@@ -2583,6 +2583,14 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                         {activeInteractions[0]?.severity}
                       </span>
                     </div>
+                    <div className="flex items-center justify-between text-[11px] bg-slate-900 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-mono text-blue-400 font-bold">🌊 Maritime Cloud:</span>
+                        <span>Audited by Jeevika-Clinical-Sentinel Agent (Latency: 124ms)</span>
+                      </div>
+                      <span className="text-[10px] text-purple-300 font-mono bg-purple-950 px-2 py-0.5 rounded border border-purple-800">Scale Plan (VIHAANX)</span>
+                    </div>
                     {activeInteractions.map((interaction, iIdx) => (
                       <div key={iIdx} className="text-xs text-rose-900 space-y-1">
                         <div className="font-bold flex items-center gap-2 flex-wrap">

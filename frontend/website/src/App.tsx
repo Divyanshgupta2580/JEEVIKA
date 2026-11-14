@@ -54,6 +54,7 @@ const DoctorConsultation = lazyWithRetry(() => import("@/components/DoctorConsul
 const EmergencyTriage = lazyWithRetry(() => import("@/components/EmergencyTriage").then(module => ({ default: module.EmergencyTriage })));
 const AyushDashboard = lazyWithRetry(() => import("@/components/AyushDashboard").then(module => ({ default: module.AyushDashboard })));
 const PatientKiosk = lazyWithRetry(() => import("@/components/PatientKiosk").then(module => ({ default: module.PatientKiosk })));
+const MaritimeAgentMesh = lazyWithRetry(() => import("@/components/MaritimeAgentMesh").then(module => ({ default: module.MaritimeAgentMesh })));
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import { BillingOverview, SubscriptionDashboard } from '@/components/billing';
@@ -77,7 +78,7 @@ import { authService } from '@/lib/authService'
 import { dataService } from '@/lib/dataService'
 
 // View types
-type View = 'selection' | 'staff' | 'admin' | 'inventory-dashboard' | 'setup' | 'hospitals' | 'audit_logs' | 'pos' | 'attendance' | 'earnings' | 'settings' | 'billing' | 'shift-management' | 'procurement' | 'medicine-migration' | 'expenses' | 'equipments' | 'ca-suite' | 'ipd' | 'doctor-consultation' | 'emergency-triage' | 'ayush-center' | 'patient-kiosk' | 'clinic-admin'
+type View = 'selection' | 'staff' | 'admin' | 'inventory-dashboard' | 'setup' | 'hospitals' | 'audit_logs' | 'pos' | 'attendance' | 'earnings' | 'settings' | 'billing' | 'shift-management' | 'procurement' | 'medicine-migration' | 'expenses' | 'equipments' | 'ca-suite' | 'ipd' | 'doctor-consultation' | 'emergency-triage' | 'ayush-center' | 'patient-kiosk' | 'clinic-admin' | 'maritime-agents'
 
 type SeoConfig = {
     title: string
@@ -219,7 +220,7 @@ function AppContent() {
             // This prevents losing the user's position when the component remounts
             // (e.g. tab switch, minimize, auth state re-trigger).
 
-            const clinicalViews: View[] = ['doctor-consultation', 'emergency-triage', 'ayush-center', 'patient-kiosk', 'clinic-admin'];
+            const clinicalViews: View[] = ['doctor-consultation', 'emergency-triage', 'ayush-center', 'patient-kiosk', 'clinic-admin', 'maritime-agents'];
 
             // 1. CRITICAL: Clinic Admin Bypass (Gatekeeper Fix)
             // Allow entry even if clinic_id is null (The Dashboard will handle the "No Clinic" state)
@@ -535,6 +536,12 @@ function AppContent() {
                     {view === 'ayush-center' && (
                         <AyushDashboard 
                             onSendToPos={() => guardedSetView('pos')}
+                        />
+                    )}
+
+                    {view === 'maritime-agents' && (
+                        <MaritimeAgentMesh 
+                            onNavigate={(v) => guardedSetView(v as View)}
                         />
                     )}
 

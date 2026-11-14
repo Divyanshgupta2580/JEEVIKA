@@ -51,6 +51,15 @@ export function AppLayout({
                 dotClass: 'bg-amber-500'
             };
         }
+        if (view === 'maritime-agents') {
+            return {
+                number: '05',
+                name: 'Maritime Autonomous Agent Mesh (Scale Tier)',
+                badge: 'SPECIAL TRACK · MARITIME CLOUD AGENTS',
+                badgeClass: 'bg-blue-50 text-blue-800 border-blue-300',
+                dotClass: 'bg-blue-600'
+            };
+        }
         if (view === 'doctor-consultation') {
             return {
                 number: '02',
@@ -437,6 +446,15 @@ export function AppLayout({
 
                     {/* DEDICATED EXIT TO PORTALS BUTTON - STITCH MINIMAL TASTE */}
                     <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setView('maritime-agents')}
+                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-900 text-blue-300 border-blue-500/40 hover:bg-slate-800'}`}
+                            title="Maritime Autonomous Clinical Agent Mesh (VIHAAN-X Special Challenge)"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>🌊 Maritime Agents</span>
+                        </button>
                         <button
                             type="button"
                             onClick={() => {

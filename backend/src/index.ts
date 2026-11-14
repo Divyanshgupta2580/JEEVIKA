@@ -15,6 +15,7 @@ import { vitalisRouter } from "./modules/vitalis/routes";
 import { patientAuthRouter, patientProfileRouter } from "./modules/patient_auth/routes";
 import { cbcRouter } from "./modules/cbc/routes";
 import { pruneCbcSources } from "./modules/cbc/maintenance";
+import { maritimeRouter } from "./modules/maritime";
 import { createApp } from "../../apps/api/app";
 
 import {
@@ -1672,6 +1673,7 @@ v1.route("/her", herRouter);
 v1.route("/vitalis", vitalisRouter);
 v1.route("/auth/patient", patientAuthRouter);
 v1.route("/patient", patientProfileRouter);
+v1.route("/maritime", maritimeRouter);
 
 // Deterministic algorithm evaluation endpoint
 v1.post("/algorithms/:name", async (c) => {
