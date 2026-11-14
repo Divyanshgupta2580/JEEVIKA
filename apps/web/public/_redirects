@@ -1,0 +1,3 @@
+/api/*  https://jeevika-api.workers.dev/api/:splat  200
+/healthz  https://jeevika-api.workers.dev/healthz  200
+/*  /index.html  200
