@@ -33,6 +33,7 @@ interface TelemetryLog {
 export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (view: string) => void }) {
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [logs, setLogs] = useState<TelemetryLog[]>([]);
+  const [status, setStatus] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunningAudit, setIsRunningAudit] = useState(false);
   const [auditResult, setAuditResult] = useState<any | null>(null);
@@ -47,6 +48,7 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
       const res = await fetch(`${CLOUDFLARE_API_BASE}/maritime/status`);
       if (res.ok) {
         const data = await res.json();
+        setStatus(data);
         if (data.agents) setAgents(data.agents);
       }
       const telRes = await fetch(`${CLOUDFLARE_API_BASE}/maritime/telemetry`);
@@ -139,13 +141,13 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="bg-blue-600/30 border border-blue-400/40 text-blue-300 text-xs font-mono font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  MARITIME AGENT CLOUD • LIVE
+                  {status?.apiKeyConfigured ? `MARITIME CLOUD LIVE (${status.apiKeyMasked})` : 'MARITIME AGENT CLOUD • LIVE'}
                 </span>
                 <span className="bg-purple-900/40 border border-purple-500/30 text-purple-300 text-xs font-mono px-3 py-1 rounded-full">
-                  Tier: Scale Plan (Code: VIHAANX)
+                  Endpoint: api.maritime.sh • Cluster: maritime-scale-vihaanx-delhi
                 </span>
                 <span className="bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
-                  VIHAAN-X Special Challenge
+                  Special Challenge: Best Use of Maritime Swarm (Code: VIHAANX)
                 </span>
               </div>
               
