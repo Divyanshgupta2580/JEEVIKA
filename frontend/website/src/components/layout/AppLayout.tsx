@@ -60,6 +60,15 @@ export function AppLayout({
                 dotClass: 'bg-blue-600'
             };
         }
+        if (view === 'prune-gateway') {
+            return {
+                number: '06',
+                name: 'Prune AI Cost Engine & Security Gateway',
+                badge: 'SPECIAL TRACK · PRUNE PRO AI GATEWAY',
+                badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+                dotClass: 'bg-emerald-600'
+            };
+        }
         if (view === 'doctor-consultation') {
             return {
                 number: '02',
@@ -454,6 +463,15 @@ export function AppLayout({
                         >
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                             <span>🌊 Maritime Agents</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setView('prune-gateway')}
+                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-900 text-emerald-300 border-emerald-500/40 hover:bg-slate-800'}`}
+                            title="Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challenge)"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>🛡️ Prune Gateway</span>
                         </button>
                         <button
                             type="button"

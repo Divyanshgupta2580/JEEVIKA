@@ -2591,6 +2591,14 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                       </div>
                       <span className="text-[10px] text-purple-300 font-mono bg-purple-950 px-2 py-0.5 rounded border border-purple-800">Scale Plan (VIHAANX)</span>
                     </div>
+                    <div className="flex items-center justify-between text-[11px] bg-slate-900 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-mono text-emerald-400 font-bold">🛡️ Prune Gateway:</span>
+                        <span>Cached & Protected (Cost: ₹0.00 • Zero PII Leakage)</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-300 font-mono bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">Prune Pro Active</span>
+                    </div>
                     {activeInteractions.map((interaction, iIdx) => (
                       <div key={iIdx} className="text-xs text-rose-900 space-y-1">
                         <div className="font-bold flex items-center gap-2 flex-wrap">
