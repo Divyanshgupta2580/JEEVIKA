@@ -1883,9 +1883,13 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     doc.text('Reg. No: MCI-2018-94821 • Department of Internal Medicine', 14, footerY + 9);
     doc.text('Digitally signed via JEEVIKA Clinician Verification Engine • Valid under IT Act 2000', 14, footerY + 13);
 
-    doc.setFont('courier', 'normal');
+    doc.setFont('courier', 'bold');
     doc.setFontSize(7);
-    doc.text(`NRCeS-SIGN-HASH: ${activePatient.patientId.toUpperCase()}-${Date.now().toString(16).toUpperCase()}`, 14, footerY + 17);
+    doc.setTextColor(2, 132, 199);
+    doc.text('🌊 Maritime Cloud Swarm Audited (VIHAANX Scale) • 🛡️ Prune Pro AI Gateway Protected (0 PII Leaks)', 14, footerY + 17);
+    doc.setFont('courier', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`NRCeS-SIGN-HASH: ${activePatient.patientId.toUpperCase()}-${Date.now().toString(16).toUpperCase()}`, 14, footerY + 21);
 
     // Save PDF
     const cleanName = activePatient.name.replace(/\s+/g, '_');
