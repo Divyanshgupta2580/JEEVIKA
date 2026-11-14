@@ -2,7 +2,7 @@
 ### *Bharat’s First Vernacular-First Clinical Operating System & Assistive Hospital Platform*
 
 [![Pure Software](https://img.shields.io/badge/Architecture-100%25%20Pure%20Software%20(Zero%20Hardware)-blue)](frontend/website)
-[![Contributors](https://img.shields.io/badge/Core%20Team-5%20Engineers-purple)](#-core-engineering--clinical-team-5-contributors)
+[![Contributors](https://img.shields.io/badge/Core%20Team-2%20Engineers-purple)](#-core-engineering--clinical-team-2-contributors)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 [![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](frontend/website)
 [![Hono API](https://img.shields.io/badge/Backend-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
@@ -222,15 +222,12 @@ Visit **[http://localhost:5173](http://localhost:5173)** to explore:
 
 ---
 
-## 👥 Core Engineering & Clinical Team (5 Contributors)
+## 👥 Core Engineering & Clinical Team (2 Contributors)
 
 | Contributor | GitHub Handle | Core Engineering & Clinical Role |
 |:---|:---|:---|
 | **Divyansh Garg** | [`@DIVYANSH-GARG28`](https://github.com/DIVYANSH-GARG28) | **Lead Architect & Full-Stack Systems Lead** — Distributed Hono Backend, Zero-Hardware Triage & Platform Verification |
 | **Divyansh Gupta** | [`@Divyanshgupta2580`](https://github.com/Divyanshgupta2580) | **Clinical Operations & EHR Lead** — OPD Workflows, CBC Engine, Pharmacy POS & FEFO Inventory |
-| **Paarth** | [`@Paarth-dev-lab`](https://github.com/Paarth-dev-lab) | **Mobile & Kiosk UI Lead** — Indic Speech ASR Tokenizer, Multilingual Intake & Pictographic Dosage Guides |
-| **Saksham Goswami** | [`@Saksham-Goswami-11`](https://github.com/Saksham-Goswami-11) | **Clinical AI & Safety Lead** — Dynamic Red-Flag Intent Engine, Herb-Drug Sentinel & Decision Support |
-| **Rohan** | [`@xzzrohan`](https://github.com/xzzrohan) | **Cloudflare Edge & Security Lead** — D1 Multi-Tenant Isolation, ABDM FHIR R4 Bundle Export & Audit Trails |
 
 ---
 
