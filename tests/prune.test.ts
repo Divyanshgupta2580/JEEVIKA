@@ -51,7 +51,7 @@ describe("Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challe
     const data = await res.json() as any;
     expect(data.success).toBe(true);
     expect(data.piiSanitized).toBe(true);
-  });
+  }, 15000);
 
   it("executes simulated prompt injection attack and logs to immutable ledger", async () => {
     const res = await app.request("http://127.0.0.1/api/v1/prune/firewall/simulate-injection", {

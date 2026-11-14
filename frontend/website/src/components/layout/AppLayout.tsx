@@ -458,19 +458,19 @@ export function AppLayout({
                         <button
                             type="button"
                             onClick={() => setView('maritime-agents')}
-                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-900 text-blue-300 border-blue-500/40 hover:bg-slate-800'}`}
+                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50/80 hover:bg-blue-100 text-blue-700 border-blue-200/80'}`}
                             title="Maritime Autonomous Clinical Agent Mesh (VIHAAN-X Special Challenge)"
                         >
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
                             <span>🌊 Maritime Agents</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setView('prune-gateway')}
-                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-900 text-emerald-300 border-emerald-500/40 hover:bg-slate-800'}`}
+                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'}`}
                             title="Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challenge)"
                         >
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                             <span>🛡️ Prune Gateway</span>
                         </button>
                         <button

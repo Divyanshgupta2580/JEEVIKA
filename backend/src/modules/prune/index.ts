@@ -233,6 +233,7 @@ pruneRouter.post("/gateway/chat", async (c) => {
         "Content-Type": "application/json",
         "X-Prune-Cache": "semantic"
       },
+      signal: AbortSignal.timeout(3800),
       body: JSON.stringify({
         model: requestedModel,
         messages: [
