@@ -1238,6 +1238,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     costSavedINR?: number;
     piiSanitized?: boolean;
     gateway: string;
+    receiptId?: string;
   } | null>(null);
   const [isPruneRunning, setIsPruneRunning] = useState(false);
 
@@ -1278,7 +1279,8 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
           tokensSaved: data.tokensSaved || data.tokensPruned || 0,
           costSavedINR: data.costSavedINR || 0,
           piiSanitized: data.piiSanitized || false,
-          gateway: data.gateway || 'Prune Pro AI Gateway'
+          gateway: data.gateway || 'Prune Pro AI Gateway',
+          receiptId: data.receiptId
         });
       }
     } catch (e: any) {
@@ -2531,6 +2533,11 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                         {pruneResult.piiSanitized && (
                           <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/30">
                             🔒 PII Scrubbed
+                          </span>
+                        )}
+                        {pruneResult.receiptId && (
+                          <span className="bg-slate-700/60 text-slate-300 px-2 py-0.5 rounded border border-slate-600/50">
+                            Receipt: {pruneResult.receiptId.slice(0, 14)}...
                           </span>
                         )}
                       </div>
