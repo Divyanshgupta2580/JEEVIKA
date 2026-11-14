@@ -1388,7 +1388,7 @@ patientsRouter.post("/", async (c) => {
           preferredLang: newPatient.preferredLang,
         });
       } catch (dbErr) {
-        console.warn("DB patient save warning, using persistent patientStore:", dbErr);
+        console.warn("Patient DB insertion warning, proceeding with in-memory persistence:", dbErr);
       }
     }
 

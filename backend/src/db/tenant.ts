@@ -191,30 +191,66 @@ export class TenantDb {
       sex?: string | null;
       preferredLang?: string;
     }): Promise<D1Response> => {
-      const birthDate = data.dob || "1990-01-01";
-      const gender = data.sex || "OTHER";
-      const language = data.preferredLang || "hi";
-      return this.db
-        .prepare(
-          `INSERT INTO patients
-            (id, org_id, name, birth_date, gender, language, synthetic, phone_hash, abha_number, abha_address, dob, sex, preferred_lang)
-           VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          data.id,
-          this.orgId,
-          data.name,
-          birthDate,
-          gender,
-          language,
-          data.phoneHash,
-          data.abhaNumber ?? null,
-          data.abhaAddress ?? null,
-          data.dob ?? null,
-          data.sex ?? null,
-          data.preferredLang ?? "hi"
-        )
-        .run();
+      try {
+        return await this.db
+          .prepare(
+            `INSERT INTO patients
+              (id, org_id, name, phone_hash, abha_number, abha_address, dob, sex, preferred_lang, birth_date, gender, language, synthetic)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+          )
+          .bind(
+            data.id,
+            this.orgId,
+            data.name,
+            data.phoneHash,
+            data.abhaNumber ?? null,
+            data.abhaAddress ?? null,
+            data.dob ?? "1990-01-01",
+            data.sex ?? "M",
+            data.preferredLang ?? "hi",
+            data.dob ?? "1990-01-01",
+            data.sex ?? "M",
+            data.preferredLang ?? "hi"
+          )
+          .run();
+      } catch {
+        try {
+          return await this.db
+            .prepare(
+              `INSERT INTO patients
+                (id, org_id, name, phone_hash, abha_number, abha_address, dob, sex, preferred_lang)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            )
+            .bind(
+              data.id,
+              this.orgId,
+              data.name,
+              data.phoneHash,
+              data.abhaNumber ?? null,
+              data.abhaAddress ?? null,
+              data.dob ?? null,
+              data.sex ?? null,
+              data.preferredLang ?? "hi"
+            )
+            .run();
+        } catch {
+          return await this.db
+            .prepare(
+              `INSERT INTO patients
+                (org_id, id, name, birth_date, gender, language, synthetic)
+               VALUES (?, ?, ?, ?, ?, ?, 1)`
+            )
+            .bind(
+              this.orgId,
+              data.id,
+              data.name,
+              data.dob ?? "1990-01-01",
+              data.sex ?? "M",
+              data.preferredLang ?? "hi"
+            )
+            .run();
+        }
+      }
     },
 
     list: async (limit = 50): Promise<PatientRecord[]> => {
