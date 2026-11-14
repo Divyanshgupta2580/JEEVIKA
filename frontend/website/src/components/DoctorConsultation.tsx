@@ -2081,13 +2081,14 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                   No matching patients found.
                 </div>
               ) : (
-                filteredQueue.map(item => {
+                filteredQueue.map((item, idx) => {
                   const isSelected = queueIdentity(item) === queueIdentity(activePatient);
                   const isStat = item.status === 'STAT_ALERT';
+                  const itemKey = `${item.encounterId || item.cbcEncounterId || item.patientId}-${item.token || idx}`;
 
                   return (
                     <div
-                      key={queueIdentity(item)}
+                      key={itemKey}
                       onClick={() => handleSelectPatient(queueIdentity(item))}
                       className={`p-3.5 rounded-xl border-2 transition cursor-pointer relative group ${
                         isSelected
