@@ -1159,9 +1159,9 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     tier: string;
     latencyMs: number;
     swarmSummary: {
-      sentinelAgent: { status: string; interactionsFlagged: number; items: any[] };
-      scribeAgent: { status: string; redFlagsCount: number; triageCode: string };
-      supplyAgent: { status: string; genericSavingsPct: string; substitutionsCount: number };
+      sentinelAgent: { status: string; interactionsFlagged: number; items: any[]; summary?: string };
+      scribeAgent: { status: string; redFlagsCount: number; triageCode: string; vernacularInstructions?: string; dialect?: string };
+      supplyAgent: { status: string; genericSavingsPct: string; substitutionsCount: number; monthlySavingsINR?: number; stockStatus?: string };
     };
     consensus: string;
   } | null>(null);
@@ -2959,11 +2959,11 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-300 leading-snug">
-                        <strong>Indic Vernacular Instructions:</strong> "दवाइयों का सेवन समय पर करें और तैलीय भोजन से परहेज रखें।"
+                        <strong>Indic Vernacular Instructions:</strong> "{maritimeResult?.swarmSummary?.scribeAgent?.vernacularInstructions || 'दवाइयां नियमित रूप से लें, खान-पान का ध्यान रखें और कोई भी जटिलता होने पर तुरंत अस्पताल संपर्क करें।'}"
                       </p>
                       <button
                         type="button"
-                        onClick={() => speakVernacularInstructions('दवाइयों का सेवन समय पर करें और तैलीय भोजन से परहेज रखें।')}
+                        onClick={() => speakVernacularInstructions(maritimeResult?.swarmSummary?.scribeAgent?.vernacularInstructions || 'दवाइयां नियमित रूप से लें, खान-पान का ध्यान रखें और कोई भी जटिलता होने पर तुरंत अस्पताल संपर्क करें।')}
                         className={`px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer ${
                           vernacularAudioPlaying ? 'bg-purple-600 text-white animate-pulse' : 'bg-purple-950 text-purple-300 border border-purple-800 hover:bg-purple-900'
                         }`}
@@ -2982,7 +2982,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-300 leading-snug">
-                        <strong>Jan Aushadhi Substitution:</strong> 2 branded items swappable to PMBJP generic alternatives (Saves patient ~₹380/mo).
+                        <strong>Jan Aushadhi Substitution:</strong> {maritimeResult?.swarmSummary?.supplyAgent?.substitutionsCount || 2} branded items swappable to PMBJP generic alternatives (Saves patient ~₹{maritimeResult?.swarmSummary?.supplyAgent?.monthlySavingsINR || 380}/mo).
                       </p>
                       <span className="text-[10px] text-emerald-400 block font-mono">Stock: In District Kendra (FEFO Verified)</span>
                     </div>
