@@ -191,8 +191,8 @@ In many conventional digital health prototypes, an LLM is prompted to "diagnose"
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/DIVYANSH-GARG28/JEEVIKA.git
-cd JEEVIKA
+git clone https://github.com/DIVYANSH-GARG28/DTU_JEEVIKA.git
+cd DTU_JEEVIKA
 npm install
 npm install --prefix frontend/website
 ```
