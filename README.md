@@ -30,49 +30,118 @@ It tackles three deeply rooted systemic failures:
 
 ---
 
+## 🏛️ End-to-End System Architecture
+
+Jeevika's architecture is built around a **100% Pure Software, Zero-Hardware Local-First** paradigm. It unites regional edge touchpoints with a distributed agent swarm on Maritime Cloud and real-time security/cost firewalls on Prune AI Gateway.
+
+```mermaid
+flowchart TD
+    subgraph S1["1. Zero-Hardware Edge Presentation Tier (React 18 + Vite)"]
+        Kiosk["🎙️ Patient Intake Kiosk<br/>• 9 Indic Languages Speech Input<br/>• Sarvam Vision 3B OCR<br/>• ABHA QR & Token #032"]
+        Doctor["🩺 Clinician OPD Cockpit<br/>• Ambient Scribe (Speech-to-SOAP)<br/>• Herb-Drug Sentinel Warnings<br/>• PMBJP Generic Substitution (-86%)"]
+        Triage["🚨 Emergency Triage (STAT)<br/>• ESI-1 Severity & Shock Index<br/>• Code-Red Siren Broadcast<br/>• Resuscitation Bays 1-4"]
+        Command["🏢 Hospital Command Center<br/>• Multi-Clinic Fleet (5 Hubs)<br/>• Integer Paise Ledger (0 Leakage)<br/>• Stock Shortage Radar"]
+        POS["💊 Pharmacy POS & Dispensing<br/>• FEFO Expiry Management<br/>• CDSCO Form 20/21 Receipts"]
+    end
+
+    subgraph S2["2. Security, Caching & WAF Gateway (Prune Pro Engine)"]
+        WAF["🛡️ Clinical AI WAF<br/>• Intercepts Prompt Injections in 8ms<br/>• HTTP 403 Neutralizer (NMC Rule 4.2)"]
+        Cache["⚡ Semantic Caching Engine<br/>• Vector Similarity Matching (8ms)<br/>• 76.3% Hit Rate • ₹0 Billed Tokens<br/>• ₹18,444+ Direct API Saved"]
+        PII["🔐 Zero-Trust PII Redactor<br/>• Auto-Redacts 12-Digit Aadhaar<br/>• Masks 10-Digit Phone Numbers<br/>• DPDP Act 2023 Compliant"]
+    end
+
+    subgraph S3["3. Distributed Multi-Agent Intelligence Swarm (Maritime Cloud Scale)"]
+        MeshCoord["🌊 Maritime Mesh Swarm Coordinator<br/>(api.maritime.sh • Cluster: vihaanx-delhi)"]
+        AgentSentinel["agent-sentinel-01<br/>(Clinical Sentinel Watchdog)<br/>• Detects Herb-Drug Collisions<br/>• e.g. Warfarin + Ashwagandha (126ms)"]
+        AgentScribe["agent-vernacular-02<br/>(Vernacular Scribe Engine)<br/>• Normalizes Bhojpuri/Hindi Audio<br/>• Builds ABDM FHIR R4 SOAP (142ms)"]
+        AgentSupply["agent-supply-03<br/>(Supply & Generic Optimizer)<br/>• Real-time PMBJP Bioequivalence<br/>• FEFO Expiry Allocation (115ms)"]
+        MeshCoord --> AgentSentinel & AgentScribe & AgentSupply
+    end
+
+    subgraph S4["4. Core Runtime, Local-First Storage & Double-Entry Ledger"]
+        HonoAPI["⚡ Hono Microsecond API Core (backend/src)"]
+        LocalSQLite["💾 SQLite WAL Local-First Database<br/>• 100% Offline Resilient<br/>• Zero Cloud Lag for Tokens"]
+        CloudflareD1["☁️ Cloudflare D1 Multi-Tenant Shards"]
+        DoubleEntry["⚖️ Integer-Paise Double-Entry Engine<br/>• Σ Debit = Σ Credit = ₹2,28,000<br/>• Zero Float Rounding Leakage"]
+        AuditLedger["📜 Medico-Legal Cryptographic Vault<br/>• 142 SHA-256 Tamper-Evident Blocks<br/>• IT Act 2000 Court Admissible"]
+        HonoAPI --> LocalSQLite & CloudflareD1 & DoubleEntry & AuditLedger
+    end
+
+    subgraph S5["5. National Digital Health Ecosystem Integrations"]
+        ABDM["🇮🇳 NHA ABDM Milestone 2<br/>(FHIR R4 Diagnostic Bundles)"]
+        PMBJP["💊 PMBJP Jan Aushadhi Repository<br/>(2,000+ Generic Formularies)"]
+        NMCReg["⚖️ NMC Registered Practitioner<br/>(Dr. Divyansh #NMC-DL-2018-84729)"]
+    end
+
+    Kiosk & Doctor & Triage & Command & POS -->|Encrypted REST & WebSockets| HonoAPI
+    Kiosk & Doctor -->|Ambient Audio & AI Prompts| WAF
+    WAF --> Cache
+    Cache -->|Cache Miss ➔ Sanitized Request| PII
+    PII -->|Upstream Model Execution| S3
+    HonoAPI <--> S3
+    S3 -->|138ms Swarm Consensus| Doctor
+    HonoAPI <--> ABDM & PMBJP & NMCReg
+```
+
+---
+
 ## 📸 Platform UI Showcase (Live Screen Walkthrough)
 
-Every portal is designed with a clean clinical light-mode design system (`bg-slate-50`, elevated white cards, slate-200 borders, high-contrast typography) to ensure visual elegance, accessibility, and zero jarring theme clash.
+Every portal is designed with an ultra-clean, clinical Light Theme design system (`bg-slate-50`, elevated white cards, slate-200 borders, high-contrast typography) to ensure visual elegance, accessibility, and zero jarring theme clash. Captured at **full 2160 × 1350 desktop resolution**.
 
 ### 1. 🏥 Universal Landing Page & Clinical Hub Router
-![JEEVIKA Landing Page](./docs/screenshots/01_landing_page.png)
-*Brand identity, multilingual picker (English, Hindi, Punjabi, Tamil), and direct routing to Patient Kiosk, Doctor OPD, Emergency Triage, and Hospital Command.*
+<p align="center">
+  <img src="./docs/screenshots/01_landing_page.png" alt="JEEVIKA Landing Page" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>Brand identity, multilingual picker (English, Hindi, Punjabi, Tamil), and direct routing to Patient Kiosk, Doctor OPD, Emergency Triage, and Hospital Command.</em></p>
 
 ---
 
 ### 2. 🎙️ Patient Intake Kiosk (Voice, Camera OCR & ABHA Sync)
-![Patient Intake Kiosk](./docs/screenshots/02_patient_kiosk.png)
-*9-language voice intake, Sarvam Vision paper prescription OCR, 5 ABHA verification modes (QR/OTP/Aadhaar), and instant queue token generation (#032) assigned to OPD Room 4.*
+<p align="center">
+  <img src="./docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>9-language voice intake, Sarvam Vision paper prescription OCR, 5 ABHA verification modes (QR/OTP/Aadhaar), and instant queue token generation (#032) assigned to OPD Room 4.</em></p>
 
 ---
 
 ### 3. 🩺 Doctor OPD Cockpit (Ambient Clinical Scribe & PMBJP Substitution)
-![Doctor OPD Cockpit](./docs/screenshots/03_doctor_opd_cockpit.png)
-*Doctor header (Dr. Divyansh, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.*
+<p align="center">
+  <img src="./docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>Doctor header (Dr. Divyansh, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.</em></p>
 
 ---
 
 ### 4. 🚨 Emergency & Trauma Triage (STAT Code-Red Resuscitation)
-![Emergency Triage](./docs/screenshots/04_emergency_triage.png)
-*Real-time STAT Code-Red alert broadcast, ESI-1 trauma scoring, resuscitation bay readiness (Bays 1 to 4), and incoming casualty trauma board with SHA-256 tamper-evident logs.*
+<p align="center">
+  <img src="./docs/screenshots/04_emergency_triage.png" alt="Emergency Triage" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>Real-time STAT Code-Red alert broadcast, ESI-1 trauma scoring, resuscitation bay readiness (Bays 1 to 4), and incoming casualty trauma board with SHA-256 tamper-evident logs.</em></p>
 
 ---
 
 ### 5. 🏢 Hospital Command Center & Double-Entry Financial Ledger
-![Hospital Command Center](./docs/screenshots/05_hospital_command_center.png)
-*Multi-clinic fleet coordination across 5 hospital hubs, integer-paise double-entry accounting (Debit = Credit = ₹2,28,000; zero rounding leaks), central stock shortage radar, and 142 cryptographic audit blocks.*
+<p align="center">
+  <img src="./docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>Multi-clinic fleet coordination across 5 hospital hubs, integer-paise double-entry accounting (Debit = Credit = ₹2,28,000; zero rounding leaks), central stock shortage radar, and 142 cryptographic audit blocks.</em></p>
 
 ---
 
 ### 6. 🌊 Maritime Autonomous Agent Swarm (Scale Tier Cloud Mesh)
-![Maritime Swarm Mesh](./docs/screenshots/06_maritime_swarm_mesh.png)
-*3 autonomous background micro-agents (Clinical Sentinel, Vernacular Scribe, Supply Optimizer) executing distributed cloud consensus in 138ms on `api.maritime.sh` without straining hospital hardware.*
+<p align="center">
+  <img src="./docs/screenshots/06_maritime_swarm_mesh.png" alt="Maritime Swarm Mesh" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>3 autonomous background micro-agents (Clinical Sentinel, Vernacular Scribe, Supply Optimizer) executing distributed cloud consensus in 138ms on api.maritime.sh without straining hospital hardware.</em></p>
 
 ---
 
 ### 7. 🛡️ Prune AI Cost Engine & Security Firewall Gateway
-![Prune AI Gateway](./docs/screenshots/07_prune_ai_gateway.png)
-*Sub-20ms semantic caching (76.3% hit rate, ₹18,444+ saved), clinical prompt injection WAF defense (HTTP 403 Forbidden intercept in 8ms under NMC Act 2019 Rule 4.2), and DPDP Act 2023 Aadhaar PII masking.*
+<p align="center">
+  <img src="./docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Gateway" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+</p>
+<p align="center"><em>Sub-20ms semantic caching (76.3% hit rate, ₹18,444+ saved), clinical prompt injection WAF defense (HTTP 403 Forbidden intercept in 8ms under NMC Act 2019 Rule 4.2), and DPDP Act 2023 Aadhaar PII masking.</em></p>
 
 ---
 
