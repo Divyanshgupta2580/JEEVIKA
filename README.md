@@ -30,6 +30,52 @@ It tackles three deeply rooted systemic failures:
 
 ---
 
+## 📸 Platform UI Showcase (Live Screen Walkthrough)
+
+Every portal is designed with a clean clinical light-mode design system (`bg-slate-50`, elevated white cards, slate-200 borders, high-contrast typography) to ensure visual elegance, accessibility, and zero jarring theme clash.
+
+### 1. 🏥 Universal Landing Page & Clinical Hub Router
+![JEEVIKA Landing Page](./docs/screenshots/01_landing_page.png)
+*Brand identity, multilingual picker (English, Hindi, Punjabi, Tamil), and direct routing to Patient Kiosk, Doctor OPD, Emergency Triage, and Hospital Command.*
+
+---
+
+### 2. 🎙️ Patient Intake Kiosk (Voice, Camera OCR & ABHA Sync)
+![Patient Intake Kiosk](./docs/screenshots/02_patient_kiosk.png)
+*9-language voice intake, Sarvam Vision paper prescription OCR, 5 ABHA verification modes (QR/OTP/Aadhaar), and instant queue token generation (#032) assigned to OPD Room 4.*
+
+---
+
+### 3. 🩺 Doctor OPD Cockpit (Ambient Clinical Scribe & PMBJP Substitution)
+![Doctor OPD Cockpit](./docs/screenshots/03_doctor_opd_cockpit.png)
+*Doctor header (Dr. Divyansh, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.*
+
+---
+
+### 4. 🚨 Emergency & Trauma Triage (STAT Code-Red Resuscitation)
+![Emergency Triage](./docs/screenshots/04_emergency_triage.png)
+*Real-time STAT Code-Red alert broadcast, ESI-1 trauma scoring, resuscitation bay readiness (Bays 1 to 4), and incoming casualty trauma board with SHA-256 tamper-evident logs.*
+
+---
+
+### 5. 🏢 Hospital Command Center & Double-Entry Financial Ledger
+![Hospital Command Center](./docs/screenshots/05_hospital_command_center.png)
+*Multi-clinic fleet coordination across 5 hospital hubs, integer-paise double-entry accounting (Debit = Credit = ₹2,28,000; zero rounding leaks), central stock shortage radar, and 142 cryptographic audit blocks.*
+
+---
+
+### 6. 🌊 Maritime Autonomous Agent Swarm (Scale Tier Cloud Mesh)
+![Maritime Swarm Mesh](./docs/screenshots/06_maritime_swarm_mesh.png)
+*3 autonomous background micro-agents (Clinical Sentinel, Vernacular Scribe, Supply Optimizer) executing distributed cloud consensus in 138ms on `api.maritime.sh` without straining hospital hardware.*
+
+---
+
+### 7. 🛡️ Prune AI Cost Engine & Security Firewall Gateway
+![Prune AI Gateway](./docs/screenshots/07_prune_ai_gateway.png)
+*Sub-20ms semantic caching (76.3% hit rate, ₹18,444+ saved), clinical prompt injection WAF defense (HTTP 403 Forbidden intercept in 8ms under NMC Act 2019 Rule 4.2), and DPDP Act 2023 Aadhaar PII masking.*
+
+---
+
 ## 🚨 Why This Project? (The "Ramesh" Crisis)
 
 ### The Ground Reality in Rural India
@@ -68,7 +114,7 @@ flowchart LR
 ---
 
 ### 1. 🎙️ Smart Vernacular Voice Kiosk (Entrance Gate)
-* **Multilingual Indic Speech Processing:** Integrates native Web Speech API and Indic ASR tokenizers across 6 languages: Hindi, Telugu, Tamil, Marathi, Punjabi, and English.
+* **Multilingual Indic Speech Processing:** Integrates native Web Speech API and Indic ASR tokenizers across 9 Indian languages.
 * **Dynamic Clinical Red-Flag Engine (`packages/engine/clinicalIntake.ts`):** Evaluates live utterances against clinical emergency triggers:
   - Acute Coronary Syndrome / Chest Pain
   - Severe Dyspnea / Stridor
@@ -76,7 +122,7 @@ flowchart LR
   - Stroke / Facial Drooping / Slurred Speech
   - Severe Hemoptysis / Hematemesis
 * **Instant Dual-Routing:**
-  - **Emergency Red:** Flashes high-priority amber/red alert banner, plays immediate spoken guidance, notifies crash cart, and issues an `E-XXX` priority token for Resuscitation Bay 1.
+  - **Emergency Red:** Flashes high-priority red alert banner, sounds spoken guidance, notifies crash cart, and issues an `E-XXX` priority token for Resuscitation Bay 1.
   - **Routine Cases:** Issues general OPD queue tokens (`#XXX`) with estimated consultation wait times.
 
 ---
@@ -88,8 +134,9 @@ flowchart LR
   - **Subjective (S):** Structures chief complaints, duration, and radiation history.
   - **Assessment (A):** Maps provisional impressions to **ICD-11 dual-coding** (e.g., `BA41 Acute Myocardial Infarction` / `FA00 Osteoarthritis`).
   - **Plan (P):** Extracts mentioned drugs (Ecosprin, Atorvastatin, Pantoprazole, Dolo) with frequency and meal timing.
-* **Human-in-the-Loop Review:** Renders an editable **Draft Mode** banner. The physician can edit any word or click **✓ Apply Draft to SOAP & Prescription** in one click, saving 5 minutes of typing per patient.
-* **AHA/ACC STEMI Diagnostic Prerequisite Verification:** Enforces 12-Lead ECG confirmation, Stat Troponin-I testing, and GI/CVA bleed screening prior to antiplatelet approval.
+* **Human-in-the-Loop Review:** Physician edits any word or clicks **✓ Apply Draft to SOAP & Prescription** in one click, saving 5 minutes of typing per patient.
+* **Herb-Drug Pharmacovigilance Sentinel:** Detects hazardous allopathic + AYUSH collisions (e.g., *Ashwagandha + Warfarin* bleeding risk).
+* **PMBJP Jan Aushadhi Generic Substitution:** Calculates 86% patient medicine cost savings by mapping expensive branded drugs to quality Jan Aushadhi equivalents.
 * **Legal NMC Registered Medical Practitioner (RMP) Stamp:**
   - Authenticated under **Dr. Divyansh, MD, DM (Cardiology / Chief Medical Officer)**.
   - Reg. Number `#NMC-DL-2018-84729`.
@@ -99,7 +146,7 @@ flowchart LR
 ---
 
 ### 3. 👁️ Patient Vernacular Medication Guide (मरीज सचित्र खुराक निर्देशिका)
-* **Dynamic State Mapping:** Automatically reads whatever medications were approved in the consultation and translates them into simple, high-contrast pictographic cards.
+* **Dynamic State Mapping:** Automatically translates approved medications into simple, high-contrast pictographic cards.
 * **Visual Icon Timetable:**
   - 🌅 **सुबह (Morning / Suraj icon):** `1 गोली` (e.g. Ecosprin - नाश्ते के बाद)
   - ☀️ **दोपहर (Afternoon / Dhoop icon):** `-`
@@ -114,22 +161,34 @@ flowchart LR
 
 ---
 
-### 4. 🌿 Herb-Drug Interaction Sentinel (`packages/engine/herbDrugInteractions.ts`)
-* **Algorithmic Cross-Matrix:** Evaluates combinations of Western Allopathic drugs and Classical Ayurvedic formulations.
-* **Real Contraindication Detection:**
-  - **Aspirin + Guggulu (*Commiphora mukul*):** Flags `CONTRAINDICATED` due to synergistic antiplatelet inhibition and high hemorrhagic bleed risk.
-  - **Aspirin + Lasuna (*Allium sativum*):** Severe bleeding alert.
-  - **Statins + Arjuna:** Hepatoprotective coordination advice.
-* **Clinical Override Checkbox:** Requires explicit physician rationale before dispensing cross-reactive therapies.
-
----
-
-### 5. 💊 Smart Pharmacy POS & FEFO Inventory Engine
+### 4. 💊 Smart Pharmacy POS & FEFO Inventory Engine
 * **FEFO (First-Expired, First-Out) Algorithm:** Dispenses stock strictly based on expiration dates, eliminating medicine expiry losses in hospital dispensaries.
 * **PMBJP Jan Aushadhi Generic Substitution:** Automatically suggests A-rated bioequivalent generics from Pradhan Mantri Bhartiya Janaushadhi Pariyojana:
   - *Brand Atorvastatin 40mg:* ₹195 $\rightarrow$ *Jan Aushadhi Generic:* **₹28 (85% savings)**.
   - *Brand Pantoprazole 40mg:* ₹110 $\rightarrow$ *Jan Aushadhi Generic:* **₹18 (83% savings)**.
 * **CDSCO Statutory Compliance:** Receipts printed with CDSCO Form 20/21 Retail Drug License numbers (`DL-20-4921/2024`) and Registered Pharmacist certification.
+
+---
+
+## 💼 Business Model, Pricing Tiers & Monetization Engine
+
+### 1. Market Opportunity & Target Segments
+* **Target Audience**: 70,000+ Tier-2/Tier-3 Private Nursing Homes (30–100 beds), Standalone Polyclinics, Trust Hospitals, and 10,000+ PMBJP Kendras across India.
+* **Market Sizing**: India Healthcare IT Market is **$4.5B+ (growing at 22% CAGR)** driven by National Health Authority’s mandatory ABDM integration.
+
+### 2. Multi-Tier Subscription Structure
+
+| Tier | Target Customer | Monthly Pricing | Included Core Modules |
+|:---|:---|:---:|:---|
+| **Starter OPD Plan** | Single Doctor Clinics & Small OPDs | **₹2,999 / mo** | Vernacular Voice Kiosk + Doctor OPD Cockpit + Ambient Scribe + ABDM Sync + WhatsApp Rx |
+| **PRO PLAN (Hospital)** | 30–100 Bed Nursing Homes & Polyclinics | **₹19,999 / mo** | **All 10 Enterprise Modules** (IPD Ward Bed Map, Emergency Triage, AI CBC Smear Analyzer, Dedicated Maritime Swarm, Prune Enterprise WAF, Shift Roster, CA Double-Entry Ledger, Biomedical Equipment Tracker, Automated Voice Follow-ups, Cryptographic Medico-Legal Vault) |
+| **Enterprise Fleet** | Multi-Branch Hospital Chains | **₹1,00,000+ / mo** | Custom D1 Multi-Tenant Shards, Central Depot Drug Rebalancing Radar, Dedicated Account Manager |
+
+### 3. Four Diversified Revenue Streams
+1. **Predictable B2B SaaS Subscriptions**: Monthly/Annual recurring subscription fees.
+2. **AI Consult Arbitrage (Prune Engine)**: Hospitals charged ₹2–₹3 per transcribed consultation. Prune Semantic Cache cuts actual cost to **₹0.12 (12 paise)** $\rightarrow$ **92%+ Gross Profit Margin**.
+3. **Jan Aushadhi Supply Chain Take-Rate**: 1.5%–3% platform commission on bulk generic medicine restocking facilitated via central rebalancing radar.
+4. **Govt ABDM DHIS Cash Incentives**: National Health Authority pays **₹20 per digital OPD consultation** and **₹500 per IPD discharge**. Jeevika splits this 50:50 with hospitals (hospital software effectively becomes zero-cost).
 
 ---
 
@@ -144,8 +203,8 @@ flowchart LR
 | **Hono** | Backend Framework | Lightweight REST API router (`backend/src`) | Microsecond routing performance, Cloudflare Workers & Node.js dual runtime portability |
 | **Node.js 20+** | Server Runtime | Executes local server integration and batch migrations | Stable LTS foundation for hospital server boxes |
 | **SQLite (WAL Mode)** | Local Database | Persistent encounter, patient, and pharmacy data store | **Local-First Architecture:** Hospitals operate flawlessly even when internet lines are severed |
-| **TailwindCSS** | Styling | Responsive layout, high-contrast medical modes | Clean design tokens, rapid UI customization without CSS bundle bloat |
-| **Vitest** | Automated Testing | Runs 172 clinical, safety, and integration tests | Native ESM support, blazing-fast execution (172 tests run in under 5 seconds) |
+| **TailwindCSS** | Styling | Responsive layout, clinical light-theme design tokens | Clean design tokens, rapid UI customization without CSS bundle bloat |
+| **Vitest** | Automated Testing | Runs 184 clinical, safety, and integration tests | Native ESM support, blazing-fast execution (184 tests run in under 5 seconds) |
 | **jsPDF** | Document Engine | Official bilingual prescription generation | Vector-crisp client-side PDF rendering without cloud round-trips |
 
 ---
@@ -153,7 +212,7 @@ flowchart LR
 ## 🔒 Why Trust It? (Clinical Safety & Regulatory Integrity)
 
 ### 1. No Black-Box Clinical Autonomy
-In many conventional digital health prototypes, an LLM is prompted to "diagnose" the patient and write an automated prescription. **This is illegal, dangerous, and violates the NMC Code of Medical Ethics.**
+In conventional digital health prototypes, an LLM is prompted to "diagnose" the patient and write an automated prescription. **This is illegal, dangerous, and violates the NMC Code of Medical Ethics.**
 * In Jeevika, the AI only transcribes spoken words into a draft note.
 * The doctor explicitly approves, modifies, or deletes any item.
 * No encounter can transition to pharmacy billing without the physician's cryptographic sign-off.
@@ -164,7 +223,7 @@ In many conventional digital health prototypes, an LLM is prompted to "diagnose"
 
 ### 3. Synchronous Zero-Latency Token Handshake
 * Kiosk token issuance uses a unified single-roundtrip sequence engine:
-  - Token printed on Kiosk Screen 5 (`E-024`) matches the Doctor Consultation queue **with 0 off-by-one difference**.
+  - Token printed on Kiosk Screen (`#032`) matches the Doctor Consultation queue **with 0 off-by-one difference**.
   - Local `CustomEvent` bus synchronizes the selected patient across tabs in real-time.
 
 ---
@@ -199,7 +258,7 @@ npm install --prefix frontend/website
 
 ### 2. Run Test Suite & Typecheck
 ```bash
-# Verify all 172 clinical vitest tests pass
+# Verify all 184 clinical vitest tests pass
 npm test
 
 # Run strict TypeScript verification across full mono-repo (0 errors guaranteed)
@@ -217,11 +276,13 @@ npm run dev:web
 
 ### 4. Open in Browser
 Visit **[http://localhost:5173](http://localhost:5173)** to explore:
-* **Patient Kiosk (Zero-Hardware Web Triage):** [http://localhost:5173/#/app?view=kiosk](http://localhost:5173/#/app?view=kiosk)
-* **Doctor Consultation (Ambient Scribe & Code-Red Override):** [http://localhost:5173/#/app?view=doctor-consultation](http://localhost:5173/#/app?view=doctor-consultation)
-* **Emergency Triage Resuscitation Bay:** [http://localhost:5173/#/app?view=emergency](http://localhost:5173/#/app?view=emergency)
-* **Pharmacy POS & Jan Aushadhi Dispenser:** [http://localhost:5173/#/app?view=clinic-admin](http://localhost:5173/#/app?view=clinic-admin)
+* **Landing Page (Portal Router):** [http://localhost:5173/#/](http://localhost:5173/#/)
+* **Patient Kiosk (Voice Intake & ABHA):** [http://localhost:5173/#/kiosk](http://localhost:5173/#/kiosk)
+* **Doctor OPD Cockpit (Ambient Scribe & PMBJP):** [http://localhost:5173/#/app?view=doctor-consultation](http://localhost:5173/#/app?view=doctor-consultation)
+* **Emergency Triage Resuscitation Bay:** [http://localhost:5173/#/app?view=emergency-triage](http://localhost:5173/#/app?view=emergency-triage)
+* **Hospital Command Center & Admin:** [http://localhost:5173/#/app?view=admin](http://localhost:5173/#/app?view=admin)
 * **Maritime Autonomous Agent Mesh (VIHAAN-X Track):** [http://localhost:5173/#/app?view=maritime-agents](http://localhost:5173/#/app?view=maritime-agents)
+* **Prune AI Cost Engine & WAF (VIHAAN-X Track):** [http://localhost:5173/#/app?view=prune-gateway](http://localhost:5173/#/app?view=prune-gateway)
 
 ---
 
@@ -256,7 +317,7 @@ In high-volume public hospitals handling 200+ OPD encounters daily, repetitive d
 
 | Prune Gateway Module | Clinical Mechanism | Real-World Impact | Technical SLA |
 |:---|:---|:---|:---:|
-| **Semantic Caching Engine** | Vector similarity caching for common rural complaints. | **76.4% reduction in LLM inference costs** (saving ₹18,420+/month per PHC cluster). | `< 14ms` cache response (vs 1,200ms direct LLM). |
+| **Semantic Caching Engine** | Vector similarity caching for common rural complaints. | **76.4% reduction in LLM inference costs** (saving ₹18,444+/month per PHC cluster). | `< 14ms` cache response (vs 1,200ms direct LLM). |
 | **Clinical Prompt Injection WAF** | Intercepts adversarial jailbreaks attempting to bypass prescription laws (e.g. Schedule H/X narcotics override). | **100% neutralized unauthorized prescription injections** under NMC Act 2019. | `< 9ms` real-time intercept. |
 | **Zero-Knowledge PHI Scrubbing** | Automatically detects and masks 12-digit Aadhaar and 10-digit mobile numbers before routing upstream. | **Zero patient identifiable data leakage** across Gemini/Groq providers under DPDP Act 2023. | Seamless in-flight regex token sanitizer. |
 | **Token Pruning** | Strips redundant whitespace, stop-words, and prompt boilerplate. | Reduces billed prompt tokens by **28% on non-cached queries**. | Transparent stream filter. |
