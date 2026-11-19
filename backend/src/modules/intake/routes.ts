@@ -771,7 +771,13 @@ intakeRouter.post("/encounter", async (c) => {
     sequenceNumber = (localTokenSequences.get(sequenceKey) || 0) + 1;
     localTokenSequences.set(sequenceKey, sequenceNumber);
   }
-  const token = `${isEmergency ? "E-" : "#"}${String(sequenceNumber).padStart(3, "0")}`;
+  const token = body.token
+    ? String(body.token)
+    : body.token_number
+      ? String(body.token_number)
+      : (body.is_stat || body.status === "STAT_ALERT")
+        ? `EMERG-STAT-#${String(sequenceNumber).padStart(3, "0")}`
+        : `${isEmergency ? "E-" : "#"}${String(sequenceNumber).padStart(3, "0")}`;
   const initialStatus: "WAITING" | "STAT_ALERT" | "IN_CONSULT" | "DISPENSED" =
     body.status ? String(body.status).toUpperCase() as any : (isEmergency ? "STAT_ALERT" : "WAITING");
 
@@ -798,7 +804,7 @@ intakeRouter.post("/encounter", async (c) => {
       ? body.vitals as Record<string, unknown>
       : {},
     soap: body.soap || null,
-    bay: body.bay ? String(body.bay) : body.bay_assigned ? String(body.bay_assigned) : (isEmergency ? "Emergency Bay 1" : null),
+    bay: body.bay ? String(body.bay) : body.bay_assigned ? String(body.bay_assigned) : (isEmergency ? "Casualty Resus Bay 1" : null),
     assigned_doctor: body.assigned_doctor ? String(body.assigned_doctor) : body.doctor_name ? String(body.doctor_name) : null,
     created_at: body.created_at ? String(body.created_at) : now,
     updated_at: now
