@@ -3,7 +3,7 @@ import {
   Siren, Flame, Clock, CheckCircle2, Bed, ArrowRight,
   Activity, Heart, Zap, Volume2, VolumeX, Stethoscope,
   RefreshCw, Sparkles, Gauge, Sun, Moon,
-  ShieldCheck, X, Search, AlertOctagon
+  ShieldCheck, X, Search, AlertOctagon, Radio, BellRing
 } from 'lucide-react';
 import { dataService as db } from '@/lib/dataService';
 import { useHospital } from '@/context/HospitalContext';
@@ -272,6 +272,73 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
 
   // Simulation counter
   const [scenarioIndex, setScenarioIndex] = useState<number>(0);
+
+  // Inpatient Bedside Code Blue & Rapid Response State
+  const [activeIpdDistress, setActiveIpdDistress] = useState<any>(null);
+  const [isNurseReporterOpen, setIsNurseReporterOpen] = useState<boolean>(false);
+  const [nurseBedId, setNurseBedId] = useState<string>('GW-101');
+  const [nurseReason, setNurseReason] = useState<string>('Acute Desaturation (SpO2 < 85%)');
+
+  useEffect(() => {
+    const syncDistress = async () => {
+      try {
+        const res = await fetch(`${CLOUDFLARE_API_BASE}/ipd/distress/active`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.events && data.events.length > 0) {
+            setActiveIpdDistress(data.events[0]);
+          } else {
+            setActiveIpdDistress(null);
+          }
+        }
+      } catch (_) {}
+    };
+    syncDistress();
+    const unsub = db.subscribe('ipd_distress_events', () => {
+      syncDistress();
+      playAlarmSound();
+    });
+    const interval = setInterval(syncDistress, 2500);
+    return () => {
+      if (typeof unsub === 'function') unsub();
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleNurseDistressDispatch = async () => {
+    const payload = {
+      bedNumber: 'Bed 1',
+      roomId: 'Room 105',
+      wardName: 'Room 105 (Inpatient Care)',
+      patientId: 'pat_priya_01',
+      patientName: 'Priya Sharma',
+      patientAge: 34,
+      patientGender: 'Female',
+      assignedDoctorId: 'doc_malhotra',
+      assignedDoctorName: 'Dr. Malhotra',
+      reporterType: 'NURSE_STAT_REPORT',
+      reporterName: 'Nurse Triage Lead • RN-402',
+      reporterId: 'RN-402',
+      reason: nurseReason,
+      acuity: 'CODE_BLUE_CRITICAL'
+    };
+
+    try {
+      await fetch(`${CLOUDFLARE_API_BASE}/ipd/beds/${nurseBedId}/distress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await db.create('ipd_distress_events', {
+        ...payload,
+        bedId: nurseBedId,
+        status: 'ACTIVE_DISTRESS',
+        timestamp: new Date().toISOString()
+      });
+      setIsNurseReporterOpen(false);
+      setToastMessage(`STAT Bed Distress Dispatched for Priya Sharma (${nurseReason}). Dr. Malhotra Alerted.`);
+    } catch (_) {}
+  };
 
   // Clock tick
   useEffect(() => {
@@ -871,6 +938,14 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
 
             {/* Simulate STAT Alert Button */}
             <button
+              onClick={() => setIsNurseReporterOpen(true)}
+              className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black shadow-lg shadow-red-900/30 flex items-center gap-2 transition active:scale-95 border border-red-500"
+            >
+              <Radio className="w-4 h-4 animate-pulse" />
+              <span>Nurse STAT Bed Distress Reporter</span>
+            </button>
+
+            <button
               onClick={handleSimulateNewAlert}
               className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-black shadow-lg shadow-red-900/30 hover:shadow-red-700/50 flex items-center gap-2 transition active:scale-95 border border-red-400/40"
             >
@@ -882,6 +957,36 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
 
         </div>
       </div>
+
+      {/* Inpatient Code Blue Cascade Alert Banner */}
+      {activeIpdDistress && (
+        <div className="p-4 bg-red-600 text-white rounded-2xl border-2 border-red-400 shadow-xl flex flex-wrap items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-white/20 rounded-xl">
+              <AlertOctagon className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
+                  [INPATIENT CODE BLUE CASCADE]
+                </span>
+                <span className="text-xs font-mono opacity-90">{activeIpdDistress.dispatchedAt}</span>
+              </div>
+              <p className="text-sm font-bold mt-1">
+                Room 105 · Bed 1 ({activeIpdDistress.patientName} - {activeIpdDistress.patientAge}F) · Reported by {activeIpdDistress.reporterName} · Crash Cart Dispatched · Dr. Malhotra Alerted (&lt;5s)
+              </p>
+              <p className="text-xs text-white/90 font-medium">
+                Reason: {activeIpdDistress.reason} • Status: {activeIpdDistress.status}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold bg-white/20 px-3 py-1.5 rounded-lg border border-white/30">
+              Crash Cart Bay 1 Auto-Dispatched
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* SENTINEL RULE-ENGINE TELEMETRY BADGE & SLA HUD */}
       <div className={`p-4 sm:p-5 rounded-3xl border transition-all ${
@@ -1392,6 +1497,71 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
         )}
       </div>
 
+      {/* Nurse STAT Bed Distress Reporter Modal */}
+      {isNurseReporterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-red-500/60 rounded-2xl p-6 max-w-lg w-full text-white shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-400">
+                <Radio className="w-5 h-5 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-wider bg-red-950 px-2.5 py-0.5 rounded-full border border-red-700">
+                  Nurse Rapid Inpatient Reporting Trigger
+                </span>
+              </div>
+              <button onClick={() => setIsNurseReporterOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-white">Nurse STAT Bed Distress Reporter</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                When patient is unresponsive or unable to press bedside button. Triggers Floor Nurse Console Crash Cart and alerts Dr. Malhotra immediately.
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-800/80 border border-slate-700 rounded-xl flex items-center justify-between text-xs">
+              <span className="text-slate-400">Reporting Station:</span>
+              <span className="font-bold text-white">Nurse Triage Lead • RN-402 (Station 4)</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300 uppercase">Target Bed</label>
+              <select
+                value={nurseBedId}
+                onChange={(e) => setNurseBedId(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold text-sm"
+              >
+                <option value="GW-101">Room 105 · Bed 1 (Priya Sharma - 34F • Dr. Malhotra)</option>
+                <option value="GW-102">Room 105 · Bed 2 (Ramesh Chandra - 52M • Dr. Ananya Sharma)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300 uppercase">Clinical Deterioration Reason</label>
+              <select
+                value={nurseReason}
+                onChange={(e) => setNurseReason(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold text-sm"
+              >
+                <option value="Acute Desaturation (SpO2 < 85%)">Acute Desaturation (SpO2 &lt; 85%)</option>
+                <option value="Cardiac Arrest / Life-Threatening Arrhythmia">Cardiac Arrest / Life-Threatening Arrhythmia</option>
+                <option value="Sudden Loss of Consciousness / Stroke Rule-Out">Sudden Loss of Consciousness / Stroke Rule-Out</option>
+                <option value="Massive Post-Op Bleeding / Hemorrhagic Shock">Massive Post-Op Bleeding / Hemorrhagic Shock</option>
+                <option value="Severe Respiratory Stridor / Airway Compromise">Severe Respiratory Stridor / Airway Compromise</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleNurseDistressDispatch}
+              className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-xl shadow-lg shadow-red-900/40 flex items-center justify-center gap-2 transition"
+            >
+              <AlertOctagon className="w-5 h-5 animate-pulse" />
+              <span>DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

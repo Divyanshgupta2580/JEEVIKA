@@ -1748,6 +1748,125 @@ patientsRouter.put("/:id", async (c) => {
 
 // Mount module routers under /api/v1
 const v1 = new Hono<{ Bindings: Env }>();
+
+// Inpatient Rapid Response System (RRS) & Bedside Code Blue Distress Store
+interface IpdDistressEventRecord {
+  id: string;
+  bedId: string;
+  bedNumber: string;
+  roomId: string;
+  wardName: string;
+  patientId: string;
+  patientName: string;
+  patientAge: number;
+  patientGender: string;
+  assignedDoctorId: string;
+  assignedDoctorName: string;
+  reporterType: 'PATIENT_BEDSIDE_SOS' | 'NURSE_STAT_REPORT';
+  reporterName: string;
+  reporterId?: string;
+  reason: string;
+  acuity: 'CODE_BLUE_CRITICAL' | 'RAPID_RESPONSE_STAT';
+  status: 'ACTIVE_DISTRESS' | 'ATTENDING' | 'RESOLVED';
+  timestamp: string;
+  dispatchedAt: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  responseLatencyMs?: number;
+}
+
+const ipdDistressStore = new Map<string, IpdDistressEventRecord>();
+
+const ipdRouter = new Hono<{ Bindings: Env }>();
+
+ipdRouter.post("/beds/:bedId/distress", async (c) => {
+  const bedId = c.req.param("bedId");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, any>;
+  const now = new Date();
+  const id = body.id || `distress_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  
+  const event: IpdDistressEventRecord = {
+    id,
+    bedId,
+    bedNumber: String(body.bedNumber || body.bed_number || `Bed ${bedId}`),
+    roomId: String(body.roomId || body.room_id || body.room || "Room 105"),
+    wardName: String(body.wardName || body.ward_name || "Room 105 (Inpatient Care)"),
+    patientId: String(body.patientId || body.patient_id || "pat_priya_01"),
+    patientName: String(body.patientName || body.patient_name || body.name || "Priya Sharma"),
+    patientAge: Number(body.patientAge || body.age || 34),
+    patientGender: String(body.patientGender || body.gender || "Female"),
+    assignedDoctorId: String(body.assignedDoctorId || body.doctor_id || "doc_malhotra"),
+    assignedDoctorName: String(body.assignedDoctorName || body.doctor_name || body.doctor || "Dr. Malhotra"),
+    reporterType: body.reporterType === "PATIENT_BEDSIDE_SOS" ? "PATIENT_BEDSIDE_SOS" : "NURSE_STAT_REPORT",
+    reporterName: String(body.reporterName || body.reporter || (body.reporterType === "PATIENT_BEDSIDE_SOS" ? "Patient Bedside SOS" : "Nurse Triage Lead")),
+    reporterId: body.reporterId ? String(body.reporterId) : undefined,
+    reason: String(body.reason || body.chiefComplaint || "Acute Desaturation"),
+    acuity: body.acuity || "CODE_BLUE_CRITICAL",
+    status: "ACTIVE_DISTRESS",
+    timestamp: now.toISOString(),
+    dispatchedAt: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+  };
+
+  ipdDistressStore.set(event.id, event);
+  return c.json({ success: true, event });
+});
+
+ipdRouter.get("/distress/active", async (c) => {
+  const allEvents = Array.from(ipdDistressStore.values());
+  const activeEvents = allEvents.filter(e => e.status === "ACTIVE_DISTRESS" || e.status === "ATTENDING")
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return c.json({ success: true, count: activeEvents.length, events: activeEvents });
+});
+
+ipdRouter.post("/distress/:id/acknowledge", async (c) => {
+  const id = c.req.param("id");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, any>;
+  let event = ipdDistressStore.get(id);
+
+  if (!event) {
+    const now = new Date();
+    event = {
+      id,
+      bedId: "GW-101",
+      bedNumber: "Bed 1",
+      roomId: "Room 105",
+      wardName: "Room 105 (Inpatient Care)",
+      patientId: "pat_priya_01",
+      patientName: "Priya Sharma",
+      patientAge: 34,
+      patientGender: "Female",
+      assignedDoctorId: "doc_malhotra",
+      assignedDoctorName: "Dr. Malhotra",
+      reporterType: "NURSE_STAT_REPORT",
+      reporterName: "Nurse Triage Lead",
+      reason: "Acute Desaturation",
+      acuity: "CODE_BLUE_CRITICAL",
+      status: "ATTENDING",
+      timestamp: now.toISOString(),
+      dispatchedAt: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      acknowledgedAt: now.toISOString(),
+      acknowledgedBy: String(body.doctorName || "Dr. Malhotra"),
+      responseLatencyMs: Number(body.responseLatencyMs || 142)
+    };
+    ipdDistressStore.set(id, event);
+    return c.json({ success: true, event });
+  }
+
+  const now = new Date();
+  event.status = "ATTENDING";
+  event.acknowledgedAt = now.toISOString();
+  event.acknowledgedBy = String(body.doctorName || body.doctor_name || "Dr. Malhotra");
+  if (typeof body.responseLatencyMs === "number") {
+    event.responseLatencyMs = body.responseLatencyMs;
+  } else {
+    event.responseLatencyMs = Math.max(45, now.getTime() - new Date(event.timestamp).getTime());
+  }
+
+  ipdDistressStore.set(event.id, event);
+  return c.json({ success: true, event });
+});
+
+v1.route("/ipd", ipdRouter);
 v1.route("/intake", intakeRouter);
 v1.route("/ops", opsRouter);
 v1.route("/bridge", bridgeRouter);

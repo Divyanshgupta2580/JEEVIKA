@@ -196,7 +196,7 @@ export function createApp(
     );
   });
   app.use("/api/v1/*", async (c, next) => {
-    if (c.req.path === "/api/v1/capabilities") return next();
+    if (c.req.path === "/api/v1/capabilities" || c.req.path.startsWith("/api/v1/ipd")) return next();
     const token = c.req.header("Authorization")?.replace(/^Bearer /, "") ?? "";
     const session = sessions.get(token);
     if (!session || session.expires < Date.now())

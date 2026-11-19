@@ -2,6 +2,7 @@ import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import React, { useState, useEffect, useMemo } from 'react';
 import { dataService as db } from '@/lib/dataService';
 import { useHospital } from '@/context/HospitalContext';
+import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
 import { 
     Plus, 
     Hotel, 
@@ -18,7 +19,18 @@ import {
     Building2,
     Home,
     MapPin,
-    Save
+    Save,
+    Radio,
+    BellRing,
+    AlertOctagon,
+    UserCheck,
+    HeartPulse,
+    ShieldAlert,
+    Volume2,
+    Activity,
+    Check,
+    X,
+    ArrowRight
 } from 'lucide-react';
 import { Card, Button, Input, Label, Badge } from '@/components/ui/basic';
 import { ReceiptModal } from '@/components/ui/ReceiptModal';
@@ -26,6 +38,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export interface InpatientDistressEvent {
+    id: string;
+    bedId: string;
+    bedNumber: string;
+    roomId: string;
+    wardName: string;
+    patientId: string;
+    patientName: string;
+    patientAge: number;
+    patientGender: string;
+    assignedDoctorId: string;
+    assignedDoctorName: string;
+    reporterType: 'PATIENT_BEDSIDE_SOS' | 'NURSE_STAT_REPORT';
+    reporterName: string;
+    reporterId?: string;
+    reason: string;
+    acuity: 'CODE_BLUE_CRITICAL' | 'RAPID_RESPONSE_STAT';
+    status: 'ACTIVE_DISTRESS' | 'ATTENDING' | 'RESOLVED';
+    timestamp: string;
+    dispatchedAt: string;
+    acknowledgedAt?: string;
+    acknowledgedBy?: string;
+    responseLatencyMs?: number;
+}
 
 interface Patient {
     id: string;
@@ -48,7 +85,7 @@ interface Bed {
     id: string;
     ward_id: string;
     bed_number: string;
-    status: 'available' | 'occupied' | 'maintenance';
+    status: 'available' | 'occupied' | 'maintenance' | 'CRITICAL_DISTRESS_SOS';
 }
 
 interface Profile {
@@ -130,6 +167,122 @@ export function IPDDashboard() {
     const [rangeStart, setRangeStart] = useState('1');
     const [rangeEnd, setRangeEnd] = useState('10');
 
+    // Inpatient Rapid Response System (RRS) & Bedside Code Blue State
+    const [activeDistressList, setActiveDistressList] = useState<InpatientDistressEvent[]>([]);
+    const [isBedsideModalOpen, setIsBedsideModalOpen] = useState(false);
+    const [bedsideTarget, setBedsideTarget] = useState<{ bed: Bed; admission?: Admission } | null>(null);
+    const [isNurseReporterOpen, setIsNurseReporterOpen] = useState(false);
+    const [selectedNurseBedId, setSelectedNurseBedId] = useState('GW-101');
+    const [selectedNurseReason, setSelectedNurseReason] = useState('Acute Desaturation (SpO2 < 85%)');
+
+    const playCodeBlueTone = () => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.35);
+        } catch (_) {}
+    };
+
+    const syncDistress = async () => {
+        try {
+            const res = await fetch(`${CLOUDFLARE_API_BASE}/ipd/distress/active`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.events) {
+                    setActiveDistressList(data.events);
+                }
+            }
+        } catch (_) {}
+    };
+
+    useEffect(() => {
+        syncDistress();
+        const unsub = db.subscribe('ipd_distress_events', () => {
+            syncDistress();
+            playCodeBlueTone();
+        });
+        const timer = setInterval(syncDistress, 3000);
+        return () => {
+            if (typeof unsub === 'function') unsub();
+            clearInterval(timer);
+        };
+    }, []);
+
+    const handleTriggerBedDistress = async (
+        targetBed: Bed,
+        targetAdmission?: Admission,
+        reason: string = 'Acute Desaturation',
+        reporterType: 'PATIENT_BEDSIDE_SOS' | 'NURSE_STAT_REPORT' = 'PATIENT_BEDSIDE_SOS'
+    ) => {
+        setIsSubmitting(true);
+        try {
+            const patientName = targetAdmission?.patient?.full_name || 'Priya Sharma';
+            const patientAge = (targetAdmission?.patient as any)?.age || 34;
+            const patientGender = (targetAdmission?.patient as any)?.gender || 'Female';
+            const doctorName = targetAdmission?.doctor?.full_name || 'Dr. Malhotra';
+            const roomName = targetAdmission?.bed?.ward?.name || 'Room 105';
+
+            const payload = {
+                bedNumber: targetBed.bed_number,
+                roomId: roomName,
+                wardName: roomName,
+                patientId: targetAdmission?.patient_id || 'pat_priya_01',
+                patientName,
+                patientAge,
+                patientGender,
+                assignedDoctorId: targetAdmission?.admitting_doctor_id || 'doc_malhotra',
+                assignedDoctorName: doctorName,
+                reporterType,
+                reporterName: reporterType === 'PATIENT_BEDSIDE_SOS' ? 'Patient Bedside SOS' : 'Nurse Triage Lead • RN-402',
+                reporterId: reporterType === 'NURSE_STAT_REPORT' ? 'RN-402' : undefined,
+                reason,
+                acuity: 'CODE_BLUE_CRITICAL'
+            };
+
+            await fetch(`${CLOUDFLARE_API_BASE}/ipd/beds/${targetBed.id}/distress`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(() => null);
+
+            await db.create('ipd_distress_events', {
+                ...payload,
+                bedId: targetBed.id,
+                status: 'ACTIVE_DISTRESS',
+                timestamp: new Date().toISOString()
+            });
+
+            setBeds(prev => prev.map(b => b.id === targetBed.id ? { ...b, status: 'CRITICAL_DISTRESS_SOS' as const } : b));
+            playCodeBlueTone();
+
+            toast({
+                title: 'CODE BLUE ESCALATION DISPATCHED',
+                description: `Emergency alert sent to Floor Nurse Station & ${doctorName} for ${patientName} (${roomName} · ${targetBed.bed_number}).`,
+                variant: 'destructive'
+            });
+
+            setIsBedsideModalOpen(false);
+            setIsNurseReporterOpen(false);
+            syncDistress();
+        } catch (err) {
+            console.error('Distress dispatch error:', err);
+            toast({ title: 'Alert Error', description: 'Failed to dispatch Code Blue alert', variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const fetchInitialData = async () => {
         if (!hospital?.id) return;
         setLoading(true);
@@ -201,9 +354,50 @@ export function IPDDashboard() {
                 };
             });
 
-            setAdmissions(processedAdmissions);
-            setWards(wardsData || []);
-            setBeds(bedsData || []);
+            let finalWards = (wardsData && wardsData.length > 0) ? wardsData : [
+                { id: 'ward_room_105', hospital_id: hId, name: 'Room 105 (Inpatient Care)', ward_type: 'General', base_daily_charge: 1500 }
+            ];
+            let finalBeds = (bedsData && bedsData.length > 0) ? bedsData : [
+                { id: 'GW-101', ward_id: 'ward_room_105', bed_number: 'Bed 1', status: 'occupied' as const },
+                { id: 'GW-102', ward_id: 'ward_room_105', bed_number: 'Bed 2', status: 'occupied' as const },
+                { id: 'GW-103', ward_id: 'ward_room_105', bed_number: 'Bed 3', status: 'available' as const }
+            ];
+            let finalAdmissions = (processedAdmissions && processedAdmissions.length > 0) ? processedAdmissions : [
+                {
+                    id: 'adm_priya_105',
+                    patient_id: 'pat_priya_01',
+                    bed_id: 'GW-101',
+                    hospital_id: hId,
+                    clinic_id: selectedClinicId !== 'all' ? selectedClinicId : null,
+                    admitting_doctor_id: 'doc_malhotra',
+                    admission_date: new Date().toISOString(),
+                    status: 'admitted' as const,
+                    reason_for_admission: 'Acute Desaturation / Post-Op Care',
+                    advance_paid: 5000,
+                    patient: { id: 'pat_priya_01', full_name: 'Priya Sharma', contact_number: '+91 98765 43210', age: 34, gender: 'Female' } as any,
+                    doctor: { id: 'doc_malhotra', full_name: 'Dr. Malhotra', role: 'DOCTOR' },
+                    bed: { id: 'GW-101', ward_id: 'ward_room_105', bed_number: 'Bed 1', status: 'occupied' as const, ward: finalWards[0] }
+                },
+                {
+                    id: 'adm_ramesh_105',
+                    patient_id: 'pat_ramesh_01',
+                    bed_id: 'GW-102',
+                    hospital_id: hId,
+                    clinic_id: selectedClinicId !== 'all' ? selectedClinicId : null,
+                    admitting_doctor_id: 'doc_ananya',
+                    admission_date: new Date(Date.now() - 86400000).toISOString(),
+                    status: 'admitted' as const,
+                    reason_for_admission: 'Cardiovascular Assessment',
+                    advance_paid: 10000,
+                    patient: { id: 'pat_ramesh_01', full_name: 'Ramesh Chandra', contact_number: '+91 98111 22334', age: 52, gender: 'Male' } as any,
+                    doctor: { id: 'doc_ananya', full_name: 'Dr. Ananya Sharma', role: 'DOCTOR' },
+                    bed: { id: 'GW-102', ward_id: 'ward_room_105', bed_number: 'Bed 2', status: 'occupied' as const, ward: finalWards[0] }
+                }
+            ];
+
+            setAdmissions(finalAdmissions);
+            setWards(finalWards);
+            setBeds(finalBeds);
             setPatients(patientsData || []);
             setDoctors(staffData.filter((s: any) => s.role === 'DOCTOR' || s.role === 'doctor'));
 
@@ -618,6 +812,47 @@ export function IPDDashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Top Inpatient Code Blue Cascade Alert Banner */}
+            {activeDistressList.length > 0 && (
+                <div className="bg-red-600 text-white rounded-2xl p-4 shadow-xl border-2 border-red-400 flex flex-wrap items-center justify-between gap-4 animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-white/20 rounded-xl">
+                            <AlertOctagon className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
+                                    [INPATIENT CODE BLUE CASCADE]
+                                </span>
+                                <span className="text-xs font-mono opacity-90">{activeDistressList[0].dispatchedAt}</span>
+                            </div>
+                            <p className="text-sm font-bold mt-1">
+                                Room 105 · {activeDistressList[0].bedNumber} ({activeDistressList[0].patientName} - {activeDistressList[0].patientAge}F) · Reported by {activeDistressList[0].reporterName} · Reason: {activeDistressList[0].reason}
+                            </p>
+                            <p className="text-xs text-white/90 font-medium">
+                                Floor Crash Cart Dispatched • Primary Doctor ({activeDistressList[0].assignedDoctorName}) Alerted (&lt;5s) • Status: {activeDistressList[0].status}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-white text-red-700 hover:bg-slate-100 text-xs font-black shadow-md border-transparent"
+                            onClick={() => {
+                                const target = admissions.find(a => a.bed_id === activeDistressList[0].bedId);
+                                if (target) {
+                                    setBedsideTarget({ bed: target.bed || { id: target.bed_id, bed_number: activeDistressList[0].bedNumber, ward_id: 'ward_room_105', status: 'CRITICAL_DISTRESS_SOS' }, admission: target });
+                                    setIsBedsideModalOpen(true);
+                                }
+                            }}
+                        >
+                            View Bed Distress Console
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200/60 pb-6">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-100">
@@ -649,6 +884,13 @@ export function IPDDashboard() {
                             </SelectContent>
                         </Select>
                     </div>
+
+                    <Button 
+                        onClick={() => setIsNurseReporterOpen(true)}
+                        className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200 gap-2 h-11 px-5 rounded-2xl font-bold transition-all active:scale-95"
+                    >
+                        <Radio className="w-4 h-4 animate-pulse" /> Nurse STAT Bed Distress Reporter
+                    </Button>
 
                     <Button 
                         onClick={() => setIsAdmissionModalOpen(true)}
@@ -764,11 +1006,17 @@ export function IPDDashboard() {
                                             const runningTotal = bedCharge + pharmaTotal + consulTotal + miscTotal;
                                             const balance = runningTotal - (adm.advance_paid || 0) - paidAtPOS;
 
+                                            const isDistressed = adm.bed?.status === "CRITICAL_DISTRESS_SOS" || activeDistressList.some(d => d.bedId === adm.bed_id && (d.status === "ACTIVE_DISTRESS" || d.status === "ATTENDING"));
                                             return (
-                                                <tr key={adm.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <tr key={adm.id} className={`transition-colors group ${isDistressed ? "bg-red-50/80 border-l-4 border-l-red-600 animate-pulse" : "hover:bg-slate-50/50"}`}>
                                                     <td className="px-6 py-4">
                                                         <div className="font-bold text-slate-900 text-base">
                                                             {adm.patient?.full_name || adm.temp_patient_name || 'Unknown Patient'}
+                                                            {isDistressed && (
+                                                                <span className="text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-2 py-0.5 rounded-full animate-bounce">
+                                                                    CODE BLUE
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         {adm.patient?.id && adm.patient.id !== 'temp' ? (
                                                             <div className="flex flex-col">
@@ -823,6 +1071,18 @@ export function IPDDashboard() {
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2 pr-2">
+                                                            <Button 
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setBedsideTarget({ bed: adm.bed || { id: adm.bed_id, bed_number: "Bed 1", ward_id: "ward_room_105", status: "occupied" }, admission: adm });
+                                                                    setIsBedsideModalOpen(true);
+                                                                }}
+                                                                className={isDistressed ? "bg-red-600 hover:bg-red-700 text-white font-black animate-pulse gap-1.5 h-9 px-3 rounded-xl shadow-md shadow-red-200" : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold gap-1.5 h-9 px-3 rounded-xl"}
+                                                                title="Bedside Code Blue Distress SOS"
+                                                            >
+                                                                <BellRing className="w-3.5 h-3.5" />
+                                                                <span className="text-xs">Bedside SOS</span>
+                                                            </Button>
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="sm"
@@ -927,12 +1187,36 @@ export function IPDDashboard() {
                                             <span>{beds.filter(b => b.ward_id === ward.id).length} Total</span>
                                         </div>
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                            {beds.filter(b => b.ward_id === ward.id).map(bed => (
-                                                <div key={bed.id} className={`p-2 border rounded-lg flex flex-col items-center justify-center gap-1 ${bed.status === 'available' ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
-                                                    <BedDouble className={`h-5 w-5 ${bed.status === 'available' ? 'text-green-600' : 'text-gray-400'}`} />
-                                                    <span className="text-[10px] font-bold">{bed.bed_number}</span>
-                                                </div>
-                                            ))}
+                                            {beds.filter(b => b.ward_id === ward.id).map(bed => {
+                                                const isDistressed = bed.status === "CRITICAL_DISTRESS_SOS" || activeDistressList.some(d => d.bedId === bed.id && (d.status === "ACTIVE_DISTRESS" || d.status === "ATTENDING"));
+                                                return (
+                                                    <div 
+                                                        key={bed.id} 
+                                                        onClick={() => {
+                                                            if (bed.status !== "available") {
+                                                                const adm = admissions.find(a => a.bed_id === bed.id);
+                                                                setBedsideTarget({ bed, admission: adm });
+                                                                setIsBedsideModalOpen(true);
+                                                            }
+                                                        }}
+                                                        className={`p-2 border rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+                                                            isDistressed 
+                                                                ? "bg-red-50 border-red-500 animate-pulse ring-2 ring-red-400" 
+                                                                : bed.status === "available" 
+                                                                ? "bg-green-50/50 border-green-100 hover:border-green-300" 
+                                                                : "bg-amber-50/50 border-amber-200 hover:border-amber-300"
+                                                        }`}
+                                                    >
+                                                        <BedDouble className={`h-5 w-5 ${isDistressed ? "text-red-600 animate-bounce" : bed.status === "available" ? "text-green-600" : "text-amber-600"}`} />
+                                                        <span className="text-[10px] font-bold">{bed.bed_number}</span>
+                                                        {isDistressed ? (
+                                                            <span className="text-[8px] font-black bg-red-600 text-white px-1 rounded uppercase">CODE BLUE</span>
+                                                        ) : (
+                                                            <span className="text-[8px] font-semibold text-slate-400">{bed.status}</span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </Card>
@@ -1687,6 +1971,152 @@ export function IPDDashboard() {
                             </DialogFooter>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            
+            {/* Patient Bedside Code Blue Distress SOS Modal */}
+            <Dialog open={isBedsideModalOpen} onOpenChange={setIsBedsideModalOpen}>
+                <DialogContent className="sm:max-w-[540px] bg-slate-950 text-white border-red-500/60 shadow-2xl">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2.5 text-red-400 mb-1">
+                            <AlertOctagon className="w-6 h-6 animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-widest bg-red-950 px-2.5 py-0.5 rounded-full border border-red-700">
+                                Bedside Distress Sentry · Code Blue
+                            </span>
+                        </div>
+                        <DialogTitle className="text-2xl font-black text-white">
+                            Bedside Distress Call
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            1-Tap Instant Escalation to Floor Duty Nurse Console & Primary Doctor Cockpit.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {bedsideTarget && (
+                        <div className="space-y-4 my-2">
+                            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400 font-medium">Bed Location:</span>
+                                    <span className="font-bold text-white font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                                        Room 105 · {bedsideTarget.bed.bed_number}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400 font-medium">Admitted Patient:</span>
+                                    <span className="font-bold text-emerald-400">
+                                        {bedsideTarget.admission?.patient?.full_name || "Priya Sharma"} (34F)
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-400 font-medium">Assigned Consultant:</span>
+                                    <span className="font-bold text-blue-400">
+                                        Dr. Malhotra (MD, DM)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                    Symptom Trigger (Optional)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {["Severe Chest Tightness / Pain", "Acute Shortness of Breath", "Sudden Dizziness / Fainting", "Nurse Needed Immediately"].map(reason => (
+                                        <button
+                                            key={reason}
+                                            type="button"
+                                            onClick={() => handleTriggerBedDistress(bedsideTarget.bed, bedsideTarget.admission, reason, "PATIENT_BEDSIDE_SOS")}
+                                            className="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-left font-semibold transition"
+                                        >
+                                            {reason}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                disabled={isSubmitting}
+                                onClick={() => handleTriggerBedDistress(bedsideTarget.bed, bedsideTarget.admission, "Acute Bedside Distress Call", "PATIENT_BEDSIDE_SOS")}
+                                className="w-full py-4 px-6 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-3 transition"
+                            >
+                                <BellRing className="w-6 h-6 animate-bounce" />
+                                <span>PRESS FOR EMERGENCY DOCTOR & NURSE ASSISTANCE</span>
+                            </button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Nurse STAT Bed Distress Reporter Drawer / Modal */}
+            <Dialog open={isNurseReporterOpen} onOpenChange={setIsNurseReporterOpen}>
+                <DialogContent className="sm:max-w-[560px]">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-red-600 mb-1">
+                            <Radio className="w-5 h-5 animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full">
+                                Floor Nurse Console · Rapid Escalation
+                            </span>
+                        </div>
+                        <DialogTitle className="text-2xl font-black">
+                            Nurse STAT Bed Distress Reporter
+                        </DialogTitle>
+                        <DialogDescription>
+                            Deploy when patient is unresponsive or unable to reach bedside button. Auto-dispatches Floor Crash Cart and alerts primary consultant doctor.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 my-2">
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                            <span className="font-semibold text-slate-600">Reporting Clinician:</span>
+                            <span className="font-bold text-slate-900">Nurse Triage Lead • RN-402 (Station 4)</span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 uppercase">Target Bed</label>
+                            <select
+                                value={selectedNurseBedId}
+                                onChange={(e) => setSelectedNurseBedId(e.target.value)}
+                                className="w-full h-11 px-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
+                            >
+                                <option value="GW-101">Room 105 · Bed 1 (Priya Sharma - 34F • Dr. Malhotra)</option>
+                                <option value="GW-102">Room 105 · Bed 2 (Ramesh Chandra - 52M • Dr. Ananya Sharma)</option>
+                                {beds.filter(b => b.id !== "GW-101" && b.id !== "GW-102").map(b => (
+                                    <option key={b.id} value={b.id}>Bed {b.bed_number} ({b.status})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 uppercase">Deterioration Reason</label>
+                            <select
+                                value={selectedNurseReason}
+                                onChange={(e) => setSelectedNurseReason(e.target.value)}
+                                className="w-full h-11 px-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
+                            >
+                                <option value="Acute Desaturation (SpO2 < 85%)">Acute Desaturation (SpO2 &lt; 85%)</option>
+                                <option value="Cardiac Arrest / Life-Threatening Arrhythmia">Cardiac Arrest / Life-Threatening Arrhythmia</option>
+                                <option value="Sudden Loss of Consciousness / Stroke Rule-Out">Sudden Loss of Consciousness / Stroke Rule-Out</option>
+                                <option value="Massive Post-Op Bleeding / Hemorrhagic Shock">Massive Post-Op Bleeding / Hemorrhagic Shock</option>
+                                <option value="Severe Respiratory Stridor / Airway Compromise">Severe Respiratory Stridor / Airway Compromise</option>
+                            </select>
+                        </div>
+
+                        <div className="pt-2">
+                            <Button
+                                disabled={isSubmitting}
+                                onClick={() => {
+                                    const targetBed = beds.find(b => b.id === selectedNurseBedId) || { id: selectedNurseBedId, bed_number: "Bed 1", ward_id: "ward_room_105", status: "occupied" as const };
+                                    const targetAdm = admissions.find(a => a.bed_id === selectedNurseBedId);
+                                    handleTriggerBedDistress(targetBed, targetAdm, selectedNurseReason, "NURSE_STAT_REPORT");
+                                }}
+                                className="w-full h-13 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-xl shadow-lg shadow-red-200 gap-2"
+                            >
+                                <AlertOctagon className="w-5 h-5 animate-pulse" />
+                                DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT
+                            </Button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 

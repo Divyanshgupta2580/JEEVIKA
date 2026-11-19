@@ -42,6 +42,54 @@ export default function LandingPage() {
     element?.addEventListener("click", follow);
     return () => element?.removeEventListener("click", follow);
   }, [navigate]);
-  // biome-ignore lint/security/noDangerouslySetInnerHtml: Static locally authored markup; no user or API values are interpolated.
-  return <div ref={node} dangerouslySetInnerHTML={{ __html: markup }} />;
+  // Scoped layout overrides to guarantee translucent hero caption card and identical button dimensions across all devices
+  return (
+    <>
+      <style>{`
+        .ds-actions {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: stretch !important;
+          gap: 12px !important;
+          width: 100% !important;
+          max-width: 440px !important;
+        }
+        .ds-actions .ds-button {
+          flex: 1 1 0px !important;
+          width: 50% !important;
+          min-width: 0 !important;
+          min-height: 48px !important;
+          height: 48px !important;
+          padding: 12px 16px !important;
+          justify-content: center !important;
+          text-align: center !important;
+          box-sizing: border-box !important;
+        }
+        @media (max-width: 1050px) {
+          .ds-art-caption-card {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: fit-content !important;
+            max-width: min(320px, 92%) !important;
+            margin-top: 8px !important;
+            padding: 12px 18px !important;
+            background: rgba(255, 255, 255, 0.22) !important;
+            backdrop-filter: blur(16px) saturate(170%) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.55) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 8px 24px rgba(8, 127, 114, 0.05) !important;
+          }
+          .dark .ds-art-caption-card {
+            background: rgba(20, 40, 32, 0.35) !important;
+            border: 1px solid rgba(64, 96, 82, 0.5) !important;
+          }
+        }
+      `}</style>
+      <div ref={node} dangerouslySetInnerHTML={{ __html: markup }} />
+    </>
+  );
 }

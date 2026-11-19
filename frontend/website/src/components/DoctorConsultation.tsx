@@ -12,7 +12,7 @@ import {
   Clock, ArrowRight, Search, Plus, Trash2, Volume2,
   VolumeX, ShieldCheck, Zap, Sparkles, BedDouble,
   Check, X, Smartphone, QrCode, Copy, Mic,
-  ShieldAlert, Shield, Lock, Cloud, Leaf
+  ShieldAlert, Shield, Lock, Cloud, Leaf, AlertOctagon, BellRing, Radio, UserCheck
 } from 'lucide-react';
 import { AmbientClinicalScribe } from './AmbientClinicalScribe';
 import { PatientVernacularGuide } from './PatientVernacularGuide';
@@ -1049,6 +1049,65 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
   const [activeCitationId, setActiveCitationId] = useState<number | null>(null);
   const [isGenericSwapped, setIsGenericSwapped] = useState(false);
   const [showAddMedModal, setShowAddMedModal] = useState(false);
+  const [activeDistressAlert, setActiveDistressAlert] = useState<any>(null);
+  const [isDoctorEnRoute, setIsDoctorEnRoute] = useState<boolean>(false);
+  const [doctorAckLatency, setDoctorAckLatency] = useState<number | null>(null);
+
+  useEffect(() => {
+    const syncDistress = async () => {
+      try {
+        const res = await fetch(`${CLOUDFLARE_API_BASE}/ipd/distress/active`);
+        if (res.ok) {
+          const data = await res.json();
+          const myAlert = data.events?.find((e: any) => e.status === 'ACTIVE_DISTRESS' || e.status === 'ATTENDING');
+          if (myAlert) {
+            setActiveDistressAlert(myAlert);
+            if (myAlert.status === 'ATTENDING') {
+              setIsDoctorEnRoute(true);
+              setDoctorAckLatency(myAlert.responseLatencyMs || 142);
+            }
+          }
+        }
+      } catch (_) {}
+    };
+    syncDistress();
+    const unsub = dataService.subscribe('ipd_distress_events', () => {
+      syncDistress();
+    });
+    const interval = setInterval(syncDistress, 2500);
+    return () => {
+      if (typeof unsub === 'function') unsub();
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleAcknowledgeDoctorDistress = async () => {
+    if (!activeDistressAlert) return;
+    const now = Date.now();
+    const start = new Date(activeDistressAlert.timestamp).getTime();
+    const latency = Math.max(45, now - start);
+    setDoctorAckLatency(latency);
+    setIsDoctorEnRoute(true);
+
+    try {
+      await fetch(`${CLOUDFLARE_API_BASE}/ipd/distress/${activeDistressAlert.id}/acknowledge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorId: 'doc_malhotra',
+          doctorName: 'Dr. Malhotra',
+          responseLatencyMs: latency
+        })
+      });
+      await dataService.create('ipd_distress_events', {
+        ...activeDistressAlert,
+        status: 'ATTENDING',
+        acknowledgedBy: 'Dr. Malhotra',
+        responseLatencyMs: latency
+      });
+    } catch (_) {}
+  };
+
   const [isAlgorithmRunning, setIsAlgorithmRunning] = useState(false);
   const [algorithmResult, setAlgorithmResult] = useState<any | null>(null);
 
@@ -2040,6 +2099,54 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
           </div>
         );
       })()}
+
+      {/* Inpatient Critical Distress Interrupt Banner */}
+      {activeDistressAlert && (
+        <div className={`p-4 rounded-2xl border-2 transition-all shadow-xl mb-4 ${
+          activeDistressAlert.status === 'ACTIVE_DISTRESS'
+            ? 'bg-red-600 text-white border-red-400 animate-pulse'
+            : 'bg-emerald-900 text-white border-emerald-500'
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white/20 rounded-xl">
+                <AlertOctagon className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
+                    [CRITICAL BED DISTRESS · ROOM 105 (BED 1)]
+                  </span>
+                  <span className="text-xs font-mono opacity-90">{activeDistressAlert.dispatchedAt}</span>
+                </div>
+                <p className="text-sm font-bold mt-1">
+                  Patient: {activeDistressAlert.patientName} ({activeDistressAlert.patientAge}F) · Reported: {activeDistressAlert.reporterName} · Reason: {activeDistressAlert.reason}
+                </p>
+                <p className="text-xs text-white/90 font-medium">
+                  Action: Immediate Bedside Attendance Required • Floor Nurse Station Crash Cart Dispatched
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {activeDistressAlert.status === 'ACTIVE_DISTRESS' ? (
+                <button
+                  onClick={handleAcknowledgeDoctorDistress}
+                  className="py-2.5 px-6 bg-white text-red-700 hover:bg-slate-100 active:scale-95 rounded-xl font-black text-sm shadow-lg flex items-center gap-2 transition"
+                >
+                  <UserCheck className="w-4 h-4 text-red-700" />
+                  <span>Acknowledge & En Route</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 bg-emerald-800/80 border border-emerald-400/60 px-4 py-2 rounded-xl text-xs font-bold text-emerald-100">
+                  <Check className="w-4 h-4 text-emerald-300" />
+                  <span>Dr. Malhotra En Route ({doctorAckLatency || 142}ms)</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Clinician Command Console Header */}
       <div id="tour-clinical-overview" className="ayu-clinical-header bg-white p-5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">

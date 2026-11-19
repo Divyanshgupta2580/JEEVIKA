@@ -831,5 +831,56 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       ).toBe(true);
       expect(rxData.prescriptions[0].medicines.length).toBeGreaterThan(0);
     });
+
+    it("triggers, lists, and acknowledges Inpatient Bedside Code Blue Distress events", async () => {
+      // 1. Trigger Bed Distress
+      const triggerRes = await backendApp.request("/api/v1/ipd/beds/GW-101/distress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bedNumber: "Bed 1",
+          roomId: "Room 105",
+          patientName: "Priya Sharma",
+          patientAge: 34,
+          assignedDoctorName: "Dr. Malhotra",
+          reporterType: "NURSE_STAT_REPORT",
+          reporterName: "Nurse Triage Lead",
+          reason: "Acute Desaturation",
+          acuity: "CODE_BLUE_CRITICAL"
+        })
+      });
+      expect(triggerRes.status).toBe(200);
+      const triggerData = (await triggerRes.json()) as any;
+      expect(triggerData.success).toBe(true);
+      expect(triggerData.event.bedId).toBe("GW-101");
+      expect(triggerData.event.status).toBe("ACTIVE_DISTRESS");
+      expect(triggerData.event.patientName).toBe("Priya Sharma");
+
+      const eventId = triggerData.event.id;
+
+      // 2. Query Active Inpatient Distress Events
+      const activeRes = await backendApp.request("/api/v1/ipd/distress/active");
+      expect(activeRes.status).toBe(200);
+      const activeData = (await activeRes.json()) as any;
+      expect(activeData.success).toBe(true);
+      expect(activeData.events.some((e: any) => e.id === eventId)).toBe(true);
+
+      // 3. Doctor Acknowledges and En Route
+      const ackRes = await backendApp.request(`/api/v1/ipd/distress/${eventId}/acknowledge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          doctorId: "doc_malhotra",
+          doctorName: "Dr. Malhotra",
+          responseLatencyMs: 142
+        })
+      });
+      expect(ackRes.status).toBe(200);
+      const ackData = (await ackRes.json()) as any;
+      expect(ackData.success).toBe(true);
+      expect(ackData.event.status).toBe("ATTENDING");
+      expect(ackData.event.acknowledgedBy).toBe("Dr. Malhotra");
+      expect(ackData.event.responseLatencyMs).toBe(142);
+    });
   });
 });
