@@ -6,13 +6,13 @@
 
 ---
 
-## 🎯 Umbrella Problem Statement
+##  Umbrella Problem Statement
 
 > *"Healthcare & Well-being — develop technology-driven solutions to improve healthcare **accessibility, affordability and quality of care**, such as **AI-assisted guidance, remote monitoring and digital health management**."*
 
 ---
 
-## 📋 Core Requirements (PS-1 to PS-7)
+##  Core Requirements (PS-1 to PS-7)
 
 | ID | Requirement Area | Hackathon Expectation | JEEVIKA Implementation |
 |---|---|---|---|
@@ -26,7 +26,7 @@
 
 ---
 
-## 🔄 Dual-Project Origin & Integration
+##  Dual-Project Origin & Integration
 
 JEEVIKA unifies and elevates two foundational codebases into a single closed-loop ecosystem:
 

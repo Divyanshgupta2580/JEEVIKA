@@ -5,7 +5,7 @@
 
 ---
 
-## 👥 1. Team Collaboration Architecture (Single GitHub Repo)
+##  1. Team Collaboration Architecture (Single GitHub Repo)
 
 We use **one central repository** (`JEEVIKA`) with all teammates added as collaborators.
 
@@ -39,7 +39,7 @@ Every teammate works in their dedicated feature branch:
 
 ---
 
-## ⛅ 2. Cloudflare Remote Account & API Setup
+##  2. Cloudflare Remote Account & API Setup
 
 Do **not** use existing personal accounts. Create a fresh account for the hackathon deployment.
 
@@ -83,14 +83,14 @@ npm run deploy:web
 
 ---
 
-## 📋 3. Skill-Engineered Teammate Prompts
+##  3. Skill-Engineered Teammate Prompts
 
 > Built with the **Prompt Engineer Framework** (RISEN + RODES + Chain of Thought + RTF) and pre-equipped with specialized skills.  
 > Teammates can copy and paste their role's prompt directly into **Cursor, Claude Code, Antigravity, or Copilot**.
 
 ---
 
-### 📱 Prompt 1: Mobile App & Kiosk Lead
+###  Prompt 1: Mobile App & Kiosk Lead
 * **Branch:** `feat/mobile-kiosk`
 * **Agent Persona:** Principal Flutter & Android Kiosk Systems Architect
 * **Target Directory:** `frontend/app/` (or `medikiosk-sih2026-main/kiosk_app/`)
@@ -163,7 +163,7 @@ Integrate and harden the Patient Intake Kiosk (`frontend/app/` / `kiosk_app`), c
 
 ---
 
-### 🗄️ Prompt 2: Backend, Cloudflare & Database Lead
+### ️ Prompt 2: Backend, Cloudflare & Database Lead
 * **Branch:** `feat/backend-cloudflare`
 * **Agent Persona:** Principal Cloudflare Edge & Distributed Systems Engineer
 * **Target Directory:** `backend/` and `apps/api/`, `packages/shared/`
@@ -256,7 +256,7 @@ Replace in-memory demo stores with Cloudflare D1 relational persistence, impleme
 
 ---
 
-### 🎙️ Prompt 3: AI, Voice & Clinical Algorithms Lead
+### ️ Prompt 3: AI, Voice & Clinical Algorithms Lead
 * **Branch:** `feat/ai-voice`
 * **Agent Persona:** Principal AI Systems & Clinical Algorithm Integration Engineer
 * **Target Directory:** `services/lang-gateway/`, `packages/ai/`, `packages/engine/`
@@ -325,7 +325,7 @@ Integrate sub-800ms Indic voice triage, structured prescription OCR parsing with
 
 ---
 
-### 💻 Prompt 4: Web ERP, Clinician Portal & POS Lead
+###  Prompt 4: Web ERP, Clinician Portal & POS Lead
 * **Branch:** `feat/web-pos`
 * **Agent Persona:** Principal Frontend Engineer & Medical Systems Architect
 * **Target Directory:** `frontend/website/` and `apps/web/`

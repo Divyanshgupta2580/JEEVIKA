@@ -36,10 +36,10 @@ Private R2 original retention is optional, separately permissioned and subject t
 
 | # | Concept | One-liner | Verdict |
 |---|---|---|---|
-| **A** | "Two modules, one login" | Voice intake app + hospital ERP side by side | ❌ Rejected — stapled together; judges see two apps |
-| **B** | **Closed-loop Continuity-of-Care OS** | Intake → clinic operations → home monitoring → back to intake, joined by one *Patient Thread* and 4 custom algorithms | ✅ **CHOSEN** |
-| **C** | "Intelligence API only" | Rx-to-Shelf + demand forecasting as a headless service | ❌ Strong tech, weak human story, ignores the remote-monitoring theme |
-| D | Syndromic surveillance | Kiosk intake → outbreak detection → stock pre-positioning | ⚠️ Folded into B as a *feature* (Outbreak Radar inside ThreadPulse) |
+| **A** | "Two modules, one login" | Voice intake app + hospital ERP side by side |  Rejected — stapled together; judges see two apps |
+| **B** | **Closed-loop Continuity-of-Care OS** | Intake → clinic operations → home monitoring → back to intake, joined by one *Patient Thread* and 4 custom algorithms |  **CHOSEN** |
+| **C** | "Intelligence API only" | Rx-to-Shelf + demand forecasting as a headless service |  Strong tech, weak human story, ignores the remote-monitoring theme |
+| D | Syndromic surveillance | Kiosk intake → outbreak detection → stock pre-positioning | ️ Folded into B as a *feature* (Outbreak Radar inside ThreadPulse) |
 
 ### 0.1 Umbrella problem statement (the hackathon's own)
 
@@ -111,7 +111,7 @@ Private R2 original retention is optional, separately permissioned and subject t
 | Judge impact | 2 | **5** | 3 | 4 |
 | Story strength | 2 | **5** | 2 | 4 |
 | Technical elegance | 2 | **5** | 4 | 3 |
-| Covers PS "remote monitoring" | ✗ | **✓** | ✗ | ✗ |
+| Covers PS "remote monitoring" |  | **** |  |  |
 | **Total** | 12 | **29** | 16 | 18 |
 
 ### 0.5 Unified product vision — "1 + 1 = 3"
@@ -264,7 +264,7 @@ Implementation: one env var `JEEVIKA_MODE` hides nav items; all three modes ship
 | India IoT medical devices | $2.43B | $7.35B (2030) | 24.7% | [MarketsandMarkets](https://www.marketsandmarkets.com/Market-Reports/geography/iot-medical-device-market/India) |
 | India clinical analytics | $1.50B | $4.23B (2030) | 23.1% | [MarketsandMarkets](https://www.marketsandmarkets.com/Market-Reports/geography/clinical-analytics-market/india) |
 
-> ⚠️ The same MarketsandMarkets "AI in healthcare India" page shows two conflicting figures ($791M vs $21.6M for 2025) — **we do not use it**.
+> ️ The same MarketsandMarkets "AI in healthcare India" page shows two conflicting figures ($791M vs $21.6M for 2025) — **we do not use it**.
 
 **Our calculation (bottom-up, all inputs E):**
 
@@ -289,19 +289,19 @@ Implementation: one env var `JEEVIKA_MODE` hides nav items; all three modes ship
 | 8 | **Dozee** | RPM / EWS | Contactless vitals, early warning (hospital beds) | Hardware + SaaS (n/a) | FDA 510(k) device, 380+ hospitals (older press) | Hospital-bed hardware; not for ambulatory/home chronic; no intake/pharmacy |
 | 9 | **eSanjeevani** (govt) | Telemedicine | National teleconsult | Free | Scale | Not an ops/RPM thread *(not researched this pass)* |
 
-**Feature matrix (✓ strong · ◐ partial · ✗ none; based on public marketing — verify):**
+**Feature matrix ( strong · ◐ partial ·  none; based on public marketing — verify):**
 
 | Feature | Practo | Eka | Bahmni | Infermedica | Dozee | **JEEVIKA** |
 |---|---|---|---|---|---|---|
-| Indic voice-first intake | ✗ | ◐ | ✗ | ◐ | ✗ | **✓** |
-| Adaptive, auditable triage math | ✗ | ✗ | ✗ | ✓ | ✗ | **✓** |
-| Multi-clinic pharmacy ops + FEFO | ◐ | ◐ | ◐ | ✗ | ✗ | **✓** |
-| Prescription → stock plan | ✗ | ✗ | ✗ | ✗ | ✗ | **✓** |
-| Patient-level demand sensing | ✗ | ✗ | ✗ | ✗ | ✗ | **✓** |
-| Home monitoring, no device needed | ✗ | ◐ | ✗ | ✗ | ✗ | **✓** |
-| Personal-baseline deterioration | ✗ | ✗ | ✗ | ✗ | ◐ | **✓** |
-| ABDM/FHIR-aligned | ✓ | ✓ | ✓ | ◐ | ◐ | ◐ (aligned, not certified) |
-| Live ledger/P&L from operations | ◐ | ✗ | ◐ | ✗ | ✗ | **✓** |
+| Indic voice-first intake |  | ◐ |  | ◐ |  | **** |
+| Adaptive, auditable triage math |  |  |  |  |  | **** |
+| Multi-clinic pharmacy ops + FEFO | ◐ | ◐ | ◐ |  |  | **** |
+| Prescription → stock plan |  |  |  |  |  | **** |
+| Patient-level demand sensing |  |  |  |  |  | **** |
+| Home monitoring, no device needed |  | ◐ |  |  |  | **** |
+| Personal-baseline deterioration |  |  |  |  | ◐ | **** |
+| ABDM/FHIR-aligned |  |  |  | ◐ | ◐ | ◐ (aligned, not certified) |
+| Live ledger/P&L from operations | ◐ |  | ◐ |  |  | **** |
 
 ```mermaid
 quadrantChart
@@ -991,7 +991,7 @@ Serves: the bridge (Intake → Ops). Features: B-01..B-04, O-02, O-03/04, I-06. 
 Formulation.
 • Catalogue: Brand → Composition(salt set, strength, form); compositions are equivalence classes (union-find). Substitution only inside a class; therapeutic alternatives need explicit doctor action.
 • Resolve: s_ik = 0.75·cos₃(q,name_k) + 0.15·[phon match] + 0.10·cos₃(q,salt_k); strength parsed with OCR-tolerant repair (O→0, l→1, S→5, b→6); margin m_i = s_i1 − s_i,alt (best candidate with a different salt). Auto-accept iff m_i ≥ τ (0.12) and parsed strength exactly matches the top brand; else pharmacist lane.
-• Quantity: q_i = ⌈f_i·D_i/u⌉ units (loose-unit aware).
+• Quantity: q_i = f_i·D_i/u units (loose-unit aware).
 • Allocate: choose integer x_ibk to minimise J = Σ (α·price_b + β·tcost_k + γ·sub_i − κ·nearexp_b)·x_ibk + Σ_{k≠h} F_k y_k subject to Σ x = q_i, x ≤ stock, expiry_b ≥ course end + 14 d, allergy/interaction exclusions, ≤ 2 source clinics.
 • Exact solution: with ≤ 6 clinics enumerate subsets |S|≤2 (≤ 21); per subset each line is a bounded knapsack with linear cost → greedy by unit cost is optimal. Return top 3 plans; verified against brute force.
 function PLAN(lines, clinics, patient):
@@ -1738,7 +1738,7 @@ Kiosk in Hindi (airplane mode): consent receipt, voice triage, chest-pain test �
 1:45–2:30
 Prescription photo → OCR → SOAP with provenance chips
 2:30–3:30
-Bridge moment: Rx-to-Shelf rejects the 20-day-expiry batch, picks a course-valid one, generic saves ₹; POS concurrency test; P&L updates, A = L + E ✓
+Bridge moment: Rx-to-Shelf rejects the 20-day-expiry batch, picks a course-valid one, generic saves ₹; POS concurrency test; P&L updates, A = L + E 
 3:30–4:30
 WhatsApp simulator BP photo → Drift Radar vs fixed threshold; nurse queue slider
 4:30–5:15

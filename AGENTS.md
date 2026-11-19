@@ -4,7 +4,7 @@
 
 ---
 
-## 🏗️ Repository Layout
+## ️ Repository Layout
 
 - `backend/` — **Unified Cloudflare Worker** (Hono + D1 + Durable Objects + R2 + KV + Queues). Serves both `website/` and `app/` over `/api/v1`.
 - `frontend/website/` — **Web ERP & Clinician Portal** (React + Vite + Tailwind CSS).
@@ -15,7 +15,7 @@
 
 ---
 
-## ⚡ Master Rules
+##  Master Rules
 
 1. **Shared Backend:** Both `frontend/website` and `frontend/app` connect to the same Cloudflare backend (`/api/v1`).
 2. **TypeScript Strict:** No `any`. Zod validation on all API boundaries.

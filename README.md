@@ -1,4 +1,4 @@
-# 🩺 JEEVIKA
+# JEEVIKA
 ### *Bharat’s First Vernacular-First Clinical Operating System & Assistive Hospital Platform*
 
 [![Pure Software](https://img.shields.io/badge/Architecture-100%25%20Pure%20Software%20(Zero%20Hardware)-blue)](frontend/website)
@@ -15,7 +15,7 @@
 
 ---
 
-## 📌 Executive Summary
+## Executive Summary
 
 **Jeevika** is a clinical-grade, vernacular-first hospital operating system engineered specifically for the ground realities of Tier 2, Tier 3, and rural public healthcare in India. 
 
@@ -30,28 +30,28 @@ It tackles three deeply rooted systemic failures:
 
 ---
 
-## 🏛️ End-to-End System Architecture
+## End-to-End System Architecture
 
 Jeevika's architecture is built around a **100% Pure Software, Zero-Hardware Local-First** paradigm. It unites regional edge touchpoints with a distributed agent swarm on Maritime Cloud and real-time security/cost firewalls on Prune AI Gateway.
 
 ```mermaid
 flowchart TD
     subgraph S1["1. Zero-Hardware Edge Presentation Tier (React 18 + Vite)"]
-        Kiosk["🎙️ Patient Intake Kiosk<br/>• 9 Indic Languages Speech Input<br/>• Sarvam Vision 3B OCR<br/>• ABHA QR & Token #032"]
-        Doctor["🩺 Clinician OPD Cockpit<br/>• Ambient Scribe (Speech-to-SOAP)<br/>• Herb-Drug Sentinel Warnings<br/>• PMBJP Generic Substitution (-86%)"]
-        Triage["🚨 Emergency Triage (STAT)<br/>• ESI-1 Severity & Shock Index<br/>• Code-Red Siren Broadcast<br/>• Resuscitation Bays 1-4"]
-        Command["🏢 Hospital Command Center<br/>• Multi-Clinic Fleet (5 Hubs)<br/>• Integer Paise Ledger (0 Leakage)<br/>• Stock Shortage Radar"]
-        POS["💊 Pharmacy POS & Dispensing<br/>• FEFO Expiry Management<br/>• CDSCO Form 20/21 Receipts"]
+        Kiosk["Patient Intake Kiosk<br/>• 9 Indic Languages Speech Input<br/>• Sarvam Vision 3B OCR<br/>• ABHA QR & Token #032"]
+        Doctor["Clinician OPD Cockpit<br/>• Ambient Scribe (Speech-to-SOAP)<br/>• Herb-Drug Sentinel Warnings<br/>• PMBJP Generic Substitution (-86%)"]
+        Triage["Emergency Triage (STAT)<br/>• ESI-1 Severity & Shock Index<br/>• Code-Red Siren Broadcast<br/>• Resuscitation Bays 1-4"]
+        Command["Hospital Command Center<br/>• Multi-Clinic Fleet (5 Hubs)<br/>• Integer Paise Ledger (0 Leakage)<br/>• Stock Shortage Radar"]
+        POS["Pharmacy POS & Dispensing<br/>• FEFO Expiry Management<br/>• CDSCO Form 20/21 Receipts"]
     end
 
     subgraph S2["2. Security, Caching & WAF Gateway (Prune Pro Engine)"]
-        WAF["🛡️ Clinical AI WAF<br/>• Intercepts Prompt Injections in 8ms<br/>• HTTP 403 Neutralizer (NMC Rule 4.2)"]
-        Cache["⚡ Semantic Caching Engine<br/>• Vector Similarity Matching (8ms)<br/>• 76.3% Hit Rate • ₹0 Billed Tokens<br/>• ₹18,444+ Direct API Saved"]
-        PII["🔐 Zero-Trust PII Redactor<br/>• Auto-Redacts 12-Digit Aadhaar<br/>• Masks 10-Digit Phone Numbers<br/>• DPDP Act 2023 Compliant"]
+        WAF["Clinical AI WAF<br/>• Intercepts Prompt Injections in 8ms<br/>• HTTP 403 Neutralizer (NMC Rule 4.2)"]
+        Cache["Semantic Caching Engine<br/>• Vector Similarity Matching (8ms)<br/>• 76.3% Hit Rate • ₹0 Billed Tokens<br/>• ₹18,444+ Direct API Saved"]
+        PII["Zero-Trust PII Redactor<br/>• Auto-Redacts 12-Digit Aadhaar<br/>• Masks 10-Digit Phone Numbers<br/>• DPDP Act 2023 Compliant"]
     end
 
     subgraph S3["3. Distributed Multi-Agent Intelligence Swarm (Maritime Cloud Scale)"]
-        MeshCoord["🌊 Maritime Mesh Swarm Coordinator<br/>(api.maritime.sh • Cluster: vihaanx-delhi)"]
+        MeshCoord["Maritime Mesh Swarm Coordinator<br/>(api.maritime.sh • Cluster: vihaanx-delhi)"]
         AgentSentinel["agent-sentinel-01<br/>(Clinical Sentinel Watchdog)<br/>• Detects Herb-Drug Collisions<br/>• e.g. Warfarin + Ashwagandha (126ms)"]
         AgentScribe["agent-vernacular-02<br/>(Vernacular Scribe Engine)<br/>• Normalizes Bhojpuri/Hindi Audio<br/>• Builds ABDM FHIR R4 SOAP (142ms)"]
         AgentSupply["agent-supply-03<br/>(Supply & Generic Optimizer)<br/>• Real-time PMBJP Bioequivalence<br/>• FEFO Expiry Allocation (115ms)"]
@@ -59,24 +59,24 @@ flowchart TD
     end
 
     subgraph S4["4. Core Runtime, Local-First Storage & Double-Entry Ledger"]
-        HonoAPI["⚡ Hono Microsecond API Core (backend/src)"]
-        LocalSQLite["💾 SQLite WAL Local-First Database<br/>• 100% Offline Resilient<br/>• Zero Cloud Lag for Tokens"]
-        CloudflareD1["☁️ Cloudflare D1 Multi-Tenant Shards"]
-        DoubleEntry["⚖️ Integer-Paise Double-Entry Engine<br/>• Σ Debit = Σ Credit = ₹2,28,000<br/>• Zero Float Rounding Leakage"]
-        AuditLedger["📜 Medico-Legal Cryptographic Vault<br/>• 142 SHA-256 Tamper-Evident Blocks<br/>• IT Act 2000 Court Admissible"]
+        HonoAPI["Hono Microsecond API Core (backend/src)"]
+        LocalSQLite["SQLite WAL Local-First Database<br/>• 100% Offline Resilient<br/>• Zero Cloud Lag for Tokens"]
+        CloudflareD1["Cloudflare D1 Multi-Tenant Shards"]
+        DoubleEntry["Integer-Paise Double-Entry Engine<br/>• Σ Debit = Σ Credit = ₹2,28,000<br/>• Zero Float Rounding Leakage"]
+        AuditLedger["Medico-Legal Cryptographic Vault<br/>• 142 SHA-256 Tamper-Evident Blocks<br/>• IT Act 2000 Court Admissible"]
         HonoAPI --> LocalSQLite & CloudflareD1 & DoubleEntry & AuditLedger
     end
 
     subgraph S5["5. National Digital Health Ecosystem Integrations"]
-        ABDM["🇮🇳 NHA ABDM Milestone 2<br/>(FHIR R4 Diagnostic Bundles)"]
-        PMBJP["💊 PMBJP Jan Aushadhi Repository<br/>(2,000+ Generic Formularies)"]
-        NMCReg["⚖️ NMC Registered Practitioner<br/>(Registered Medical Practitioner #NMC-DL-2018-84729)"]
+        ABDM["NHA ABDM Milestone 2<br/>(FHIR R4 Diagnostic Bundles)"]
+        PMBJP["PMBJP Jan Aushadhi Repository<br/>(2,000+ Generic Formularies)"]
+        NMCReg["NMC Registered Practitioner<br/>(Registered Medical Practitioner #NMC-DL-2018-84729)"]
     end
 
     Kiosk & Doctor & Triage & Command & POS -->|Encrypted REST & WebSockets| HonoAPI
     Kiosk & Doctor -->|Ambient Audio & AI Prompts| WAF
     WAF --> Cache
-    Cache -->|Cache Miss ➔ Sanitized Request| PII
+    Cache -->|Cache Miss -> Sanitized Request| PII
     PII -->|Upstream Model Execution| S3
     HonoAPI <--> S3
     S3 -->|138ms Swarm Consensus| Doctor
@@ -85,67 +85,88 @@ flowchart TD
 
 ---
 
-## 📸 Platform UI Showcase (Live Screen Walkthrough)
+## Platform UI Showcase (Live Screen Walkthrough)
 
-Every portal is designed with an ultra-clean, clinical Light Theme design system (`bg-slate-50`, elevated white cards, slate-200 borders, high-contrast typography) to ensure visual elegance, accessibility, and zero jarring theme clash. Captured at **full 2160 × 1350 desktop resolution**.
+Every portal is designed with a clinical Light Theme design system (`bg-slate-50`, elevated white cards, slate-200 borders, high-contrast typography) for clarity, accessibility, and zero theme clash across clinical devices.
 
-### 1. 🏥 Universal Landing Page & Clinical Hub Router
-<p align="center">
-  <img src="./docs/screenshots/01_landing_page.png" alt="JEEVIKA Landing Page" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>Brand identity, multilingual picker (English, Hindi, Punjabi, Tamil), and direct routing to Patient Kiosk, Doctor OPD, Emergency Triage, and Hospital Command.</em></p>
+<table width="100%" style="border-collapse: separate; border-spacing: 12px; margin: 16px 0;">
+  <tr>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/01_landing_page.png" target="_blank">
+        <img src="./docs/screenshots/01_landing_page.png" alt="Universal Landing Page" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>1. Universal Landing Page</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Multilingual clinical portal router (EN, HI, PA, TA)</span>
+      </div>
+    </td>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/02_patient_kiosk.png" target="_blank">
+        <img src="./docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>2. Patient Intake Kiosk</strong><br />
+        <span style="font-size: 11px; color: #64748b;">9 Indic languages voice intake, OCR & ABHA sync</span>
+      </div>
+    </td>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/03_doctor_opd_cockpit.png" target="_blank">
+        <img src="./docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>3. Doctor OPD Cockpit</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Ambient Scribe & PMBJP 86% cost reduction</span>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/04_emergency_triage.png" target="_blank">
+        <img src="./docs/screenshots/04_emergency_triage.png" alt="Emergency & Trauma Triage" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>4. Emergency & Trauma Triage</strong><br />
+        <span style="font-size: 11px; color: #64748b;">STAT Code-Red broadcast & ESI-1 trauma scoring</span>
+      </div>
+    </td>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/05_hospital_command_center.png" target="_blank">
+        <img src="./docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>5. Hospital Command Center</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Integer-paise double-entry ledger & 5-clinic fleet</span>
+      </div>
+    </td>
+    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/06_maritime_swarm_mesh.png" target="_blank">
+        <img src="./docs/screenshots/06_maritime_swarm_mesh.png" alt="Maritime Autonomous Agent Swarm" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>6. Maritime Agent Swarm</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Distributed edge consensus & drug sentinel</span>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" style="border-collapse: separate; border-spacing: 12px; margin-top: -6px;">
+  <tr>
+    <td align="center" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+      <a href="./docs/screenshots/07_prune_ai_gateway.png" target="_blank">
+        <img src="./docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Cost Engine & Security Firewall Gateway" width="75%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 10px;">
+        <strong>7. Prune AI Cost Engine & Security Firewall Gateway</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Sub-20ms semantic caching (76.3% hit rate), prompt injection WAF defense & DPDP Act 2023 Aadhaar PII masking</span>
+      </div>
+    </td>
+  </tr>
+</table>
 
 ---
 
-### 2. 🎙️ Patient Intake Kiosk (Voice, Camera OCR & ABHA Sync)
-<p align="center">
-  <img src="./docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>9-language voice intake, Sarvam Vision paper prescription OCR, 5 ABHA verification modes (QR/OTP/Aadhaar), and instant queue token generation (#032) assigned to OPD Room 4.</em></p>
-
----
-
-### 3. 🩺 Doctor OPD Cockpit (Ambient Clinical Scribe & PMBJP Substitution)
-<p align="center">
-  <img src="./docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>Doctor header (Consultant Physician, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.</em></p>
-
----
-
-### 4. 🚨 Emergency & Trauma Triage (STAT Code-Red Resuscitation)
-<p align="center">
-  <img src="./docs/screenshots/04_emergency_triage.png" alt="Emergency Triage" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>Real-time STAT Code-Red alert broadcast, ESI-1 trauma scoring, resuscitation bay readiness (Bays 1 to 4), and incoming casualty trauma board with SHA-256 tamper-evident logs.</em></p>
-
----
-
-### 5. 🏢 Hospital Command Center & Double-Entry Financial Ledger
-<p align="center">
-  <img src="./docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>Multi-clinic fleet coordination across 5 hospital hubs, integer-paise double-entry accounting (Debit = Credit = ₹2,28,000; zero rounding leaks), central stock shortage radar, and 142 cryptographic audit blocks.</em></p>
-
----
-
-### 6. 🌊 Maritime Autonomous Agent Swarm (Scale Tier Cloud Mesh)
-<p align="center">
-  <img src="./docs/screenshots/06_maritime_swarm_mesh.png" alt="Maritime Swarm Mesh" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>3 autonomous background micro-agents (Clinical Sentinel, Vernacular Scribe, Supply Optimizer) executing distributed cloud consensus in 138ms on api.maritime.sh without straining hospital hardware.</em></p>
-
----
-
-### 7. 🛡️ Prune AI Cost Engine & Security Firewall Gateway
-<p align="center">
-  <img src="./docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Gateway" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
-</p>
-<p align="center"><em>Sub-20ms semantic caching (76.3% hit rate, ₹18,444+ saved), clinical prompt injection WAF defense (HTTP 403 Forbidden intercept in 8ms under NMC Act 2019 Rule 4.2), and DPDP Act 2023 Aadhaar PII masking.</em></p>
-
----
-
-## 🚨 Why This Project? (The "Ramesh" Crisis)
+## Why This Project? (The "Ramesh" Crisis)
 
 ### The Ground Reality in Rural India
 Every morning at 6:30 AM across 60,000+ Primary Health Centres (PHCs) and Community Health Centres (CHCs) in India, hundreds of patients gather in queue. 
@@ -165,7 +186,7 @@ Consider **Ramesh Chandra**, a 52-year-old farmer from a village near Khammam, T
 
 ---
 
-## ⚡ What Jeevika Does: Core Modules
+## What Jeevika Does: Core Modules
 
 ```mermaid
 flowchart LR
@@ -182,7 +203,7 @@ flowchart LR
 
 ---
 
-### 1. 🎙️ Smart Vernacular Voice Kiosk (Entrance Gate)
+### 1. Smart Vernacular Voice Kiosk (Entrance Gate)
 * **Multilingual Indic Speech Processing:** Integrates native Web Speech API and Indic ASR tokenizers across 9 Indian languages.
 * **Dynamic Clinical Red-Flag Engine (`packages/engine/clinicalIntake.ts`):** Evaluates live utterances against clinical emergency triggers:
   - Acute Coronary Syndrome / Chest Pain
@@ -196,14 +217,14 @@ flowchart LR
 
 ---
 
-### 2. 🩺 Doctor OPD Cockpit & Ambient Clinical Scribe (Dr. Cabin)
+### 2. Doctor OPD Cockpit & Ambient Clinical Scribe (Dr. Cabin)
 * **Digital Medical Stenographer:** Listens to continuous doctor-patient consultation dialogues in Hindi, English, or Hinglish via live microphone.
 * **Dynamic Clinical NLP Extraction:**
   - **Objective Vitals (O):** Detects BP (`150/95 mmHg`), Pulse (`94 bpm`), Temp (`100.4°F`), SpO2 (`95%`).
   - **Subjective (S):** Structures chief complaints, duration, and radiation history.
   - **Assessment (A):** Maps provisional impressions to **ICD-11 dual-coding** (e.g., `BA41 Acute Myocardial Infarction` / `FA00 Osteoarthritis`).
   - **Plan (P):** Extracts mentioned drugs (Ecosprin, Atorvastatin, Pantoprazole, Dolo) with frequency and meal timing.
-* **Human-in-the-Loop Review:** Physician edits any word or clicks **✓ Apply Draft to SOAP & Prescription** in one click, saving 5 minutes of typing per patient.
+* **Human-in-the-Loop Review:** Physician edits any word or clicks **Apply Draft to SOAP & Prescription** in one click, saving 5 minutes of typing per patient.
 * **Herb-Drug Pharmacovigilance Sentinel:** Detects hazardous allopathic + AYUSH collisions (e.g., *Ashwagandha + Warfarin* bleeding risk).
 * **PMBJP Jan Aushadhi Generic Substitution:** Calculates 86% patient medicine cost savings by mapping expensive branded drugs to quality Jan Aushadhi equivalents.
 * **Legal NMC Registered Medical Practitioner (RMP) Stamp:**
@@ -214,23 +235,23 @@ flowchart LR
 
 ---
 
-### 3. 👁️ Patient Vernacular Medication Guide (मरीज सचित्र खुराक निर्देशिका)
+### 3. Patient Vernacular Medication Guide (मरीज सचित्र खुराक निर्देशिका)
 * **Dynamic State Mapping:** Automatically translates approved medications into simple, high-contrast pictographic cards.
 * **Visual Icon Timetable:**
-  - 🌅 **सुबह (Morning / Suraj icon):** `1 गोली` (e.g. Ecosprin - नाश्ते के बाद)
-  - ☀️ **दोपहर (Afternoon / Dhoop icon):** `-`
-  - 🌙 **रात (Night / Chaand icon):** `1 गोली` (e.g. Atorvastatin - रात को सोते समय)
+  - **सुबह (Morning):** `1 गोली` (e.g. Ecosprin - नाश्ते के बाद)
+  - **दोपहर (Afternoon):** `-`
+  - **रात (Night):** `1 गोली` (e.g. Atorvastatin - रात को सोते समय)
 * **Desi Category Explanations:**
   - *"दिल की सुरक्षा और खून पतला करने की दवा"* (Cardioprotective)
   - *"कोलेस्ट्रॉल घटाने और नसों को खोलने की दवा"* (Lipid Lowering)
   - *"गैस और एसिडिटी से बचाव"* (Antacid/PPI)
-* **🔊 Indic SpeechSynthesis Audio Engine:** Built-in Hindi voice readout reads the entire medication schedule aloud for illiterate or visually impaired patients.
-* **📱 WhatsApp & Patient App QR Sync:** Renders dynamic QR codes that family members can scan to auto-configure medication reminders on smartphones.
-* **🖨️ 1-Page High-Contrast Printout:** Printable bedside/kitchen handout.
+* **Indic SpeechSynthesis Audio Engine:** Built-in Hindi voice readout reads the entire medication schedule aloud for illiterate or visually impaired patients.
+* **WhatsApp & Patient App QR Sync:** Renders dynamic QR codes that family members can scan to auto-configure medication reminders on smartphones.
+* **1-Page High-Contrast Printout:** Printable bedside/kitchen handout.
 
 ---
 
-### 4. 💊 Smart Pharmacy POS & FEFO Inventory Engine
+### 4. Smart Pharmacy POS & FEFO Inventory Engine
 * **FEFO (First-Expired, First-Out) Algorithm:** Dispenses stock strictly based on expiration dates, eliminating medicine expiry losses in hospital dispensaries.
 * **PMBJP Jan Aushadhi Generic Substitution:** Automatically suggests A-rated bioequivalent generics from Pradhan Mantri Bhartiya Janaushadhi Pariyojana:
   - *Brand Atorvastatin 40mg:* ₹195 $\rightarrow$ *Jan Aushadhi Generic:* **₹28 (85% savings)**.
@@ -239,7 +260,7 @@ flowchart LR
 
 ---
 
-## 💼 Business Model, Pricing Tiers & Monetization Engine
+## Business Model, Pricing Tiers & Monetization Engine
 
 ### 1. Market Opportunity & Target Segments
 * **Target Audience**: 70,000+ Tier-2/Tier-3 Private Nursing Homes (30–100 beds), Standalone Polyclinics, Trust Hospitals, and 10,000+ PMBJP Kendras across India.
@@ -261,7 +282,7 @@ flowchart LR
 
 ---
 
-## 🛠️ The Tech Stack & Why It Was Chosen
+## The Tech Stack & Why It Was Chosen
 
 | Technology | Layer | Exact Role in Jeevika | Why It Was Chosen |
 |---|---|---|---|
@@ -278,7 +299,7 @@ flowchart LR
 
 ---
 
-## 🔒 Why Trust It? (Clinical Safety & Regulatory Integrity)
+## Why Trust It? (Clinical Safety & Regulatory Integrity)
 
 ### 1. No Black-Box Clinical Autonomy
 In conventional digital health prototypes, an LLM is prompted to "diagnose" the patient and write an automated prescription. **This is illegal, dangerous, and violates the NMC Code of Medical Ethics.**
@@ -297,7 +318,7 @@ In conventional digital health prototypes, an LLM is prompted to "diagnose" the 
 
 ---
 
-## 📊 Quantifiable Impact & Benefits
+## Quantifiable Impact & Benefits
 
 | Parameter | Traditional Hospital Workflow | With JEEVIKA Platform | Measured Improvement |
 |---|---|---|---|
@@ -310,7 +331,7 @@ In conventional digital health prototypes, an LLM is prompted to "diagnose" the 
 
 ---
 
-## 🚀 Local Quickstart Guide
+## Local Quickstart Guide
 
 ### Prerequisites
 * **Node.js:** v20.x or higher
@@ -355,7 +376,7 @@ Visit **[http://localhost:5173](http://localhost:5173)** to explore:
 
 ---
 
-## 🌊 Special Challenge: Best Use of Maritime (VIHAAN-X Track)
+## Special Challenge: Best Use of Maritime (VIHAAN-X Track)
 
 > **Participant Code:** `VIHAANX`  
 > **Target Track:** Special Challenge — Best Use of Maritime (1st Place: 3 Months Maritime Scale + 20-min session with Maria Gorskikh, CEO of Maritime)
@@ -366,7 +387,7 @@ Running multiple continuous background AI agents on local district hospital serv
 
 | Autonomous Maritime Agent | Swarm Role | Trigger & Autonomous Workflow | Latency SLA | Statutory Safety Guardrail |
 |:---|:---|:---|:---:|:---|
-| **`agent-sentinel-01`**<br/>*(Jeevika-Clinical-Sentinel)* | Herb-Drug Pharmacovigilance Watchdog | Continuously audits doctor allopathic prescriptions against rural AYUSH/herbal history (e.g. Warfarin ⚡ Ashwagandha). | `< 130ms` | **NMC Act 2019 Assistive Only** — Flags warnings to doctor screen without modifying orders. |
+| **`agent-sentinel-01`**<br/>*(Jeevika-Clinical-Sentinel)* | Herb-Drug Pharmacovigilance Watchdog | Continuously audits doctor allopathic prescriptions against rural AYUSH/herbal history (e.g. Warfarin <-> Ashwagandha). | `< 130ms` | **NMC Act 2019 Assistive Only** — Flags warnings to doctor screen without modifying orders. |
 | **`agent-vernacular-02`**<br/>*(Jeevika-Vernacular-Scribe)* | Indic Dialect to FHIR R4 Clinical Scribe | Asynchronously processes 16kHz PCM audio from rural OPD intakes (Hindi/Bhojpuri/Maithili) into structured ABDM FHIR R4 notes. | `< 145ms` | **Acoustic SNR Threshold > 15dB** — Rejects audio artifacts; Zero-Hallucination Gate. |
 | **`agent-supply-03`**<br/>*(Jeevika-Supply-Optimizer)* | Jan Aushadhi Generic Substitution Agent | Evaluates clinic stock FEFO expiry dates and maps expensive branded drugs to Jan Aushadhi generic equivalents, cutting patient costs by ~85%. | `< 115ms` | **PMBJP Verified Formularies** — Restricts substitutions to government certified Jan Aushadhi batches. |
 
@@ -376,7 +397,7 @@ Running multiple continuous background AI agents on local district hospital serv
 
 ---
 
-## 🛡️ Special Challenge: Best Use of Prune (VIHAAN-X Track)
+## Special Challenge: Best Use of Prune (VIHAAN-X Track)
 
 > **Target Track:** Special Challenge — Best Use of Prune (1st Place: 12 Months Prune Pro + Direct Founder Internship Opportunities)
 
@@ -398,7 +419,7 @@ In high-volume public hospitals handling 200+ OPD encounters daily, repetitive d
 
 ---
 
-## 👥 Core Engineering & Systems Architecture
+## Core Engineering & Systems Architecture
 
 | Core Function | Architecture & Systems Ownership |
 |:---|:---|
@@ -407,7 +428,7 @@ In high-volume public hospitals handling 200+ OPD encounters daily, repetitive d
 
 ---
 
-## 👨‍⚕️ Clinical Governance & NMC Compliance
+## Clinical Governance & NMC Compliance
 * **Clinical Governance:** Chief Medical Officer, MD, DM (Internal Medicine & Cardiology)
 * **Statutory Registration:** `#NMC-DL-2018-84729` (National Medical Commission Registered Medical Practitioner)
 * **Legal Framework:** Conforms to NMC Registered Medical Practitioner (Professional Conduct) Regulations 2023, Digital Personal Data Protection (DPDP) Act 2023, and Ayushman Bharat Digital Mission (ABDM Milestone 2).

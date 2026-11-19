@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏥 Jeevika (जीविका) Enterprise Healthcare Suite
+# Jeevika (जीविका) Enterprise Healthcare Suite
 ### *Next-Generation Hub-and-Spoke Healthcare Operating System & Hospital Business ERP*
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-jeevika.in-0066FF?style=for-the-badge&logo=google-chrome&logoColor=white)](https://www.jeevika.in)
@@ -11,8 +11,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS%203.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 <p align="center">
-  <b>A unified, medical-grade operating system designed for multi-clinic networks, super-specialty hospitals, and healthcare chains.</b><br/>
-  Featuring real-time multi-tenant isolation, FEFO automated pharmacy POS, IPD ward & bed grid, complete procurement supply chain, full Chartered Accountant (CA) financial suite, and automated WhatsApp patient communication.
+ <b>A unified, medical-grade operating system designed for multi-clinic networks, super-specialty hospitals, and healthcare chains.</b><br/>
+ Featuring real-time multi-tenant isolation, FEFO automated pharmacy POS, IPD ward & bed grid, complete procurement supply chain, full Chartered Accountant (CA) financial suite, and automated WhatsApp patient communication.
 </p>
 
 [Explore Features](#-core-platform-modules) • [Function Matrix](#-function--api-specification-matrix) • [System Architecture](#-system-architecture) • [Security & Pentest](#-battle-tested-security-matrix) • [Tech Stack](#-technology-stack) • [Database Schema](#-database-schema--entity-matrix) • [Quickstart](#-quickstart--deployment)
@@ -21,31 +21,31 @@
 
 </div>
 
-## 🌟 Executive Summary
+## Executive Summary
 
 **Jeevika** solves the fragmentation and revenue leakage in multi-facility healthcare operations. Traditional hospital software operates in silos; Jeevika implements a distributed **Hub-and-Spoke** architecture that connects central hospital headquarters with unlimited satellite clinics and outpatient departments (OPDs).
 
 Every transaction—from a strip of Paracetamol dispensed at a remote clinic counter to an ICU admission at HQ—synchronizes through database triggers into an audit-locked double-entry financial ledger and real-time inventory matrix.
 
 ```
-       ┌────────────────────────────────────────────────────────┐
-       │               JEEVIKA HOSPITAL HQ HUB                  │
-       │    Executive Command Center • Central Inventory        │
-       │    Procurement Supply Chain • CA Financial Suite       │
-       └──────────────────────────┬─────────────────────────────┘
-                                  │
-         ┌────────────────────────┼────────────────────────┐
-         ▼                        ▼                        ▼
-┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ Satellite Clinic │    │ Satellite Clinic │    │ Satellite Clinic │
-│      (North)     │    │      (South)     │    │      (East)      │
-│  OPD / POS / IPD │    │  OPD / POS / IPD │    │  OPD / POS / IPD │
-└──────────────────┘    └──────────────────┘    └──────────────────┘
+    ┌────────────────────────────────────────────────────────┐
+    │        JEEVIKA HOSPITAL HQ HUB         │
+    │  Executive Command Center • Central Inventory    │
+    │  Procurement Supply Chain • CA Financial Suite    │
+    └──────────────────────────┬─────────────────────────────┘
+                 │
+     ┌────────────────────────┼────────────────────────┐
+     ▼            ▼            ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│ Satellite Clinic │  │ Satellite Clinic │  │ Satellite Clinic │
+│   (North)   │  │   (South)   │  │   (East)   │
+│ OPD / POS / IPD │  │ OPD / POS / IPD │  │ OPD / POS / IPD │
+└──────────────────┘  └──────────────────┘  └──────────────────┘
 ```
 
 ---
 
-## 🏗 System Architecture
+## System Architecture
 
 Jeevika is built with a **Zero-Trust, Database-First Security Model**. All business invariants (stock deductions, ledger balancing, role isolation) are enforced via PostgreSQL Row Level Security (RLS) policies, database triggers, and atomic Stored Procedures (RPCs).
 
@@ -53,47 +53,47 @@ Jeevika is built with a **Zero-Trust, Database-First Security Model**. All busin
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer ["🖥️ Client Application (Vite + React 18 + TS)"]
-        UI_POS["⚡ Pharmacy & OPD POS"]
-        UI_IPD["🛏️ IPD Ward & Bed Matrix"]
-        UI_INV["📦 Smart Inventory Engine"]
-        UI_FIN["💼 CA Financial Suite"]
-        UI_PROC["🛒 Procurement & Vendors"]
-        UI_STAFF["⏰ Staff Rostering & Biometrics"]
-    end
+  subgraph ClientLayer ["️ Client Application (Vite + React 18 + TS)"]
+    UI_POS[" Pharmacy & OPD POS"]
+    UI_IPD["️ IPD Ward & Bed Matrix"]
+    UI_INV[" Smart Inventory Engine"]
+    UI_FIN[" CA Financial Suite"]
+    UI_PROC[" Procurement & Vendors"]
+    UI_STAFF[" Staff Rostering & Biometrics"]
+  end
 
-    subgraph SecurityGate ["🛡️ Security & Authentication Layer"]
-        AUTH["Supabase Auth (JWT & Session)"]
-        RBAC["PostgreSQL RLS (Multi-Tenant Isolation)"]
-        IDOR_GUARD["Defensive RPC Parameter Validation"]
-    end
+  subgraph SecurityGate ["️ Security & Authentication Layer"]
+    AUTH["Supabase Auth (JWT & Session)"]
+    RBAC["PostgreSQL RLS (Multi-Tenant Isolation)"]
+    IDOR_GUARD["Defensive RPC Parameter Validation"]
+  end
 
-    subgraph DatabaseLayer ["🗄️ PostgreSQL 15 Engine (Supabase)"]
-        TRG_STOCK["⚡ Atomic Stock Auto-Deduction Trigger"]
-        TRG_LEDGER["⚡ Accrual Ledger & COGS Sync Trigger"]
-        TRG_WA["⚡ Automated WhatsApp Dispatch Trigger"]
-        TBL_DATA[("Multi-Tenant Hospital & Clinic Mesh")]
-    end
+  subgraph DatabaseLayer ["️ PostgreSQL 15 Engine (Supabase)"]
+    TRG_STOCK[" Atomic Stock Auto-Deduction Trigger"]
+    TRG_LEDGER[" Accrual Ledger & COGS Sync Trigger"]
+    TRG_WA[" Automated WhatsApp Dispatch Trigger"]
+    TBL_DATA[("Multi-Tenant Hospital & Clinic Mesh")]
+  end
 
-    subgraph EdgeServices ["⚡ Deno Edge Functions & Third-Party APIs"]
-        EDGE_PAY["💳 Razorpay Billing & Webhooks"]
-        EDGE_WA["📲 WhatsApp Cloud API Gateway"]
-        EDGE_NOTIF["🔔 Realtime Notification Hub"]
-        AI_ENGINE["🤖 Gemini AI Clinical Analytics"]
-    end
+  subgraph EdgeServices [" Deno Edge Functions & Third-Party APIs"]
+    EDGE_PAY[" Razorpay Billing & Webhooks"]
+    EDGE_WA[" WhatsApp Cloud API Gateway"]
+    EDGE_NOTIF[" Realtime Notification Hub"]
+    AI_ENGINE[" Gemini AI Clinical Analytics"]
+  end
 
-    ClientLayer --> AUTH
-    AUTH --> RBAC
-    RBAC --> IDOR_GUARD
-    IDOR_GUARD --> DatabaseLayer
-    DatabaseLayer --> EdgeServices
+  ClientLayer --> AUTH
+  AUTH --> RBAC
+  RBAC --> IDOR_GUARD
+  IDOR_GUARD --> DatabaseLayer
+  DatabaseLayer --> EdgeServices
 ```
 
 ---
 
-## ✨ Core Platform Modules
+## Core Platform Modules
 
-### 1. ⚡ High-Velocity Point of Sale (POS) & Pharmacy Billing
+### 1. High-Velocity Point of Sale (POS) & Pharmacy Billing
 * **Multi-Mode Billing**: Seamlessly switch between **Pharmacy Dispensing**, **OPD Doctor Consultation Fees**, and **IPD Admission Billing**.
 * **FEFO Auto-Batch Sorting**: Automatically recommends and deducts medicines using **First-Expiry-First-Out (FEFO)** algorithms to prevent pharmaceutical waste.
 * **Flexible Unit Economics**: Sell full commercial packs or individual loose tablets/strips/units with automatic price calculations.
@@ -103,7 +103,7 @@ flowchart TD
 
 ---
 
-### 2. 📦 Intelligent Medical Inventory & Stock Mesh
+### 2. Intelligent Medical Inventory & Stock Mesh
 * **Trigger-Based Atomic Deductions**: PostgreSQL triggers guarantee zero race conditions and eliminate overselling during simultaneous clinic checkouts.
 * **Batch & Expiry Radar**: Visual color-coded alerts (Red: Expired, Amber: Expiring within 30/60/90 days).
 * **Historical Inventory Snapshot (Time Travel)**: Reconstruct and export exact inventory valuation and quantities for any past date.
@@ -112,27 +112,27 @@ flowchart TD
 
 ---
 
-### 3. 🛏️ In-Patient Department (IPD) Operations
+### 3. ️ In-Patient Department (IPD) Operations
 * **Live Ward & Bed Matrix**: Visual interactive grid tracking General Wards, Semi-Private Rooms, Deluxe Suites, and ICUs.
 * **Real-Time Bed Lifecycle**: Instant tracking of `Available`, `Occupied`, and `Under Maintenance` beds.
 * **Admission to Discharge Pipeline**:
-  * Patient demographic capture & immediate bed assignment.
-  * Admitting physician tagging and clinical diagnosis records.
-  * Advance deposit collections with auto-generated receipts.
-  * Treatment sheets, medication administration charts, and nursing logs.
-  * Consolidated discharge billing with auto-summed room charges, medicines, and doctor fees.
+ * Patient demographic capture & immediate bed assignment.
+ * Admitting physician tagging and clinical diagnosis records.
+ * Advance deposit collections with auto-generated receipts.
+ * Treatment sheets, medication administration charts, and nursing logs.
+ * Consolidated discharge billing with auto-summed room charges, medicines, and doctor fees.
 
 ---
 
-### 4. 🛒 Procurement, Vendors & Supply Chain
-* **End-to-End Purchase Orders (PO)**: Manage the complete supply lifecycle (`Draft` ➔ `Issued` ➔ `Partially Received` ➔ `Fulfilled` ➔ `Cancelled`).
+### 4. Procurement, Vendors & Supply Chain
+* **End-to-End Purchase Orders (PO)**: Manage the complete supply lifecycle (`Draft` `Issued` `Partially Received` `Fulfilled` `Cancelled`).
 * **Goods Received Notes (GRN)**: Inspect delivered medical goods, log batch numbers & expiry dates, and auto-sync stock into clinic inventory upon verification.
 * **Supplier Directory & Rate Comparisons**: Track vendor catalogs, contact information, payment terms, and past purchase price trends.
 * **B2B GST & Tax Breakdown**: Automated computation of CGST, SGST, and IGST for all inbound medical stock.
 
 ---
 
-### 5. 💼 Chartered Accountant (CA) Financial Suite
+### 5. Chartered Accountant (CA) Financial Suite
 * **Automated Profit & Loss (P&L)**: Real-time calculation of gross revenue, Cost of Goods Sold (COGS), operating expenses, and net profit.
 * **Real-Time Balance Sheet**: Comprehensive view of Current/Fixed Assets, Liabilities, Sundry Creditors, and Retained Equity.
 * **General Financial Ledger & Journal Vouchers (JV)**: Double-entry bookkeeping system supporting manual journal entries with debit/credit balancing checks.
@@ -143,21 +143,21 @@ flowchart TD
 
 ---
 
-### 6. ⏰ Staff Rostering, Shifts & Attendance
+### 6. Staff Rostering, Shifts & Attendance
 * **Duty Roster Management**: Organize morning, evening, and night shifts across clinical departments.
 * **Clinic-Bound Biometric Clock-In**: Secure staff attendance recording with overtime and break tracking.
 * **Role-Specific Dashboards**: Custom views for Doctors, Nurses, Pharmacists, and Administrative Staff.
 
 ---
 
-### 7. 🔬 Biomedical Equipment & Asset Tracking
+### 7. Biomedical Equipment & Asset Tracking
 * **Asset Lifecycle Management**: Maintain comprehensive registries of critical medical equipment (ventilators, monitors, ECG, diagnostic tools).
 * **Maintenance & AMC/CMC Tracking**: Scheduled maintenance reminders, calibration logs, and equipment downtime recording.
 * **Categorized Inventory**: Grouping across Medical Machines, ICU Beds, IT Infrastructure, and Clinical Furniture.
 
 ---
 
-## 👥 Multi-Tier Role-Based Access Control (RBAC)
+## Multi-Tier Role-Based Access Control (RBAC)
 
 The system enforces granular permissions across five distinct operational roles:
 
@@ -171,18 +171,18 @@ The system enforces granular permissions across five distinct operational roles:
 
 ---
 
-## 🛡️ Battle-Tested Security Matrix
+## ️ Battle-Tested Security Matrix
 
 Jeevika was engineered under rigorous security standards and has undergone complete black-box and white-box penetration testing:
 
 ```
 =================== SECURITY AUDIT & PENTEST RESULTS ===================
-[✔] IDOR Penetration Test (Cross-Tenant Boundary) .......... 100% PASSED (0 Leaks)
-[✔] Privilege Escalation Attack Vector ...................... 100% BLOCKED
-[✔] PostgreSQL Row Level Security (RLS) ..................... 100% ENFORCED (All Tables)
-[✔] SQL Injection / Search Path Hijacking .................. 100% MITIGATED
-[✔] Concurrency Flood & Race-Condition Defense .............. 100% MITIGATED
-[✔] Replay & TTL Token Attacks .............................. 100% BLOCKED
+[] IDOR Penetration Test (Cross-Tenant Boundary) .......... 100% PASSED (0 Leaks)
+[] Privilege Escalation Attack Vector ...................... 100% BLOCKED
+[] PostgreSQL Row Level Security (RLS) ..................... 100% ENFORCED (All Tables)
+[] SQL Injection / Search Path Hijacking .................. 100% MITIGATED
+[] Concurrency Flood & Race-Condition Defense .............. 100% MITIGATED
+[] Replay & TTL Token Attacks .............................. 100% BLOCKED
 ========================================================================
 ```
 
@@ -193,7 +193,7 @@ Jeevika was engineered under rigorous security standards and has undergone compl
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 ### Frontend Architecture
 * **Framework**: [React 18](https://react.dev/) + [Vite 5](https://vitejs.dev/)
@@ -216,7 +216,7 @@ Jeevika was engineered under rigorous security standards and has undergone compl
 
 ---
 
-## ⚙️ Function & API Specification Matrix
+## ️ Function & API Specification Matrix
 
 Every mission-critical workflow in Jeevika is encapsulated in dedicated serverless edge functions, PostgreSQL stored procedures, or core client services.
 
@@ -275,24 +275,24 @@ Every mission-critical workflow in Jeevika is encapsulated in dedicated serverle
 
 ---
 
-## 🗄️ Database Schema & Entity Matrix
+## ️ Database Schema & Entity Matrix
 
 ```mermaid
 erDiagram
-    HOSPITALS ||--o{ CLINICS : operates
-    HOSPITALS ||--o{ PROFILES : employs
-    CLINICS ||--o{ PROFILES : stations
-    CLINICS ||--o{ INVENTORY : stocks
-    CLINICS ||--o{ SALES : generates
-    SALES ||--o{ SALE_ITEMS : contains
-    INVENTORY ||--o{ SALE_ITEMS : depletes
-    CLINICS ||--o{ WARDS : houses
-    WARDS ||--o{ BEDS : contains
-    BEDS ||--o{ ADMISSIONS : hosts
-    HOSPITALS ||--o{ PURCHASE_ORDERS : issues
-    PURCHASE_ORDERS ||--o{ PURCHASE_ORDER_ITEMS : includes
-    HOSPITALS ||--o{ FINANCIAL_LEDGER : records
-    HOSPITALS ||--o{ AUDIT_LOGS : tracks
+  HOSPITALS ||--o{ CLINICS : operates
+  HOSPITALS ||--o{ PROFILES : employs
+  CLINICS ||--o{ PROFILES : stations
+  CLINICS ||--o{ INVENTORY : stocks
+  CLINICS ||--o{ SALES : generates
+  SALES ||--o{ SALE_ITEMS : contains
+  INVENTORY ||--o{ SALE_ITEMS : depletes
+  CLINICS ||--o{ WARDS : houses
+  WARDS ||--o{ BEDS : contains
+  BEDS ||--o{ ADMISSIONS : hosts
+  HOSPITALS ||--o{ PURCHASE_ORDERS : issues
+  PURCHASE_ORDERS ||--o{ PURCHASE_ORDER_ITEMS : includes
+  HOSPITALS ||--o{ FINANCIAL_LEDGER : records
+  HOSPITALS ||--o{ AUDIT_LOGS : tracks
 ```
 
 | Entity Table | Purpose & Key Attributes |
@@ -311,45 +311,45 @@ erDiagram
 
 ---
 
-## 📂 Repository Directory Tour
+## Repository Directory Tour
 
 ```
 HOSPITAL-MANAGEMENT/
-├── 📁 public/                 # Static assets, sitemaps, robots.txt, tour media
-├── 📁 src/
-│   ├── 📁 components/         # Core UI Dashboards & Business Modules
-│   │   ├── 📄 CAFinancialSuite.tsx      # Comprehensive P&L, Balance Sheet, BRS & JV
-│   │   ├── 📄 IPDDashboard.tsx          # In-Patient Bed Matrix & Discharge Billing
-│   │   ├── 📄 POSDashboard.tsx          # Pharmacy & Consultation Point of Sale
-│   │   ├── 📄 InventoryDashboard.tsx    # Batch, Expiry, Stock Replay & XLSX Import
-│   │   ├── 📄 ProcurementDashboard.tsx  # Purchase Orders, GRN & Vendor Directory
-│   │   ├── 📄 HospitalDashboard.tsx     # Central HQ Command Center & KPIs
-│   │   ├── 📄 ClinicAdminDashboard.tsx  # Branch-level Operations & Local Metrics
-│   │   ├── 📄 StaffPortal.tsx           # Duty Rosters, Shift Swap & Biometrics
-│   │   ├── 📄 EquipmentsDashboard.tsx   # Biomedical Machine & Asset Registry
-│   │   ├── 📄 AuditLogs.tsx             # Compliance & Security Access Log Viewer
-│   │   ├── 📁 billing/                  # Subscription, Razorpay portal & invoice banners
-│   │   ├── 📁 landing/                  # Landing page sections, hero, features & pricing
-│   │   └── 📁 ui/                       # Radix UI primitives, modals, toasts & cards
-│   ├── 📁 context/            # React Context (HospitalContext, TourContext)
-│   ├── 📁 hooks/              # Custom hooks (useSubscription, etc.)
-│   ├── 📁 lib/                # Database abstraction, authService, analytics, utils
-│   ├── 📁 pages/              # Route views (Landing, About, Contact, Privacy, etc.)
-│   ├── 📄 App.tsx             # Main routing orchestrator & RBAC view controller
-│   └── 📄 main.tsx            # Application entry point
-├── 📁 supabase/
-│   ├── 📁 functions/          # Deno Edge Functions (Razorpay checkout, WhatsApp, etc.)
-│   └── 📁 migrations/         # 35+ Production SQL Migrations (Triggers, RPCs, RLS)
-├── 📁 tests/                  # Security, RBAC, IDOR, Load & Webhook Test Suites
-├── 📁 pentest/                # Penetration testing scripts (Concurreny, IDOR, Replay)
-├── 📁 scripts/                # WhatsApp agents, automation & migration scripts
-├── 📄 remotion.config.ts      # Programmatic 3D video configuration
-└── 📄 vite.config.ts          # Vite build & bundler configuration
+├── public/         # Static assets, sitemaps, robots.txt, tour media
+├── src/
+│  ├── components/     # Core UI Dashboards & Business Modules
+│  │  ├── CAFinancialSuite.tsx   # Comprehensive P&L, Balance Sheet, BRS & JV
+│  │  ├── IPDDashboard.tsx     # In-Patient Bed Matrix & Discharge Billing
+│  │  ├── POSDashboard.tsx     # Pharmacy & Consultation Point of Sale
+│  │  ├── InventoryDashboard.tsx  # Batch, Expiry, Stock Replay & XLSX Import
+│  │  ├── ProcurementDashboard.tsx # Purchase Orders, GRN & Vendor Directory
+│  │  ├── HospitalDashboard.tsx   # Central HQ Command Center & KPIs
+│  │  ├── ClinicAdminDashboard.tsx # Branch-level Operations & Local Metrics
+│  │  ├── StaffPortal.tsx      # Duty Rosters, Shift Swap & Biometrics
+│  │  ├── EquipmentsDashboard.tsx  # Biomedical Machine & Asset Registry
+│  │  ├── AuditLogs.tsx       # Compliance & Security Access Log Viewer
+│  │  ├── billing/         # Subscription, Razorpay portal & invoice banners
+│  │  ├── landing/         # Landing page sections, hero, features & pricing
+│  │  └── ui/            # Radix UI primitives, modals, toasts & cards
+│  ├── context/      # React Context (HospitalContext, TourContext)
+│  ├── hooks/       # Custom hooks (useSubscription, etc.)
+│  ├── lib/        # Database abstraction, authService, analytics, utils
+│  ├── pages/       # Route views (Landing, About, Contact, Privacy, etc.)
+│  ├── App.tsx       # Main routing orchestrator & RBAC view controller
+│  └── main.tsx      # Application entry point
+├── supabase/
+│  ├── functions/     # Deno Edge Functions (Razorpay checkout, WhatsApp, etc.)
+│  └── migrations/     # 35+ Production SQL Migrations (Triggers, RPCs, RLS)
+├── tests/         # Security, RBAC, IDOR, Load & Webhook Test Suites
+├── pentest/        # Penetration testing scripts (Concurreny, IDOR, Replay)
+├── scripts/        # WhatsApp agents, automation & migration scripts
+├── remotion.config.ts   # Programmatic 3D video configuration
+└── vite.config.ts     # Vite build & bundler configuration
 ```
 
 ---
 
-## 🚀 Quickstart & Deployment
+## Quickstart & Deployment
 
 ### Prerequisites
 * **Node.js**: `v18.0.0` or higher
@@ -404,7 +404,7 @@ npm run video:build
 
 ---
 
-## 🔒 Compliance & Standards Alignment
+## Compliance & Standards Alignment
 
 Jeevika was designed to adhere to healthcare technology guidelines:
 * **NABH / Indian Healthcare Standards**: Strict tracking of drug batch numbers, manufacturing/expiry dates, and prescription dispensing trails.
@@ -413,7 +413,7 @@ Jeevika was designed to adhere to healthcare technology guidelines:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from healthcare software engineers, security researchers, and developers!
 
@@ -427,8 +427,8 @@ We welcome contributions from healthcare software engineers, security researcher
 
 <div align="center">
 
-Made with ❤️ for healthcare professionals & hospital managers worldwide.
+Made with ️ for healthcare professionals & hospital managers worldwide.
 
-**[🌐 Visit Official Website](https://www.jeevika.in)**
+**[ Visit Official Website](https://www.jeevika.in)**
 
 </div>
