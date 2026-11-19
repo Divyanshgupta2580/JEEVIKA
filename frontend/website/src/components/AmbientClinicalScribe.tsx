@@ -10,7 +10,6 @@ import {
   Stethoscope,
   Activity,
   Pill,
-  RefreshCw,
   ShieldCheck,
   Languages,
 } from 'lucide-react';
@@ -44,7 +43,6 @@ export function AmbientClinicalScribe({
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'live' | 'manual'>('live');
   const [selectedMeds, setSelectedMeds] = useState<Record<number, boolean>>({});
 
   const recognitionRef = useRef<any>(null);
@@ -419,9 +417,10 @@ export function AmbientClinicalScribe({
                   'Patient Ramesh reports severe retrosternal chest pain with left shoulder radiation and cold sweats since 2 hours. BP is 150 over 95, pulse 94 regular. Start Tab Ecosprin 150mg once daily after food, Tab Atorvastatin 40mg at bedtime, and Cap Pantoprazole 40mg before breakfast.'
                 )
               }
-              className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 rounded-lg text-[10px] font-bold border border-slate-200 transition"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 rounded-lg text-[10px] font-bold border border-slate-200 transition inline-flex items-center gap-1"
             >
-              🚨 Acute STEMI (Ramesh)
+              <AlertTriangle className="w-3 h-3 text-rose-500" />
+              <span>Acute STEMI (Ramesh)</span>
             </button>
             <button
               onClick={() =>
@@ -429,9 +428,10 @@ export function AmbientClinicalScribe({
                   'Patient has burning retrosternal acidity, sour belching and gas after meals for 3 weeks. BP is 124 over 82, pulse 76. Start Cap Pantoprazole 40mg daily morning empty stomach and Tab Dolo 650mg SOS for headache.'
                 )
               }
-              className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 rounded-lg text-[10px] font-bold border border-slate-200 transition"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-800 rounded-lg text-[10px] font-bold border border-slate-200 transition inline-flex items-center gap-1"
             >
-              🔥 GERD / Acidity
+              <Activity className="w-3 h-3 text-amber-500" />
+              <span>GERD / Acidity</span>
             </button>
           </div>
         </div>
@@ -591,7 +591,7 @@ export function AmbientClinicalScribe({
             className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shadow-indigo-600/20 transition"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>✓ Apply Draft to SOAP & Prescription</span>
+            <span>Apply Draft to SOAP & Prescription</span>
           </button>
         </div>
 

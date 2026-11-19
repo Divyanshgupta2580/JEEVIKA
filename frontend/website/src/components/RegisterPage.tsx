@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService as auth } from '@/lib/authService';
 import { Button, Input, PasswordInput, Label, Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/basic';
-import { UserPlus, Mail, Lock, Loader2, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, Building2, Stethoscope, ShieldAlert } from 'lucide-react';
+import { UserPlus, Mail, Lock, Loader2, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, Building2, Stethoscope, ShieldAlert, Zap } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export function RegisterPage() {
@@ -24,7 +24,7 @@ export function RegisterPage() {
         try {
             await auth.signInDemo(role);
             toast({
-                title: '⚡ Instant Evaluator Access Granted',
+                title: 'Instant Evaluator Access Granted',
                 description: `Authenticated as ${role === 'HOSPITAL_ADMIN' ? 'Hospital Medical Director' : role === 'DOCTOR' ? 'Consulting Doctor' : 'Emergency Triage Lead'}`,
                 className: 'bg-emerald-50 border-emerald-200 text-emerald-900'
             });
@@ -200,13 +200,14 @@ export function RegisterPage() {
                                     <span className="w-full border-t border-slate-200" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white/90 px-3 text-slate-500 font-bold tracking-wider rounded">
-                                        ⚡ Hackathon Instant Evaluator Bypass
+                                    <span className="bg-white/90 px-3 text-slate-500 font-bold tracking-wider rounded inline-flex items-center gap-1.5">
+                                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                        Instant Evaluator Bypass
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <button
                                     type="button"
                                     onClick={() => handleDemoLogin('HOSPITAL_ADMIN')}

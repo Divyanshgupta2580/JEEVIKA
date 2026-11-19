@@ -106,7 +106,7 @@ export function useBillingActions() {
                 },
                 handler: function () {
                     // Payment successful (also handled by webhook)
-                    toast({ title: '🎉 Payment Successful!', description: `You've been upgraded to the ${checkout.plan_name} plan.` });
+                    toast({ title: 'Payment Successful!', description: `You've been upgraded to the ${checkout.plan_name} plan.` });
                     onSuccess?.();
                     // Reload after a short delay to let webhook process
                     setTimeout(() => window.location.reload(), 2000);

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/basic'
-import { X, Printer } from 'lucide-react'
+import { X, Printer, ShieldCheck } from 'lucide-react'
 import { useHospital } from '@/context/HospitalContext'
 
 import { ReceiptBranding } from './ReceiptBranding'
@@ -218,7 +218,8 @@ export function ReceiptModal({ open, onClose, sale, items }: { open: boolean, on
                     <div className="mt-6 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-[10px] text-slate-600">
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-1.5 font-bold">
                             <span className="text-slate-800 flex items-center gap-1.5">
-                                ⚖️ CDSCO Form 20/21 Retail Drug License: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200">DL-20-4921/2024</code>
+                                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 inline" />
+                                CDSCO Form 20/21 Retail Drug License: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200">DL-20-4921/2024</code>
                             </span>
                             <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                                 Schedule H / H1 / FEFO Verified

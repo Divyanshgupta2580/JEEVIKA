@@ -637,7 +637,7 @@ export function IPDDashboard() {
                                 <SelectValue placeholder="All Branches" />
                             </SelectTrigger>
                             <SelectContent className="bg-white border-slate-200">
-                                <SelectItem value="all">🏢 All Branches</SelectItem>
+                                <SelectItem value="all">All Branches</SelectItem>
                                 {clinics.map(clinic => (
                                     <SelectItem key={clinic.id} value={clinic.id}>
                                         <div className="flex items-center gap-2">
@@ -926,7 +926,7 @@ export function IPDDashboard() {
                                             <span>Bed Grid</span>
                                             <span>{beds.filter(b => b.ward_id === ward.id).length} Total</span>
                                         </div>
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                             {beds.filter(b => b.ward_id === ward.id).map(bed => (
                                                 <div key={bed.id} className={`p-2 border rounded-lg flex flex-col items-center justify-center gap-1 ${bed.status === 'available' ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
                                                     <BedDouble className={`h-5 w-5 ${bed.status === 'available' ? 'text-green-600' : 'text-gray-400'}`} />
@@ -1099,7 +1099,7 @@ export function IPDDashboard() {
                                     <SelectValue placeholder="Global (No Branch)" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border-slate-200">
-                                    <SelectItem value="none">🌐 Global (All Branches)</SelectItem>
+                                    <SelectItem value="none">Global (All Branches)</SelectItem>
                                     {clinics.map(clinic => (
                                         <SelectItem key={clinic.id} value={clinic.id}>
                                             <div className="flex items-center gap-2">

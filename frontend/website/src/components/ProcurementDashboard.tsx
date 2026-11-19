@@ -604,7 +604,7 @@ export default function ProcurementDashboard() {
                     
                     if (isAdmin) {
                         const proceed = window.confirm(
-                            `⚠️ CREDIT LIMIT EXCEEDED\n\nThis order needs ₹${netCreditImpact.toLocaleString()} in credit but only ₹${remainingCredit.toLocaleString()} remains for ${selectedSupplier.name}.\n\nAs an admin, you can override this. Proceed?`
+                            `CREDIT LIMIT EXCEEDED\n\nThis order needs ₹${netCreditImpact.toLocaleString()} in credit but only ₹${remainingCredit.toLocaleString()} remains for ${selectedSupplier.name}.\n\nAs an admin, you can override this. Proceed?`
                         );
                         if (!proceed) return;
                     } else {
@@ -1025,7 +1025,7 @@ export default function ProcurementDashboard() {
                                                 </select>
                                             </div>
                                         </div>
-                                                                         <div className="grid grid-cols-4 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                             <div className="col-span-1 space-y-2">
                                                 <Label className="text-slate-700 font-bold px-0.5">Place of Supply</Label>
                                                 <Input 

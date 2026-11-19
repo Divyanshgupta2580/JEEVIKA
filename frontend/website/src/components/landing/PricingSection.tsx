@@ -223,8 +223,8 @@ const PricingSection: React.FC = () => {
                                 {/* Popular badge */}
                                 {isPro && (
                                     <div className="absolute -top-0 left-0 right-0">
-                                        <div className={`bg-gradient-to-r ${style.from} ${style.to} text-white text-center py-2 text-xs font-bold uppercase tracking-widest`}>
-                                            ✦ Most Popular
+                                        <div className={`bg-gradient-to-r ${style.from} ${style.to} text-white text-center py-2 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-1.5`}>
+                                            <Sparkles className="w-3.5 h-3.5" /> Most Popular
                                         </div>
                                     </div>
                                 )}

@@ -141,7 +141,7 @@ export function SuperAdminDashboard({ onView }: SuperAdminDashboardProps) {
             })
 
             toast({
-                title: '✅ Hospital Onboarded',
+                title: 'Hospital Onboarded',
                 description: `Successfully registered ${hospitalName} and created admin account for ${adminName}.`,
                 className: 'bg-green-50 border-green-200 text-green-900'
             })

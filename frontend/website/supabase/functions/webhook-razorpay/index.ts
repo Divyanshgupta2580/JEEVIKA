@@ -45,9 +45,9 @@ async function sendBillingEmail(supabaseUrl: string, emailType: string, data: Re
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email_type: emailType, data }),
     });
-    console.log(`📧 Triggered ${emailType} email for hospital ${data.hospital_id}`);
+    console.log(`[INFO] Triggered ${emailType} email for hospital ${data.hospital_id}`);
   } catch (err) {
-    console.warn(`⚠️ Failed to trigger ${emailType} email:`, err);
+    console.warn(`[WARN] Failed to trigger ${emailType} email:`, err);
   }
 }
 
@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
     // ============================================================
     const contentLength = parseInt(req.headers.get('content-length') || '0');
     if (contentLength > MAX_PAYLOAD_SIZE) {
-      console.warn(`❌ Oversized payload rejected: ${contentLength} bytes`);
+      console.warn(`[WARN] Oversized payload rejected: ${contentLength} bytes`);
       return new Response(JSON.stringify({ error: 'Payload too large' }), {
         status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
 
     // Double-check actual size after reading
     if (rawBody.length > MAX_PAYLOAD_SIZE) {
-      console.warn(`❌ Oversized body rejected: ${rawBody.length} chars`);
+      console.warn(`[WARN] Oversized body rejected: ${rawBody.length} chars`);
       return new Response(JSON.stringify({ error: 'Payload too large' }), {
         status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
     // Verify webhook signature (timing-safe)
     const isValid = await verifySignature(rawBody, signature, RZP_WEBHOOK_SECRET);
     if (!isValid) {
-      console.error('❌ Invalid webhook signature');
+      console.error('[ERROR] Invalid webhook signature');
       return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
     const event = payload.event;
     const eventId = payload.event_id || payload.id || `${event}_${Date.now()}`;
 
-    console.log(`✅ Webhook verified: ${event} (id: ${eventId})`);
+    console.log(`[SUCCESS] Webhook verified: ${event} (id: ${eventId})`);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -120,7 +120,7 @@ Deno.serve(async (req: Request) => {
     if (eventTimestamp) {
       const eventAge = Math.floor(Date.now() / 1000) - eventTimestamp;
       if (eventAge > MAX_EVENT_AGE_SECONDS) {
-        console.warn(`⏰ Stale webhook rejected: event_id=${eventId}, age=${eventAge}s (max ${MAX_EVENT_AGE_SECONDS}s)`);
+        console.warn(`[WARN] Stale webhook rejected: event_id=${eventId}, age=${eventAge}s (max ${MAX_EVENT_AGE_SECONDS}s)`);
         return new Response(
           JSON.stringify({ error: 'Event too old', age_seconds: eventAge }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -138,7 +138,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (existingEvent) {
-      console.log(`⏭️ Duplicate event ${eventId}, skipping`);
+      console.log(`[INFO] Duplicate event ${eventId}, skipping`);
       return new Response(
         JSON.stringify({ received: true, duplicate: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -152,7 +152,7 @@ Deno.serve(async (req: Request) => {
     });
 
     if (logError) {
-      console.warn(`⚠️ Failed to log event (may be race duplicate): ${logError.message}`);
+      console.warn(`[WARN] Failed to log event (may be race duplicate): ${logError.message}`);
       // If it's a unique violation, another instance is handling it
       if (logError.code === '23505') {
         return new Response(
@@ -189,7 +189,7 @@ Deno.serve(async (req: Request) => {
         });
 
         if (rpcError) {
-          console.error('❌ process_payment_captured RPC failed:', rpcError.message);
+          console.error('[ERROR] process_payment_captured RPC failed:', rpcError.message);
           return new Response(
             JSON.stringify({ error: 'Processing failed', details: rpcError.message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -197,11 +197,11 @@ Deno.serve(async (req: Request) => {
         }
 
         if (result?.already_processed) {
-          console.log(`⏭️ Payment ${payment.id} already processed, skipping`);
+          console.log(`[INFO] Payment ${payment.id} already processed, skipping`);
           break;
         }
 
-        console.log(`✅ Payment captured: hospital=${hospitalId}, plan=${planSlug}, invoice=${result?.invoice_id}`);
+        console.log(`[SUCCESS] Payment captured: hospital=${hospitalId}, plan=${planSlug}, invoice=${result?.invoice_id}`);
 
         // Send upgrade email (fire-and-forget)
         const { data: hospital } = await supabase
@@ -238,11 +238,11 @@ Deno.serve(async (req: Request) => {
         });
 
         if (rpcError) {
-          console.error('❌ process_payment_failed RPC failed:', rpcError.message);
+          console.error('[ERROR] process_payment_failed RPC failed:', rpcError.message);
         } else if (result?.skipped) {
-          console.log(`⏭️ No active subscription for hospital ${hospitalId}`);
+          console.log(`[INFO] No active subscription for hospital ${hospitalId}`);
         } else {
-          console.log(`⚠️ Payment failed: hospital=${hospitalId}`);
+          console.log(`[WARN] Payment failed: hospital=${hospitalId}`);
         }
 
         const { data: hospital } = await supabase
@@ -289,7 +289,7 @@ Deno.serve(async (req: Request) => {
           .update({ status: 'cancelled', updated_at: new Date().toISOString() })
           .eq('id', dbSub.id);
 
-        if (updateError) console.error('❌ Subscription cancel failed:', updateError.message);
+        if (updateError) console.error('[ERROR] Subscription cancel failed:', updateError.message);
 
         const { error: eventError } = await supabase.from('subscription_events').insert({
           subscription_id: dbSub.id,
@@ -297,14 +297,14 @@ Deno.serve(async (req: Request) => {
           event_data: { razorpay_subscription_id: sub.id, reason: event },
         });
 
-        if (eventError) console.error('❌ Cancel event insert failed:', eventError.message);
+        if (eventError) console.error('[ERROR] Cancel event insert failed:', eventError.message);
 
         const { error: hospitalError } = await supabase
           .from('hospitals')
           .update({ subscription_plan: 'Free' })
           .eq('id', hospitalId);
 
-        if (hospitalError) console.error('❌ Hospital downgrade failed:', hospitalError.message);
+        if (hospitalError) console.error('[ERROR] Hospital downgrade failed:', hospitalError.message);
 
         const { data: hospital } = await supabase
           .from('hospitals')
@@ -319,7 +319,7 @@ Deno.serve(async (req: Request) => {
           subscription_id: dbSub.id,
         });
 
-        console.log(`🔴 Subscription ${event} for hospital ${hospitalId}`);
+        console.log(`[INFO] Subscription ${event} for hospital ${hospitalId}`);
         break;
       }
 

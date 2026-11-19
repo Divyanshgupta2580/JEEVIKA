@@ -215,11 +215,11 @@ export const websiteMarketingCopy: Record<
     "pa-IN": "17% ਬਚਾਓ",
     "ta-IN": "17% சேமிக்கவும்",
   },
-  "✦ Most Popular": {
-    "en-IN": "✦ Most Popular",
-    "hi-IN": "✦ सबसे लोकप्रिय",
-    "pa-IN": "✦ ਸਭ ਤੋਂ ਮਸ਼ਹੂਰ",
-    "ta-IN": "✦ மிகவும் பிரபலமானது",
+  "Most Popular": {
+    "en-IN": "Most Popular",
+    "hi-IN": "सबसे लोकप्रिय",
+    "pa-IN": "ਸਭ ਤੋਂ ਮਸ਼ਹੂਰ",
+    "ta-IN": "மிகவும் பிரபலமானது",
   },
   "Tailored pricing for your organization": {
     "en-IN": "Tailored pricing for your organization",
@@ -777,11 +777,11 @@ export const websiteMarketingCopy: Record<
     "pa-IN": "2. ਸੁਰੱਖਿਆ ਉਪਾਅ",
     "ta-IN": "2. பாதுகாப்பு நடவடிக்கைகள்",
   },
-  "⚡ Hackathon Instant Evaluator Bypass": {
-    "en-IN": "⚡ Hackathon Instant Evaluator Bypass",
-    "hi-IN": "⚡ हैकाथॉन मूल्यांकन हेतु तुरंत प्रवेश",
-    "pa-IN": "⚡ ਹੈਕਾਥਾਨ ਮੁਲਾਂਕਣ ਲਈ ਤੁਰੰਤ ਦਾਖ਼ਲਾ",
-    "ta-IN": "⚡ ஹேக்கத்தான் மதிப்பீட்டிற்கான உடனடி நுழைவு",
+  "Hackathon Instant Evaluator Bypass": {
+    "en-IN": "Hackathon Instant Evaluator Bypass",
+    "hi-IN": "हैकाथॉन मूल्यांकन हेतु तुरंत प्रवेश",
+    "pa-IN": "ਹੈਕਾਥਾਨ ਮੁਲਾਂਕਣ ਲਈ ਤੁਰੰਤ ਦਾਖ਼ਲਾ",
+    "ta-IN": "ஹேக்கத்தான் மதிப்பீட்டிற்கான உடனடி நுழைவு",
   },
   ". Once verified, you can complete your hospital setup.": {
     "en-IN": ". Once verified, you can complete your hospital setup.",

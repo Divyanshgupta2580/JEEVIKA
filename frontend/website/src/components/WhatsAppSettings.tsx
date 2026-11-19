@@ -182,7 +182,7 @@ export function WhatsAppSettings({ hospitalId }: { hospitalId: string }) {
 
                             <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                                 <p className="text-[11px] text-blue-300 leading-relaxed font-medium">
-                                    🚀 *Installation*: Download the agent script, install Python, and run it on any office PC. It will ask for these two keys. One scan, and you're set!
+                                    <strong className="text-blue-200">Installation:</strong> Download the agent script, install Python, and run it on any office PC. It will ask for these two keys. One scan, and you're set!
                                 </p>
                             </div>
                         </div>

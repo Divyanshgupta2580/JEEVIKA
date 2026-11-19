@@ -1293,7 +1293,7 @@ export function CAFinancialSuite() {
                                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
                                                 <input name="b_desc" type="text" required placeholder="NEFT from ABC Pharma" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                                             </div>
-                                            <div className="grid grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Withdrawal (Dr)</label>
                                                     <input name="b_debit" type="number" step="0.01" min="0" defaultValue="0" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-rose-400 outline-none font-mono" />

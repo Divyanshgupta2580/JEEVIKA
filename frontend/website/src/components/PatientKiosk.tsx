@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { VoiceInput } from './VoiceInput';
-import { ArrowLeft, Volume2, VolumeX, ShieldCheck, Camera } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, ShieldCheck, Camera, AlertTriangle, AlertCircle, QrCode, Smartphone, Globe, Shield, Cloud, Check, FileText, Pill, FlaskConical, Download, Mic, Upload } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { dataService } from '@/lib/dataService';
 import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
@@ -119,24 +119,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'ਨਵੇਂ ਮਰੀਜ਼?',
     optRegSub: 'ਰਜਿਸਟਰ ਕਰੋ ਅਤੇ ABHA ਬਣਾਓ',
     btnSelect: 'ਚੁਣੋ',
-    btnSelected: '✓ ਚੁਣਿਆ ਗਿਆ',
+    btnSelected: 'ਚੁਣਿਆ ਗਿਆ',
     btnOpenCam: 'ਸਕੈਨ ਕਰਨ ਲਈ ਕੈਮਰਾ ਖੋਲ੍ਹੋ',
     btnVerifyMob: 'ਮੋਬਾਈਲ OTP ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',
     btnFetchAbha: 'ABHA ਪ੍ਰੋਫ਼ਾਈਲ ਪ੍ਰਾਪਤ ਕਰੋ',
     btnVerifyAadh: 'ਆਧਾਰ e-KYC ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',
     pmjayTitle: 'ਆਯੁਸ਼ਮਾਨ ਭਾਰਤ PM-JAY ਸਰਗਰਮ',
     pmjayDesc: '₹5,00,000 ਸਾਲਾਨਾ ਕਵਰੇਜ • ਕੈਸ਼ਲੈੱਸ OPD ਮਨਜ਼ੂਰ',
-    continueVoiceBtn: 'ਲੱਛਣ ਦੱਸਣ ਲਈ ਅੱਗੇ ਵਧੋ ➔',
+    continueVoiceBtn: 'ਲੱਛਣ ਦੱਸਣ ਲਈ ਅੱਗੇ ਵਧੋ',
     headerBack: 'ਪਿੱਛੇ',
     aiQuestion: 'ਤੁਹਾਨੂੰ ਕਿੱਥੇ ਦਰਦ ਜਾਂ ਤਕਲੀਫ਼ ਹੈ? ਸਰੀਰ ਦੇ ਹਿੱਸੇ ਨੂੰ ਛੂਹੋ ਜਾਂ ਬੋਲੋ।',
     aiQuestionSub: 'ਲੱਛਣ ਚੁਣੋ, ਮਾਈਕ ਦਬਾ ਕੇ ਬੋਲੋ ਜਾਂ ਲਿਖੋ।',
     aiVoicePrompt: 'ਤੁਹਾਨੂੰ ਕਿੱਥੇ ਦਰਦ ਜਾਂ ਤਕਲੀਫ਼ ਹੈ? ਸਕ੍ਰੀਨ ਉੱਤੇ ਸਰੀਰ ਦਾ ਹਿੱਸਾ ਛੂਹੋ ਜਾਂ ਬੋਲਣ ਲਈ ਮਾਈਕ ਦਬਾਓ।',
-    tabVoice: '🎙️ ਬੋਲੋ',
-    tabType: '⌨️ ਲਿਖੋ',
+    tabVoice: 'ਬੋਲੋ',
+    tabType: 'ਲਿਖੋ',
     typePrompt: 'ਆਪਣੀ ਸਮੱਸਿਆ ਦਾ ਵੇਰਵਾ ਦਿਓ:',
     typePlaceholder: 'ਉਦਾਹਰਨ: ਮੈਨੂੰ ਪਿਛਲੇ 3 ਦਿਨਾਂ ਤੋਂ ਤੇਜ਼ ਸਿਰਦਰਦ, ਗਲੇ ਵਿੱਚ ਦਰਦ ਅਤੇ ਬੁਖ਼ਾਰ ਹੈ...',
-    quickChipsLabel: '⚡ ਤੁਰੰਤ ਲੱਛਣ ਵਿਕਲਪ:',
-    typeTranslateBtn: '⚡ ਅਨੁਵਾਦ ਕਰੋ ਅਤੇ ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ ➔',
+    quickChipsLabel: 'ਤੁਰੰਤ ਲੱਛਣ ਵਿਕਲਪ:',
+    typeTranslateBtn: 'ਅਨੁਵਾਦ ਕਰੋ ਅਤੇ ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ',
     kneeTitle: 'ਗੋਡਿਆਂ ਅਤੇ ਜੋੜਾਂ ਦਾ ਦਰਦ',
     kneeVoice: 'ਗੋਡਿਆਂ ਦੇ ਦਰਦ ਦੀ ਜਾਣਕਾਰੀ ਦਰਜ ਕਰ ਲਈ ਗਈ ਹੈ।',
     chestTitle: 'ਛਾਤੀ ਵਿੱਚ ਤੇਜ਼ ਦਰਦ — ਐਮਰਜੈਂਸੀ',
@@ -146,13 +146,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'ਪੇਟ ਦਰਦ ਅਤੇ ਤੇਜ਼ਾਬੀਅਤ',
     stomachVoice: 'ਪੇਟ ਦਰਦ ਅਤੇ ਤੇਜ਼ਾਬੀਅਤ ਦਰਜ ਕਰ ਲਈ ਗਈ ਹੈ।',
     micLabel: 'ਬੋਲਣ ਲਈ ਮਾਈਕ ਦਬਾਓ',
-    nextScanBtn: 'ਅਗਲਾ: ਪਰਚੀ ਸਕੈਨ ਕਰੋ ➔',
+    nextScanBtn: 'ਅਗਲਾ: ਪਰਚੀ ਸਕੈਨ ਕਰੋ',
     scanRxTitle: 'ਪੁਰਾਣੀ ਪਰਚੀ ਸਕੈਨਰ ਹੇਠਾਂ ਰੱਖੋ',
     scanRxSub: 'Sarvam Vision 3B ਲਿਖਤ ਨੂੰ ਡਿਜ਼ੀਟਲ ਰੂਪ ਵਿੱਚ ਦਰਜ ਕਰਦਾ ਹੈ',
     scanRxAct: 'ਪਰਚੀ ਸਕੈਨ ਕਰੋ ਅਤੇ ਜਾਣਕਾਰੀ ਦਰਜ ਕਰੋ',
     ocrSuccessVoice: 'ਦਵਾਈ ਦੀ ਪਰਚੀ ਸਫਲਤਾਪੂਰਵਕ ਸਕੈਨ ਹੋ ਗਈ ਹੈ।',
     ocrHead: 'ਪਛਾਣੀਆਂ ਗਈਆਂ ਦਵਾਈਆਂ ਦੇ ਵੇਰਵੇ',
-    confirmTokenBtn: 'ਪੁਸ਼ਟੀ ਕਰੋ ਅਤੇ ਟੋਕਨ ਲਵੋ ➔',
+    confirmTokenBtn: 'ਪੁਸ਼ਟੀ ਕਰੋ ਅਤੇ ਟੋਕਨ ਲਵੋ',
     tokenDone: 'ਮਰੀਜ਼ ਦਾ ਪੰਜੀਕਰਨ ਪੂਰਾ ਹੋਇਆ',
     tokenSub: 'ਤੁਹਾਡਾ OPD ਟੋਕਨ ਨੰਬਰ',
     tokenMsg: 'ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਡਾਕਟਰ ਦੀ ਸਕ੍ਰੀਨ ਉੱਤੇ ਭੇਜ ਦਿੱਤੀ ਗਈ ਹੈ।',
@@ -160,7 +160,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'ਅਗਲੇ ਮਰੀਜ਼ ਦੀ ਸ਼ੁਰੂਆਤ ਕਰੋ',
     transcriptionHint: 'ਮੇਰੇ ਦੋਵੇਂ ਗੋਡਿਆਂ ਵਿੱਚ 6 ਮਹੀਨਿਆਂ ਤੋਂ ਦਰਦ ਹੈ',
     listenBtn: 'ਸੁਣੋ',
-    skipBtnText: 'ਪਰਚੀ ਨਹੀਂ ਹੈ ➔ ਛੱਡੋ',
+    skipBtnText: 'ਪਰਚੀ ਨਹੀਂ ਹੈ ਛੱਡੋ',
   },
   'hi-IN': {
     langName: 'हिन्दी',
@@ -178,24 +178,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'नया मरीज? (New Patient?)',
     optRegSub: 'पंजीकरण और आभा बनाएं (Register & Create ABHA)',
     btnSelect: 'चुनें (Select)',
-    btnSelected: '✓ चुना गया (Selected)',
+    btnSelected: 'चुना गया (Selected)',
     btnOpenCam: 'कैमरा खोलकर स्कैन करें (Open Camera to Scan)',
     btnVerifyMob: 'मोबाइल OTP सत्यापित करें (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA प्रोफाइल प्राप्त करें (Fetch ABHA Profile)',
     btnVerifyAadh: 'आधार e-KYC सत्यापित करें (Verify Aadhaar e-KYC)',
     pmjayTitle: 'आयुष्मान भारत PM-JAY सक्रिय (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 वार्षिक मुफ्त इलाज (Cashless OPD Approved)',
-    continueVoiceBtn: 'लक्षण बताने के लिए आगे बढ़ें (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'लक्षण बताने के लिए आगे बढ़ें (Continue to Symptoms)',
     headerBack: 'पीछे (Back)',
     aiQuestion: 'आपको कहाँ दर्द या तकलीफ है? नीचे दिए गए हिस्से को छुएं या बोलें।',
     aiQuestionSub: 'लक्षण चुनें या बोलने के लिए माइक दबाएं (Where does it hurt?)',
     aiVoicePrompt: 'आपको कहाँ दर्द या तकलीफ है? नीचे दिए गए हिस्से को छुएं या बोलें।',
-    tabVoice: '🎙️ बोलें (Speak)',
-    tabType: '⌨️ टाइप करें (Type)',
+    tabVoice: 'बोलें (Speak)',
+    tabType: 'टाइप करें (Type)',
     typePrompt: 'अपनी समस्याओं का विवरण दें (Describe symptoms in Hindi/English):',
     typePlaceholder: 'उदा: मुझे पिछले 3 दिनों से तेज सिरदर्द, गले में दर्द और बुखार है...',
-    quickChipsLabel: '⚡ त्वरित विकल्प (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ अनुवाद और विश्लेषण (Translate & Analyze) ➔',
+    quickChipsLabel: 'त्वरित विकल्प (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'अनुवाद और विश्लेषण (Translate & Analyze)',
     kneeTitle: 'घुटनों व जोड़ों का दर्द (Knee & Joint Pain)',
     kneeVoice: 'घुटनों का दर्द दर्ज कर लिया गया है।',
     chestTitle: 'सीने में तेज दर्द (Severe Chest Pain - Emergency)',
@@ -205,13 +205,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'पेट दर्द व गैस (Stomach Pain & Acidity)',
     stomachVoice: 'पेट दर्द दर्ज कर लिया गया है।',
     micLabel: 'बोलने के लिए माइक दबाएं (Tap Mic to Speak)',
-    nextScanBtn: 'पर्चा स्कैन करें (Next: Scan Rx) ➔',
+    nextScanBtn: 'पर्चा स्कैन करें (Next: Scan Rx)',
     scanRxTitle: 'पुराना पर्चा स्कैनर के नीचे रखें (Place Prescription)',
     scanRxSub: 'सर्वम विज़न 3B लिखावट को डिजिटाइज़ करता है (AI Digitization)',
     scanRxAct: 'पर्चा स्कैन करें (Capture & Digitize)',
     ocrSuccessVoice: 'दवाइयों का पर्चा सफलतापूर्वक स्कैन हो गया है।',
     ocrHead: 'निकाली गई दवाइयों की सूची (Extracted Clinical Entities)',
-    confirmTokenBtn: 'पुष्टि करें और टोकन लें (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'पुष्टि करें और टोकन लें (Confirm & Generate Token)',
     tokenDone: 'पंजीकरण पूर्ण हुआ (Clinical Intake Complete)',
     tokenSub: 'आपका ओपीडी टोकन नंबर (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'आपका विवरण डॉक्टर की स्क्रीन पर भेज दिया गया है (Sent directly to Doctor).',
@@ -219,7 +219,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'अगला मरीज शुरू करें (Start Next Patient)',
     transcriptionHint: 'मुझे 6 महीने से दोनों घुटनों में दर्द है',
     listenBtn: 'सुनें (Listen)',
-    skipBtnText: 'पर्चे नहीं हैं ➔ आगे बढ़ें (Skip / No Documents ➔)'
+    skipBtnText: 'पर्चे नहीं हैं आगे बढ़ें (Skip / No Documents)'
   },
   'te-IN': {
     langName: 'తెలుగు',
@@ -237,24 +237,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'కొత్త పేషెంట్? (New Patient?)',
     optRegSub: 'నమోదు & ఆభా సృష్టి (Register & Create ABHA)',
     btnSelect: 'ఎంచుకోండి (Select)',
-    btnSelected: '✓ ఎంచుకోబడింది (Selected)',
+    btnSelected: 'ఎంచుకోబడింది (Selected)',
     btnOpenCam: 'కెమెరా ప్రారంభించి స్కాన్ చేయండి (Open Camera to Scan)',
     btnVerifyMob: 'ఓటీపీ ధృవీకరించి రికార్డులు పొందండి (Verify Mobile OTP)',
     btnFetchAbha: 'ఆభా రికార్డ్ పొందండి (Fetch ABHA Profile)',
     btnVerifyAadh: 'ఆధార్ బయోమెట్రిక్ / ఓటీపీ (Verify Aadhaar e-KYC)',
     pmjayTitle: 'ఆయుష్మాన్ భారత్ PM-JAY యాక్టివ్ (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 వార్షిక కవరేజ్ • 100% ఉచిత క్యాష్‌లెస్‌ చికిత్స (Cashless Approved)',
-    continueVoiceBtn: 'లక్షణాలు చెప్పడానికి కొనసాగించండి (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'లక్షణాలు చెప్పడానికి కొనసాగించండి (Continue to Symptoms)',
     headerBack: 'వెనుకకు (Back)',
     aiQuestion: 'మీకు ఎక్కడ నొప్పిగా ఉంది? బొమ్మను తాకండి, మాట్లాడండి లేదా రాయండి.',
     aiQuestionSub: 'నొప్పి ఉన్న భాగాన్ని తాకండి లేదా మైక్ నొక్కి మాట్లాడండి (Where does it hurt?)',
     aiVoicePrompt: 'మీకు ఎక్కడ నొప్పిగా ఉంది? బొమ్మను తాకండి లేదా మైక్ నొక్కి మాట్లాడండి.',
-    tabVoice: '🎙️ మాట్లాడండి (Speak)',
-    tabType: '⌨️ రాయండి (Type)',
+    tabVoice: 'మాట్లాడండి (Speak)',
+    tabType: 'రాయండి (Type)',
     typePrompt: 'మీ సమస్యలను వివరించండి (Describe your symptoms in Telugu/English):',
     typePlaceholder: 'ఉదా: నాకు గత 3 రోజులుగా తీవ్రమైన తలనొప్పి, గొంతు నొప్పి మరియు జ్వరం ఉంది...',
-    quickChipsLabel: '⚡ త్వరిత ఎంపికలు (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ అనువదించండి & విశ్లేషించండి (Translate & Analyze) ➔',
+    quickChipsLabel: 'త్వరిత ఎంపికలు (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'అనువదించండి & విశ్లేషించండి (Translate & Analyze)',
     kneeTitle: 'మోకాళ్ళ / కీళ్ళ నొప్పులు (Knee & Joint Pain)',
     kneeVoice: 'మోకాళ్ళ నొప్పులు నమోదు చేయబడ్డాయి.',
     chestTitle: 'ఛాతీలో తీవ్ర నొప్పి (Severe Chest Pain - Emergency)',
@@ -264,13 +264,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'కడుపు నొప్పి / అజీర్ణం (Stomach Pain & Acidity)',
     stomachVoice: 'కడుపు నొప్పి మరియు అజీర్ణం నమోదు చేయబడ్డాయి.',
     micLabel: 'మాట్లాడటానికి మైక్ నొక్కండి (Tap Mic to Speak)',
-    nextScanBtn: 'ప్రిస్క్రిప్షన్ స్కాన్ చేయండి (Next: Scan Rx) ➔',
+    nextScanBtn: 'ప్రిస్క్రిప్షన్ స్కాన్ చేయండి (Next: Scan Rx)',
     scanRxTitle: 'పాత ప్రిస్క్రిప్షన్ పేపర్‌ను కెమెరా కింద ఉంచండి (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B చేతివ్రాతను డిజిటైజ్ చేస్తుంది (AI Digitization)',
     scanRxAct: 'ప్రిస్క్రిప్షన్ స్కాన్ చేయండి (Capture & Digitize)',
     ocrSuccessVoice: 'ప్రిస్క్రిప్షన్ రికార్డ్ విజయవంతంగా నమోదు చేయబడింది.',
     ocrHead: 'గుర్తించబడిన మందుల వివరాలు (Extracted Clinical Entities)',
-    confirmTokenBtn: 'ధృవీకరించి టోకెన్ పొందండి (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'ధృవీకరించి టోకెన్ పొందండి (Confirm & Generate Token)',
     tokenDone: 'కేస్ నమోదు పూర్తయింది (Clinical Intake Complete)',
     tokenSub: 'మీ ఓపీడీ టోకెన్ సంఖ్య (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'మీ వివరాలు డాక్టర్ గారి స్క్రీన్ కు పంపబడ్డాయి (Sent directly to Doctor).',
@@ -278,7 +278,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'మరో పేషెంట్ ప్రారంభించండి (Start Next Patient)',
     transcriptionHint: 'నాకు 6 నెలలుగా రెండు మోకాళ్ళలో నొప్పిగా ఉంది',
     listenBtn: 'వినండి (Listen)',
-    skipBtnText: 'పత్రాలు లేవు ➔ స్కిప్ చేయండి (Skip / No Documents ➔)'
+    skipBtnText: 'పత్రాలు లేవు స్కిప్ చేయండి (Skip / No Documents)'
   },
   'en-IN': {
     langName: 'English',
@@ -296,24 +296,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'New Patient?',
     optRegSub: 'Register & Create ABHA',
     btnSelect: 'Select',
-    btnSelected: '✓ Selected',
+    btnSelected: 'Selected',
     btnOpenCam: 'Open Camera to Scan QR',
     btnVerifyMob: 'Verify Mobile OTP & Fetch Records',
     btnFetchAbha: 'Fetch ABHA Profile',
     btnVerifyAadh: 'Verify Aadhaar e-KYC',
     pmjayTitle: 'Ayushman Bharat PM-JAY Active',
     pmjayDesc: '₹5,00,000 Annual Coverage • Cashless OPD Approved',
-    continueVoiceBtn: 'Continue to Symptom Intake ➔',
+    continueVoiceBtn: 'Continue to Symptom Intake',
     headerBack: 'Back',
     aiQuestion: 'Where does it hurt? Touch the body area below, speak via microphone, or type below.',
     aiQuestionSub: 'Select symptom, tap microphone to speak, or type symptoms',
     aiVoicePrompt: 'Where does it hurt? Please touch the body area on the screen or press the microphone to speak.',
-    tabVoice: '🎙️ Speak',
-    tabType: '⌨️ Type',
+    tabVoice: 'Speak',
+    tabType: 'Type',
     typePrompt: 'Describe your symptoms in your own words:',
     typePlaceholder: 'e.g., I have had severe headache, sore throat, and high fever for the last 3 days...',
-    quickChipsLabel: '⚡ Quick 1-Tap Add Symptoms:',
-    typeTranslateBtn: '⚡ Translate & Analyze ➔',
+    quickChipsLabel: 'Quick 1-Tap Add Symptoms:',
+    typeTranslateBtn: 'Translate & Analyze',
     kneeTitle: 'Knee & Joint Pain',
     kneeVoice: 'Bilateral knee joint pain recorded.',
     chestTitle: 'Severe Chest Pain (Emergency)',
@@ -323,13 +323,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'Stomach Pain & Acidity',
     stomachVoice: 'Stomach pain and acid peptic disorder recorded.',
     micLabel: 'Tap Microphone to Speak',
-    nextScanBtn: 'Next: Scan Paper Prescriptions ➔',
+    nextScanBtn: 'Next: Scan Paper Prescriptions',
     scanRxTitle: 'Place Paper Prescription Under Scanner',
     scanRxSub: 'Sarvam Vision 3B VLM digitizes cursive handwriting',
     scanRxAct: 'Capture & Digitize Prescription',
     ocrSuccessVoice: 'Prescription OCR extraction complete. Active medications recorded.',
     ocrHead: 'Extracted Clinical Entities (96% Accuracy)',
-    confirmTokenBtn: 'Confirm & Generate Token ➔',
+    confirmTokenBtn: 'Confirm & Generate Token',
     tokenDone: 'Clinical Intake Complete',
     tokenSub: 'YOUR OPD TOKEN NUMBER',
     tokenMsg: 'Your case summary has been sent directly to the doctor.',
@@ -337,7 +337,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'Start Next Patient Intake',
     transcriptionHint: 'I have had pain in both knees for 6 months',
     listenBtn: 'Listen',
-    skipBtnText: 'Skip / No Documents ➔'
+    skipBtnText: 'Skip / No Documents'
   },
   'ta-IN': {
     langName: 'தமிழ்',
@@ -355,24 +355,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'புதிய நோயாளி? (New Patient?)',
     optRegSub: 'பதிவு & ABHA உருவாக்கம் (Register & Create ABHA)',
     btnSelect: 'தேர்ந்தெடு (Select)',
-    btnSelected: '✓ தேர்ந்தெடுக்கப்பட்டது (Selected)',
+    btnSelected: 'தேர்ந்தெடுக்கப்பட்டது (Selected)',
     btnOpenCam: 'கேமராவைத் திறந்து ஸ்கேன் செய்க (Open Camera to Scan)',
     btnVerifyMob: 'OTP சரிபார்த்து பதிவுகளைப் பெறுக (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA சுயவிவரத்தைப் பெறுக (Fetch ABHA Profile)',
     btnVerifyAadh: 'ஆதார் e-KYC சரிபார்க்கவும் (Verify Aadhaar e-KYC)',
     pmjayTitle: 'ஆயுஷ்மான் பாரத் PM-JAY செயலில் உள்ளது (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 இலவச மருத்துவக் காப்பீடு • ரொக்கமில்லா சிகிச்சை (Cashless Approved)',
-    continueVoiceBtn: 'அறிகுறிகளைக் கூற தொடரவும் (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'அறிகுறிகளைக் கூற தொடரவும் (Continue to Symptoms)',
     headerBack: 'பின்னே (Back)',
     aiQuestion: 'உங்களுக்கு எங்கு வலிக்கிறது? கீழே உள்ள பகுதியைத் தொடவும் அல்லது மைக்கில் பேசவும்.',
     aiQuestionSub: 'அறிகுறியைத் தேர்ந்தெடுக்கவும் அல்லது பேசவும் (Where does it hurt?)',
     aiVoicePrompt: 'உங்களுக்கு எங்கு வலிக்கிறது? கீழே உள்ள பகுதியைத் தொடவும் அல்லது மைக்கில் பேசவும்.',
-    tabVoice: '🎙️ பேசுங்கள் (Speak)',
-    tabType: '⌨️ தட்டச்சு செய்க (Type)',
+    tabVoice: 'பேசுங்கள் (Speak)',
+    tabType: 'தட்டச்சு செய்க (Type)',
     typePrompt: 'உங்கள் அறிகுறிகளை விவரிக்கவும் (Describe symptoms in Tamil/English):',
     typePlaceholder: 'உதா: எனக்கு 3 நாட்களாக கடுமையான தலைவலி, தொண்டை வலி மற்றும் காய்ச்சல் உள்ளது...',
-    quickChipsLabel: '⚡ விரைவு தேர்வு (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ மொழிபெயர்க்க & பகுப்பாய்வு (Translate & Analyze) ➔',
+    quickChipsLabel: 'விரைவு தேர்வு (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'மொழிபெயர்க்க & பகுப்பாய்வு (Translate & Analyze)',
     kneeTitle: 'முழங்கால் மற்றும் மூட்டு வலி (Knee & Joint Pain)',
     kneeVoice: 'மூட்டு வலி பதிவு செய்யப்பட்டது.',
     chestTitle: 'கடுமையான மார்பு வலி (Severe Chest Pain - Emergency)',
@@ -382,13 +382,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'வயிற்று வலி & அஜீரணம் (Stomach Pain & Acidity)',
     stomachVoice: 'வயிற்று வலி பதிவு செய்யப்பட்டது.',
     micLabel: 'பேச மைக்கை அழுத்தவும் (Tap Mic to Speak)',
-    nextScanBtn: 'மருந்து சீட்டை ஸ்கேன் செய்க (Next: Scan Rx) ➔',
+    nextScanBtn: 'மருந்து சீட்டை ஸ்கேன் செய்க (Next: Scan Rx)',
     scanRxTitle: 'பழைய மருந்து சீட்டை ஸ்கேனரில் வைக்கவும் (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B கையெழுத்தை டிஜிட்டல் மயமாக்குகிறது (AI Digitization)',
     scanRxAct: 'மருந்து சீட்டை ஸ்கேன் செய்க (Capture & Digitize)',
     ocrSuccessVoice: 'மருந்து சீட்டு வெற்றிகரமாக பதிவு செய்யப்பட்டது.',
     ocrHead: 'கண்டறியப்பட்ட மருந்துகள் (Extracted Clinical Entities)',
-    confirmTokenBtn: 'டோக்கனைப் பெறுக (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'டோக்கனைப் பெறுக (Confirm & Generate Token)',
     tokenDone: 'பதிவு முடிந்தது (Clinical Intake Complete)',
     tokenSub: 'உங்கள் OPD டோக்கன் எண் (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'உங்கள் விவரங்கள் மருத்துவருக்கு அனுப்பப்பட்டன (Sent directly to Doctor).',
@@ -396,7 +396,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'அடுத்த நோயாளி (Start Next Patient)',
     transcriptionHint: 'எனக்கு 6 மாதங்களாக இரு முழங்கால்களிலும் வலி உள்ளது',
     listenBtn: 'கேளுங்கள் (Listen)',
-    skipBtnText: 'மருந்து சீட்டு இல்லை ➔ தொடரவும் (Skip / No Documents ➔)'
+    skipBtnText: 'மருந்து சீட்டு இல்லை தொடரவும் (Skip / No Documents)'
   },
   'kn-IN': {
     langName: 'ಕನ್ನಡ',
@@ -414,24 +414,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'ಹೊಸ ರೋಗಿ? (New Patient?)',
     optRegSub: 'ನೋಂದಣಿ & ABHA ರಚಿಸಿ (Register & Create ABHA)',
     btnSelect: 'ಆಯ್ಕೆಮಾಡಿ (Select)',
-    btnSelected: '✓ ಆಯ್ಕೆಯಾಗಿದೆ (Selected)',
+    btnSelected: 'ಆಯ್ಕೆಯಾಗಿದೆ (Selected)',
     btnOpenCam: 'ಕ್ಯಾಮೆರಾ ತೆರೆದು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ (Open Camera to Scan)',
     btnVerifyMob: 'OTP ಪರಿಶೀಲಿಸಿ ದಾಖಲೆಗಳನ್ನು ಪಡೆಯಿರಿ (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA ಪ್ರೊಫೈಲ್ ಪಡೆಯಿರಿ (Fetch ABHA Profile)',
     btnVerifyAadh: 'ಆಧಾರ್ e-KYC ಪರಿಶೀಲಿಸಿ (Verify Aadhaar e-KYC)',
     pmjayTitle: 'ಆಯುಷ್ಮಾನ್ ಭಾರತ್ PM-JAY ಸಕ್ರಿಯವಾಗಿದೆ (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 ವಾರ್ಷಿಕ ನಗದು ರಹಿತ ಚಿಕಿತ್ಸೆ (Cashless Approved)',
-    continueVoiceBtn: 'ಲಕ್ಷಣಗಳನ್ನು ಹೇಳಲು ಮುಂದುವರಿಯಿರಿ (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'ಲಕ್ಷಣಗಳನ್ನು ಹೇಳಲು ಮುಂದುವರಿಯಿರಿ (Continue to Symptoms)',
     headerBack: 'ಹಿಂದಕ್ಕೆ (Back)',
     aiQuestion: 'ನಿಮಗೆ ಎಲ್ಲಿ ನೋವಾಗುತ್ತಿದೆ? ಕೆಳಗಿನ ಭಾಗವನ್ನು ಸ್ಪರ್ಶಿಸಿ ಅಥವಾ ಮೈಕ್‌ನಲ್ಲಿ ಮಾತನಾಡಿ.',
     aiQuestionSub: 'ಲಕ್ಷಣವನ್ನು ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ (Where does it hurt?)',
     aiVoicePrompt: 'ನಿಮಗೆ ಎಲ್ಲಿ ನೋವಾಗುತ್ತಿದೆ? ಕೆಳಗಿನ ಭಾಗವನ್ನು ಸ್ಪರ್ಶಿಸಿ ಅಥವಾ ಮೈಕ್‌ನಲ್ಲಿ ಮಾತನಾಡಿ.',
-    tabVoice: '🎙️ ಮಾತನಾಡಿ (Speak)',
-    tabType: '⌨️ ಟೈಪ್ ಮಾಡಿ (Type)',
+    tabVoice: 'ಮಾತನಾಡಿ (Speak)',
+    tabType: 'ಟೈಪ್ ಮಾಡಿ (Type)',
     typePrompt: 'ನಿಮ್ಮ ಲಕ್ಷಣಗಳನ್ನು ವಿವರಿಸಿ (Describe symptoms in Kannada/English):',
     typePlaceholder: 'ಉದಾ: ನನಗೆ 3 ದಿನಗಳಿಂದ ತೀವ್ರ ತಲೆನೋವು, ಗಂಟಲು ನೋವು ಮತ್ತು ಜ್ವರವಿದೆ...',
-    quickChipsLabel: '⚡ ತ್ವರಿತ ಆಯ್ಕೆಗಳು (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ ಅನುವಾದ ಮತ್ತು ವಿಶ್ಲೇಷಣೆ (Translate & Analyze) ➔',
+    quickChipsLabel: 'ತ್ವರಿತ ಆಯ್ಕೆಗಳು (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'ಅನುವಾದ ಮತ್ತು ವಿಶ್ಲೇಷಣೆ (Translate & Analyze)',
     kneeTitle: 'ಮಂಡಿ & ಕೀಲು ನೋವು (Knee & Joint Pain)',
     kneeVoice: 'ಮಂಡಿ ನೋವು ದಾಖಲಾಗಿದೆ.',
     chestTitle: 'ತೀವ್ರ ಎದೆ ನೋವು (Severe Chest Pain - Emergency)',
@@ -441,13 +441,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'ಹೊಟ್ಟೆ ನೋವು & ಗ್ಯಾಸ್ಟ್ರಿಕ್ (Stomach Pain & Acidity)',
     stomachVoice: 'ಹೊಟ್ಟೆ ನೋವು ದಾಖಲಾಗಿದೆ.',
     micLabel: 'ಮಾತನಾಡಲು ಮೈಕ್ ಒತ್ತಿ (Tap Mic to Speak)',
-    nextScanBtn: 'ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ (Next: Scan Rx) ➔',
+    nextScanBtn: 'ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ (Next: Scan Rx)',
     scanRxTitle: 'ಹಳೆಯ ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಕಾಗದವನ್ನು ಇರಿಸಿ (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B ಕೈಬರಹವನ್ನು ಡಿಜಿಟೈಜ್ ಮಾಡುತ್ತದೆ (AI Digitization)',
     scanRxAct: 'ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ (Capture & Digitize)',
     ocrSuccessVoice: 'ಔಷಧಿ ವಿವರಗಳು ದಾಖಲಾಗಿವೆ.',
     ocrHead: 'ಗುರುತಿಸಲಾದ ಔಷಧಿಗಳು (Extracted Clinical Entities)',
-    confirmTokenBtn: 'ಟೋಕನ್ ಪಡೆಯಿರಿ (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'ಟೋಕನ್ ಪಡೆಯಿರಿ (Confirm & Generate Token)',
     tokenDone: 'ನೋಂದಣಿ ಪೂರ್ಣಗೊಂಡಿದೆ (Clinical Intake Complete)',
     tokenSub: 'ನಿಮ್ಮ OPD ಟೋಕನ್ ಸಂಖ್ಯೆ (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'ನಿಮ್ಮ ವಿವರಗಳನ್ನು ವೈದ್ಯರಿಗೆ ಕಳುಹಿಸಲಾಗಿದೆ (Sent directly to Doctor).',
@@ -455,7 +455,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'ಮುಂದಿನ ರೋಗಿ (Start Next Patient)',
     transcriptionHint: 'ನನಗೆ 6 ತಿಂಗಳಿಂದ ಎರಡೂ ಮೊಣಕಾಲುಗಳಲ್ಲಿ ನೋವು ಇದೆ',
     listenBtn: 'ಕೇಳಿ (Listen)',
-    skipBtnText: 'ದಾಖಲೆಗಳಿಲ್ಲ ➔ ಮುಂದುವರಿಯಿರಿ (Skip / No Documents ➔)'
+    skipBtnText: 'ದಾಖಲೆಗಳಿಲ್ಲ ಮುಂದುವರಿಯಿರಿ (Skip / No Documents)'
   },
   'mr-IN': {
     langName: 'मराठी',
@@ -473,24 +473,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'नवीन रुग्ण? (New Patient?)',
     optRegSub: 'नोंदणी आणि ABHA तयार करा (Register & Create ABHA)',
     btnSelect: 'निवडा (Select)',
-    btnSelected: '✓ निवडले (Selected)',
+    btnSelected: 'निवडले (Selected)',
     btnOpenCam: 'कॅमेरा उघडून QR स्कॅन करा (Open Camera to Scan)',
     btnVerifyMob: 'OTP सत्यापित करा (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA प्रोफाइल मिळवा (Fetch ABHA Profile)',
     btnVerifyAadh: 'आधार e-KYC सत्यापित करा (Verify Aadhaar e-KYC)',
     pmjayTitle: 'आयुष्मान भारत PM-JAY सक्रिय (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 मोफत कॅशलेस उपचार (Cashless Approved)',
-    continueVoiceBtn: 'लक्षणे सांगण्यासाठी पुढे जा (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'लक्षणे सांगण्यासाठी पुढे जा (Continue to Symptoms)',
     headerBack: 'मागे (Back)',
     aiQuestion: 'आपल्याला कुठे त्रास किंवा वेदना होत आहे? खालील भागाला स्पर्श करा किंवा माईकमध्ये बोला.',
     aiQuestionSub: 'लक्षण निवडा किंवा बोलण्यासाठी माईक दाबा (Where does it hurt?)',
     aiVoicePrompt: 'आपल्याला कुठे त्रास किंवा वेदना होत आहे? खालील भागाला स्पर्श करा किंवा माईकमध्ये बोला.',
-    tabVoice: '🎙️ बोला (Speak)',
-    tabType: '⌨️ टाईप करा (Type)',
+    tabVoice: 'बोला (Speak)',
+    tabType: 'टाईप करा (Type)',
     typePrompt: 'आपली लक्षणे सांगा (Describe symptoms in Marathi/English):',
     typePlaceholder: 'उदा: मला ३ दिवसांपासून तीव्र डोकेदुखी, घसादुखी आणि ताप आहे...',
-    quickChipsLabel: '⚡ जलद पर्याय (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ भाषांतर आणि विश्लेषण (Translate & Analyze) ➔',
+    quickChipsLabel: 'जलद पर्याय (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'भाषांतर आणि विश्लेषण (Translate & Analyze)',
     kneeTitle: 'गुडघे व सांधेदुखी (Knee & Joint Pain)',
     kneeVoice: 'गुडघेदुखी नोंदवली गेली आहे.',
     chestTitle: 'छातीत तीव्र वेदना (Severe Chest Pain - Emergency)',
@@ -500,13 +500,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'पोटदुखी व ॲसिडिटी (Stomach Pain & Acidity)',
     stomachVoice: 'पोटदुखी नोंदवली गेली आहे.',
     micLabel: 'बोलण्यासाठी माईक दाबा (Tap Mic to Speak)',
-    nextScanBtn: 'प्रिस्क्रिप्शन स्कॅन करा (Next: Scan Rx) ➔',
+    nextScanBtn: 'प्रिस्क्रिप्शन स्कॅन करा (Next: Scan Rx)',
     scanRxTitle: 'जुने प्रिस्क्रिप्शन स्कॅनरखाली ठेवा (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B हस्ताक्षर डिजिटाईज करतो (AI Digitization)',
     scanRxAct: 'प्रिस्क्रिप्शन स्कॅन करा (Capture & Digitize)',
     ocrSuccessVoice: 'प्रिस्क्रिप्शन यशस्वीरित्या स्कॅन झाले.',
     ocrHead: 'काढलेली औषधांची यादी (Extracted Clinical Entities)',
-    confirmTokenBtn: 'टोकन मिळवा (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'टोकन मिळवा (Confirm & Generate Token)',
     tokenDone: 'नोंदणी पूर्ण झाली (Clinical Intake Complete)',
     tokenSub: 'आपला ओपीडी टोकन क्रमांक (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'आपले तपशील डॉक्टरांना पाठवले आहेत (Sent directly to Doctor).',
@@ -514,7 +514,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'पुढील रुग्ण (Start Next Patient)',
     transcriptionHint: 'मला ६ महिन्यांपासून दोन्ही गुडघ्यांत वेदना होत आहेत',
     listenBtn: 'ऐका (Listen)',
-    skipBtnText: 'कागदपत्रे नाहीत ➔ पुढे जा (Skip / No Documents ➔)'
+    skipBtnText: 'कागदपत्रे नाहीत पुढे जा (Skip / No Documents)'
   },
   'bn-IN': {
     langName: 'বাংলা',
@@ -532,24 +532,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'নতুন রোগী? (New Patient?)',
     optRegSub: 'নিবন্ধন ও ABHA তৈরি করুন (Register & Create ABHA)',
     btnSelect: 'নির্বাচন করুন (Select)',
-    btnSelected: '✓ নির্বাচিত (Selected)',
+    btnSelected: 'নির্বাচিত (Selected)',
     btnOpenCam: 'ক্যামেরা খুলে QR স্ক্যান করুন (Open Camera to Scan)',
     btnVerifyMob: 'OTP যাচাই করুন (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA প্রোফাইল পান (Fetch ABHA Profile)',
     btnVerifyAadh: 'আধার e-KYC যাচাই করুন (Verify Aadhaar e-KYC)',
     pmjayTitle: 'আয়ুষ্মান ভারত PM-JAY সক্রিয় (PM-JAY Active)',
     pmjayDesc: '₹৫,০০,০০০ বার্ষিক ক্যাশলেস চিকিৎসা (Cashless Approved)',
-    continueVoiceBtn: 'লক্ষণ জানাতে এগিয়ে যান (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'লক্ষণ জানাতে এগিয়ে যান (Continue to Symptoms)',
     headerBack: 'পেছনে (Back)',
     aiQuestion: 'আপনার কোথায় ব্যথা বা সমস্যা হচ্ছে? নীচের অংশে স্পর্শ করুন বা মাইকে বলুন।',
     aiQuestionSub: 'লক্ষণ নির্বাচন করুন বা মাইক টিপে বলুন (Where does it hurt?)',
     aiVoicePrompt: 'আপনার কোথায় ব্যথা বা সমস্যা হচ্ছে? নীচের অংশে স্পর্শ করুন বা মাইকে বলুন।',
-    tabVoice: '🎙️ বলুন (Speak)',
-    tabType: '⌨️ টাইপ করুন (Type)',
+    tabVoice: 'বলুন (Speak)',
+    tabType: 'টাইপ করুন (Type)',
     typePrompt: 'আপনার লক্ষণগুলি বর্ণনা করুন (Describe symptoms in Bengali/English):',
     typePlaceholder: 'উদা: আমার ৩ দিন ধরে তীব্র মাথাব্যথা, গলা ব্যথা এবং জ্বর রয়েছে...',
-    quickChipsLabel: '⚡ দ্রুত বিকল্প (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ অনুবাদ ও বিশ্লেষণ (Translate & Analyze) ➔',
+    quickChipsLabel: 'দ্রুত বিকল্প (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'অনুবাদ ও বিশ্লেষণ (Translate & Analyze)',
     kneeTitle: 'হাঁটু ও জয়েন্টে ব্যথা (Knee & Joint Pain)',
     kneeVoice: 'হাঁটুর ব্যথা নথিভুক্ত করা হয়েছে।',
     chestTitle: 'বুকে তীব্র ব্যথা (Severe Chest Pain - Emergency)',
@@ -559,13 +559,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'পেট ব্যথা ও এসিডিটি (Stomach Pain & Acidity)',
     stomachVoice: 'পেট ব্যথা নথিভুক্ত করা হয়েছে।',
     micLabel: 'বলতে মাইক টিপুন (Tap Mic to Speak)',
-    nextScanBtn: 'প্রেসক্রিপশন স্ক্যান করুন (Next: Scan Rx) ➔',
+    nextScanBtn: 'প্রেসক্রিপশন স্ক্যান করুন (Next: Scan Rx)',
     scanRxTitle: 'পুরোনো প্রেসক্রিপশন স্ক্যানারের নিচে রাখুন (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B হাতের লেখা ডিজিটাইজ করে (AI Digitization)',
     scanRxAct: 'প্রেসক্রিপশন স্ক্যান করুন (Capture & Digitize)',
     ocrSuccessVoice: 'ওষুধের তালিকা নথিভুক্ত হয়েছে।',
     ocrHead: 'শনাক্তকৃত ওষুধসমূহ (Extracted Clinical Entities)',
-    confirmTokenBtn: 'টোকেন নিন (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'টোকেন নিন (Confirm & Generate Token)',
     tokenDone: 'নিবন্ধন সম্পন্ন হয়েছে (Clinical Intake Complete)',
     tokenSub: 'আপনার ওপিডি টোকেন নম্বর (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'আপনার তথ্য ডাক্তারের কাছে পাঠানো হয়েছে (Sent directly to Doctor).',
@@ -573,7 +573,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'পরবর্তী রোগী (Start Next Patient)',
     transcriptionHint: 'আমার 6 মাস ধরে দুই হাঁটুতে ব্যথা',
     listenBtn: 'শুনুন (Listen)',
-    skipBtnText: 'প্রেসক্রিপশন নেই ➔ এগিয়ে যান (Skip / No Documents ➔)'
+    skipBtnText: 'প্রেসক্রিপশন নেই এগিয়ে যান (Skip / No Documents)'
   },
   'gu-IN': {
     langName: 'ગુજરાતી',
@@ -591,24 +591,24 @@ const I18N: Record<string, Record<string, string>> = {
     optRegTitle: 'નવા દર્દી? (New Patient?)',
     optRegSub: 'નોંધણી અને ABHA બનાવો (Register & Create ABHA)',
     btnSelect: 'પસંદ કરો (Select)',
-    btnSelected: '✓ પસંદ કરેલ (Selected)',
+    btnSelected: 'પસંદ કરેલ (Selected)',
     btnOpenCam: 'કેમેરા ખોલીને QR સ્કેન કરો (Open Camera to Scan)',
     btnVerifyMob: 'OTP ચકાસો (Verify Mobile OTP)',
     btnFetchAbha: 'ABHA પ્રોફાઇલ મેળવો (Fetch ABHA Profile)',
     btnVerifyAadh: 'આધાર e-KYC ચકાસો (Verify Aadhaar e-KYC)',
     pmjayTitle: 'આયુષ્માન ભારત PM-JAY સક્રિય (PM-JAY Active)',
     pmjayDesc: '₹5,00,000 મફત કેશલેસ સારવાર (Cashless Approved)',
-    continueVoiceBtn: 'લક્ષણો જણાવવા આગળ વધો (Continue to Symptoms) ➔',
+    continueVoiceBtn: 'લક્ષણો જણાવવા આગળ વધો (Continue to Symptoms)',
     headerBack: 'પાછળ (Back)',
     aiQuestion: 'તમને ક્યાં દુખાવો થાય છે? નીચેના ભાગને સ્પર્શ કરો અથવા માઇકમાં બોલો.',
     aiQuestionSub: 'લક્ષણ પસંદ કરો અથવા બોલવા માટે માઇક દબાવો (Where does it hurt?)',
     aiVoicePrompt: 'તમને ક્યાં દુખાવો થાય છે? નીચેના ભાગને સ્પર્શ કરો અથવા માઇકમાં બોલો.',
-    tabVoice: '🎙️ બોલો (Speak)',
-    tabType: '⌨️ ટાઈપ કરો (Type)',
+    tabVoice: 'બોલો (Speak)',
+    tabType: 'ટાઈપ કરો (Type)',
     typePrompt: 'તમારા લક્ષણો વર્ણવો (Describe symptoms in Gujarati/English):',
     typePlaceholder: 'દા.ત.: મને છેલ્લા 3 દિવસથી ગંભીર માથાનો દુખાવો, ગળામાં દુખાવો અને તાવ છે...',
-    quickChipsLabel: '⚡ ઝડપી વિકલ્પો (Quick 1-Tap Add Symptoms):',
-    typeTranslateBtn: '⚡ અનુવાદ અને વિશ્લેષણ (Translate & Analyze) ➔',
+    quickChipsLabel: 'ઝડપી વિકલ્પો (Quick 1-Tap Add Symptoms):',
+    typeTranslateBtn: 'અનુવાદ અને વિશ્લેષણ (Translate & Analyze)',
     kneeTitle: 'ઘૂંટણ અને સાંધાનો દુખાવો (Knee & Joint Pain)',
     kneeVoice: 'ઘૂંટણનો દુખાવો નોંધાયેલ છે.',
     chestTitle: 'છાતીમાં તીવ્ર દુખાવો (Severe Chest Pain - Emergency)',
@@ -618,13 +618,13 @@ const I18N: Record<string, Record<string, string>> = {
     stomachTitle: 'પેટમાં દુખાવો અને એસિડિટી (Stomach Pain & Acidity)',
     stomachVoice: 'પેટનો દુખાવો નોંધાયેલ છે.',
     micLabel: 'બોલવા માટે માઇક દબાવો (Tap Mic to Speak)',
-    nextScanBtn: 'પ્રિસ્ક્રિપ્શન સ્કેન કરો (Next: Scan Rx) ➔',
+    nextScanBtn: 'પ્રિસ્ક્રિપ્શન સ્કેન કરો (Next: Scan Rx)',
     scanRxTitle: 'જૂનું પ્રિસ્ક્રિપ્શન સ્કેનર નીચે મૂકો (Place Prescription)',
     scanRxSub: 'Sarvam Vision 3B હસ્તલેખનને ડિજિટાઈઝ કરે છે (AI Digitization)',
     scanRxAct: 'પ્રિસ્ક્રિપ્શન સ્કેન કરો (Capture & Digitize)',
     ocrSuccessVoice: 'દવાઓની વિગતો નોંધાઈ ગઈ છે.',
     ocrHead: 'શોધાયેલ દવાઓ (Extracted Clinical Entities)',
-    confirmTokenBtn: 'ટોકન મેળવો (Confirm & Generate Token) ➔',
+    confirmTokenBtn: 'ટોકન મેળવો (Confirm & Generate Token)',
     tokenDone: 'નોંધણી પૂર્ણ થઈ (Clinical Intake Complete)',
     tokenSub: 'તમારો OPD ટોકન નંબર (YOUR OPD TOKEN NUMBER)',
     tokenMsg: 'તમારી વિગતો ડૉક્ટરને મોકલી દેવામાં આવી છે (Sent directly to Doctor).',
@@ -632,7 +632,7 @@ const I18N: Record<string, Record<string, string>> = {
     nextPatBtn: 'આગળનો દર્દી (Start Next Patient)',
     transcriptionHint: 'મને 6 મહિનાથી બંને ઘૂંટણમાં દુખાવો છે',
     listenBtn: 'સાંભળો (Listen)',
-    skipBtnText: 'દસ્તાવેજો નથી ➔ આગળ વધો (Skip / No Documents ➔)'
+    skipBtnText: 'દસ્તાવેજો નથી આગળ વધો (Skip / No Documents)'
   }
 };
 
@@ -1051,7 +1051,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
         tokenNumber: '',
         isVerified: true,
       });
-      setRegistrationMessage('✓ Patient profile created & saved to clinic. You can now continue.');
+      setRegistrationMessage('Patient profile created & saved to clinic. You can now continue.');
     } catch (error) {
       console.warn('Backend patient save notice, registering session patient:', error);
       const fallbackLocalPatient = {
@@ -1086,7 +1086,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
         tokenNumber: '',
         isVerified: true,
       });
-      setRegistrationMessage('✓ Patient profile created & saved to clinic. You can now continue.');
+      setRegistrationMessage('Patient profile created & saved to clinic. You can now continue.');
     } finally {
       setIsRegisteringPatient(false);
     }
@@ -1684,14 +1684,14 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   <span className="w-4 h-4 rounded-full bg-white animate-ping" />
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">🚨</span>
+                      <AlertTriangle className="w-5 h-5 text-rose-500 inline" />
                       <span className="tracking-wide">ZERO-CLICK EMERGENCY OVERRIDE</span>
                     </div>
                     <p className="text-[11px] font-medium text-red-100 mt-0.5">అత్యవసర చికిత్స • आपातकालीन • அவசர சிகிச்சை • ತక్షణದ ತುರ್ತು</p>
                   </div>
                 </div>
                 <span className="text-xs uppercase bg-white text-red-700 font-black px-3.5 py-2 rounded-xl border border-red-200 shadow-sm">
-                  EMERGENCY / STAT ➔
+                  EMERGENCY / STAT
                 </span>
               </button>
             </div>
@@ -1809,7 +1809,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     <span className="text-[10px] text-slate-500 mt-0.5 block">{opt.sub}</span>
                   </div>
                   <span className={`text-[10px] font-bold px-3 py-0.5 rounded-full w-full ${authMethod === opt.id ? 'bg-[#223D79] text-white' : 'bg-slate-100 text-slate-600'}`}>
-                    {authMethod === opt.id ? dict.btnSelected || '✓ Selected' : dict.btnSelect || 'Select'}
+                    {authMethod === opt.id ? dict.btnSelected || 'Selected' : dict.btnSelect || 'Select'}
                   </span>
                 </button>
               ))}
@@ -1848,7 +1848,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
                         {qrCameraError && (
                           <div className="p-2.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-xl text-xs text-left">
-                            <p className="font-bold">⚠️ Camera Note:</p>
+                            <p className="font-bold flex items-center gap-1"><AlertCircle className="w-4 h-4 text-amber-500" /> Camera Note:</p>
                             <p className="text-[11px] mt-0.5">{qrCameraError}</p>
                           </div>
                         )}
@@ -1861,7 +1861,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             }}
                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5"
                           >
-                            <span>📸 Scan Ramesh Chandra QR</span>
+                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Ramesh Chandra QR</span>
                           </button>
                           <button
                             onClick={() => {
@@ -1870,7 +1870,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             }}
                             className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-2.5 px-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5"
                           >
-                            <span>📸 Scan Priya Sharma QR</span>
+                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Priya Sharma QR</span>
                           </button>
                         </div>
 
@@ -1878,7 +1878,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                           onClick={handleStopQrCamera}
                           className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 px-3 rounded-xl text-xs transition"
                         >
-                          ✕ Close Camera
+                          Close Camera
                         </button>
                       </div>
                     ) : (
@@ -1900,7 +1900,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             onClick={() => loadDemoPatient('9876543210')}
                             className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-300 transition"
                           >
-                            ⚡ Use Sample ABHA QR Card (Ramesh Chandra)
+                            Use Sample ABHA QR Card (Ramesh Chandra)
                           </button>
                         </div>
                       </>
@@ -1925,7 +1925,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       <span>{dict.btnVerifyMob || 'Verify Mobile OTP & Fetch Records'}</span>
                     </button>
                     <button onClick={() => setMobileInput('9876543210')} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
-                      ⚡ Fill Sample Mobile (+91 98765 43210)
+                      Fill Sample Mobile (+91 98765 43210)
                     </button>
                   </div>
                 )}
@@ -1998,7 +1998,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     </div>
                     <p className="text-[11px] text-slate-500">A demo identifier is generated for this prototype. It is not an official ABDM/ABHA registration.</p>
                     <button onClick={handleCreatePatient} disabled={isRegisteringPatient} className="w-full bg-[#087f70] hover:bg-[#066b5f] disabled:opacity-60 text-white font-black py-3 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
-                      <span>{isRegisteringPatient ? 'Saving patient…' : 'Create Patient & Save to Clinic ➔'}</span>
+                      <span>{isRegisteringPatient ? 'Saving patient…' : 'Create Patient & Save to Clinic'}</span>
                     </button>
                     {registrationMessage && <p role="status" className="text-xs font-semibold text-slate-700" aria-live="polite">{registrationMessage}</p>}
                   </div>
@@ -2057,7 +2057,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     <span>{dict.headerBack || 'Back'}</span>
                   </button>
                   <button onClick={() => setCurrentScreenIndex(2)} disabled={!currentPatient.id} className="flex-1 bg-slate-900 hover:bg-[#1a2f5e] disabled:opacity-50 disabled:cursor-not-allowed text-white border border-[#D9CDBA]/30 font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition shadow">
-                    {dict.continueVoiceBtn || 'Continue to Voice Symptom Intake ➔'}
+                    {dict.continueVoiceBtn || 'Continue to Voice Symptom Intake'}
                   </button>
                 </div>
               </div>
@@ -2194,7 +2194,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                         disabled={isSubmittingIntake || intakeComplete}
                         className="px-3 py-1.5 bg-[#223D79] hover:bg-[#1a2f5e] text-white rounded-lg text-xs font-bold transition shadow-sm"
                       >
-                        {isSubmittingIntake ? 'Processing…' : intakeComplete ? 'Intake complete' : dict.typeTranslateBtn || '⚡ Translate & Analyze ➔'}
+                        {isSubmittingIntake ? 'Processing…' : intakeComplete ? 'Intake complete' : dict.typeTranslateBtn || 'Translate & Analyze'}
                       </button>
                     </div>
                   </div>
@@ -2203,10 +2203,10 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     <span className="text-[11px] font-bold text-slate-600 block">{dict.quickChipsLabel}</span>
                     <div className="flex flex-wrap gap-1.5 text-xs">
                       {[
-                        { text: '🚨 सीने में तेज दर्द (Chest Pain)', val: 'अचानक सीने में बहुत तेज दर्द और सांस फूलने की समस्या हो रही है' },
-                        { text: '🦴 घुटनों में दर्द (Knee Pain)', val: 'मुझे दोनों घुटनों में पिछले 6 महीनों से दर्द और अकड़न है' },
-                        { text: '🌡️ तेज बुखार और ठंड (Fever)', val: 'मुझे 3 दिनों से तेज बुखार, बदन दर्द और कंपकंपी है' },
-                        { text: '🌿 पेट में जलन और गैस (Acidity)', val: 'पेट में बहुत तेज जलन, गैस और खट्टी डकारें आ रही हैं' }
+                        { text: 'सीने में तेज दर्द (Chest Pain)', val: 'अचानक सीने में बहुत तेज दर्द और सांस फूलने की समस्या हो रही है' },
+                        { text: 'घुटनों में दर्द (Knee Pain)', val: 'मुझे दोनों घुटनों में पिछले 6 महीनों से दर्द और अकड़न है' },
+                        { text: 'तेज बुखार और ठंड (Fever)', val: 'मुझे 3 दिनों से तेज बुखार, बदन दर्द और कंपकंपी है' },
+                        { text: 'पेट में जलन और गैस (Acidity)', val: 'पेट में बहुत तेज जलन, गैस और खट्टी डकारें आ रही हैं' }
                       ].map(chip => (
                         <button
                           key={chip.text}
@@ -2227,7 +2227,10 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
               <div className="w-full space-y-2 mt-2 pt-2 border-t border-slate-100">
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left flex items-center justify-between gap-2">
                   <div className="flex-1">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">🎙️ Spoken / Typed Patient Input (Native):</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider inline-flex items-center gap-1">
+                      <Mic className="w-3 h-3 text-emerald-600" />
+                      Spoken / Typed Patient Input (Native):
+                    </span>
                     <p className="text-xs text-slate-800 font-semibold italic mt-0.5 min-h-[18px]">
                       "{currentPatient.selectedSymptom || 'मुझे 6 महीने से दोनों घुटनों में दर्द है'}"
                     </p>
@@ -2245,7 +2248,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
                 <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-left">
                   <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider flex items-center gap-1">
-                    <span>🌐 English translation (review before clinical use):</span>
+                    <span className="inline-flex items-center gap-1.5"><Globe className="w-4 h-4 text-blue-500" /> English translation (review before clinical use):</span>
                   </span>
                   <p className="text-xs text-emerald-900 font-bold mt-0.5 min-h-[18px]">
                     {translationStatus === 'translating'
@@ -2261,7 +2264,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   <div className="flex items-center justify-between bg-emerald-950 text-emerald-200 px-3 py-2 rounded-xl border border-emerald-800 shadow-sm">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="font-mono font-bold text-emerald-300">🛡️ Prune Gateway:</span>
+                      <span className="font-mono font-bold text-emerald-300 inline-flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Prune Gateway:</span>
                       <span>Zero PII Leakage (Aadhaar & Mobile Masked)</span>
                     </div>
                     <span className="text-[9px] font-mono bg-emerald-900/60 px-1.5 py-0.5 rounded border border-emerald-700">Sub-20ms SLA</span>
@@ -2269,7 +2272,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   <div className="flex items-center justify-between bg-blue-950 text-blue-200 px-3 py-2 rounded-xl border border-blue-800 shadow-sm">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                      <span className="font-mono font-bold text-blue-300">🌊 Maritime Cloud:</span>
+                      <span className="font-mono font-bold text-blue-300 inline-flex items-center gap-1"><Cloud className="w-3.5 h-3.5" /> Maritime Cloud:</span>
                       <span>agent-vernacular-02 (Indic to FHIR Scribe)</span>
                     </div>
                     <span className="text-[9px] font-mono bg-blue-900/60 px-1.5 py-0.5 rounded border border-blue-700">Scale Plan</span>
@@ -2286,7 +2289,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   <span>{dict.headerBack || 'Back'}</span>
                 </button>
                 <button onClick={() => setCurrentScreenIndex(3)} className="bg-slate-900 hover:bg-[#1a2f5e] text-white border border-[#D9CDBA]/30 font-bold py-3 px-6 rounded-xl text-sm transition">
-                  {dict.nextScanBtn || 'Next: Scan Paper Prescriptions ➔'}
+                  {dict.nextScanBtn || 'Next: Scan Paper Prescriptions'}
                 </button>
               </div>
             </div>
@@ -2321,14 +2324,14 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                         onClick={stopCamera}
                         className="px-3 py-1.5 bg-slate-800/90 hover:bg-slate-900 text-white rounded-lg text-xs font-bold"
                       >
-                        ✕ Cancel
+                        Cancel
                       </button>
                       <button
                         type="button"
                         onClick={handleCaptureCamera}
                         className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-900/50"
                       >
-                        📸 Capture Photo
+                        Capture Photo
                       </button>
                     </div>
                   </div>
@@ -2345,7 +2348,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     <div className="z-10 bg-slate-900/90 border border-emerald-500/50 px-4 py-3 rounded-xl text-center space-y-2">
                       <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
                       <span className="text-xs font-bold text-emerald-300 block">
-                        ⚡ Sarvam Vision 3B VLM Extracting Rx...
+                        Sarvam Vision 3B VLM Extracting Rx...
                       </span>
                     </div>
                   </div>
@@ -2357,7 +2360,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <span>✓ Scanned</span>
+                      <span className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-500" /> Scanned</span>
                     </div>
                   </div>
                 ) : (
@@ -2377,10 +2380,10 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     onClick={handleStartCamera}
                     className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3 px-3 rounded-xl text-xs sm:text-sm transition shadow flex items-center justify-center gap-1.5"
                   >
-                    <span>📷 Camera Scan</span>
+                    <span className="inline-flex items-center gap-1"><Camera className="w-3.5 h-3.5" /> Camera Scan</span>
                   </button>
                   <label className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-3 rounded-xl text-xs sm:text-sm transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>📁 Upload Image</span>
+                    <span className="inline-flex items-center gap-1"><Upload className="w-3.5 h-3.5" /> Upload Image</span>
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -2402,7 +2405,10 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
                 {/* Uploaded Documents Tray */}
                 <div className="text-left pt-2 border-t border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">📁 Uploaded Documents / Pages:</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider inline-flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-slate-500" />
+                    Uploaded Documents / Pages:
+                  </span>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {scannedDocs.map((doc, idx) => (
                       <button
@@ -2418,7 +2424,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             : 'bg-blue-50 border border-blue-200 text-[#223D79] hover:bg-blue-100'
                         }`}
                       >
-                        <span className="truncate max-w-[140px]">📄 {doc.name}</span>
+                        <span className="truncate max-w-[140px] inline-flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-slate-400" /> {doc.name}</span>
                         <span className={`text-[9px] px-1 py-0.2 rounded font-black ${idx === activeDocIndex ? 'bg-white text-[#223D79]' : 'bg-blue-200 text-blue-900'}`}>
                           #{idx + 1}
                         </span>
@@ -2454,7 +2460,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   <div className="space-y-3 text-xs">
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-sm">💊</span>
+                        <Pill className="w-4 h-4 text-emerald-600 inline" />
                         <span className="font-bold text-slate-900 uppercase text-[11px] tracking-wide">Current Medication / Active Regimen:</span>
                       </div>
                       <p className="text-slate-800 font-medium pl-5 leading-relaxed">
@@ -2464,7 +2470,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
                     <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-sm">🧪</span>
+                        <FlaskConical className="w-4 h-4 text-purple-600 inline" />
                         <span className="font-bold text-amber-950 uppercase text-[11px] tracking-wide">Lab Results & Key Biomarkers:</span>
                       </div>
                       <p className="text-amber-900 font-medium pl-5 leading-relaxed">
@@ -2476,14 +2482,14 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
                 <div className="flex flex-col gap-3 pt-2">
                   <button onClick={handleGenerateToken} disabled={isIssuingToken} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] disabled:opacity-60 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow-lg shadow-[#223D79]/20 flex items-center justify-center gap-2">
-                    <span>{isIssuingToken ? 'Issuing your clinic token…' : dict.confirmTokenBtn || 'Confirm & Generate Token ➔'}</span>
+                    <span>{isIssuingToken ? 'Issuing your clinic token…' : dict.confirmTokenBtn || 'Confirm & Generate Token'}</span>
                   </button>
                   <div className="flex gap-3">
                     <button onClick={() => setCurrentScreenIndex(2)} className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1 transition">
                       <span>{dict.headerBack || 'Back'}</span>
                     </button>
                     <button onClick={handleGenerateToken} disabled={isIssuingToken} className="flex-1 bg-white hover:bg-gray-50 disabled:opacity-60 text-slate-600 border border-slate-300 font-bold py-3.5 px-4 rounded-xl text-sm transition">
-                      {dict.skipBtnText || 'Skip / No Documents ➔'}
+                      {dict.skipBtnText || 'Skip / No Documents'}
                     </button>
                   </div>
                 </div>
@@ -2506,7 +2512,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
               <div>
                 <h3 className={`font-black text-2xl ${currentPatient.isEmergency ? 'text-rose-800' : 'text-slate-900'}`}>
-                  {currentPatient.isEmergency ? '🚨 STAT EMERGENCY TRIAGE ACTIVATED' : dict.tokenDone}
+                  {currentPatient.isEmergency ? 'STAT EMERGENCY TRIAGE ACTIVATED' : dict.tokenDone}
                 </h3>
                 <p className="text-xs text-slate-600">All India Institute of Medical Sciences (AIIMS) • Central OPD • OPD Room 4</p>
               </div>
@@ -2531,14 +2537,14 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>📥 Download / Print OPD Slip & Prescription (PDF)</span>
+                <span className="inline-flex items-center gap-1.5"><Download className="w-4 h-4" /> Download / Print OPD Slip & Prescription (PDF)</span>
               </button>
 
               {/* 100% Pure Software Mobile Fast-Checkout: WhatsApp & Smartphone QR */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">📱</span>
+                    <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs"><Smartphone className="w-4 h-4" /></span>
                     <div>
                       <p className="text-xs font-bold text-slate-900">Zero-Hardware Mobile Fast-Checkout</p>
                       <p className="text-[10px] text-slate-500">Scan QR or dispatch directly to Patient's WhatsApp</p>
@@ -2579,7 +2585,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       : 'bg-[#25D366] hover:bg-[#20ba59] text-white shadow-sm'
                   }`}
                 >
-                  <span>{whatsappSent ? '✅ Dispatched to WhatsApp (+91 98765 43210)' : '💬 Send Audio Token & Instructions to WhatsApp (+91 98765 43210)'}</span>
+                  <span>{whatsappSent ? 'Dispatched to WhatsApp (+91 98765 43210)' : 'Send Audio Token & Instructions to WhatsApp (+91 98765 43210)'}</span>
                 </button>
               </div>
 
@@ -2599,9 +2605,9 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-600 animate-ping" />
-                <h3 className="font-bold text-base text-[#223D79]">🎙️ Voice Intake</h3>
+                <h3 className="font-bold text-base text-[#223D79] flex items-center gap-1.5"><Mic className="w-4 h-4 text-blue-600" /> Voice Intake</h3>
               </div>
-              <button onClick={() => setShowVoiceModal(false)} className="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
+              <button onClick={() => setShowVoiceModal(false)} className="text-slate-400 hover:text-slate-700 text-lg font-bold"></button>
             </div>
             <textarea
               rows={3}
@@ -2622,7 +2628,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                 }}
                 className="flex-1 py-2.5 bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold rounded-xl text-xs shadow"
               >
-                ✓ Submit & Translate
+                Submit & Translate
               </button>
             </div>
           </div>

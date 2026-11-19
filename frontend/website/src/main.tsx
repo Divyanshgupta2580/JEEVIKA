@@ -29,6 +29,7 @@ import {
   LogOut,
   Menu,
   Search,
+  ChevronDown,
 } from "lucide-react";
 import {
   ClinicalStatusBadge as Badge,
@@ -824,7 +825,7 @@ function App() {
             </strong>
             <small>{session.principal.orgId} · care network</small>
           </div>
-          <span>⌄</span>
+          <ChevronDown size={14} className="text-slate-400" aria-hidden="true" />
         </div>
         <span className="nav-caption">CARE WORKSPACE</span>
         <nav aria-label="Care workspace">

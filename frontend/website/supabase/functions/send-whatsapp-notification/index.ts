@@ -44,9 +44,9 @@ Deno.serve(async (req: Request) => {
     let message = '';
 
     if (event_type === 'OPD_BOOKING') {
-      message = `Hello *${patient_name}*,\n\nYour OPD booking at *${hospitalName}* is confirmed!\n\n🎟️ Token No: *${meta_data.token_number}*\n👨‍⚕️ Doctor: *Dr. ${doctorName}*\n📅 Date: ${today}\n\nPlease arrive 15 mins early. Thank you!`;
+      message = `Hello *${patient_name}*,\n\nYour OPD booking at *${hospitalName}* is confirmed!\n\nToken No: *${meta_data.token_number}*\nDoctor: *Dr. ${doctorName}*\nDate: ${today}\n\nPlease arrive 15 mins early. Thank you!`;
     } else if (event_type === 'IPD_ADMISSION') {
-      message = `Hello *${patient_name}*,\n\nYou have been successfully admitted to *${hospitalName}*.\n\n🏥 Ward: *${meta_data.ward_name}*\n🛌 Bed: *${meta_data.bed_number}*\n👨‍⚕️ Admitting Doctor: *Dr. ${doctorName}*\n📅 Admission Date: ${today}\n\nWe wish you a speedy recovery.`;
+      message = `Hello *${patient_name}*,\n\nYou have been successfully admitted to *${hospitalName}*.\n\nWard: *${meta_data.ward_name}*\nBed: *${meta_data.bed_number}*\nAdmitting Doctor: *Dr. ${doctorName}*\nAdmission Date: ${today}\n\nWe wish you a speedy recovery.`;
     } else {
       return new Response(JSON.stringify({ error: 'Unknown event type' }), {
         status: 400,

@@ -104,7 +104,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     isVerifying: false
                 });
                 toast({
-                    title: "🛡️ Cryptographic Audit Chain Verified",
+                    title: "Cryptographic Audit Chain Verified",
                     description: `Consensus intact: ${data.chainLength || 142} immutable SHA-256 blocks validated on Cloudflare D1.`,
                     className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
                 });
@@ -121,7 +121,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             isVerifying: false
         });
         toast({
-            title: "🛡️ Cryptographic Ledger Verified",
+            title: "Cryptographic Ledger Verified",
             description: "D1 cryptographic chain verified. Zero block discrepancies detected.",
             className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
         });
@@ -514,7 +514,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             const dstName = clinics.find(c => c.id === transferDestClinic)?.name || 'Destination';
 
             toast({
-                title: "✅ Stock Rebalance Executed",
+                title: "Stock Rebalance Executed",
                 description: `Successfully transferred ${transferQuantity} units of ${transferItemName} from ${srcName} to ${dstName}. Cryptographic audit event logged.`,
                 className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
             });
@@ -645,7 +645,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             });
 
             toast({
-                title: '✅ Clinic Hub Provisioned',
+                title: 'Clinic Hub Provisioned',
                 description: `Registered ${clinicName} (${code}) with manager ${staffName}.`,
                 className: 'bg-emerald-50 border-emerald-200 text-emerald-950 font-medium'
             });

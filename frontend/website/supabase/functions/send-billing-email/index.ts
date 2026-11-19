@@ -36,33 +36,33 @@ Deno.serve(async (req: Request) => {
 
     switch (email_type) {
       case 'trial_expiry':
-        subject = `⏳ Your MedFlow trial ends in ${Math.ceil(data.days_remaining)} days`;
+        subject = `Your Jeevika trial ends in ${Math.ceil(data.days_remaining)} days`;
         html = `
           <h1>Your Trial is Ending Soon</h1>
           <p>Hello ${hospitalName},</p>
-          <p>Your 14-day free trial of MedFlow premium features will expire in <strong>${Math.ceil(data.days_remaining)} days</strong>.</p>
+          <p>Your 14-day free trial of Jeevika premium features will expire in <strong>${Math.ceil(data.days_remaining)} days</strong>.</p>
           <p>To avoid any disruption in your clinical operations, please upgrade to a paid plan.</p>
-          <a href="${data.app_url || 'https://medflow.app'}/billing" style="background:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Upgrade Now</a>
+          <a href="${data.app_url || 'https://jeevika.in'}/billing" style="background:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Upgrade Now</a>
         `;
         break;
       case 'payment_failed':
-        subject = `❌ Payment failed for ${hospitalName}`;
+        subject = `Payment failed for ${hospitalName}`;
         html = `
           <h1>Payment Failed</h1>
           <p>Hello ${hospitalName},</p>
-          <p>We were unable to process your payment of <strong>${data.amount}</strong> for your MedFlow subscription.</p>
+          <p>We were unable to process your payment of <strong>${data.amount}</strong> for your Jeevika subscription.</p>
           <p>Please update your payment method to keep your account active.</p>
-          <a href="${data.app_url || 'https://medflow.app'}/billing" style="background:#dc3545;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Update Payment Method</a>
+          <a href="${data.app_url || 'https://jeevika.in'}/billing" style="background:#dc3545;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Update Payment Method</a>
         `;
         break;
       case 'subscription_upgraded':
-        subject = `🎉 Welcome to MedFlow ${data.plan_name}!`;
+        subject = `Welcome to Jeevika ${data.plan_name}!`;
         html = `
           <h1>Subscription Upgraded</h1>
           <p>Hello ${hospitalName},</p>
           <p>Congratulations! Your hospital has been successfully upgraded to the <strong>${data.plan_name}</strong> plan.</p>
           <p>Your subscription ID is ${data.subscription_id}.</p>
-          <p>Thank you for choosing MedFlow!</p>
+          <p>Thank you for choosing Jeevika!</p>
         `;
         break;
       case 'subscription_cancelled':

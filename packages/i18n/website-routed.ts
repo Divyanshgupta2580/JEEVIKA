@@ -1109,11 +1109,11 @@ export const websiteRoutedCopy: Record<
     "pa-IN": "ਆਪਣੇ ਹਸਪਤਾਲ ਵਿੱਚ ਨਵਾਂ ਵਾਰਡ ਵਿੰਗ ਜਾਂ ਵਿਭਾਗ ਬਣਾਓ।",
     "ta-IN": "உங்கள் மருத்துவமனையில் புதிய வார்டு பிரிவு அல்லது துறையை அமைக்கவும்.",
   },
-  "🌐 Global (All Branches)": {
-    "en-IN": "🌐 Global (All Branches)",
-    "hi-IN": "🌐 सभी शाखाएँ",
-    "pa-IN": "🌐 ਸਾਰੀਆਂ ਸ਼ਾਖਾਵਾਂ",
-    "ta-IN": "🌐 அனைத்து கிளைகளும்",
+  "Global (All Branches)": {
+    "en-IN": "Global (All Branches)",
+    "hi-IN": "सभी शाखाएँ",
+    "pa-IN": "ਸਾਰੀਆਂ ਸ਼ਾਖਾਵਾਂ",
+    "ta-IN": "அனைத்து கிளைகளும்",
   },
   "Daily Charge (₹)": {
     "en-IN": "Daily Charge (₹)",
@@ -1877,11 +1877,11 @@ export const websiteRoutedCopy: Record<
     "pa-IN": "ਉਦਾਹਰਨ ਲਈ, ICU ਨਰਸਿੰਗ - ਰਾਤ ਦੀ ਸ਼ਿਫਟ",
     "ta-IN": "எ.கா. ICU செவிலியம் - இரவுப் பணி",
   },
-  "🏢 All Branches": {
-    "en-IN": "🏢 All Branches",
-    "hi-IN": "🏢 सभी शाखाएँ",
-    "pa-IN": "🏢 ਸਾਰੀਆਂ ਸ਼ਾਖਾਵਾਂ",
-    "ta-IN": "🏢 அனைத்து கிளைகளும்",
+  "All Branches": {
+    "en-IN": "All Branches",
+    "hi-IN": "सभी शाखाएँ",
+    "pa-IN": "ਸਾਰੀਆਂ ਸ਼ਾਖਾਵਾਂ",
+    "ta-IN": "அனைத்து கிளைகளும்",
   },
   Admissions: {
     "en-IN": "Admissions",

@@ -10,7 +10,7 @@ const tailwindcss = require("tailwindcss");
 const autoprefixer = require("autoprefixer");
 
 export default defineConfig({
-  plugins: [cbcAssets()],
+  plugins: [cbcAssets() as any],
   root: __dirname,
   css: {
     postcss: {

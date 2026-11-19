@@ -7,7 +7,7 @@ import { NotificationsPanel } from '@/components/ui/NotificationsPanel'
 import { requestNotificationPermission } from '@/lib/notifications'
 import { useTour } from '@/context/TourContext'
 import { workspaceTour } from '@/tourSteps'
-import { Play } from 'lucide-react'
+import { Play, Cloud, Shield } from 'lucide-react'
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -461,8 +461,8 @@ export function AppLayout({
                             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50/80 hover:bg-blue-100 text-blue-700 border-blue-200/80'}`}
                             title="Maritime Autonomous Clinical Agent Mesh (VIHAAN-X Special Challenge)"
                         >
-                            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-                            <span>🌊 Maritime Agents</span>
+                            <Cloud className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Maritime Agents</span>
                         </button>
                         <button
                             type="button"
@@ -470,8 +470,8 @@ export function AppLayout({
                             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'}`}
                             title="Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challenge)"
                         >
-                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                            <span>🛡️ Prune Gateway</span>
+                            <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Prune Gateway</span>
                         </button>
                         <button
                             type="button"

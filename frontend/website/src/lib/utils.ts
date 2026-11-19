@@ -12,14 +12,14 @@ export function generateWhatsAppMessage(
     lowStock: any[]
 ) {
     const alerts = lowStock.length > 0
-        ? lowStock.map(i => `⚠️ *Alert:* ${i.clinic_name} is low on '${i.item_name}'.`).join('\n   ')
-        : '✅ All systems synced.'
+        ? lowStock.map(i => `[ALERT] ${i.clinic_name} is low on '${i.item_name}'.`).join('\n   ')
+        : 'All systems synced.'
 
     return encodeURIComponent(
-        `🏥 *ARTEMIS SATELLITE REPORT* 🏥\n` +
-        `📅 Date: ${date}\n` +
-        `💰 Total Revenue: ₹${revenue}\n` +
-        `👥 Total Patients: ${footfall}\n` +
+        `*JEEVIKA CLINICAL INTELLIGENCE REPORT*\n` +
+        `Date: ${date}\n` +
+        `Total Revenue: ₹${revenue}\n` +
+        `Total Patients: ${footfall}\n` +
         `${alerts}`
     )
 }

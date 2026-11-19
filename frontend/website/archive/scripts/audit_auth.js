@@ -25,11 +25,11 @@ async function testUnauthenticatedAccess() {
     const { data: sales, error: salesError } = await supabase.from('sales').select('*')
 
     if (salesError) {
-        console.log('✅ PASS: Database returned error (expected).', salesError.message)
+        console.log('[PASS] PASS: Database returned error (expected).', salesError.message)
     } else if (sales && sales.length === 0) {
-        console.log('✅ PASS: Database returned 0 rows (RLS active).')
+        console.log('[PASS] PASS: Database returned 0 rows (RLS active).')
     } else {
-        console.error('❌ FAIL: Database returned rows! RLS Breach?', sales)
+        console.error('[FAIL] FAIL: Database returned rows! RLS Breach?', sales)
     }
 
     // 2. Try to fetch INVENTORY
@@ -37,11 +37,11 @@ async function testUnauthenticatedAccess() {
     const { data: inv, error: invError } = await supabase.from('inventory').select('*')
 
     if (invError) {
-        console.log('✅ PASS: Database returned error (expected).', invError.message)
+        console.log('[PASS] PASS: Database returned error (expected).', invError.message)
     } else if (inv && inv.length === 0) {
-        console.log('✅ PASS: Database returned 0 rows (RLS active).')
+        console.log('[PASS] PASS: Database returned 0 rows (RLS active).')
     } else {
-        console.error('❌ FAIL: Database returned rows!', inv)
+        console.error('[FAIL] FAIL: Database returned rows!', inv)
     }
 
     // 3. Try to fetch PROFILES (Should fail or return empty)
@@ -49,11 +49,11 @@ async function testUnauthenticatedAccess() {
     const { data: prof, error: profError } = await supabase.from('profiles').select('*')
 
     if (profError) {
-        console.log('✅ PASS: Database returned error (expected).', profError.message)
+        console.log('[PASS] PASS: Database returned error (expected).', profError.message)
     } else if (prof && prof.length === 0) {
-        console.log('✅ PASS: Database returned 0 rows (RLS active).')
+        console.log('[PASS] PASS: Database returned 0 rows (RLS active).')
     } else {
-        console.error('❌ FAIL: Database returned rows!', prof)
+        console.error('[FAIL] FAIL: Database returned rows!', prof)
     }
 
     console.log('\n--- Vulnerability Test Complete ---')

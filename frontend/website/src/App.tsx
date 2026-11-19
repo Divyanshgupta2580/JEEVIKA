@@ -542,13 +542,13 @@ function AppContent() {
 
                     {view === 'maritime-agents' && (
                         <MaritimeAgentMesh 
-                            onNavigate={(v) => guardedSetView(v as View)}
+                            onNavigate={(v: string) => guardedSetView(v as View)}
                         />
                     )}
 
                     {view === 'prune-gateway' && (
                         <PruneGatewayDashboard 
-                            onNavigate={(v) => guardedSetView(v as View)}
+                            onNavigate={(v: string) => guardedSetView(v as View)}
                         />
                     )}
 

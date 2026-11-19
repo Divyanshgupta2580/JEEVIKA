@@ -1229,7 +1229,7 @@ export function InventoryDashboard({ clinicIdOverride, onNavigate }: InventoryDa
                                     <Input name="expiry_date" type="date" defaultValue={editingItem.expiry_date} className="bg-white border-slate-200 text-sm h-10" required />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-4 border-t border-slate-100 pt-5 mt-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-100 pt-5 mt-5">
                                  <div className="space-y-1">
                                      <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest text-[#0ea5e9]">Packs In Stock</Label>
                                      <Input name="quantity" type="number" defaultValue={Math.floor(editingItem.quantity / (editingItem.units_per_pack || 1))} className="bg-slate-50 border-slate-200 font-mono font-bold text-slate-900 h-10" required />

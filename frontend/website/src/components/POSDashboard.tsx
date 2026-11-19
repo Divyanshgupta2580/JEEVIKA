@@ -48,7 +48,9 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
         maxQty: number,
         unitsPerPack: number,
         isLoose: boolean,
-        totalTablets: number
+        totalTablets: number,
+        batchNumber?: string,
+        expiryDate?: string
     }[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [pharmacyDiscountPercent, setPharmacyDiscountPercent] = useState('');
@@ -1553,7 +1555,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                     className="w-full mb-2.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
                                 >
                                     <Volume2 className="w-4 h-4 text-emerald-700" />
-                                    <span>🔊 मरीज सचित्र खुराक (Audio Schedule)</span>
+                                    <span>मरीज सचित्र खुराक (Audio Schedule)</span>
                                 </button>
                             )}
 

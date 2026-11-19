@@ -203,7 +203,7 @@ maritimeRouter.post("/agents/:agentId/run", async (c) => {
     inputSummary = `Auditing ${allopathicPlan.length} allopathic Rx against ${complementaryFormulations.length} Ayurvedic/herbal supplements`;
     if (interactions.length > 0) {
       safetyStatus = "WARNING";
-      outputSummary = `DETECTED ${interactions.length} INTERACTION(S): ${interactions.map(i => `${i.allopathicDrug} ⚡ ${i.ayurvedicHerb} (${i.severity})`).join("; ")}`;
+      outputSummary = `DETECTED ${interactions.length} INTERACTION(S): ${interactions.map(i => `${i.allopathicDrug} <-> ${i.ayurvedicHerb} (${i.severity})`).join("; ")}`;
     } else {
       safetyStatus = "PASS";
       outputSummary = "Clear: No contraindicated herb-drug pharmacokinetic collisions detected.";

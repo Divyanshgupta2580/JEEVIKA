@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Activity, RefreshCw, Cpu, Layers, ExternalLink, Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Shield, Activity, RefreshCw, Cpu, Layers, Sparkles, Cloud, Zap, Terminal, ArrowRight } from 'lucide-react';
 import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
 
 interface AgentInfo {
@@ -152,7 +152,8 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
               </div>
               
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                <span>🌊 Maritime Autonomous Clinical Swarm</span>
+                <Cloud className="w-8 h-8 text-blue-600" />
+                <span>Maritime Autonomous Clinical Swarm</span>
               </h1>
               <p className="text-slate-600 text-sm sm:text-base max-w-3xl leading-relaxed">
                 Jeevika offloads background pharmacovigilance watchdogs, Indic speech normalizers, and generic supply chain allocation to <strong className="text-slate-900 font-semibold">Maritime’s fully managed AI agent cloud</strong>, guaranteeing sub-150ms deterministic clinical audits without straining local hospital hardware.
@@ -166,7 +167,7 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold px-6 py-3.5 rounded-2xl shadow-xs hover:shadow-sm transition flex items-center justify-center gap-2 text-sm cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 text-blue-100 ${isRunningAudit ? 'animate-spin' : ''}`} />
-                <span>{isRunningAudit ? 'Executing Swarm...' : '⚡ Run Tri-Agent Mesh Audit'}</span>
+                <span>{isRunningAudit ? 'Executing Swarm...' : <>Run Tri-Agent Mesh Audit <Zap className="w-3.5 h-3.5 text-amber-300 ml-1 inline" /></>}</span>
               </button>
             </div>
           </div>
@@ -227,8 +228,9 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
             <div className="flex items-center justify-between border-b border-emerald-200 pb-3">
               <div className="flex items-center gap-3">
                 <span className="w-3 h-3 rounded-full bg-emerald-600 animate-ping" />
-                <h3 className="text-lg font-black text-emerald-950">
-                  ⚡ Tri-Agent Consensus Achieved on Maritime Cloud ({auditResult.latencyMs}ms)
+                <h3 className="text-lg font-black text-emerald-950 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-emerald-600" />
+                  Tri-Agent Consensus Achieved on Maritime Cloud ({auditResult.latencyMs}ms)
                 </h3>
               </div>
               <span className="text-xs font-mono text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
@@ -334,7 +336,8 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
             <div>
               <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <span>🧪 Test an Autonomous Maritime Agent Live</span>
+                <Terminal className="w-5 h-5 text-blue-600" />
+                <span>Test an Autonomous Maritime Agent Live</span>
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 Select an agent, supply clinical input, and observe real-time offloaded execution on Maritime Cloud.
@@ -378,7 +381,7 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
               disabled={isExecutingAgent}
               className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl text-xs transition shadow-xs flex items-center gap-2 cursor-pointer"
             >
-              <span>{isExecutingAgent ? 'Maritime Agent Executing...' : 'Execute Agent on Maritime Cloud ➔'}</span>
+              <span>{isExecutingAgent ? 'Maritime Agent Executing...' : <><span>Execute Agent on Maritime Cloud</span><ArrowRight className="w-3.5 h-3.5" /></>}</span>
             </button>
 
             {agentOutput && (

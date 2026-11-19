@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { 
   Users, Printer, CheckCircle2, 
-  Sparkles, Leaf, Pill, AlertTriangle, ShieldCheck 
+  Sparkles, Leaf, Pill, AlertTriangle 
 } from 'lucide-react';
 import { checkHerbDrugInteractions } from '../lib/herbDrugInteractions';
 
@@ -118,7 +118,7 @@ export function AyushDashboard({ onSendToPos }: AyushDashboardProps) {
   }, [activePatient]);
 
   const handleApproveFormulations = () => {
-    setSuccessMsg(`🌿 Ayurvedic Case Sheet Approved! Pushed to ABDM M2 Gateway & JEEVIKA POS!`);
+    setSuccessMsg(`Ayurvedic Case Sheet Approved! Pushed to ABDM M2 Gateway & JEEVIKA POS!`);
     setTimeout(() => setSuccessMsg(null), 4000);
 
     if (onSendToPos) {
@@ -158,8 +158,8 @@ export function AyushDashboard({ onSendToPos }: AyushDashboardProps) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-black text-2xl shadow-sm">
-            🌿
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center shadow-sm">
+            <Leaf className="w-6 h-6 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -377,7 +377,7 @@ export function AyushDashboard({ onSendToPos }: AyushDashboardProps) {
                   <div key={idx} className="text-xs text-rose-950 space-y-1">
                     <div className="font-bold flex items-center gap-2 flex-wrap">
                       <span>{interaction.ayurvedicHerb}</span>
-                      <span>⚡</span>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                       <span>{interaction.allopathicDrug} ({interaction.allopathicClass})</span>
                     </div>
                     <p className="text-[11px] text-rose-800 leading-relaxed font-medium">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, DollarSign, Zap, Lock, RefreshCw, Terminal, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Zap, Lock, RefreshCw, Terminal, CheckCircle2, XCircle, ArrowRight, ShieldAlert, FileText, Check } from 'lucide-react';
 import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
 
 interface PruneLogItem {
@@ -112,7 +112,8 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                <span>🛡️ Prune AI Cost Engine & Security Firewall</span>
+                <Shield className="w-8 h-8 text-emerald-600" />
+                <span>Prune AI Cost Engine & Security Firewall</span>
               </h1>
               <p className="text-slate-600 text-sm sm:text-base max-w-3xl leading-relaxed">
                 Jeevika routes all clinician ambient audio notes, kiosk chats, and agent inferences through <strong className="text-slate-900 font-semibold">Prune’s intelligent reverse proxy</strong>, saving 76.4% in LLM API expenses via sub-20ms semantic caching while neutralizing prompt injections and scrubbing patient PII.
@@ -127,6 +128,14 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
               >
                 <Zap className="w-4 h-4 text-emerald-100" />
                 <span>Test 14ms Semantic Cache</span>
+              </button>
+              <button
+                onClick={handleSimulateInjection}
+                disabled={isRunningTest}
+                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold px-6 py-3.5 rounded-2xl shadow-xs hover:shadow-sm transition flex items-center justify-center gap-2 text-sm cursor-pointer"
+              >
+                <Lock className="w-4 h-4 text-purple-100" />
+                <span>Simulate WAF Attack</span>
               </button>
             </div>
           </div>
@@ -193,9 +202,9 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 In rural district health centres, 80% of OPD walk-ins present with identical seasonal complaints (e.g. viral pharyngitis, tension headache, acute gastroenteritis). Prune’s vector embedding cache evaluates semantic similarity:
               </p>
               <div className="space-y-2 text-xs font-mono bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="text-emerald-700 font-bold">✓ Cache Hit: 14ms latency • ₹0.00 billed tokens</div>
-                <div className="text-slate-600">✓ Token Pruner: Strips redundant padding & stop-words</div>
-                <div className="text-slate-600">✓ Provider Failover: Gemini 2.5 ➔ Groq Llama 3 on 503</div>
+                <div className="text-emerald-700 font-bold flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Cache Hit: 14ms latency • ₹0.00 billed tokens</div>
+                <div className="text-slate-600 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Token Pruner: Strips redundant padding & stop-words</div>
+                <div className="text-slate-600 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Provider Failover: Gemini 2.5 <ArrowRight className="w-3 h-3 inline" /> Groq Llama 3 on 503</div>
               </div>
             </div>
 
@@ -208,9 +217,9 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 Public touchpoint kiosks are vulnerable to adversarial prompt injections. Prune enforces deep medical safety gates before any prompt reaches upstream LLM clusters:
               </p>
               <div className="space-y-2 text-xs font-mono bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="text-rose-700 font-bold">🛑 Blocks Unauthorized Narcotics Dispensing Prompts</div>
-                <div className="text-blue-700 font-bold">🔐 Automatic Aadhaar (12-Digit) & Mobile (10-Digit) Masking</div>
-                <div className="text-emerald-700 font-bold">📜 NMC Act 2019 Rule 4.2 Assistive Guardrail Lock</div>
+                <div className="text-rose-700 font-bold flex items-center gap-1.5"><ShieldAlert className="w-3.5 h-3.5 text-rose-600 shrink-0" /> Blocks Unauthorized Narcotics Dispensing Prompts</div>
+                <div className="text-blue-700 font-bold flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Automatic Aadhaar (12-Digit) & Mobile (10-Digit) Masking</div>
+                <div className="text-emerald-700 font-bold flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> NMC Act 2019 Rule 4.2 Assistive Guardrail Lock</div>
               </div>
             </div>
           </div>
@@ -221,7 +230,8 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
             <div>
               <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <span>🧪 Test Prune Gateway Security & Semantic Cache</span>
+                <Terminal className="w-5 h-5 text-emerald-600" />
+                <span>Test Prune Gateway Security & Semantic Cache</span>
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 Choose a pre-set clinical scenario or type your own to test cache hits, prompt injection defense, and PII masking.
@@ -236,7 +246,8 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 }}
                 className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
               >
-                <span>⚡ Test Cache Hit (Viral Fever)</span>
+                <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Test Cache Hit (Viral Fever)</span>
               </button>
               <button
                 onClick={() => {
@@ -245,7 +256,8 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 }}
                 className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
               >
-                <span>🛑 Test Prompt Injection Attack</span>
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                <span>Test Prompt Injection Attack</span>
               </button>
               <button
                 onClick={() => {
@@ -254,7 +266,8 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 }}
                 className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
               >
-                <span>🔐 Test PII / Aadhaar Masking</span>
+                <Lock className="w-3.5 h-3.5 text-blue-600" />
+                <span>Test PII / Aadhaar Masking</span>
               </button>
             </div>
 
@@ -270,9 +283,9 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                 <button
                   onClick={() => handleExecutePrompt()}
                   disabled={isRunningTest}
-                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shrink-0 cursor-pointer shadow-xs"
+                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shrink-0 cursor-pointer shadow-xs inline-flex items-center gap-1.5"
                 >
-                  {isRunningTest ? 'Routing...' : 'Send via Prune Gateway ➔'}
+                  {isRunningTest ? 'Routing...' : <><span>Send via Prune Gateway</span><ArrowRight className="w-3.5 h-3.5" /></>}
                 </button>
               </div>
             </div>
@@ -305,7 +318,7 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
                       <div className="flex gap-4 text-[10px] text-emerald-700 font-bold pt-2 border-t border-slate-200">
                         <span>Tokens Saved: {testResult.tokensSaved || testResult.tokensPruned || 0}</span>
                         <span>Estimated Cost Saved: ₹{testResult.costSavedINR || 4.20}</span>
-                        {testResult.piiSanitized && <span className="text-blue-700">✓ Patient PII Scrubbed</span>}
+                        {testResult.piiSanitized && <span className="text-blue-700 inline-flex items-center gap-1"><Check className="w-3 h-3" /> Patient PII Scrubbed</span>}
                       </div>
                     </div>
                   )}

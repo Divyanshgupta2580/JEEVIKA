@@ -935,7 +935,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                         </div>
 
                         {/* Chart KPI Sub-pills */}
-                        <div className="grid grid-cols-3 gap-3 mb-6 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100">
                             <div>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Period Revenue</p>
                                 <p className="text-base font-black text-slate-900 mt-0.5">₹{totalPeriodRevenue.toLocaleString('en-IN')}</p>
@@ -1545,7 +1545,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">In Stock</p>
                                         <p className="text-2xl font-black text-amber-600 mt-1">{(selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0}</p>

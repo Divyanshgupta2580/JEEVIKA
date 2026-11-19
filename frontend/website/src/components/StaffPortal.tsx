@@ -2,7 +2,7 @@ import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import { useState, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog'
 import { Button, Input, Label, Skeleton } from '@/components/ui/basic'
-import { Plus, Key, Banknote } from 'lucide-react'
+import { Plus, Key, Banknote, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useHospital } from '@/context/HospitalContext'
 import { dataService as db } from '@/lib/dataService'
@@ -765,8 +765,9 @@ export function StaffPortal({ clinicIdOverride }: { clinicIdOverride?: string })
                     </DialogHeader>
                     {selectedStaff && (
                         <form onSubmit={handleEditStaff} className="space-y-4 pt-4">
-                            <p className="text-xs font-semibold text-amber-700 bg-amber-100 p-2 rounded border border-amber-200">
-                                ⚠️ Changing details here will update the staff member's record across the entire platform globally.
+                            <p className="text-xs font-semibold text-amber-700 bg-amber-100 p-2 rounded border border-amber-200 flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                <span>Changing details here will update the staff member's record across the entire platform globally.</span>
                             </p>
                             <div className="space-y-2">
                                 <Label className="text-amber-900">Full Name*</Label>

@@ -6,14 +6,11 @@ import {
   Printer,
   QrCode,
   Languages,
-  ShieldCheck,
   Sun,
   Moon,
   Coffee,
   AlertCircle,
-  Heart,
   Pill,
-  Sparkles,
 } from 'lucide-react';
 import type { PrescriptionItem } from './DoctorConsultation';
 
@@ -53,7 +50,6 @@ export function PatientVernacularGuide({
 }: PatientVernacularGuideProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en' | 'te' | 'ta'>('hi');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [activeSpeakingIdx, setActiveSpeakingIdx] = useState<number | null>(null);
 
   // Convert raw prescription items dynamically into Vernacular visual schedules
   const parsedSchedule: ParsedScheduleItem[] = prescriptionItems.map((item, idx) => {
@@ -171,7 +167,6 @@ export function PatientVernacularGuide({
     if (isPlayingAudio) {
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
-      setActiveSpeakingIdx(null);
       return;
     }
 
@@ -189,12 +184,10 @@ export function PatientVernacularGuide({
 
     utterance.onend = () => {
       setIsPlayingAudio(false);
-      setActiveSpeakingIdx(null);
     };
 
     utterance.onerror = () => {
       setIsPlayingAudio(false);
-      setActiveSpeakingIdx(null);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -275,7 +268,7 @@ export function PatientVernacularGuide({
               }`}
             >
               {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              <span>{isPlayingAudio ? 'आवाज़ बंद करें (Stop)' : '🔊 पूरी खुराक बोलकर सुनें (Listen Hindi Audio)'}</span>
+              <span>{isPlayingAudio ? 'आवाज़ बंद करें (Stop)' : 'पूरी खुराक बोलकर सुनें (Listen Hindi Audio)'}</span>
             </button>
             <span className="text-[11px] text-slate-600 font-medium">
               अनपढ़ या बुजुर्ग मरीजों के लिए हिंदी में स्पष्ट ऑडियो निर्देश।
@@ -348,7 +341,7 @@ export function PatientVernacularGuide({
                 </div>
 
                 {/* Pictographic Visual Schedule Matrix */}
-                <div className="grid grid-cols-3 gap-2.5 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
 
                   {/* Morning */}
                   <div className={`p-3 rounded-xl border text-center transition ${

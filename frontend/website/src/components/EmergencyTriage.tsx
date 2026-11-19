@@ -473,7 +473,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
       time: nowTime
     });
 
-    setToastMessage(`🚨 Crash Cart Alpha & Code Team Dispatched to ${bayName}!`);
+    setToastMessage(`Crash Cart Alpha & Code Team Dispatched to ${bayName}!`);
     setTimeout(() => {
       setActiveDispatchAlert(null);
     }, 4500);
@@ -523,7 +523,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
     }
 
     playAudioTone('STABILIZE', soundEnabled);
-    setToastMessage(`✅ Patient ${targetCase?.patientName || ''} stabilized. Terminal Biohazard Decontamination & Restock logged under NABH Protocol. ${targetCase?.resuscitationBay} sanitized & code-ready.`);
+    setToastMessage(`Patient ${targetCase?.patientName || ''} stabilized. Terminal Biohazard Decontamination & Restock logged under NABH Protocol. ${targetCase?.resuscitationBay} sanitized & code-ready.`);
     setTimeout(() => setToastMessage(null), 4000);
 
     // Backend synchronization: call POST /api/v1/intake/encounter/:id/status
@@ -588,7 +588,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
       assignedToken: undefined
     } : b));
 
-    setToastMessage(`🛏️ Fast-tracking ${em.patientName} (${em.token}) to Inpatient ICU / Casualty Ward...`);
+    setToastMessage(`Fast-tracking ${em.patientName} (${em.token}) to Inpatient ICU / Casualty Ward...`);
 
     if (onAdmitToIpd) {
       setTimeout(() => {
@@ -671,7 +671,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
     }).catch(() => {});
 
     // High impact notification
-    setToastMessage(`🚨 LIVE STAT ALERT: ${scenario.patientName} (<${scenario.detectionLatencyMs}ms Sentinel Latency) assigned to ${availableBay.name}!`);
+    setToastMessage(`LIVE STAT ALERT: ${scenario.patientName} (<${scenario.detectionLatencyMs}ms Sentinel Latency) assigned to ${availableBay.name}!`);
     setTimeout(() => setToastMessage(null), 4500);
   };
 
@@ -709,7 +709,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
     });
     setIsBenchmarking(false);
 
-    setToastMessage(`⚡ Sentinel Hard Real-Time SLA Verified: 500 cases in ${totalMs}ms (${avgMs}ms/eval) — 100% Deterministic Guarantee!`);
+    setToastMessage(`Sentinel Hard Real-Time SLA Verified: 500 cases in ${totalMs}ms (${avgMs}ms/eval) — 100% Deterministic Guarantee!`);
     setTimeout(() => setToastMessage(null), 4500);
   };
 
@@ -1249,7 +1249,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center pt-1">
                         {/* Blood Pressure */}
                         <div className={`p-2 rounded-xl border ${
                           vitalsAnalysis.bpStatus.severity === 'CRITICAL'

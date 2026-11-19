@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useHospital } from '@/context/HospitalContext';
-import { X, Sparkles, AlertTriangle, ArrowUpRight, FileText, ShieldAlert } from 'lucide-react';
+import { X, Sparkles, AlertTriangle, ArrowUpRight, FileText, ShieldAlert, Clock } from 'lucide-react';
 
 /**
  * TrialBanner — shows a countdown banner during the free trial period.
@@ -21,8 +21,8 @@ export function TrialBanner({ onExtendClick, onUpgradeClick }: { onExtendClick?:
             } text-white px-4 py-2.5 text-center text-sm relative`}>
             <div className="flex items-center justify-center gap-2 flex-wrap">
                 <Sparkles className="w-4 h-4" />
-                <span className="font-semibold">
-                    {isUrgent ? '⏰ ' : ''}
+                <span className="font-semibold inline-flex items-center">
+                    {isUrgent && <Clock className="w-3.5 h-3.5 inline mr-1 text-white" />}
                     {billing.daysLeftInTrial} day{billing.daysLeftInTrial !== 1 ? 's' : ''} left in your {billing.isTrialExtended ? 'extended ' : ''}free trial
                 </span>
                 <span className="hidden sm:inline text-white/80">

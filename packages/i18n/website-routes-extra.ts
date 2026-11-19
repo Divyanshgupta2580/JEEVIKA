@@ -29,11 +29,11 @@ export const websiteRoutesExtraCopy: Record<
     "pa-IN": "ਸਥਿਤੀ:",
     "ta-IN": "நிலை:",
   },
-  "🚨 STAT Alert": {
-    "en-IN": "🚨 STAT Alert",
-    "hi-IN": "🚨 तत्काल अलर्ट",
-    "pa-IN": "🚨 ਤੁਰੰਤ ਚੇਤਾਵਨੀ",
-    "ta-IN": "🚨 அவசர எச்சரிக்கை",
+  "STAT Alert": {
+    "en-IN": "STAT Alert",
+    "hi-IN": "तत्काल अलर्ट",
+    "pa-IN": "ਤੁਰੰਤ ਚੇਤਾਵਨੀ",
+    "ta-IN": "அவசர எச்சரிக்கை",
   },
   "Waiting Room": {
     "en-IN": "Waiting Room",

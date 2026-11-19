@@ -32,7 +32,7 @@ export function LoginPage() {
             localStorage.setItem('lastActiveView', targetView)
             await auth.signInDemo(role)
             toast({
-                title: '⚡ Instant Portal Access Granted',
+                title: 'Instant Portal Access Granted',
                 description: `Authenticated as ${label}. Entering ${targetView.replace('-', ' ').toUpperCase()}...`,
                 className: 'bg-emerald-50 border-emerald-200 text-emerald-900'
             })

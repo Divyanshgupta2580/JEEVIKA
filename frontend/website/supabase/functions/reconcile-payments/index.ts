@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // GHOST PAYMENT FOUND — webhook missed this!
-      console.warn(`🔄 Ghost payment detected: ${payment.id} for hospital ${hospitalId}`);
+      console.warn(`[RECONCILE] Ghost payment detected: ${payment.id} for hospital ${hospitalId}`);
 
       // Use the same atomic RPC as the webhook
       const { data: result, error: rpcError } = await supabase.rpc('process_payment_captured', {
@@ -106,12 +106,12 @@ Deno.serve(async (req: Request) => {
       });
 
       if (rpcError) {
-        console.error(`❌ Reconciliation failed for ${payment.id}:`, rpcError.message);
+        console.error(`[ERROR] Reconciliation failed for ${payment.id}:`, rpcError.message);
         errors++;
       } else if (result?.already_processed) {
         skipped++;
       } else {
-        console.log(`✅ Reconciled ghost payment: ${payment.id} → plan ${planSlug}`);
+        console.log(`[SUCCESS] Reconciled ghost payment: ${payment.id} → plan ${planSlug}`);
 
         // Log as reconciliation event
         if (result?.subscription_id) {
