@@ -67,6 +67,8 @@ const HospitalCommandCenterPage = lazyWithRetry(() => import("@/pages/HospitalCo
 const PrivacyPage = lazyWithRetry(() => import("@/pages/PrivacyPage"));
 const CareersPage = lazyWithRetry(() => import("@/pages/CareersPage"));
 const SupportPage = lazyWithRetry(() => import("@/pages/SupportPage"));
+const LoginPage = lazyWithRetry(() => import("@/components/LoginPage").then(module => ({ default: module.LoginPage })));
+const RegisterPage = lazyWithRetry(() => import("@/components/RegisterPage").then(module => ({ default: module.RegisterPage })));
 import { useLocation } from 'react-router-dom';
 import { logPageView } from '@/lib/analytics';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -445,8 +447,8 @@ function AppContent() {
                                     </div>
                                 )
                             )}
-                            {/* TIER 4: DOCTOR (Hospital Context) */}
-                            {(profile?.role === 'DOCTOR') && profile.hospital_id && (
+                            {/* TIER 4: CLINICAL & STAFF ROLES FALLBACK */}
+                            {(!['SUPER_ADMIN', 'OWNER', 'HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'].includes(profile?.role || '')) && (
                                 <HospitalDashboard onSelectClinic={setSelectedClinicId} />
                             )}
                         </>
@@ -698,8 +700,8 @@ function AppRouter() {
                     <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
                     <Route path="/careers" element={<PageWrapper><CareersPage /></PageWrapper>} />
                     <Route path="/support" element={<PageWrapper><SupportPage /></PageWrapper>} />
-                    <Route path="/login" element={<Navigate to="/app" />} />
-                    <Route path="/register" element={<Navigate to="/app" />} />
+                    <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
+                    <Route path="/register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
                     <Route path="/kiosk" element={<div className="min-h-screen bg-slate-100 py-6"><PatientKiosk /></div>} />
                     <Route path="/app/*" element={<AppContent />} />
                     <Route path="*" element={<Navigate to="/" />} />
