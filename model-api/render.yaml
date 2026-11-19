@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: rohan-cbc-model-api
+    name: jeevika-cbc-model-api
     runtime: python
     plan: free
     region: singapore

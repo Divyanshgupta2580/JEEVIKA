@@ -633,7 +633,7 @@ const defaultMohammedEncounter: EncounterRecord = {
   status: "IN_CONSULT",
   is_emergency: false,
   bay: "Nephrology Consultation Suite 1",
-  assigned_doctor: "Dr. Divyansh, MD, DM",
+  assigned_doctor: "Consultant Physician, MD, DM",
   triage: { tier: "routine", redFlags: [] },
   vitals: { bp: "162/98 mmHg", pulse: 68, spo2: 97, temp: "98.2°F" },
   soap: {

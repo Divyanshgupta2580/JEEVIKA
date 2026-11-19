@@ -2,7 +2,7 @@
 ### *Bharat’s First Vernacular-First Clinical Operating System & Assistive Hospital Platform*
 
 [![Pure Software](https://img.shields.io/badge/Architecture-100%25%20Pure%20Software%20(Zero%20Hardware)-blue)](frontend/website)
-[![Author](https://img.shields.io/badge/Author-Divyansh%20Gupta-purple)](#-creator--engineering-lead)
+[![Architecture](https://img.shields.io/badge/Architecture-Enterprise%20Clinical%20OS-purple)](#-core-engineering--clinical-governance)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 [![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](frontend/website)
 [![Hono API](https://img.shields.io/badge/Backend-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
@@ -70,7 +70,7 @@ flowchart TD
     subgraph S5["5. National Digital Health Ecosystem Integrations"]
         ABDM["🇮🇳 NHA ABDM Milestone 2<br/>(FHIR R4 Diagnostic Bundles)"]
         PMBJP["💊 PMBJP Jan Aushadhi Repository<br/>(2,000+ Generic Formularies)"]
-        NMCReg["⚖️ NMC Registered Practitioner<br/>(Dr. Divyansh #NMC-DL-2018-84729)"]
+        NMCReg["⚖️ NMC Registered Practitioner<br/>(Registered Medical Practitioner #NMC-DL-2018-84729)"]
     end
 
     Kiosk & Doctor & Triage & Command & POS -->|Encrypted REST & WebSockets| HonoAPI
@@ -109,7 +109,7 @@ Every portal is designed with an ultra-clean, clinical Light Theme design system
 <p align="center">
   <img src="./docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
 </p>
-<p align="center"><em>Doctor header (Dr. Divyansh, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.</em></p>
+<p align="center"><em>Doctor header (Consultant Physician, MD, DM), live queue sync (#032 Ramesh Chandra), Ambient Clinical Scribe (Speech-to-SOAP), Herb-Drug Pharmacovigilance alert (Ashwagandha + Warfarin bleed risk), and PMBJP Jan Aushadhi generic substitution saving 86% out-of-pocket costs with PDF Rx generation.</em></p>
 
 ---
 
@@ -173,7 +173,7 @@ flowchart LR
     B -->|"Critical Cardiac/Stroke"| C["Resuscitation Bay #1<br/>(STAT Emergency E-024)"]
     B -->|"Routine Complaints"| D["Doctor OPD Cockpit<br/>(Ambient Clinical Scribe)"]
     C --> D
-    D -->|"AHA/ACC STEMI & Sentinel"| E["NMC RMP Sign-Off<br/>(Dr. Divyansh, MD, DM)"]
+    D -->|"AHA/ACC STEMI & Sentinel"| E["NMC RMP Sign-Off<br/>(Duty Medical Officer, MD, DM)"]
     E --> F["Patient Vernacular Guide<br/>(Pictographic Hindi Timetable)"]
     E --> G["Pharmacy POS & FEFO<br/>(PMBJP Jan Aushadhi -85% Cost)"]
     F --> H["Patient Home<br/>(Audio & WhatsApp QR Sync)"]
@@ -207,7 +207,7 @@ flowchart LR
 * **Herb-Drug Pharmacovigilance Sentinel:** Detects hazardous allopathic + AYUSH collisions (e.g., *Ashwagandha + Warfarin* bleeding risk).
 * **PMBJP Jan Aushadhi Generic Substitution:** Calculates 86% patient medicine cost savings by mapping expensive branded drugs to quality Jan Aushadhi equivalents.
 * **Legal NMC Registered Medical Practitioner (RMP) Stamp:**
-  - Authenticated under **Dr. Divyansh, MD, DM (Cardiology / Chief Medical Officer)**.
+  - Authenticated under **Chief Medical Officer, MD, DM (Cardiology)**.
   - Reg. Number `#NMC-DL-2018-84729`.
   - Cryptographic SHA-256 tamper-evident hash timestamped for IT Act 2000 legal validity.
 * **NRCeS FHIR R4 Bundle Export:** 1-click generation of HL7/FHIR R4 JSON document bundles compliant with Ayushman Bharat Digital Mission (ABDM Milestone 2).
@@ -398,16 +398,17 @@ In high-volume public hospitals handling 200+ OPD encounters daily, repetitive d
 
 ---
 
-## 👥 Creator & Engineering Lead
+## 👥 Core Engineering & Systems Architecture
 
-| Contributor | GitHub Handle | Core Engineering & Clinical Role |
-|:---|:---|:---|
-| **Divyansh Gupta** | [`@Divyanshgupta2580`](https://github.com/Divyanshgupta2580) | **Creator, Lead Architect & Full-Stack Systems Lead** — Distributed Hono Backend, OPD Workflows, Zero-Hardware Triage, CBC Engine, Pharmacy POS & FEFO Inventory |
+| Core Function | Architecture & Systems Ownership |
+|:---|:---|
+| **Lead Systems Architect** | Distributed Hono Backend, Zero-Hardware Triage, Security Gateways & Platform Verification |
+| **Clinical Systems Lead** | OPD Workflows, CBC Engine, Pharmacy POS & FEFO Inventory Integration |
 
 ---
 
 ## 👨‍⚕️ Clinical Governance & NMC Compliance
-* **Lead Clinician:** Dr. Divyansh Gupta, MD, DM (Internal Medicine & Cardiology / Chief Medical Officer)
-* **Statutory Registration:** `#NMC-DL-2018-84729` (National Medical Commission)
+* **Clinical Governance:** Chief Medical Officer, MD, DM (Internal Medicine & Cardiology)
+* **Statutory Registration:** `#NMC-DL-2018-84729` (National Medical Commission Registered Medical Practitioner)
 * **Legal Framework:** Conforms to NMC Registered Medical Practitioner (Professional Conduct) Regulations 2023, Digital Personal Data Protection (DPDP) Act 2023, and Ayushman Bharat Digital Mission (ABDM Milestone 2).
 * **Platform:** Jeevika — *Continuity of Care Operating System (100% Pure Software SaaS)*

@@ -2,7 +2,7 @@
     "name": "jeevika-website",
     "private": true,
     "version": "0.0.0",
-    "author": "Divyansh Gupta <divyanshvinu12@gmail.com>",
+    "author": "Jeevika Core Engineering Team <engineering@jeevika.in>",
     "type": "module",
     "scripts": {
         "dev": "vite --host",

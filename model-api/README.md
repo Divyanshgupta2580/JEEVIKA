@@ -48,7 +48,7 @@ Interactive schema: `http://127.0.0.1:8000/docs`. Health: `GET /health`.
 
 ## Call the model
 
-Existing service base URL: https://rohan-cbc-model-api.onrender.com
+Existing service base URL: https://jeevika-cbc-model-api.onrender.com
 
 Send `POST /predict` with `Content-Type: application/json`:
 

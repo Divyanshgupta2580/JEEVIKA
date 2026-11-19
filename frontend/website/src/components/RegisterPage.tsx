@@ -136,7 +136,7 @@ export function RegisterPage() {
                             <Input
                                 id="fullName"
                                 type="text"
-                                placeholder="Dr. Divyansh"
+                                placeholder="Consultant Physician"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white transition-all rounded-xl"

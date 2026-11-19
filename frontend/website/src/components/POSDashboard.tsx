@@ -30,7 +30,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
     const [patientName, setPatientName] = useState('');
     const [patientPhone, setPatientPhone] = useState('');
     const [patientAddress, setPatientAddress] = useState('');
-    const [doctorName, setDoctorName] = useState('Dr. Divyansh');
+    const [doctorName, setDoctorName] = useState('Chief Medical Officer');
     const [paymentMode, setPaymentMode] = useState('Cash');
 
     // Consultation State
@@ -1427,7 +1427,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                         value={doctorName}
                                         onChange={e => setDoctorName(e.target.value)}
                                     >
-                                        <option value="Dr. Divyansh">Dr. Divyansh (Chief Medical Officer)</option>
+                                        <option value="Chief Medical Officer">Chief Medical Officer (CMO)</option>
                                         {doctors.map((d: any) => (
                                             <option key={d.id} value={d.full_name}>{d.full_name}</option>
                                         ))}

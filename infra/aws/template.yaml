@@ -4,7 +4,7 @@ Parameters:
   Revision:
     Type: String
     AllowedPattern: '[a-f0-9]{40}'
-    Description: Exact tested commit SHA in Divyanshgupta2580/JEEVIKA
+    Description: Exact tested commit SHA in JEEVIKA
   OriginPrefixList:
     Type: String
     AllowedPattern: 'pl-[a-f0-9]+'

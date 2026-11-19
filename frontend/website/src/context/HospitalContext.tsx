@@ -172,7 +172,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                 if (demoData.clinics?.length >= 5 && demoData.inventory?.length >= 10 && localStorage.getItem('cf_d1_store_sales')) {
                     const normProfile = demoData.profile ? {
                         ...demoData.profile,
-                        full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Dr. Divyansh, MD, DM' : demoData.profile.full_name
+                        full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Chief Medical Officer, MD, DM' : demoData.profile.full_name
                     } : null;
                     setSession(demoData.user);
                     setProfile(normProfile);
@@ -194,7 +194,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                 const demoData = JSON.parse(freshRaw);
                 const normProfile = demoData.profile ? {
                     ...demoData.profile,
-                    full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Dr. Divyansh, MD, DM' : demoData.profile.full_name
+                    full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Chief Medical Officer, MD, DM' : demoData.profile.full_name
                 } : null;
                 setSession(demoData.user);
                 setProfile(normProfile);

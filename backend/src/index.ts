@@ -866,7 +866,7 @@ const defaultRameshPrescription: PrescriptionRecord = {
   status: "SIGNED",
   prescriptionDate: "18 Oct 2026",
   validTillDate: "01 Nov 2026",
-  doctorName: "Dr. Divyansh",
+  doctorName: "Duty Medical Officer",
   specialty: "Senior Physician · Rheumatology & Internal Medicine",
   hospital: "AIIMS New Delhi / Central OPD Clinic",
   opdRoom: "OPD-3",
@@ -960,7 +960,7 @@ const defaultSunitaPrescription: PrescriptionRecord = {
   status: "SIGNED",
   prescriptionDate: "18 Oct 2026",
   validTillDate: "18 Nov 2026",
-  doctorName: "Dr. Divyansh",
+  doctorName: "Duty Medical Officer",
   specialty: "General Medicine & Chronic Care",
   hospital: "Central OPD Clinic",
   opdRoom: "OPD-1",
@@ -1093,7 +1093,7 @@ prescriptionsRouter.post("/", async (c) => {
     const rxId = String(raw.rxId || raw.rx_id || `#RX-${Date.now().toString().slice(-6)}`);
     const adviceObj = (typeof raw.advice === "object" && raw.advice !== null ? raw.advice : {}) as Record<string, unknown>;
 
-    const doctorName = String(raw.doctorName || adviceObj.doctorName || "Dr. Divyansh");
+    const doctorName = String(raw.doctorName || adviceObj.doctorName || "Duty Medical Officer");
     const specialty = String(raw.specialty || adviceObj.specialty || "Senior Physician · Rheumatology & Integrative Ayurveda");
     const hospital = String(raw.hospital || adviceObj.hospital || "All India Institute of Ayurveda (AIIA)");
     const opdRoom = String(raw.opdRoom || adviceObj.opdRoom || "OPD-3");

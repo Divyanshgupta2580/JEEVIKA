@@ -1,16 +1,16 @@
 # JEEVIKA Team Collaboration & Cloudflare Deployment Guide
 
-> Master guide for the team working on `Divyanshgupta2580/JEEVIKA`.
+> Master guide for the team working on JEEVIKA.
 > Contains GitHub multi-collaborator setup, Cloudflare remote deployment instructions, and copy-paste prompts for all roles.
 
 ---
 
 ## 👥 1. Team Collaboration Architecture (Single GitHub Repo)
 
-We use **one central repository** (`Divyanshgupta2580/JEEVIKA`) with all teammates added as collaborators.
+We use **one central repository** (`JEEVIKA`) with all teammates added as collaborators.
 
 ### Step 1: Add Collaborators on GitHub
-1. Go to repository **Settings** → **Collaborators** (`https://github.com/Divyanshgupta2580/JEEVIKA/settings/access`).
+1. Go to repository **Settings** → **Collaborators**.
 2. Click **Add people** and enter each teammate's GitHub username.
 3. Teammates must accept the email invite before pushing branches.
 
@@ -98,7 +98,7 @@ npm run deploy:web
 
 ```markdown
 # ROLE: Principal Flutter & Android Kiosk Systems Architect
-You are the Mobile & Kiosk Lead on JEEVIKA OS (repository: `Divyanshgupta2580/JEEVIKA`).
+You are the Mobile & Kiosk Lead on JEEVIKA OS (repository: `JEEVIKA`).
 You are equipped with skills: `flutter-expert`, `android_ui_verification`, `dart-use-pattern-matching`, `ui-a11y`, and `poka-yoke`.
 Your task is to deliver the production-ready Patient Intake Kiosk application running on Android tablets and Web.
 
@@ -171,7 +171,7 @@ Integrate and harden the Patient Intake Kiosk (`frontend/app/` / `kiosk_app`), c
 
 ```markdown
 # ROLE: Principal Cloudflare Edge & Distributed Systems Engineer
-You are the Backend & Cloudflare Lead on JEEVIKA OS (repository: `Divyanshgupta2580/JEEVIKA`).
+You are the Backend & Cloudflare Lead on JEEVIKA OS (repository: `JEEVIKA`).
 You are equipped with skills: `api-designer`, `database-admin`, `fp-errors`, `security-auditor`, and `poka-yoke`.
 Your task is to build out the high-throughput edge backend on Cloudflare Workers, Hono, D1, and Durable Objects.
 
@@ -264,7 +264,7 @@ Replace in-memory demo stores with Cloudflare D1 relational persistence, impleme
 
 ```markdown
 # ROLE: Principal AI Systems & Clinical Algorithm Integration Engineer
-You are the AI, Voice & Clinical Algorithms Lead on JEEVIKA OS (repository: `Divyanshgupta2580/JEEVIKA`).
+You are the AI, Voice & Clinical Algorithms Lead on JEEVIKA OS (repository: `JEEVIKA`).
 You are equipped with skills: `voice-agents`, `transformers-js`, `pydantic-models-py`, `privacy-by-design`, and `poka-yoke`.
 Your task is to wire Indic voice interactions (Sarvam AI), prescription document OCR, and the 4 deterministic clinical decision engines.
 
@@ -333,7 +333,7 @@ Integrate sub-800ms Indic voice triage, structured prescription OCR parsing with
 
 ```markdown
 # ROLE: Principal Frontend Engineer & Medical Systems Architect
-You are the Web Frontend & Operations Lead on JEEVIKA OS (repository: `Divyanshgupta2580/JEEVIKA`).
+You are the Web Frontend & Operations Lead on JEEVIKA OS (repository: `JEEVIKA`).
 You are equipped with skills: `react-patterns`, `ui-review`, `design-spells`, `webapp-testing`, `performance-profiling`, and `poka-yoke`.
 Your task is to build the unified Clinician Consultation Portal and Pharmacy Point-of-Sale (POS) dashboard deployed on Cloudflare Pages.
 

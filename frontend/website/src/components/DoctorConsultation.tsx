@@ -1474,7 +1474,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     try {
       const updatePayload = {
         status: 'IN_CONSULT',
-        assigned_doctor: 'Dr. Divyansh'
+        assigned_doctor: 'Duty Medical Officer'
       };
       await fetch(`${CLOUDFLARE_API_BASE}/intake/encounter/${encodeURIComponent(patientId)}/status`, {
         method: 'POST',
@@ -1613,7 +1613,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
       clinicId: clinicId,
       diagnosis: activePatient.soap.assessment,
       doctorNotes: activePatient.soap.assessment,
-      doctorName: 'Dr. Divyansh',
+      doctorName: 'Duty Medical Officer',
       specialty: 'Senior Physician · General & Integrative Medicine',
       hospital: hospital?.name || 'All India Institute of Ayurveda (AIIA)',
       items: rxItems,
@@ -1879,7 +1879,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.text('Clinician: Dr. Divyansh, MD, DNB', 14, footerY + 5);
+    doc.text('Clinician: Consultant Physician, MD, DNB', 14, footerY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 116, 139);
     doc.text('Reg. No: MCI-2018-94821 • Department of Internal Medicine', 14, footerY + 9);
@@ -1951,7 +1951,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                Dr. Divyansh, MD, DM — Clinical Consultation Workspace
+                Consultant Physician, MD, DM — Clinical Consultation Workspace
               </h1>
               <span className="text-[10px] bg-emerald-600 text-white font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-sm">
                 NMC Verified: #NMC-DL-2018-84729
@@ -2707,7 +2707,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                     <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                     <div>
                       <div className="font-bold text-slate-900 flex items-center gap-2">
-                        <span>Digitally Signed by Dr. Divyansh, MD, DM (Cardiology)</span>
+                        <span>Digitally Signed by Consultant Physician, MD, DM (Cardiology)</span>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">NMC Verified</span>
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono">
@@ -3201,7 +3201,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                     <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                     <div>
                       <div className="font-bold text-slate-900 flex items-center gap-2">
-                        <span>Digitally Signed by Dr. Divyansh, MD, DM (Cardiology)</span>
+                        <span>Digitally Signed by Consultant Physician, MD, DM (Cardiology)</span>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">NMC Verified</span>
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono">

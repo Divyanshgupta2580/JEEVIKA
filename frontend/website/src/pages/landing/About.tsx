@@ -58,13 +58,13 @@ const About: React.FC = () => {
 
                 <div className="space-y-6 text-lg text-slate-700 leading-relaxed italic font-serif">
                   <p className="border-l-4 border-blue-600/20 pl-6 py-2">
-                    "Hi, I'm Dr. Divyansh, the lead clinician and developer behind Jeevika. I started this project with a simple realization: the software our doctors and clinic staff use every day shouldn't be harder to navigate than the medical problems they solve."
+                    "Jeevika was created with a clear clinical realization: the software healthcare practitioners and hospital staff use every day shouldn't be harder to navigate than the medical challenges they solve."
                   </p>
                   <p className="pl-6">
-                    "I saw a massive gap between clunky legacy systems and the smooth technology we use everywhere else. I’m not a massive corporate entity; I’m a developer on a mission to bring real, tangible change to healthcare operations."
+                    "We saw a profound divide between clunky legacy EMR systems and the modern, responsive technologies used in other industries. Our mission is to engineer high-reliability, zero-hardware digital infrastructure built for frontline clinical workflows."
                   </p>
                   <p className="pl-6 font-semibold text-slate-900 not-italic">
-                    "My goal is simple: give medical professionals their time back, so they can focus entirely on patient care."
+                    "Our objective is simple: return time to clinicians and staff, so their complete focus remains on patient care."
                   </p>
                 </div>
 
@@ -104,16 +104,16 @@ const About: React.FC = () => {
                 <div className="absolute -bottom-10 -right-6 lg:-right-12 bg-white/95 backdrop-blur-md p-6 rounded-[2.5rem] shadow-2xl border border-white/50 animate-float flex flex-col items-center justify-center group/seal hover:scale-105 transition-transform duration-500 min-w-[200px]">
                   <div className="relative mb-2 py-1 px-3 text-center">
                     <span className="font-serif italic font-bold text-xl md:text-2xl text-slate-800 tracking-wider select-none">
-                      Dr. Divyansh
+                      JEEVIKA
                     </span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="h-px w-12 bg-blue-600/20 mb-3"></div>
                     <span className="text-[10px] font-bold text-slate-800 uppercase tracking-[0.2em] leading-none">
-                      Lead Developer
+                      Clinical Systems
                     </span>
                     <span className="text-[9px] font-medium text-blue-600 uppercase tracking-widest mt-1.5 opacity-80">
-                      & Founder
+                      Engineering
                     </span>
                   </div>
                   {/* Subtle decorative touch */}

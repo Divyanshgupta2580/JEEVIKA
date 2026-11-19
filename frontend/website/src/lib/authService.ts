@@ -377,7 +377,7 @@ class CloudflareAuthService implements AuthService {
             HOSPITAL_ADMIN: {
                 id: 'demo-user-admin',
                 email: 'director@jeevika.in',
-                full_name: 'Dr. Divyansh, MD, DM',
+                full_name: 'Chief Medical Officer, MD, DM',
                 role: 'HOSPITAL_ADMIN',
                 hospital_id: demoHospital.id,
                 clinic_id: 'clinic-opd-001'
@@ -385,7 +385,7 @@ class CloudflareAuthService implements AuthService {
             CLINIC_ADMIN: {
                 id: 'demo-user-clinic',
                 email: 'clinic.manager@jeevika.in',
-                full_name: 'Rajesh Verma (Clinic Manager)',
+                full_name: 'Clinic Operations Manager',
                 role: 'CLINIC_ADMIN',
                 hospital_id: demoHospital.id,
                 clinic_id: 'clinic-opd-001'
@@ -393,7 +393,7 @@ class CloudflareAuthService implements AuthService {
             DOCTOR: {
                 id: 'demo-user-doctor',
                 email: 'doctor@jeevika.in',
-                full_name: 'Dr. Divyansh, MD, DM',
+                full_name: 'Chief Medical Officer, MD, DM',
                 role: 'DOCTOR',
                 hospital_id: demoHospital.id,
                 clinic_id: 'clinic-opd-001'
@@ -401,7 +401,7 @@ class CloudflareAuthService implements AuthService {
             NURSE: {
                 id: 'demo-user-nurse',
                 email: 'nurse.triage@jeevika.in',
-                full_name: 'Nurse Ananya Roy, RN (STAT Lead)',
+                full_name: 'Triage Lead Nurse, RN (STAT Lead)',
                 role: 'CLINIC_ADMIN',
                 hospital_id: demoHospital.id,
                 clinic_id: 'clinic-triage-002'

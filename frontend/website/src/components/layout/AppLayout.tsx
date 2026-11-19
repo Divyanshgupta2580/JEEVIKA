@@ -409,10 +409,10 @@ export function AppLayout({
                         <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60 mt-1">
                             <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                 <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs shrink-0 ring-2 ring-white shadow-sm">
-                                    {userProfile?.full_name?.[0] || 'D'}
+                                    {userProfile?.full_name?.[0] || 'C'}
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-slate-800 truncate">{userProfile?.full_name || 'Dr. Divyansh, MD, DM'}</p>
+                                    <p className="text-xs font-bold text-slate-800 truncate">{userProfile?.full_name || 'Chief Medical Officer, MD, DM'}</p>
                                     <p className="text-[10px] text-slate-400 font-mono truncate">{getBrandSubtitle()}</p>
                                 </div>
                             </div>
@@ -534,13 +534,13 @@ export function AppLayout({
                         {/* HEADER USER PROFILE BADGE & LOGOUT */}
                         <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
                             <div
-                                title={`${userProfile?.full_name || 'Dr. Divyansh, MD, DM'} (${getBrandSubtitle()})`}
+                                title={`${userProfile?.full_name || 'Chief Medical Officer, MD, DM'} (${getBrandSubtitle()})`}
                                 className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm shrink-0"
                             >
-                                {userProfile?.full_name?.[0] || 'D'}
+                                {userProfile?.full_name?.[0] || 'C'}
                             </div>
                             <div className="hidden xl:flex flex-col text-left">
-                                <span className="text-xs font-bold text-slate-800 leading-none truncate max-w-[130px]">{userProfile?.full_name || 'Dr. Divyansh, MD, DM'}</span>
+                                <span className="text-xs font-bold text-slate-800 leading-none truncate max-w-[130px]">{userProfile?.full_name || 'Chief Medical Officer, MD, DM'}</span>
                                 <span className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{getBrandSubtitle()}</span>
                             </div>
                             <button
