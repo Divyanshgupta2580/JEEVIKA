@@ -4,7 +4,7 @@ Parameters:
   Revision:
     Type: String
     AllowedPattern: '[a-f0-9]{40}'
-    Description: Exact tested commit SHA in DIVYANSH-GARG28/JEEVIKA
+    Description: Exact tested commit SHA in Divyanshgupta2580/JEEVIKA
   OriginPrefixList:
     Type: String
     AllowedPattern: 'pl-[a-f0-9]+'
@@ -89,7 +89,7 @@ Resources:
           set -euxo pipefail
           dnf install -y docker git
           systemctl enable --now docker
-          git clone https://github.com/DIVYANSH-GARG28/JEEVIKA.git /opt/jeevika
+          git clone https://github.com/Divyanshgupta2580/JEEVIKA.git /opt/jeevika
           cd /opt/jeevika
           git checkout ${Revision}
           docker build -f infra/Dockerfile -t jeevika:${Revision} .

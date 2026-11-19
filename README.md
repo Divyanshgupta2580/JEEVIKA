@@ -2,7 +2,7 @@
 ### *Bharat’s First Vernacular-First Clinical Operating System & Assistive Hospital Platform*
 
 [![Pure Software](https://img.shields.io/badge/Architecture-100%25%20Pure%20Software%20(Zero%20Hardware)-blue)](frontend/website)
-[![Contributors](https://img.shields.io/badge/Core%20Team-2%20Engineers-purple)](#-core-engineering--clinical-team-2-contributors)
+[![Author](https://img.shields.io/badge/Author-Divyansh%20Gupta-purple)](#-creator--engineering-lead)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 [![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](frontend/website)
 [![Hono API](https://img.shields.io/badge/Backend-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
@@ -319,8 +319,8 @@ In conventional digital health prototypes, an LLM is prompted to "diagnose" the 
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/DIVYANSH-GARG28/DTU_JEEVIKA.git
-cd DTU_JEEVIKA
+git clone https://github.com/Divyanshgupta2580/JEEVIKA.git
+cd JEEVIKA
 npm install
 npm install --prefix frontend/website
 ```
@@ -398,17 +398,16 @@ In high-volume public hospitals handling 200+ OPD encounters daily, repetitive d
 
 ---
 
-## 👥 Core Engineering & Clinical Team (2 Contributors)
+## 👥 Creator & Engineering Lead
 
 | Contributor | GitHub Handle | Core Engineering & Clinical Role |
 |:---|:---|:---|
-| **Divyansh Garg** | [`@DIVYANSH-GARG28`](https://github.com/DIVYANSH-GARG28) | **Lead Architect & Full-Stack Systems Lead** — Distributed Hono Backend, Zero-Hardware Triage & Platform Verification |
-| **Divyansh Gupta** | [`@Divyanshgupta2580`](https://github.com/Divyanshgupta2580) | **Clinical Operations & EHR Lead** — OPD Workflows, CBC Engine, Pharmacy POS & FEFO Inventory |
+| **Divyansh Gupta** | [`@Divyanshgupta2580`](https://github.com/Divyanshgupta2580) | **Creator, Lead Architect & Full-Stack Systems Lead** — Distributed Hono Backend, OPD Workflows, Zero-Hardware Triage, CBC Engine, Pharmacy POS & FEFO Inventory |
 
 ---
 
 ## 👨‍⚕️ Clinical Governance & NMC Compliance
-* **Lead Clinician:** Dr. Divyansh, MD, DM (Internal Medicine & Cardiology / Chief Medical Officer)
+* **Lead Clinician:** Dr. Divyansh Gupta, MD, DM (Internal Medicine & Cardiology / Chief Medical Officer)
 * **Statutory Registration:** `#NMC-DL-2018-84729` (National Medical Commission)
 * **Legal Framework:** Conforms to NMC Registered Medical Practitioner (Professional Conduct) Regulations 2023, Digital Personal Data Protection (DPDP) Act 2023, and Ayushman Bharat Digital Mission (ABDM Milestone 2).
 * **Platform:** Jeevika — *Continuity of Care Operating System (100% Pure Software SaaS)*

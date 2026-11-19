@@ -358,7 +358,7 @@ HOSPITAL-MANAGEMENT/
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone https://github.com/DIVYANSH-GARG28/JEEVIKA.git
+git clone https://github.com/Divyanshgupta2580/JEEVIKA.git
 cd jeevika
 npm install
 ```

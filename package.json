@@ -2,6 +2,11 @@
   "name": "dhaaga-platform",
   "version": "0.1.0",
   "private": true,
+  "author": "Divyansh Gupta <divyanshvinu12@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Divyanshgupta2580/JEEVIKA.git"
+  },
   "type": "module",
   "engines": {
     "node": ">=22.13"
