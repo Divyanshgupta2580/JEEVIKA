@@ -89,9 +89,11 @@ export function landingMarkup(d: LandingDestinations): string {
         <div class="ds-hero-note">${designIcon("shield")} Built around people. Guided by clinical oversight.</div>
       </div>
       <div class="ds-hero-art">
-        <div class="ds-care-node ds-node-one">${designIcon("heart")} Prevention</div>
-        <div class="ds-care-node ds-node-two">${designIcon("clinical")} Consultation</div>
-        <div class="ds-care-node ds-node-three">${designIcon("home")} Care continues</div>
+        <div class="ds-care-nodes">
+          <div class="ds-care-node ds-node-one">${designIcon("heart")} Prevention</div>
+          <div class="ds-care-node ds-node-two">${designIcon("clinical")} Consultation</div>
+          <div class="ds-care-node ds-node-three">${designIcon("home")} Care continues</div>
+        </div>
         <div class="ds-art-caption-card">
           <span class="ds-caption-tag">${designIcon("heart")} Shared Mission</span>
           <span class="ds-art-caption">A healthier tomorrow,<br><em>together.</em></span>

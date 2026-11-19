@@ -22,15 +22,7 @@ import {
     Save,
     Radio,
     BellRing,
-    AlertOctagon,
-    UserCheck,
-    HeartPulse,
-    ShieldAlert,
-    Volume2,
-    Activity,
-    Check,
-    X,
-    ArrowRight
+    AlertOctagon
 } from 'lucide-react';
 import { Card, Button, Input, Label, Badge } from '@/components/ui/basic';
 import { ReceiptModal } from '@/components/ui/ReceiptModal';
@@ -284,10 +276,9 @@ export function IPDDashboard() {
     };
 
     const fetchInitialData = async () => {
-        if (!hospital?.id) return;
         setLoading(true);
         try {
-            const hId = hospital.id;
+            const hId = hospital?.id || 'demo_hospital_01';
             const wardFilters: any[] = [{ field: 'hospital_id', operator: '==', value: hId }];
             const admissionFilters: any[] = [{ field: 'hospital_id', operator: '==', value: hId }];
 
@@ -362,7 +353,7 @@ export function IPDDashboard() {
                 { id: 'GW-102', ward_id: 'ward_room_105', bed_number: 'Bed 2', status: 'occupied' as const },
                 { id: 'GW-103', ward_id: 'ward_room_105', bed_number: 'Bed 3', status: 'available' as const }
             ];
-            let finalAdmissions = (processedAdmissions && processedAdmissions.length > 0) ? processedAdmissions : [
+            const defaultDemoAdmissions = [
                 {
                     id: 'adm_priya_105',
                     patient_id: 'pat_priya_01',
@@ -393,6 +384,10 @@ export function IPDDashboard() {
                     doctor: { id: 'doc_ananya', full_name: 'Dr. Ananya Sharma', role: 'DOCTOR' },
                     bed: { id: 'GW-102', ward_id: 'ward_room_105', bed_number: 'Bed 2', status: 'occupied' as const, ward: finalWards[0] }
                 }
+            ];
+            let finalAdmissions = [
+                ...defaultDemoAdmissions,
+                ...(processedAdmissions || []).filter(a => a.id !== 'adm_priya_105' && a.id !== 'adm_ramesh_105')
             ];
 
             setAdmissions(finalAdmissions);

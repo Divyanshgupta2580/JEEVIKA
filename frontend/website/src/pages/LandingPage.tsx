@@ -65,7 +65,24 @@ export default function LandingPage() {
           text-align: center !important;
           box-sizing: border-box !important;
         }
+        .ds-care-nodes {
+          display: contents;
+        }
         @media (max-width: 1050px) {
+          .ds-hero-art {
+            min-height: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            justify-content: flex-start !important;
+            align-items: flex-start !important;
+          }
+          .ds-care-nodes {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            width: 100% !important;
+          }
           .ds-art-caption-card {
             position: relative !important;
             top: auto !important;
@@ -73,19 +90,19 @@ export default function LandingPage() {
             right: auto !important;
             bottom: auto !important;
             width: fit-content !important;
-            max-width: min(320px, 92%) !important;
-            margin-top: 8px !important;
+            max-width: min(320px, 90%) !important;
+            margin-top: 6px !important;
             padding: 12px 18px !important;
-            background: rgba(255, 255, 255, 0.22) !important;
-            backdrop-filter: blur(16px) saturate(170%) !important;
-            -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.55) !important;
+            background: rgba(255, 255, 255, 0.16) !important;
+            backdrop-filter: blur(10px) saturate(140%) !important;
+            -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.45) !important;
             border-radius: 16px !important;
-            box-shadow: 0 8px 24px rgba(8, 127, 114, 0.05) !important;
+            box-shadow: 0 8px 24px rgba(8, 127, 114, 0.04) !important;
           }
           .dark .ds-art-caption-card {
-            background: rgba(20, 40, 32, 0.35) !important;
-            border: 1px solid rgba(64, 96, 82, 0.5) !important;
+            background: rgba(20, 40, 32, 0.28) !important;
+            border: 1px solid rgba(64, 96, 82, 0.45) !important;
           }
         }
       `}</style>

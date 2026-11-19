@@ -12,7 +12,7 @@ import {
   Clock, ArrowRight, Search, Plus, Trash2, Volume2,
   VolumeX, ShieldCheck, Zap, Sparkles, BedDouble,
   Check, X, Smartphone, QrCode, Copy, Mic,
-  ShieldAlert, Shield, Lock, Cloud, Leaf, AlertOctagon, BellRing, Radio, UserCheck
+  ShieldAlert, Shield, Lock, Cloud, Leaf, AlertOctagon, UserCheck
 } from 'lucide-react';
 import { AmbientClinicalScribe } from './AmbientClinicalScribe';
 import { PatientVernacularGuide } from './PatientVernacularGuide';
@@ -2129,7 +2129,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
             </div>
 
             <div className="flex items-center gap-3">
-              {activeDistressAlert.status === 'ACTIVE_DISTRESS' ? (
+              {(!isDoctorEnRoute && activeDistressAlert.status === 'ACTIVE_DISTRESS') ? (
                 <button
                   onClick={handleAcknowledgeDoctorDistress}
                   className="py-2.5 px-6 bg-white text-red-700 hover:bg-slate-100 active:scale-95 rounded-xl font-black text-sm shadow-lg flex items-center gap-2 transition"

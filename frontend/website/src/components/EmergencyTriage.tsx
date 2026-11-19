@@ -3,7 +3,7 @@ import {
   Siren, Flame, Clock, CheckCircle2, Bed, ArrowRight,
   Activity, Heart, Zap, Volume2, VolumeX, Stethoscope,
   RefreshCw, Sparkles, Gauge, Sun, Moon,
-  ShieldCheck, X, Search, AlertOctagon, Radio, BellRing
+  ShieldCheck, X, Search, AlertOctagon, Radio
 } from 'lucide-react';
 import { dataService as db } from '@/lib/dataService';
 import { useHospital } from '@/context/HospitalContext';
@@ -296,7 +296,7 @@ export function EmergencyTriage({ onAdmitToIpd }: EmergencyTriageProps) {
     syncDistress();
     const unsub = db.subscribe('ipd_distress_events', () => {
       syncDistress();
-      playAlarmSound();
+      playAudioTone('STAT_ALERT', soundEnabled);
     });
     const interval = setInterval(syncDistress, 2500);
     return () => {

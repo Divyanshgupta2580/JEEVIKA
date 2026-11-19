@@ -243,6 +243,9 @@
   align-items: center;
   justify-content: center;
 }
+.ds-care-nodes {
+  display: contents;
+}
 .ds-care-node {
   position: absolute;
   display: flex;
@@ -289,13 +292,13 @@
   position: absolute;
   bottom: 4%;
   right: 4%;
-  background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 18px;
   padding: 16px 22px;
-  box-shadow: 0 12px 32px rgba(8, 127, 114, 0.08);
+  box-shadow: 0 12px 32px rgba(8, 127, 114, 0.06);
   display: inline-flex;
   flex-direction: column;
   gap: 5px;
@@ -849,10 +852,16 @@
   .ds-hero-art {
     min-height: auto;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 12px;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
+  }
+  .ds-care-nodes {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    width: 100% !important;
   }
   .ds-care-node {
     position: relative;
@@ -863,10 +872,10 @@
     font-size: 12px;
     padding: 10px 16px;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.32) !important;
-    backdrop-filter: blur(14px) saturate(160%) !important;
-    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    background: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(12px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
   }
   .ds-art-caption-card {
     position: relative !important;
@@ -875,15 +884,15 @@
     right: auto !important;
     bottom: auto !important;
     width: fit-content !important;
-    max-width: min(320px, 92%) !important;
-    margin-top: 8px !important;
+    max-width: min(320px, 90%) !important;
+    margin-top: 6px !important;
     padding: 12px 18px !important;
-    background: rgba(255, 255, 255, 0.22) !important;
-    backdrop-filter: blur(16px) saturate(170%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 24px rgba(8, 127, 114, 0.05) !important;
+    box-shadow: 0 8px 24px rgba(8, 127, 114, 0.04) !important;
   }
   .ds-art-caption {
     font-size: 18px;
@@ -1001,7 +1010,13 @@
     flex-wrap: wrap;
     gap: 8px;
     width: 100%;
-    align-items: center;
+    align-items: flex-start;
+  }
+  .ds-care-nodes {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
   .ds-care-node {
     position: relative;
@@ -1015,10 +1030,10 @@
     padding: 8px 14px;
     font-size: 11.5px;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.35) !important;
-    backdrop-filter: blur(12px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    background: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
   }
   .ds-art-caption-card {
     position: relative !important;
@@ -1031,10 +1046,10 @@
     margin-top: 4px !important;
     padding: 10px 16px !important;
     border-radius: 14px !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(16px) saturate(170%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
     box-shadow: 0 8px 20px rgba(8, 127, 114, 0.04) !important;
   }
   .ds-art-caption {
