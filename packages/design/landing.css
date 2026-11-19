@@ -271,19 +271,19 @@
   position: absolute;
   bottom: 4%;
   right: 4%;
-  background: rgba(255, 253, 245, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(210, 228, 218, 0.9);
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 18px;
   padding: 16px 22px;
-  box-shadow: 0 16px 42px rgba(8, 127, 114, 0.13);
+  box-shadow: 0 12px 32px rgba(8, 127, 114, 0.08);
   display: inline-flex;
   flex-direction: column;
   gap: 5px;
   max-width: 320px;
   z-index: 3;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, background 0.25s ease;
 }
 .ds-art-caption-card:hover {
   transform: translateY(-2px);
@@ -316,11 +316,18 @@
   color: #087466;
   font-weight: 700;
 }
-.dark .ds-care-node,
-.dark .ds-art-caption-card {
-  background: rgba(25, 45, 38, 0.92);
+.dark .ds-care-node {
+  background: rgba(25, 45, 38, 0.7);
   border-color: rgba(54, 80, 69, 0.85);
   color: #e4efe8;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+}
+.dark .ds-art-caption-card {
+  background: rgba(20, 40, 32, 0.45);
+  border-color: rgba(64, 96, 82, 0.6);
+  color: #e4efe8;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
 }
 .dark .ds-art-caption {
@@ -814,6 +821,10 @@
     bottom: auto;
     font-size: 12px;
     padding: 11px 16px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
   }
   .ds-art-caption-card {
     position: relative;
@@ -825,6 +836,11 @@
     max-width: 100%;
     margin-top: 8px;
     padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 24px rgba(8, 127, 114, 0.06);
   }
   .ds-art-caption {
     font-size: 18px;
@@ -941,6 +957,10 @@
     justify-content: flex-start;
     padding: 11px 16px;
     font-size: 12px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
   }
   .ds-art-caption-card {
     position: relative;
@@ -953,6 +973,11 @@
     margin-top: 4px;
     padding: 14px 16px;
     border-radius: 14px;
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 20px rgba(8, 127, 114, 0.05);
   }
   .ds-art-caption {
     font-size: 17px;
