@@ -89,7 +89,7 @@ Resources:
           set -euxo pipefail
           dnf install -y docker git
           systemctl enable --now docker
-          git clone https://github.com/Divyanshgupta2580/JEEVIKA.git /opt/jeevika
+          git clone https://github.com/jeevika-health/JEEVIKA.git /opt/jeevika
           cd /opt/jeevika
           git checkout ${Revision}
           docker build -f infra/Dockerfile -t jeevika:${Revision} .

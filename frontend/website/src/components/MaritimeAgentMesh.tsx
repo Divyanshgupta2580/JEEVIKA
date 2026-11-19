@@ -144,10 +144,10 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
                   {status?.apiKeyConfigured ? `MARITIME CLOUD LIVE (${status.apiKeyMasked})` : 'MARITIME AGENT CLOUD • LIVE'}
                 </span>
                 <span className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-mono px-3 py-1 rounded-full">
-                  Endpoint: api.maritime.sh • Cluster: maritime-scale-vihaanx-delhi
+                  Endpoint: api.maritime.sh • Cluster: maritime-scale-enterprise-delhi
                 </span>
                 <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-                  Special Challenge: Best Use of Maritime Swarm (Code: VIHAANX)
+                  Enterprise Cloud Mesh: Autonomous Multi-Agent Swarm
                 </span>
               </div>
               
@@ -446,7 +446,7 @@ export function MaritimeAgentMesh({ onNavigate: _onNavigate }: { onNavigate?: (v
 
         {/* Footer Note */}
         <div className="text-center text-xs text-slate-400 pt-4 border-t border-slate-200 font-mono">
-          Jeevika Platform • Vihaan-X Special Track: Best Use of Maritime • Participant Code: VIHAANX • All Autonomous Agents Restricted to Assistive Recommendations under NMC Act 2019
+          Jeevika Platform • Maritime Enterprise Cloud Swarm • All Autonomous Agents Restricted to Assistive Recommendations under NMC Act 2019
         </div>
 
       </div>

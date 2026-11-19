@@ -2599,7 +2599,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                   </p>
                 </div>
 
-                {/* Real-time Prune & Maritime Operational Telemetry (VIHAAN-X Track) */}
+                {/* Real-time Prune & Maritime Operational Telemetry */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
                   <div className="flex items-center justify-between bg-emerald-950 text-emerald-200 px-3 py-2 rounded-xl border border-emerald-800 shadow-sm">
                     <div className="flex items-center gap-2">

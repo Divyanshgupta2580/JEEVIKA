@@ -71,7 +71,7 @@ Update the existing Render service instead of creating a second instance:
 
 | Setting | Value |
 | --- | --- |
-| Repository | `Divyanshgupta2580/JEEVIKA` |
+| Repository | `jeevika-health/JEEVIKA` |
 | Branch while the PR is reviewed | `codex/add-model-api` |
 | Branch after the PR is merged | `main` |
 | Root directory | `model-api` |

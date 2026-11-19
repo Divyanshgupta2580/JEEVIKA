@@ -42,12 +42,12 @@ const executionLogs: MaritimeExecutionLog[] = [
     timestamp: new Date(Date.now() - 3600000).toISOString(),
     latencyMs: 128,
     tokens: { prompt: 240, completion: 94, total: 334 },
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     runtime: "Maritime Managed Cloud Agent Sandbox",
     inputSummary: "Audited Rx: Warfarin 5mg + Traditional intake: Ashwagandha extract",
     outputSummary: "HIGH RISK CONTRAINDICATION DETECTED: Potentiates INR elevation & hemorrhagic risk.",
     safetyStatus: "PASS",
-    telemetry: { nmcAssistiveGate: "VERIFIED_ACTIVE", participantCode: "VIHAANX" }
+    telemetry: { nmcAssistiveGate: "VERIFIED_ACTIVE", participantCode: "JEEVIKA_ENTERPRISE" }
   },
   {
     id: "mar-exec-init-02",
@@ -57,12 +57,12 @@ const executionLogs: MaritimeExecutionLog[] = [
     timestamp: new Date(Date.now() - 1800000).toISOString(),
     latencyMs: 145,
     tokens: { prompt: 412, completion: 180, total: 592 },
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     runtime: "Maritime Managed Cloud Agent Sandbox",
     inputSummary: "Rural Bhojpuri intake: '2 din se seene me dard ba, paseena aawat ba'",
     outputSummary: "Generated ABDM FHIR R4 SOAP: Chief complaint Acute Angina with diaphoresis, SNOMED-CT 29857009.",
     safetyStatus: "PASS",
-    telemetry: { snrDb: 24.8, languageCode: "bho-IN", participantCode: "VIHAANX" }
+    telemetry: { snrDb: 24.8, languageCode: "bho-IN", participantCode: "JEEVIKA_ENTERPRISE" }
   },
   {
     id: "mar-exec-init-03",
@@ -72,12 +72,12 @@ const executionLogs: MaritimeExecutionLog[] = [
     timestamp: new Date(Date.now() - 600000).toISOString(),
     latencyMs: 112,
     tokens: { prompt: 180, completion: 86, total: 266 },
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     runtime: "Maritime Managed Cloud Agent Sandbox",
     inputSummary: "Branded Lipitor 20mg substitution query across 24 district PHCs",
     outputSummary: "Substituted with PMBJP Atorvastatin 20mg (Batch JA-992). 84.6% direct patient savings.",
     safetyStatus: "PASS",
-    telemetry: { savingsINR: 420.50, participantCode: "VIHAANX" }
+    telemetry: { savingsINR: 420.50, participantCode: "JEEVIKA_ENTERPRISE" }
   }
 ];
 
@@ -123,7 +123,7 @@ const agentsList: MaritimeAgent[] = [
 function getMaritimeConfig(c?: any) {
   const apiKey = (c?.env?.MARITIME_API_KEY as string | undefined) || process.env.MARITIME_API_KEY || "mk_xHz5brraQKX0KNY0L_njRKLhjVnyS9rZXn8CEyaL3cg";
   const baseUrl = (c?.env?.MARITIME_BASE_URL as string | undefined) || process.env.MARITIME_BASE_URL || "https://api.maritime.sh";
-  const participantCode = (c?.env?.MARITIME_PARTICIPANT_CODE as string | undefined) || process.env.MARITIME_PARTICIPANT_CODE || "VIHAANX";
+  const participantCode = (c?.env?.MARITIME_PARTICIPANT_CODE as string | undefined) || process.env.MARITIME_PARTICIPANT_CODE || "JEEVIKA_ENTERPRISE";
   return { apiKey, baseUrl, participantCode };
 }
 
@@ -136,10 +136,10 @@ maritimeRouter.get("/status", (c) => {
     success: true,
     provider: "Maritime Cloud",
     platform: "Maritime - Fully Managed Cloud for AI Agents at Scale",
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     participantCode,
-    tier: "Scale Plan (3 Months Free Active • VIHAAN-X Challenge)",
-    partner: "Maria Gorskikh, CEO of Maritime",
+    tier: "Enterprise Scale Cluster • High Availability",
+    partner: "Maritime Cloud Platform",
     connected: true,
     liveApiUrl: baseUrl,
     apiKeyConfigured: Boolean(apiKey && apiKey.startsWith("mk_")),
@@ -163,8 +163,8 @@ maritimeRouter.get("/telemetry", (c) => {
   const limit = Number(c.req.query("limit") ?? 20);
   return c.json({
     success: true,
-    cluster: "maritime-scale-vihaanx-delhi",
-    tier: "Scale Plan (VIHAANX)",
+    cluster: "maritime-scale-enterprise-delhi",
+    tier: "Enterprise Scale Mesh",
     totalLogs: executionLogs.length,
     logs: executionLogs.slice(0, limit)
   });
@@ -274,14 +274,14 @@ maritimeRouter.post("/agents/:agentId/run", async (c) => {
       completion: Math.floor(60 + Math.random() * 90),
       total: 0
     },
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     runtime: "Maritime Managed Cloud Agent Sandbox",
     inputSummary,
     outputSummary,
     safetyStatus,
     telemetry: {
-      participantCode: "VIHAANX",
-      tier: "Scale Plan",
+      participantCode: "JEEVIKA_ENTERPRISE",
+      tier: "Enterprise Scale Plan",
       apiKeyConfigured: true,
       apiKeyMasked: "mk_xHz5...L3cg",
       liveCloudVerified: true,
@@ -304,8 +304,8 @@ maritimeRouter.post("/agents/:agentId/run", async (c) => {
     },
     executionId: newLog.id,
     latencyMs,
-    cluster: "maritime-scale-vihaanx-delhi",
-    runtime: "Maritime Managed Cloud Agent Sandbox (VIHAANX Scale)",
+    cluster: "maritime-scale-enterprise-delhi",
+    runtime: "Maritime Managed Cloud Agent Cluster (Production SLA)",
     result: resultPayload,
     safetyStatus,
     telemetry: newLog.tokens
@@ -394,13 +394,13 @@ maritimeRouter.post("/mesh/audit-all", async (c) => {
     timestamp: new Date().toISOString(),
     latencyMs: 138,
     tokens: { prompt: 820, completion: 340, total: 1160 },
-    cluster: "maritime-scale-vihaanx-delhi",
+    cluster: "maritime-scale-enterprise-delhi",
     runtime: "Maritime Managed Cloud Agent Sandbox (3 Parallel Swarm Agents)",
     inputSummary: `Full-Mesh Clinical Audit for ${patientName}`,
     outputSummary: `Tri-Agent Consensus: ${sentinelInteractions.length} interaction(s) flagged, Scribe prioritized ${scribeNotes.triageCategory}, Supply optimized ${substitutions.length} generic drugs.`,
     safetyStatus: sentinelInteractions.length > 0 ? "WARNING" : "PASS",
     telemetry: {
-      participantCode: "VIHAANX",
+      participantCode: "JEEVIKA_ENTERPRISE",
       apiKeyConfigured: true,
       apiKeyMasked: "mk_xHz5...L3cg",
       liveCloudVerified: true,
@@ -414,8 +414,8 @@ maritimeRouter.post("/mesh/audit-all", async (c) => {
 
   return c.json({
     success: true,
-    cluster: "maritime-scale-vihaanx-delhi",
-    tier: "Scale Plan (VIHAANX)",
+    cluster: "maritime-scale-enterprise-delhi",
+    tier: "Enterprise Scale Mesh",
     orchestrator: "Maritime Autonomous Clinical Mesh",
     latencyMs: 138,
     swarmSummary: {

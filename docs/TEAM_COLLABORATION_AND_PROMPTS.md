@@ -16,7 +16,7 @@ We use **one central repository** (`JEEVIKA`) with all teammates added as collab
 
 ### Step 2: Clone & Local Setup
 ```bash
-git clone https://github.com/Divyanshgupta2580/JEEVIKA.git
+git clone https://github.com/jeevika-health/JEEVIKA.git
 cd JEEVIKA
 npm install
 ```

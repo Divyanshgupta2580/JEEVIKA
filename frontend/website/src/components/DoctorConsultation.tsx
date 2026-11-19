@@ -1310,7 +1310,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     return checkHerbDrugInteractions(activePatient?.soap?.plan || [], complementaryFormulations);
   }, [activePatient?.soap?.plan]);
 
-  // Maritime Autonomous Swarm Cloud State (VIHAAN-X Track)
+  // Maritime Autonomous Swarm Cloud State
   const [maritimeResult, setMaritimeResult] = useState<{
     success: boolean;
     cluster: string;
@@ -1383,7 +1383,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     }
   };
 
-  // Prune Pro AI Copilot & Security Gateway State (VIHAAN-X Track)
+  // Prune Pro AI Copilot & Security Gateway State
   const [prunePrompt, setPrunePrompt] = useState('');
   const [pruneResult, setPruneResult] = useState<{
     text: string;
@@ -2596,7 +2596,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                 </div>
               </div>
 
-              {/* PRUNE PRO CLINICAL COPILOT & PROMPT FIREWALL (VIHAAN-X TRACK) */}
+              {/* PRUNE PRO CLINICAL COPILOT & PROMPT FIREWALL */}
               <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border-2 border-emerald-600/40 rounded-2xl p-4 text-white shadow-md space-y-3">
                 <div className="flex items-center justify-between border-b border-emerald-800/60 pb-2.5 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
@@ -3113,7 +3113,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                   </div>
                 )}
 
-                {/* MARITIME CLOUD AUTONOMOUS SWARM ORCHESTRATOR (VIHAAN-X TRACK) */}
+                {/* MARITIME CLOUD AUTONOMOUS SWARM ORCHESTRATOR */}
                 <div className="p-4 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 border-2 border-blue-500/40 rounded-2xl text-white shadow-lg space-y-3.5">
                   <div className="flex items-center justify-between border-b border-blue-800/60 pb-2.5 flex-wrap gap-2">
                     <div className="flex items-center gap-2.5">
@@ -3127,7 +3127,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
                             Maritime Cloud Autonomous Clinical Swarm
                           </h4>
                           <span className="text-[10px] bg-purple-950 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-800">
-                            Scale Plan (VIHAANX)
+                            Enterprise Scale Mesh
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-300 font-sans">

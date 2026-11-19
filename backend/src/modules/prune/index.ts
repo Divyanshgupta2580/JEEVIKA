@@ -89,7 +89,7 @@ pruneRouter.get("/status", async (c) => {
     success: true,
     provider: "Prune AI",
     platform: "Prune - Enterprise AI Cost Optimization & Security Gateway",
-    tier: "Prune Pro (12 Months Active • VIHAAN-X Special Challenge)",
+    tier: "Prune Pro Enterprise • AI Cost & Security Gateway",
     connected: true,
     liveGatewayUrl: baseUrl,
     apiKeyConfigured: Boolean(apiKey && apiKey.startsWith("prune_")),

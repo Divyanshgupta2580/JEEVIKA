@@ -37,7 +37,7 @@ serve(
         PRUNE_MODEL: process.env.PRUNE_MODEL ?? "gemini/gemini-3.5-flash-lite",
         MARITIME_API_KEY: process.env.MARITIME_API_KEY,
         MARITIME_BASE_URL: process.env.MARITIME_BASE_URL ?? "https://api.maritime.sh",
-        MARITIME_PARTICIPANT_CODE: process.env.MARITIME_PARTICIPANT_CODE ?? "VIHAANX",
+        MARITIME_PARTICIPANT_CODE: process.env.MARITIME_PARTICIPANT_CODE ?? "JEEVIKA_ENTERPRISE",
         ASSETS: { fetch: (req) => Promise.resolve(assets.fetch(req)) },
       }),
     hostname: "127.0.0.1",

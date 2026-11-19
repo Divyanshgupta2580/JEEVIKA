@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { app } from "../backend/src/index";
 
-describe("Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challenge)", () => {
+describe("Prune AI Cost Optimization & Security Gateway (Production WAF & Semantic Cache)", () => {
   it("returns Prune Pro gateway status and metrics", async () => {
     const res = await app.request("http://127.0.0.1/api/v1/prune/status");
     expect(res.status).toBe(200);

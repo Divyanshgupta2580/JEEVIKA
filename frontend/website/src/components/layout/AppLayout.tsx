@@ -459,7 +459,7 @@ export function AppLayout({
                             type="button"
                             onClick={() => setView('maritime-agents')}
                             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50/80 hover:bg-blue-100 text-blue-700 border-blue-200/80'}`}
-                            title="Maritime Autonomous Clinical Agent Mesh (VIHAAN-X Special Challenge)"
+                            title="Maritime Autonomous Clinical Agent Mesh (Production Swarm)"
                         >
                             <Cloud className="w-3.5 h-3.5 text-blue-600" />
                             <span>Maritime Agents</span>
@@ -468,7 +468,7 @@ export function AppLayout({
                             type="button"
                             onClick={() => setView('prune-gateway')}
                             className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'}`}
-                            title="Prune AI Cost Optimization & Security Gateway (VIHAAN-X Special Challenge)"
+                            title="Prune AI Cost Optimization & Security Gateway (Production WAF)"
                         >
                             <Shield className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Prune Gateway</span>

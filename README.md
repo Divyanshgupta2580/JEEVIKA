@@ -53,7 +53,7 @@ flowchart TD
     end
 
     subgraph S3["3. Distributed Multi-Agent Intelligence Swarm (Maritime Cloud Scale)"]
-        MeshCoord["Maritime Mesh Swarm Coordinator<br/>(Cluster: vihaanx-delhi)"]
+        MeshCoord["Maritime Mesh Swarm Coordinator<br/>(Cluster: enterprise-delhi)"]
         AgentSentinel["agent-sentinel-01<br/>(Clinical Sentinel Watchdog)<br/>• Detects Herb-Drug Collisions<br/>• e.g. Warfarin + Ashwagandha (126ms)"]
         AgentScribe["agent-vernacular-02<br/>(Vernacular Scribe Engine)<br/>• Normalizes Bhojpuri/Hindi/Telugu Audio<br/>• Builds ABDM FHIR R4 SOAP (142ms)"]
         AgentSupply["agent-supply-03<br/>(Supply & Generic Optimizer)<br/>• Real-time PMBJP Bioequivalence<br/>• FEFO Expiry Allocation (115ms)"]
@@ -313,10 +313,10 @@ Once admitted to a bed (e.g. Room 105, Bed 1), a patient cannot walk to an emerg
 
 ---
 
-## Special Challenge: Best Use of Maritime (VIHAAN-X Track)
+## Distributed Autonomous Multi-Agent Swarm: Maritime Cloud Architecture
 
-> **Participant Track:** Special Challenge — Best Use of Maritime  
-> **Award Scope:** 1st Place: 3 Months Maritime Scale + Session with Maria Gorskikh, CEO of Maritime
+> **Architecture Tier:** Enterprise Cloud Swarm Mesh  
+> **Infrastructure Target:** Fully managed agent cloud runtime (`maritime.sh`) with deterministic AYUSH and bioequivalence fallbacks
 
 Running multiple continuous background AI agents on local district hospital servers causes thermal throttling and crashes. Jeevika offloads all continuous clinical background reasoning to **Maritime’s fully managed AI agent cloud (`maritime.sh`)**:
 
@@ -332,10 +332,10 @@ Running multiple continuous background AI agents on local district hospital serv
 
 ---
 
-## Special Challenge: Best Use of Prune (VIHAAN-X Track)
+## AI Cost Optimization & Prompt Security Firewall: Prune Pro Gateway
 
-> **Participant Track:** Special Challenge — Best Use of Prune  
-> **Award Scope:** 1st Place: 12 Months Prune Pro + Direct Founder Internship Opportunities
+> **Architecture Tier:** Enterprise AI Reverse Proxy & Clinical WAF  
+> **Infrastructure Target:** Distributed Edge Gateway (`gateway.prune.ai`) with semantic vector caching and zero-knowledge PII redactor
 
 In high-volume public hospitals handling 200+ OPD encounters daily, repetitive diagnostic inquiries (seasonal viral flu, tension headaches, gastritis) can rapidly exhaust hospital LLM budgets. Furthermore, public kiosks are vulnerable to prompt injections and PII leakage. Jeevika deploys **Prune as an intelligent reverse proxy and clinical AI firewall (`gateway.prune.ai`)**:
 

@@ -376,7 +376,7 @@ export function PruneGatewayDashboard({ onNavigate: _onNavigate }: { onNavigate?
 
         {/* Footer Note */}
         <div className="text-center text-xs text-slate-400 pt-4 border-t border-slate-200 font-mono">
-          Jeevika Platform • Vihaan-X Special Track: Best Use of Prune • 12 Months Prune Pro Active • Zero Direct PII Transmission • Full Compliance with NMC Act 2019
+          Jeevika Platform • Prune Pro Enterprise AI Gateway • Zero Direct PII Transmission • Full Compliance with NMC Act 2019
         </div>
 
       </div>

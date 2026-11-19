@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { app } from "../backend/src/index";
 
-describe("Maritime Autonomous Agent Cloud Integration (VIHAAN-X Special Challenge)", () => {
+describe("Maritime Autonomous Agent Cloud Integration (Enterprise Multi-Agent Mesh)", () => {
   it("returns Maritime cluster status with Scale Plan tier and 3 active agents", async () => {
     const res = await app.request("http://127.0.0.1/api/v1/maritime/status");
     expect(res.status).toBe(200);
     const data = await res.json() as any;
     expect(data.success).toBe(true);
     expect(data.provider).toBe("Maritime Cloud");
-    expect(data.participantCode).toBe("VIHAANX");
-    expect(data.tier).toContain("Scale Plan");
+    expect(data.participantCode).toBe("JEEVIKA_ENTERPRISE");
+    expect(data.tier).toContain("Enterprise Scale Cluster");
     expect(data.activeAgentsCount).toBe(3);
     expect(data.agents.length).toBe(3);
     expect(data.agents.map((a: any) => a.id)).toContain("agent-sentinel-01");
