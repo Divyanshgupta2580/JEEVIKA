@@ -129,10 +129,19 @@ export function savePatientToStore(patient: PatientRecord) {
     patientStore.set(patient.phone.replace(/\s+/g, ""), patient);
     const withoutPlus = patient.phone.replace(/\+/g, "").replace(/\s+/g, "");
     patientStore.set(withoutPlus, patient);
+    patientStore.set(`pat-${withoutPlus}`, patient);
+    patientStore.set(`pat-${withoutPlus.slice(-10)}`, patient);
   }
   if (patient.abhaNumber) {
     patientStore.set(patient.abhaNumber, patient);
     patientStore.set(patient.abhaNumber.replace(/[-\s]/g, ""), patient);
+  }
+  if (typeof patient.metadata?.abhaAddress === "string") {
+    patientStore.set(patient.metadata.abhaAddress, patient);
+  }
+  if (patient.name.includes("Priya")) {
+    patientStore.set("9123456780", patient);
+    patientStore.set("pat-9811122334", patient);
   }
 }
 (globalThis as any).__jeevikaSavePatient = savePatientToStore;
@@ -161,19 +170,19 @@ const defaultDemoPatients: PatientRecord[] = [
   {
     id: "pat-048292",
     orgId: "org-jeevika-primary",
-    name: "Priya Patel",
-    phone: "+91 9811223344",
+    name: "Priya Sharma",
+    phone: "+91 9811122334",
     phoneHash: "cfed2431d0af330ec0343ad064f0493a5446ecd98a321c3862845373774a5790",
-    dob: "1992-08-22",
+    dob: "1992-04-12",
     gender: "FEMALE",
-    preferredLang: "gu",
-    abhaNumber: "91-8821-3901-2091",
-    bloodGroup: "A+",
-    address: "Ahmedabad, Gujarat, India",
-    emergencyContact: "+91 9811223340",
-    allergies: [],
-    chronicConditions: [],
-    metadata: { abhaAddress: "priya.patel@abdm" },
+    preferredLang: "hi",
+    abhaNumber: "91-5910-2941-8402",
+    bloodGroup: "O+",
+    address: "Hyderabad, Telangana, India",
+    emergencyContact: "+91 9811122330",
+    allergies: ["Penicillin"],
+    chronicConditions: ["Acid Peptic Disease", "GERD"],
+    metadata: { abhaAddress: "priya.sharma@abdm", pmjayId: "PMJAY-TS-591029" },
     createdAt: "2026-10-18T00:00:00.000Z",
     updatedAt: "2026-10-18T00:00:00.000Z",
   },
@@ -990,6 +999,81 @@ const defaultSunitaPrescription: PrescriptionRecord = {
   updatedAt: "2026-10-18T00:00:00.000Z",
 };
 
+const defaultPriyaPrescription: PrescriptionRecord = {
+  rxId: "#RX-2026-P5910",
+  prescriptionId: "#RX-2026-P5910",
+  patientId: "pat-048292",
+  clinicId: "clinic-delhi-01",
+  status: "SIGNED",
+  prescriptionDate: "18 Oct 2026",
+  validTillDate: "01 Nov 2026",
+  doctorName: "Duty Medical Officer",
+  specialty: "Senior Gastroenterologist & Internal Medicine",
+  hospital: "AIIMS New Delhi / Central OPD Clinic",
+  opdRoom: "OPD-4",
+  doctorNotes:
+    "Evidence-based allopathic regimen for acid peptic disease and gastroesophageal reflux: Take PPI 30 mins before breakfast. Avoid spicy and fried foods. Maintain dinner-to-sleep interval > 2 hours.",
+  items: [
+    {
+      medicationName: "Pantoprazole Gastro-Resistant 40mg + Domperidone 30mg SR",
+      genericName: "Pantoprazole + Domperidone SR",
+      dosage: "40mg / 30mg",
+      frequency: "OD (1-0-0)",
+      durationDays: 14,
+      instructions: "Take 30 minutes before morning breakfast with plain water",
+      isAyush: false,
+      isJanAushadhiGeneric: true,
+      janAushadhiPriceInr: 22,
+      brandedMarketPriceInr: 165,
+      savingsPercent: 86,
+      batchNumber: "BAT-2026-P40",
+      expiryDate: "09/2028",
+      isTaken: false,
+      reminderEnabled: true,
+      takenAt: null,
+    },
+    {
+      medicationName: "Sucralfate 1000mg + Oxetacaine 20mg Suspension (200ml)",
+      genericName: "Sucralfate + Oxetacaine Oral Gel",
+      dosage: "10ml",
+      frequency: "TDS (1-1-1)",
+      durationDays: 7,
+      instructions: "Take 10ml 1 hour after meals and at bedtime. Do not drink water immediately.",
+      isAyush: false,
+      isJanAushadhiGeneric: true,
+      janAushadhiPriceInr: 45,
+      brandedMarketPriceInr: 210,
+      savingsPercent: 78,
+      batchNumber: "BAT-2026-S10",
+      expiryDate: "11/2027",
+      isTaken: false,
+      reminderEnabled: true,
+      takenAt: null,
+    },
+    {
+      medicationName: "Digestive Enzyme Syrup (Fungal Diastase + Pepsin 100ml)",
+      genericName: "Digestive Enzymes Liquid",
+      dosage: "5ml",
+      frequency: "BD (1-0-1)",
+      durationDays: 10,
+      instructions: "Immediately after lunch and dinner",
+      isAyush: false,
+      isJanAushadhiGeneric: true,
+      janAushadhiPriceInr: 30,
+      brandedMarketPriceInr: 120,
+      savingsPercent: 75,
+      batchNumber: "BAT-2026-D05",
+      expiryDate: "08/2027",
+      isTaken: false,
+      reminderEnabled: true,
+      takenAt: null,
+    },
+  ],
+  adherenceLog: [],
+  createdAt: "2026-10-18T00:00:00.000Z",
+  updatedAt: "2026-10-18T00:00:00.000Z",
+};
+
 export const prescriptionStore = new Map<string, PrescriptionRecord>();
 prescriptionStore.set("pat-048291", defaultRameshPrescription);
 prescriptionStore.set("#RX-2026-A8921", defaultRameshPrescription);
@@ -997,6 +1081,10 @@ prescriptionStore.set("RX-2026-A8921", defaultRameshPrescription);
 prescriptionStore.set("pat_sunita", defaultSunitaPrescription);
 prescriptionStore.set("#RX-2026-S1024", defaultSunitaPrescription);
 prescriptionStore.set("RX-2026-S1024", defaultSunitaPrescription);
+prescriptionStore.set("pat-048292", defaultPriyaPrescription);
+prescriptionStore.set("pat-9811122334", defaultPriyaPrescription);
+prescriptionStore.set("#RX-2026-P5910", defaultPriyaPrescription);
+prescriptionStore.set("RX-2026-P5910", defaultPriyaPrescription);
 
 const prescriptionsRouter = new Hono<{ Bindings: Env }>();
 

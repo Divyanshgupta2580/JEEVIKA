@@ -289,6 +289,76 @@ const INITIAL_QUEUE: [PatientQueueItem, ...PatientQueueItem[]] = [
   },
   {
     token: 'TOKEN #045',
+    patientId: 'pat-9811122334',
+    name: 'Priya Sharma',
+    age: 34,
+    gender: 'FEMALE',
+    abhaId: '91-5910-2941-8402',
+    pmjayEligible: true,
+    status: 'WAITING',
+    checkInTime: '10:28 AM',
+    symptoms: ['Severe Epigastric Burning', 'Acid Reflux / GERD', 'Sour Eructations'],
+    intakeAudioSnippet: 'Pet mein bahut tej jalan aur khatti dakaarein aa rahi hain do hafte se...',
+    intakeAudioTranslation: 'Severe retrosternal epigastric burning with acid regurgitation and sour eructations for 2 weeks...',
+    citations: [
+      { id: 1, timestamp: '00:10', transcriptSnippet: 'पेट में बहुत तेज जलन', clinicalFinding: 'Retrosternal and epigastric burning sensation' },
+      { id: 2, timestamp: '00:28', transcriptSnippet: 'खट्टी डकारें और गैस', clinicalFinding: 'Acid regurgitation & dyspeptic fullness' },
+      { id: 3, timestamp: '00:45', transcriptSnippet: 'मसालेदार खाने से दर्द बढ़ना', clinicalFinding: 'Exacerbation with spicy and oily food intake' }
+    ],
+    vitals: { bp: '118/76 mmHg', pulse: 74, spo2: 99, temp: '98.2°F' },
+    soap: {
+      subjective: '34yo Female presents with severe retrosternal and epigastric burning, acid reflux, and dyspeptic discomfort lasting 2 weeks. Post-prandial fullness aggravated by spicy meals.',
+      objective: 'BP 118/76 mmHg, Pulse 74 bpm regular, SpO2 99% on ambient air, Temp 98.2°F. Epigastrium mildly tender on deep palpation, no peritoneal signs or organomegaly.',
+      assessment: 'Gastroesophageal Reflux Disease (GERD) with Acid Peptic Dyspepsia. Secondary: Stress-induced gastritis.',
+      icd11Code: 'MD90 (Gastro-oesophageal reflux disease) / DA23 (Dyspepsia)',
+      icd11Description: 'Gastro-oesophageal reflux disease without esophagitis',
+      namasteCode: 'ACG 2022 / ICMR Clinical Guidance for Acid Peptic Disorders',
+      namasteDescription: 'Proton Pump Inhibitor (PPI) + Prokinetic + Mucosal Protectant Regimen',
+      plan: [
+        {
+          drug: 'Pantoprazole 40mg + Domperidone 30mg SR',
+          dosage: '40mg/30mg',
+          frequency: '1-0-0',
+          duration: '14 Days',
+          availableInClinic: true,
+          instructions: 'Take 30 minutes before breakfast with plain water',
+          shelfLocation: 'Shelf D-04 (Gastroenterology)',
+          brandName: 'Pan-D SR',
+          brandPrice: 195,
+          genericName: 'Pantoprazole + Domperidone 40/30mg',
+          genericPrice: 24
+        },
+        {
+          drug: 'Sucralfate 1000mg + Oxetacaine 20mg Suspension (200ml)',
+          dosage: '10ml',
+          frequency: '1-1-1',
+          duration: '7 Days',
+          availableInClinic: true,
+          instructions: 'Take 10ml 1 hour after meals and at bedtime',
+          shelfLocation: 'Shelf D-05 (Gastroenterology)',
+          brandName: 'Sucrafil-O Gel',
+          brandPrice: 240,
+          genericName: 'Sucralfate + Oxetacaine Suspension',
+          genericPrice: 42
+        },
+        {
+          drug: 'Fungal Diastase + Pepsin Digestive Syrup (100ml)',
+          dosage: '5ml',
+          frequency: '0-1-1',
+          duration: '10 Days',
+          availableInClinic: true,
+          instructions: 'Immediately after lunch and dinner',
+          shelfLocation: 'Shelf D-06 (Gastroenterology)',
+          brandName: 'Aristozyme Liquid',
+          brandPrice: 135,
+          genericName: 'Digestive Enzymes Syrup 100ml',
+          genericPrice: 28
+        }
+      ]
+    }
+  },
+  {
+    token: 'TOKEN #046',
     patientId: 'pat-048294',
     name: 'Lakshmi Devi',
     age: 61,
@@ -666,6 +736,34 @@ const INITIAL_QUEUE: [PatientQueueItem, ...PatientQueueItem[]] = [
 ];
 
 const WESTERN_CLINICAL_RECOMMENDATIONS: Record<string, PrescriptionItem[]> = {
+  'pat-9811122334': [
+    {
+      drug: 'Pantoprazole 40mg + Domperidone 30mg SR',
+      dosage: '40mg/30mg',
+      frequency: '1-0-0',
+      duration: '14 Days',
+      availableInClinic: true,
+      instructions: 'Take 30 minutes before breakfast on empty stomach (ACG 2022 Class I)',
+      shelfLocation: 'Shelf D-04 (Gastroenterology)',
+      brandName: 'Pan-D',
+      brandPrice: 195,
+      genericName: 'Pantoprazole + Domperidone 40/30mg',
+      genericPrice: 24
+    },
+    {
+      drug: 'Sucralfate 1000mg + Oxetacaine 20mg Suspension (200ml)',
+      dosage: '10ml',
+      frequency: '1-1-1',
+      duration: '7 Days',
+      availableInClinic: true,
+      instructions: 'Take 10ml 1 hour after meals and at bedtime for mucosal barrier coating',
+      shelfLocation: 'Shelf D-05 (Gastroenterology)',
+      brandName: 'Sucrafil-O',
+      brandPrice: 240,
+      genericName: 'Sucralfate + Oxetacaine Suspension',
+      genericPrice: 42
+    }
+  ],
   'pat-048291': [
     {
       drug: 'Atorvastatin 80mg (High-Intensity Statin)',

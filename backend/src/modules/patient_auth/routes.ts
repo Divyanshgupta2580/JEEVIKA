@@ -234,7 +234,7 @@ patientAuthRouter.post("/login", async (c) => {
   }
 
   if (!cred) {
-    // If not found as mobile registered, check if this is the demo patient pat-048291
+    // If not found as mobile registered, check if this is the demo patient pat-048291 (Ramesh) or pat-048292 (Priya)
     if (cleanId === "pat-048291" || cleanId === "9876543210" || cleanId.includes("048291")) {
       const demoPatient = patientStore.get("pat-048291");
       if (demoPatient) {
@@ -249,6 +249,35 @@ patientAuthRouter.post("/login", async (c) => {
           patient: demoPatient,
           preferences: memoryPreferences.get("pat-048291") || {
             primaryFocus: "longevity",
+            primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
+            themeMode: "light",
+            language: "hi",
+          },
+          onboardingComplete: true,
+        });
+      }
+    }
+
+    if (
+      cleanId === "pat-048292" ||
+      cleanId === "9811122334" ||
+      cleanId === "9123456780" ||
+      cleanId.includes("048292") ||
+      cleanId.toLowerCase().includes("priya")
+    ) {
+      const demoPatient = patientStore.get("pat-048292") || patientStore.get("91-5910-2941-8402") || patientStore.get("9811122334");
+      if (demoPatient) {
+        const rawToken = `${orgId}.pat.${newToken()}`;
+        const sHash = await tokenHash(rawToken);
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        memorySessions.set(sHash, { orgId, patientId: demoPatient.id, expiresAt });
+
+        return c.json({
+          success: true,
+          token: rawToken,
+          patient: demoPatient,
+          preferences: memoryPreferences.get(demoPatient.id) || {
+            primaryFocus: "digestive_wellness",
             primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
             themeMode: "light",
             language: "hi",

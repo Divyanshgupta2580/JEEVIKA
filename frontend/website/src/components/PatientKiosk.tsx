@@ -72,6 +72,20 @@ const PATIENT_DATABASE: Record<string, {
     phone: '9811122334',
     aadhaar: '771240193382'
   },
+  '9123456780': {
+    name: 'Priya Sharma',
+    age: 34,
+    gender: 'Female',
+    city: 'Hyderabad, Telangana',
+    abha: '91-5910-2941-8402',
+    abhaAddr: 'priya.sharma@abdm',
+    pmjay: true,
+    pmjayId: 'PMJAY-TS-591029',
+    symptom: 'पेट में बहुत तेज जलन, गैस और खट्टी डकारें आ रही हैं',
+    englishTranslation: 'Severe retrosternal epigastric burning with acid peptic dyspepsia.',
+    phone: '9811122334',
+    aadhaar: '771240193382'
+  },
   '9777788899': {
     name: 'Mohan Das',
     age: 61,
@@ -932,11 +946,23 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
 
   // Demo patient auto-fill
   const loadDemoPatient = (key: string) => {
-    const p = PATIENT_DATABASE[key];
+    const clean = key.replace(/[-\s]/g, '');
+    const p =
+      PATIENT_DATABASE[key] ||
+      PATIENT_DATABASE[clean] ||
+      Object.values(PATIENT_DATABASE).find(
+        (x) =>
+          x.phone === key ||
+          x.phone.replace(/[\s+]/g, '') === clean ||
+          x.abha === key ||
+          x.abha.replace(/[-\s]/g, '') === clean ||
+          x.aadhaar === key ||
+          x.name.toLowerCase().includes(key.toLowerCase())
+      );
     if (!p) return;
     const isEmerg = p.name.includes('Mohan');
     setCurrentPatient({
-      id: `pat-${key}`,
+      id: `pat-${p.phone}`,
       name: p.name,
       age: p.age,
       gender: p.gender,
@@ -1861,16 +1887,16 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             }}
                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5"
                           >
-                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Ramesh Chandra QR</span>
+                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Ramesh Chandra QR (52M)</span>
                           </button>
                           <button
                             onClick={() => {
                               handleStopQrCamera();
-                              loadDemoPatient('9123456780');
+                              loadDemoPatient('9811122334');
                             }}
                             className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-2.5 px-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5"
                           >
-                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Priya Sharma QR</span>
+                            <span className="inline-flex items-center gap-1.5"><QrCode className="w-4 h-4" /> Scan Priya Sharma QR (34F)</span>
                           </button>
                         </div>
 
@@ -1896,12 +1922,22 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                             <Camera className="w-4 h-4" />
                             <span>{dict.btnOpenCam || 'Open Camera to Scan QR'}</span>
                           </button>
-                          <button
-                            onClick={() => loadDemoPatient('9876543210')}
-                            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-300 transition"
-                          >
-                            Use Sample ABHA QR Card (Ramesh Chandra)
-                          </button>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button
+                              onClick={() => loadDemoPatient('9876543210')}
+                              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-300 transition flex items-center justify-center gap-1.5"
+                            >
+                              <QrCode className="w-4 h-4 text-emerald-600" />
+                              <span>Sample QR (Ramesh Chandra · 52M)</span>
+                            </button>
+                            <button
+                              onClick={() => loadDemoPatient('9811122334')}
+                              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-300 transition flex items-center justify-center gap-1.5"
+                            >
+                              <QrCode className="w-4 h-4 text-[#223D79]" />
+                              <span>Sample QR (Priya Sharma · 34F)</span>
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}
@@ -1924,9 +1960,14 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                     <button onClick={() => loadDemoPatient(mobileInput in PATIENT_DATABASE ? mobileInput : '9876543210')} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
                       <span>{dict.btnVerifyMob || 'Verify Mobile OTP & Fetch Records'}</span>
                     </button>
-                    <button onClick={() => setMobileInput('9876543210')} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
-                      Fill Sample Mobile (+91 98765 43210)
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button onClick={() => { setMobileInput('9876543210'); loadDemoPatient('9876543210'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Fill Ramesh (+91 98765 43210)
+                      </button>
+                      <button onClick={() => { setMobileInput('9811122334'); loadDemoPatient('9811122334'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Fill Priya (+91 98111 22334)
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1940,9 +1981,17 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       placeholder="91-XXXX-XXXX-XXXX or name@abdm"
                       className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#FFA530]"
                     />
-                    <button onClick={() => loadDemoPatient('9876543210')} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+                    <button onClick={() => loadDemoPatient(abhaInput || '9876543210')} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
                       <span>{dict.btnFetchAbha || 'Fetch ABHA Profile'}</span>
                     </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button onClick={() => { setAbhaInput('91-4829-1029-4821'); loadDemoPatient('9876543210'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Ramesh (91-4829-1029-4821)
+                      </button>
+                      <button onClick={() => { setAbhaInput('91-5910-2941-8402'); loadDemoPatient('9811122334'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Priya (91-5910-2941-8402)
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1956,9 +2005,17 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       placeholder="8920-1920-4821"
                       className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#FFA530]"
                     />
-                    <button onClick={() => loadDemoPatient('9876543210')} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+                    <button onClick={() => loadDemoPatient(aadhaarInput || '9876543210')} className="w-full bg-[#223D79] hover:bg-[#1a2f5e] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
                       <span>{dict.btnVerifyAadh || 'Verify Aadhaar e-KYC'}</span>
                     </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button onClick={() => { setAadhaarInput('8920-1920-4821'); loadDemoPatient('9876543210'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Ramesh (8920-1920-4821)
+                      </button>
+                      <button onClick={() => { setAadhaarInput('7712-4019-3382'); loadDemoPatient('9811122334'); }} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-300 transition">
+                        Priya (7712-4019-3382)
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -2464,7 +2521,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                         <span className="font-bold text-slate-900 uppercase text-[11px] tracking-wide">Current Medication / Active Regimen:</span>
                       </div>
                       <p className="text-slate-800 font-medium pl-5 leading-relaxed">
-                        {scannedDocs[activeDocIndex]?.meds || 'Telmisartan 40mg OD • Febuxostat 40mg OD'}
+                        {scannedDocs[activeDocIndex]?.meds || (currentPatient.gender === 'Female' ? 'Pantoprazole 40mg • Domperidone 30mg SR • Sucralfate Oral Gel' : 'Telmisartan 40mg OD • Febuxostat 40mg OD')}
                       </p>
                     </div>
 
@@ -2474,7 +2531,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                         <span className="font-bold text-amber-950 uppercase text-[11px] tracking-wide">Lab Results & Key Biomarkers:</span>
                       </div>
                       <p className="text-amber-900 font-medium pl-5 leading-relaxed">
-                        {scannedDocs[activeDocIndex]?.labs || 'Serum Uric Acid: 7.8 mg/dL (High) • HbA1c: 6.1%'}
+                        {scannedDocs[activeDocIndex]?.labs || (currentPatient.gender === 'Female' ? 'Gastric pH: 2.1 (Hyperacidic) • H. pylori Serology: Negative • Hb: 12.8 g/dL' : 'Serum Uric Acid: 7.8 mg/dL (High) • HbA1c: 6.1%')}
                       </p>
                     </div>
                   </div>
@@ -2585,7 +2642,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                       : 'bg-[#25D366] hover:bg-[#20ba59] text-white shadow-sm'
                   }`}
                 >
-                  <span>{whatsappSent ? 'Dispatched to WhatsApp (+91 98765 43210)' : 'Send Audio Token & Instructions to WhatsApp (+91 98765 43210)'}</span>
+                  <span>{whatsappSent ? `Dispatched to WhatsApp (${currentPatient.phone || '+91 98111 22334'})` : `Send Audio Token & Instructions to WhatsApp (${currentPatient.phone || '+91 98111 22334'})`}</span>
                 </button>
               </div>
 
