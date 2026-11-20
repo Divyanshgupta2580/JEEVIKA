@@ -1,157 +1,93 @@
-# JEEVIKA
-### *Bharat’s First Vernacular-First Clinical Operating System & Assistive Hospital Platform*
+<div align="center">
 
-[![Pure Software](https://img.shields.io/badge/Architecture-100%25%20Pure%20Software%20(Zero%20Hardware)-blue)](frontend/website)
-[![Architecture](https://img.shields.io/badge/Architecture-Enterprise%20Clinical%20OS-purple)](#-core-engineering--clinical-governance)
-[![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
-[![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](frontend/website)
-[![Hono API](https://img.shields.io/badge/Backend-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
-[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL%20Local--First-003B57?logo=sqlite&logoColor=white)](backend/local)
-[![Tests Passing](https://img.shields.io/badge/Vitest-185%2F185%20Passing-brightgreen?logo=vitest&logoColor=white)](tests)
-[![Maritime Cloud](https://img.shields.io/badge/Agent%20Cloud-Maritime%20Scale%20Cluster-0080FF?logo=kubernetes&logoColor=white)](backend/src/modules/maritime)
-[![Prune Pro](https://img.shields.io/badge/AI%20Gateway-Prune%20Pro%20(76%25%20Saved)-00C853?logo=shield&logoColor=white)](backend/src/modules/prune)
-[![ABDM Milestone 2](https://img.shields.io/badge/NHA-ABDM%20Milestone%202%20FHIR%20R4-orange)](packages/engine)
-[![NMC Act 2019](https://img.shields.io/badge/Compliance-NMC%20RMP%20Regulations%202023-emerald)](frontend/website/src/components/DoctorConsultation.tsx)
+<img src="docs/images/banner-jeevika.svg" alt="JEEVIKA — The Continuity-of-Care Operating System" width="100%" />
 
----
+<br />
 
-## Executive Summary
+### One thread from first symptom to better days at home.
 
-**Jeevika** is an enterprise-grade, vernacular-first hospital operating system engineered for the operational realities of Tier-2, Tier-3, and rural public healthcare in India.
+**A connected care platform for patient intake, clinical review, emergency triage, inpatient ward SOS, pharmacy POS, and hospital operations.**<br />
+Deterministic rule engines govern safety. Clinicians retain legal and ethical control. Language tools bridge Bharat's vernacular divide.
 
-It tackles four systemic points of clinical failure in resource-constrained hospitals:
-1. **The 200-Person OPD Queue Collapse (Phase 1):** Overburdened district hospital lines where walk-in patients unknowingly wait hours with acute myocardial infarction (STEMI) or stroke disguised as "gastric acidity" until they collapse.
-2. **Inpatient Ward Deterioration Latency (Phase 2):** Critical delays when an admitted patient (e.g. Room 105, Bed 1) deteriorates suddenly and bedside nurse/doctor notification takes minutes instead of seconds.
-3. **Clinician Documentation Fatigue:** Doctors spending over 70% of their consultation time typing on rigid administrative forms instead of examining patients.
-4. **The Prescription Comprehension Barrier:** Illiterate or non-English-speaking patients misinterpreting complex drug schedules and experiencing preventable drug toxicity or non-adherence.
+<br />
+
+[![CI](https://github.com/Divyanshgupta2580/JEEVIKA/actions/workflows/ci.yml/badge.svg)](https://github.com/Divyanshgupta2580/JEEVIKA/actions/workflows/ci.yml)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers%20%7C%20Pages%20%7C%20D1-F38020?logo=cloudflare&logoColor=white)](wrangler.jsonc)
+[![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-3178C6?logo=typescript&logoColor=white)](package.json)
+[![React 18](https://img.shields.io/badge/Web-React%2018%20%2B%20Vite-149ECA?logo=react&logoColor=white)](frontend/website)
+[![Flutter](https://img.shields.io/badge/Android%20%2F%20iOS-Flutter-02569B?logo=flutter&logoColor=white)](frontend/app)
+[![Hono API](https://img.shields.io/badge/API-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
+[![Vitest Passing](https://img.shields.io/badge/Vitest-185%2F185%20Passing-00C853?logo=vitest&logoColor=white)](tests)
+[![Research](https://img.shields.io/badge/Research-CBC%20%2B%20BreathSense-7256AD)](#research)
+[![ABDM Ready](https://img.shields.io/badge/NHA-ABDM%20Milestone%202%20FHIR%20R4-orange)](packages/engine)
+
+[Explore the product](#product) · [Screenshots](#screenshots) · [Features](#features) · [Architecture](#architecture) · [Algorithms](#algorithms) · [Research](#research) · [Run locally](#run-locally) · [Evidence](#evidence)
+
+<br />
+
+<img src="docs/images/continuity-loop.svg" alt="Care continuum: intake, consultation, emergency, inpatient, pharmacy, at home, review" width="100%" />
+
+</div>
 
 > [!IMPORTANT]
-> **Core Architectural Principle — Human-in-the-Loop:**  
-> **AI NEVER DIAGNOSES OR PRESCRIBES AUTONOMOUSLY.** In Jeevika, AI operates strictly as an **Ambient Digital Stenographer** and a **Clinical Triage Guardrail**. All diagnostic orders, drug decisions, and prescriptions remain under the 100% legal and ethical authority of a Registered Medical Practitioner (RMP), compliant with National Medical Commission (NMC) Act 2019 regulations and cryptographically signed with SHA-256 audit blocks.
+> **Project status: engineering, clinical governance and operational prototype.** Screen data, telemetry, and benchmark fixtures utilize synthetic patients and measurements. Several modules feature local-first SQLite WAL and Cloudflare D1 storage. The research model carries no independent diagnostic clearance. Do not upload real patient records. [Current progress](docs/PROGRESS.md) · [Product requirements](docs/PRD.md) · [Deployment boundaries](docs/DEPLOYMENT.md)
 
 ---
 
-## End-to-End System Architecture
+<a id="product"></a>
+## The idea
 
-Jeevika unites a **Zero-Hardware Local-First Presentation Layer** with distributed background reasoning on **Maritime Cloud** and cost/security enforcement on **Prune AI Gateway**.
+A person's healthcare story typically fractures at every organizational boundary: walk-in intake fails to reach the physician, prescription forms are blind to real-time dispensary inventory, inpatient room distress calls encounter notification lag, and at-home recovery readings lose clinical grounding. **JEEVIKA preserves continuity of care as one consented, cryptographically verified Patient Thread.** It unites self-service kiosks, outpatient clinician cockpits, inpatient bedside distress cascades, casualty triage sentries, pharmacy dispensing, and home follow-up while placing deterministic safety rules ahead of generative text models.
 
-```mermaid
-flowchart TD
-    subgraph S1["1. Zero-Hardware Edge Presentation Tier (React 18 + Vite)"]
-        Kiosk["Autonomous Patient Kiosk<br/>• 9 Indic Languages Speech Engine<br/>• Clinical Triage Sentry Floating Banner<br/>• Differential Safety Check Interceptor<br/>• 1-Click ABHA QR Verification (Ramesh & Priya)"]
-        Doctor["Clinician OPD Cockpit<br/>• Critical Bed Distress Interrupt Banner<br/>• Ambient Scribe (Speech-to-SOAP)<br/>• Herb-Drug Sentinel Warnings<br/>• PMBJP Generic Substitution (-86%)"]
-        Triage["Emergency Triage & Floor Station<br/>• Inpatient Code Blue Cascade Broadcast<br/>• Nurse STAT Bed Distress Reporter<br/>• ESI-1 Severity & Resuscitation Bay 1"]
-        IPD["Inpatient (IPD) Ward Console<br/>• Room 105 Bed 1 Bedside SOS Trigger<br/>• Real-Time Doctor Response Latency Log<br/>• Multi-Bed Code Blue Floor Map"]
-        Command["Hospital Command Center<br/>• Integer Paise Ledger (0 Float Leakage)<br/>• Fleet Multi-Hub Central Inventory"]
-        POS["Pharmacy POS & Dispensing<br/>• FEFO Expiry Management<br/>• CDSCO Form 20/21 Receipts"]
-    end
+| The thread | What the platform demonstrates | Distinctive mechanism |
+|---|---|---|
+| **Listen and triage** | 9 Indic language voice intake, transcription/translation review, adaptive questions, Phase 1 Autonomous Triage Sentry | Differential safety modal screening ambiguous acidity/gastric complaints for acute myocardial infarction (STEMI) with sub-15ms priority elevation to Casualty Resuscitation Bay 1 |
+| **Review and prescribe** | Clinician consultation queue, source-linked SOAP notes, vitals telemetry, research-only CBC review, Jan Aushadhi generic substitution | Mandatory clinician sign-off; CBC research score is fully isolated from diagnosis and active prescriptions; PMBJP generic substitution yields up to 88% patient savings |
+| **Emergency and inpatient** | Inpatient (IPD) Bedside SOS trigger, two-tier hospital Code Blue cascade, Nurse STAT reporter, Doctor En Route latency telemetry | Direct room-to-bed-to-doctor mapping (`Room 105 Bed 1` $\rightarrow$ `Priya Sharma` $\rightarrow$ `Dr. Malhotra`); sub-5-second floor crash cart dispatch coupled with simultaneous doctor interrupt popover |
+| **Fulfil safely** | Inventory, batch eligibility, generic savings, FEFO dispensing, CDSCO Form 20/21 receipts, and integer-paise POS | Exact salt/strength/form matching, full-course stock constraints, and expiry validation before price ranking; zero float rounding leakage |
+| **Stay connected** | Regimen schedules, home biometric observations, nurse review queue, and refill exhaustion risk | Personal baseline change detection (one-sided CUSUM Drift Radar) paired with independent absolute emergency thresholds |
+| **Support daily health** | HER women's health cycle and symptom tracking; Vitalis healthspan metrics; personalized gentle yoga | Explicit contraindication gates, data coverage auditing, and provenance validation before ranking lifestyle advice |
+| **Authenticate and protect** | Dedicated default Login Page, Role-Based Access Control (RBAC), and session protection across all clinical paths | Dual-mode authentication: 1-Click Role Access for 7 operational personas and Staff Credential login with demo quick-fill pills |
 
-    subgraph S2["2. Security, Caching & WAF Gateway (Prune Pro Engine)"]
-        WAF["Clinical AI WAF<br/>• Intercepts Prompt Injections in 8ms<br/>• HTTP 403 Neutralizer (NMC Rule 4.2)"]
-        Cache["Semantic Caching Engine<br/>• Vector Similarity Matching (8ms)<br/>• 76.3% Hit Rate • Zero Cloud Token Waste<br/>• Over ₹18,440 Monthly PHC Savings"]
-        PII["Zero-Trust PII Redactor<br/>• Auto-Redacts 12-Digit Aadhaar<br/>• Masks 10-Digit Mobile Numbers<br/>• DPDP Act 2023 Compliant"]
-    end
+### Why this is different
 
-    subgraph S3["3. Distributed Multi-Agent Intelligence Swarm (Maritime Cloud Scale)"]
-        MeshCoord["Maritime Mesh Swarm Coordinator<br/>(Cluster: enterprise-delhi)"]
-        AgentSentinel["agent-sentinel-01<br/>(Clinical Sentinel Watchdog)<br/>• Detects Herb-Drug Collisions<br/>• e.g. Warfarin + Ashwagandha (126ms)"]
-        AgentScribe["agent-vernacular-02<br/>(Vernacular Scribe Engine)<br/>• Normalizes Bhojpuri/Hindi/Telugu Audio<br/>• Builds ABDM FHIR R4 SOAP (142ms)"]
-        AgentSupply["agent-supply-03<br/>(Supply & Generic Optimizer)<br/>• Real-time PMBJP Bioequivalence<br/>• FEFO Expiry Allocation (115ms)"]
-        MeshCoord --> AgentSentinel & AgentScribe & AgentSupply
-    end
-
-    subgraph S4["4. Core Runtime, Local-First Storage & Double-Entry Ledger"]
-        HonoAPI["Hono Microsecond API Core (backend/src)"]
-        LocalSQLite["SQLite WAL Local-First Database<br/>• 100% Offline Operational Resiliency<br/>• Zero Cloud Latency Token Dispatch"]
-        CloudflareD1["Cloudflare D1 Multi-Tenant Shards"]
-        DoubleEntry["Integer-Paise Double-Entry Engine<br/>• Sigma Debit = Sigma Credit<br/>• Zero Float Rounding Leakage"]
-        AuditLedger["Medico-Legal Cryptographic Vault<br/>• SHA-256 Tamper-Evident Blocks<br/>• IT Act 2000 Court Admissible"]
-        HonoAPI --> LocalSQLite & CloudflareD1 & DoubleEntry & AuditLedger
-    end
-
-    subgraph S5["5. National Digital Health Ecosystem Integrations"]
-        ABDM["NHA ABDM Milestone 2<br/>(FHIR R4 Diagnostic Bundles)"]
-        PMBJP["PMBJP Jan Aushadhi Repository<br/>(2,000+ Generic Formularies)"]
-        NMCReg["NMC Registered Practitioner<br/>(Duty Medical Officer, MD, DM)"]
-    end
-
-    Kiosk & Doctor & Triage & IPD & Command & POS -->|Encrypted REST & WebSockets| HonoAPI
-    Kiosk & Doctor -->|Ambient Audio & AI Prompts| WAF
-    WAF --> Cache
-    Cache -->|Cache Miss -> Sanitized Request| PII
-    PII -->|Upstream Model Execution| S3
-    HonoAPI <--> S3
-    S3 -->|138ms Swarm Consensus| Doctor
-    HonoAPI <--> ABDM & PMBJP & NMCReg
-```
+1. **One unified thread across all hospital roles.** Walk-in patients, attending physicians, casualty nurses, pharmacists, hospital superintendents, and chartered accountants share consistent data contracts instead of fragmented silos.
+2. **Algorithms decide; AI translates.** Clinical triage urgency, stock eligibility, and safety gates are governed strictly by versioned, deterministic rule engines. Speech and language models assist communication and translation, operating strictly under human clinician review.
+3. **Inspectable justification for every outcome.** Rejected pharmaceutical batches, red-flag rule IDs, model cutoffs, data coverage bounds, and source audit trails are exposed transparently to attending medical staff.
+4. **Pure software economics without clinical compromise.** Built as 100% pure software requiring zero proprietary hardware. All financial operations execute in integer paise ($\Sigma \text{Debits} = \Sigma \text{Credits}$), eliminating floating-point errors.
+5. **Healthspan tracking over lifespan guesswork.** The Vitalis V1 engine monitors modifiable behaviors, preventive coverage, and adherence rather than generating speculative biological age predictions.
+6. **Research remains research.** CBC machine-learning risk scoring and BreathSense X e-nose research are partitioned in dedicated research modules, strictly separated from legal medical records.
 
 ---
 
-## Clinical Lifeline Flow Diagram: Phase 1 & Phase 2
+<a id="screenshots"></a>
+## Product gallery
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Patient as Walk-in / In-Bed Patient
-    participant Kiosk as Patient Kiosk (Phase 1)
-    participant IPD as IPD Bedside SOS (Phase 2)
-    participant Nurse as Floor Nursing Station (RN-402)
-    participant Doctor as Dr. Malhotra (Doctor Cockpit)
-    participant Bay as Resuscitation Bay 1 / Crash Cart
-
-    Note over Patient,Kiosk: PHASE 1: Front-Desk Autonomous Triage Sentry
-    Patient->>Kiosk: Scans ABHA QR (Ramesh / Priya) & Selects "Stomach Pain / Gas"
-    Kiosk->>Kiosk: Autonomous Clinical Triage Sentry Intercepts Input
-    Kiosk-->>Patient: Differential Safety Check Modal: "Any chest tightness, left arm pain, cold sweating?"
-    Patient->>Kiosk: Taps "YES / Chest tightness or radiating pain"
-    Kiosk->>Kiosk: Elevated to STAT Red-Flag in under 15ms
-    Kiosk->>Bay: Dispatches STAT Token (EMERG-STAT-#XXX) & Auto-Alerts ER Team
-    Kiosk-->>Patient: Issues Immediate Priority Routing to Casualty Resuscitation Bay 1
-
-    Note over Patient,Doctor: PHASE 2: Inpatient Bedside Code Blue Cascade
-    Patient->>IPD: Presses Bedside SOS on Registered Bed (Room 105, Bed 1)
-    IPD->>IPD: Maps Bed GW-101 -> Room 105 -> Priya Sharma (34F) -> Dr. Malhotra
-    par Tier 1: Floor Nursing Console Alert (<5 seconds)
-        IPD->>Nurse: High-Decibel Audio Alarm & Pulsing CODE BLUE Banner
-        Nurse->>Bay: Floor Crash Cart Auto-Dispatched to Room 105
-    and Tier 2: Primary Consultant Interrupt (Simultaneous)
-        IPD->>Doctor: High-Priority Interrupt Modal: [CRITICAL BED DISTRESS · ROOM 105 (BED 1)]
-        Doctor->>Doctor: Reviews Patient History, Reason, and Vitals
-        Doctor->>IPD: Clicks "Acknowledge & En Route"
-        IPD->>Nurse: Telemetry Logs Attending State with Sub-Second Doctor Latency
-    end
-    Note over Nurse,Doctor: Team Converges at Bedside within Golden Window
-```
-
----
-
-## Platform UI Showcase (Live Screen Walkthrough)
-
-Every interface is built using Jeevika's clinical design system (`bg-slate-50`, crisp slate-200 borders, high-contrast typography, and zero-clash frosted glass elements).
+The interfaces below demonstrate JEEVIKA's clinical design system: high-contrast typography, accessible color accents, responsive layout geometry, and zero-clash modal layers.
 
 <table width="100%" style="border-collapse: separate; border-spacing: 12px; margin: 16px 0;">
   <tr>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/01_landing_page.png" target="_blank">
-        <img src="./docs/screenshots/01_landing_page.png" alt="Universal Landing Page" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/01_desktop_login_page.png" target="_blank">
+        <img src="docs/screenshots/01_desktop_login_page.png" alt="Protected Login & Role Access" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
-        <strong>1. Universal Landing Page</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Translucent frosted-glass card, balanced buttons, and unobstructed mother and child view.</span>
+        <strong>1. Protected Authentication Gateway</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Default entry route featuring 1-Click Role Access across 7 personas and Staff Credential sign-in.</span>
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/02_patient_kiosk.png" target="_blank">
-        <img src="./docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/02_patient_kiosk.png" target="_blank">
+        <img src="docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>2. Patient Intake Kiosk (Phase 1)</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Autonomous Clinical Triage Sentry, Audio Guidance, and 1-Click ABHA QR Sync (Priya Sharma, 34F).</span>
+        <span style="font-size: 11px; color: #64748b;">Autonomous Clinical Triage Sentry, 9 Indic languages audio guidance, and 1-Click ABHA QR scan.</span>
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/08_differential_triage_interceptor.png" target="_blank">
-        <img src="./docs/screenshots/08_differential_triage_interceptor.png" alt="Differential Safety Check Modal" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/08_differential_triage_interceptor.png" target="_blank">
+        <img src="docs/screenshots/08_differential_triage_interceptor.png" alt="Differential Triage Interceptor" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>3. Differential Triage Interceptor</strong><br />
@@ -161,8 +97,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
   </tr>
   <tr>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/09_stat_resuscitation_token.png" target="_blank">
-        <img src="./docs/screenshots/09_stat_resuscitation_token.png" alt="STAT Resuscitation Token" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/09_stat_resuscitation_token.png" target="_blank">
+        <img src="docs/screenshots/09_stat_resuscitation_token.png" alt="STAT Emergency Token" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>4. STAT Emergency Token (#EMERG)</strong><br />
@@ -170,8 +106,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/10_ipd_bedside_sos.png" target="_blank">
-        <img src="./docs/screenshots/10_ipd_bedside_sos.png" alt="IPD Bedside Distress SOS" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/10_ipd_bedside_sos.png" target="_blank">
+        <img src="docs/screenshots/10_ipd_bedside_sos.png" alt="IPD Bedside Distress SOS" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>5. IPD Bedside Distress Sentry (Phase 2)</strong><br />
@@ -179,8 +115,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/11_doctor_distress_alert.png" target="_blank">
-        <img src="./docs/screenshots/11_doctor_distress_alert.png" alt="Doctor Consultation Critical Distress Alert" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/11_doctor_distress_alert.png" target="_blank">
+        <img src="docs/screenshots/11_doctor_distress_alert.png" alt="Doctor Distress Interrupt Alert" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>6. Doctor Distress Interrupt Alert</strong><br />
@@ -190,8 +126,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
   </tr>
   <tr>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/12_nurse_stat_reporter.png" target="_blank">
-        <img src="./docs/screenshots/12_nurse_stat_reporter.png" alt="Nurse STAT Bed Distress Reporter" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/12_nurse_stat_reporter.png" target="_blank">
+        <img src="docs/screenshots/12_nurse_stat_reporter.png" alt="Nurse STAT Distress Reporter" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>7. Nurse STAT Distress Reporter</strong><br />
@@ -199,8 +135,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/03_doctor_opd_cockpit.png" target="_blank">
-        <img src="./docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/03_doctor_opd_cockpit.png" target="_blank">
+        <img src="docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>8. Doctor OPD Cockpit & Ambient Scribe</strong><br />
@@ -208,8 +144,8 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/04_emergency_triage.png" target="_blank">
-        <img src="./docs/screenshots/04_emergency_triage.png" alt="Emergency & Trauma Triage" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/04_emergency_triage.png" target="_blank">
+        <img src="docs/screenshots/04_emergency_triage.png" alt="Emergency & Trauma Triage" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>9. Floor Emergency Triage Station</strong><br />
@@ -217,31 +153,28 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
       </div>
     </td>
   </tr>
-</table>
-
-<table width="100%" style="border-collapse: separate; border-spacing: 12px; margin-top: -6px;">
   <tr>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/05_hospital_command_center.png" target="_blank">
-        <img src="./docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/05_hospital_command_center.png" target="_blank">
+        <img src="docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>10. Hospital Command Center</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Integer-paise double-entry ledger, bed census, and multi-clinic operations.</span>
+        <span style="font-size: 11px; color: #64748b;">Integer-paise double-entry ledger, bed census, and multi-clinic network inventory.</span>
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/06_maritime_swarm_mesh.png" target="_blank">
-        <img src="./docs/screenshots/06_maritime_swarm_mesh.png" alt="Maritime Autonomous Agent Swarm" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/02_mobile_login_roles.png" target="_blank">
+        <img src="docs/screenshots/02_mobile_login_roles.png" alt="Mobile Clinical Pad" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
-        <strong>11. Maritime Agent Swarm</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Autonomous cloud agent mesh for drug collisions, vernacular scribing, and supply optimization.</span>
+        <strong>11. Mobile Clinical Pad</strong><br />
+        <span style="font-size: 11px; color: #64748b;">Fully responsive viewports on iOS/Android for bedside rounds and nursing distress reporting.</span>
       </div>
     </td>
     <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="./docs/screenshots/07_prune_ai_gateway.png" target="_blank">
-        <img src="./docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Cost Engine & Security Firewall Gateway" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      <a href="docs/screenshots/07_prune_ai_gateway.png" target="_blank">
+        <img src="docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Cost Engine & WAF" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 10px;">
         <strong>12. Prune AI Cost Engine & WAF</strong><br />
@@ -253,158 +186,431 @@ Every interface is built using Jeevika's clinical design system (`bg-slate-50`, 
 
 ---
 
-## Clinical Deep Dive: Emergency Reporting & Doctor Notification
+<a id="features"></a>
+## Complete feature map
 
-### Clinical Problem 1: Hidden Front-Desk Emergencies (Phase 1)
-Rural and walk-in patients frequently mistake early heart attacks (crushing retrosternal pressure, diaphoresis, left jaw/arm radiation) for mundane "gas, acidity, or indigestion" (*badhazmi*). Unaware of the danger, they join routine OPD queues and wait 2 to 3 hours, collapsing in the waiting area.
+### Web: patient, clinical and operations
 
-**How Jeevika Intercepts It:**
-1. **Autonomous Clinical Triage Sentry:** On Kiosk screens, an intelligent sentry listens and guides walk-in patients in 9 Indic languages (Hindi, Telugu, Tamil, Punjabi, Marathi, Bengali, Gujarati, Kannada, English).
-2. **Ambiguous Symptom Interceptor:** Selecting or speaking "Stomach Pain & Acidity" immediately triggers a **Clinical Differential Safety Check modal**.
-3. **Targeted Screening Question:** *"Are you experiencing crushing chest heaviness, pain radiating to your left arm or jaw, or sudden cold sweating?"*
-4. **Sub-15ms STAT Upgrade:** Selecting **"YES"** instantly elevates the encounter to **STAT RED-FLAG**, assigns an emergency code (`EMERG-STAT-#XXX`), notifies Casualty Resuscitation Bay 1, and directs the patient straight to emergency resuscitation.
-
----
-
-### Clinical Problem 2: Inpatient (IPD) Bedside Deterioration (Phase 2)
-Once admitted to a bed (e.g. Room 105, Bed 1), a patient cannot walk to an emergency room. If sudden acute deterioration occurs (arrhythmia, acute desaturation, pulmonary edema, syncope), notification latency directly threatens survival. 
-
-**Clinical Reality:** The primary consultant (e.g. Dr. Malhotra) might be in an operation theatre (OT) or rounds. Alerts therefore cannot rely solely on the doctor's phone.
-
-**How the Patient Reports the Emergency to the Doctor:**
-1. **Bedside SOS Distress Button:** Each bed registered in the IPD console features a high-contrast Bedside SOS trigger accessible via bedside companion tablet or floor monitor.
-2. **Strict Registry Mapping:** The system maps:
-   `Bed GW-101` $\rightarrow$ `Room 105` $\rightarrow$ `Priya Sharma (34F)` $\rightarrow$ `Dr. Malhotra (Cardiology Consultant)`.
-3. **Incapacitated Patient Failsafe (Nurse STAT Reporter):** If the patient is unconscious, vomiting, or physically unable to press the button, the floor nurse can open the **Nurse STAT Bed Distress Reporter** on any mobile or desktop console, select the bed number, and broadcast the alert.
-
-**How It Is Shown to the Doctor:**
-1. **Two-Tier Hospital Code Blue Cascade:**
-   * **Tier 1 (Floor Level, <5 sec):** Audible multi-tone alert and pulsing red banner at the Floor Duty Nursing Station and RMO console. The floor crash cart is auto-dispatched to Room 105 immediately.
-   * **Tier 2 (Consultant Level, Simultaneous):** A high-priority **Critical Bed Distress Interrupt Banner** appears across Dr. Malhotra's Doctor Consultation Cockpit:
-     ```
-     [CRITICAL BED DISTRESS · ROOM 105 (BED 1)]
-     Patient: Priya Sharma (34F) · Reported by Patient Bedside SOS
-     Reason: Acute Bedside Distress Call
-     [Acknowledge & En Route]
-     ```
-2. **One-Tap Acknowledgment & Telemetry:**
-   * Clicking **"Acknowledge & En Route"** transitions the bed status to `ATTENDING`.
-   * Telemetry logs doctor acknowledgment latency (e.g. `1,931ms`), confirming that the consultant is en route.
-
----
-
-## The Tech Stack & Architecture Rationale
-
-| Layer | Technology | Exact Role in Jeevika | Why It Was Chosen |
+| Module | Purpose | Key capabilities | Implementation |
 |---|---|---|---|
-| **Frontend Framework** | **React 18** | High-concurrency component architecture for Kiosk, Doctor Cockpit, IPD, and Emergency modules | Concurrent rendering eliminates UI freeze during real-time speech input and Code Blue broadcasts |
-| **Bundler & Server** | **Vite** | Development server and production bundler | Sub-second Hot Module Replacement (HMR) and optimized tree-shaken chunking |
-| **Language** | **TypeScript (Strict Mode)** | End-to-end type safety across browser, engine, and backend | Enforces zero `undefined` errors in critical clinical triage and billing pipelines |
-| **Edge Routing & Backend** | **Hono** | High-performance microsecond API core (`backend/src`) | Runs natively on Node.js and Cloudflare Workers with microsecond response times |
-| **Local Runtime** | **Node.js 20+ (LTS)** | Backend server orchestration and local development runtime | Enterprise-grade stability for local hospital server appliances |
-| **Local-First Database** | **SQLite (WAL Mode)** | Persistent local encounter, patient, bed, and pharmacy store | **100% Offline Operational Resiliency:** Hospital operates without interruption if fiber/internet lines fail |
-| **Cloud Sharding** | **Cloudflare D1** | Multi-tenant cloud synchronization and distributed data replica | Serverless edge SQL database with instant regional replication |
-| **Styling & Design System** | **TailwindCSS** | Responsive clinical light theme with custom design tokens | Zero CSS bloat, exact bounding box controls, and strict cross-device symmetry |
-| **Indic Voice Processing** | **Web Speech API** | Client-side Speech Recognition (`SpeechRecognition`) & Text-to-Speech (`SpeechSynthesis`) | Executes **100% locally in the browser**; zero cloud token costs, zero audio transmission latency |
-| **Multi-Agent Cloud** | **Maritime Cloud Mesh** | Background multi-agent clinical watchdog (`maritime.sh`) | Offloads heavy continuous clinical audits from low-power hospital server hardware |
-| **AI Gateway & WAF** | **Prune Pro Gateway** | Clinical AI semantic caching, prompt injection WAF, and PII redactor | Cuts LLM inference costs by 76.3% and neutralizes adversarial prompt attacks under 9ms |
-| **Automated Testing** | **Vitest** | Comprehensive clinical, regulatory, and integration test suite | High-speed ESM testing (185 tests execute in under 5 seconds) |
-| **PDF Generation** | **jsPDF** | Vector-sharp bilingual prescriptions and emergency OPD slips | Pure client-side PDF rendering without cloud dependencies or external round-trips |
+| **Protected Authentication Gateway** | Hospital access control and credential management | Segmented tab interface with 1-Click Role Access (7 hospital personas) and Staff Credential sign-in; protected routing across all clinical views | [`frontend/website/src/components/LoginPage.tsx`](frontend/website/src/components/LoginPage.tsx), [`App.tsx`](frontend/website/src/App.tsx) |
+| **Patient Kiosk (Phase 1)** | Self-service multilingual hospital reception | Autonomous Triage Sentry; 9 Indic languages voice guidance; 1-click ABHA QR scanner; differential safety check modal intercepting acidity for STEMI | [`frontend/website/src/components/PatientKiosk.tsx`](frontend/website/src/components/PatientKiosk.tsx), [`packages/engine`](packages/engine) |
+| **Doctor OPD Cockpit** | Clinical consultation and decision support | Attending workflow; Ambient Scribe (Speech-to-SOAP); ICD-11 & NAMASTE coding; PMBJP generic substitution (-88%); CBC research review | [`frontend/website/src/components/DoctorConsultation.tsx`](frontend/website/src/components/DoctorConsultation.tsx) |
+| **Emergency & Trauma Triage** | High-acuity resuscitation management | Live hospital-wide Code Blue cascade banner; ESI-1 trauma triage scoring; real-time queue allocation for Casualty Resuscitation Bays 1-4 | [`frontend/website/src/components/EmergencyTriage.tsx`](frontend/website/src/components/EmergencyTriage.tsx) |
+| **Inpatient (IPD) Ward Console** | Bed tracking and Phase 2 bedside emergency sentinel | Real-time bed census; Bedside SOS trigger for admitted patients; Nurse STAT Reporter drawer; sub-second Doctor En Route telemetry logging | [`frontend/website/src/components/IPDDashboard.tsx`](frontend/website/src/components/IPDDashboard.tsx) |
+| **Clinic Operations Hub & POS** | Single-clinic management and dispensing | Prescription-to-shelf FEFO allocation; loose tablet dispensing; barcode verification; GST invoice generation; CDSCO Form 20/21 compliance | [`frontend/website/src/components/POSDashboard.tsx`](frontend/website/src/components/POSDashboard.tsx), [`ClinicAdminDashboard.tsx`](frontend/website/src/components/ClinicAdminDashboard.tsx) |
+| **Hospital Command Center** | Multi-clinic healthcare network management | Fleet-wide bed occupancy census; multi-clinic inventory rebalancing; integer-paise financial ledger; cryptographic audit vault | [`frontend/website/src/components/HospitalDashboard.tsx`](frontend/website/src/components/HospitalDashboard.tsx) |
+| **CA Financial Suite & Audit** | Regulatory tax and ledger integrity | Double-entry balance sheet; profit & loss statements; bank reconciliation (BRS); SHA-256 tamper-evident audit lock | [`frontend/website/src/components/CAFinancialSuite.tsx`](frontend/website/src/components/CAFinancialSuite.tsx) |
+| **Maritime Agent Swarm Mesh** | Continuous clinical background auditing | Tri-agent cloud swarm (`agent-sentinel-01`, `agent-vernacular-02`, `agent-supply-03`) monitoring drug collisions, scribing, and supply | [`frontend/website/src/components/MaritimeAgentMesh.tsx`](frontend/website/src/components/MaritimeAgentMesh.tsx), [`backend/src/modules/maritime`](backend/src/modules/maritime) |
+| **Prune AI Gateway & WAF** | LLM cost control and prompt defense | Semantic caching (76.3% hit rate); sub-9ms prompt injection WAF defense; zero-knowledge Aadhaar/mobile PII scrubbing | [`frontend/website/src/components/PruneGatewayDashboard.tsx`](frontend/website/src/components/PruneGatewayDashboard.tsx), [`backend/src/modules/prune`](backend/src/modules/prune) |
+
+### Flutter patient and kiosk application
+
+| Screen | Responsibility | Source path |
+|---|---|---|
+| **Intake kiosk** | Touchscreen and audio check-in for walk-in patients | [`frontend/app/lib/features/intake`](frontend/app/lib/features/intake) |
+| **Home health companion** | Longitudinal medicine tracker, daily check-in, and nurse chat | [`frontend/app/lib/features/home`](frontend/app/lib/features/home) |
+| **HER cycle & women's care** | Symptom logging, cycle phase tracking, and maternal wellness rules | [`frontend/app/lib/features/her`](frontend/app/lib/features/her) |
+| **Vitalis healthspan** | Modifiable lifestyle markers, preventive adherence, and sleep tracking | [`frontend/app/lib/features/vitalis`](frontend/app/lib/features/vitalis) |
+| **Personalized gentle yoga** | Contraindication-filtered physical wellness postures | [`frontend/app/lib/features/yoga`](frontend/app/lib/features/yoga) |
 
 ---
 
-## Distributed Autonomous Multi-Agent Swarm: Maritime Cloud Architecture
+<a id="architecture"></a>
+## System architecture
 
-> **Architecture Tier:** Enterprise Cloud Swarm Mesh  
-> **Infrastructure Target:** Fully managed agent cloud runtime (`maritime.sh`) with deterministic AYUSH and bioequivalence fallbacks
+### Runtime topology
 
-Running multiple continuous background AI agents on local district hospital servers causes thermal throttling and crashes. Jeevika offloads all continuous clinical background reasoning to **Maritime’s fully managed AI agent cloud (`maritime.sh`)**:
+```mermaid
+flowchart TB
+  classDef client fill:#e9f6ef,stroke:#087f68,color:#123d35,stroke-width:2px
+  classDef compute fill:#e9f2ff,stroke:#456dad,color:#1d355c,stroke-width:2px
+  classDef data fill:#fff2de,stroke:#cb8528,color:#5e3a12,stroke-width:2px
+  classDef agent fill:#f3ebfb,stroke:#8c66aa,color:#4b2c63,stroke-width:2px
 
-| Autonomous Maritime Agent | Swarm Role | Trigger & Autonomous Workflow | Latency SLA | Statutory Safety Guardrail |
-|:---|:---|:---|:---:|:---|
-| **`agent-sentinel-01`**<br/>*(Jeevika-Clinical-Sentinel)* | Herb-Drug Pharmacovigilance Watchdog | Continuously audits doctor allopathic prescriptions against rural AYUSH/herbal history (e.g. Warfarin <-> Ashwagandha). | `< 130ms` | **NMC Act 2019 Assistive Only** — Flags warnings to doctor screen without modifying orders. |
-| **`agent-vernacular-02`**<br/>*(Jeevika-Vernacular-Scribe)* | Indic Dialect to FHIR R4 Clinical Scribe | Asynchronously processes audio from rural OPD intakes (Hindi/Bhojpuri/Telugu) into structured ABDM FHIR R4 notes. | `< 145ms` | **Acoustic SNR Threshold > 15dB** — Rejects audio artifacts; Zero-Hallucination Gate. |
-| **`agent-supply-03`**<br/>*(Jeevika-Supply-Optimizer)* | Jan Aushadhi Generic Substitution Agent | Evaluates clinic stock FEFO expiry dates and maps expensive branded drugs to Jan Aushadhi generic equivalents, cutting patient costs by ~85%. | `< 115ms` | **PMBJP Formularies** — Restricts substitutions to government certified Jan Aushadhi batches. |
+  subgraph PresentationTier["Edge Presentation Tier (Pure Software)"]
+    LOGIN["Login Gateway<br/>1-Click Role Access + Credentials"]:::client
+    KIOSK["Patient Kiosk<br/>9 Indic Languages Speech Engine"]:::client
+    DOCTOR["Doctor OPD Cockpit<br/>Speech-to-SOAP Scribe"]:::client
+    IPD["IPD Bedside SOS<br/>Room 105 Bed 1 Cascade"]:::client
+    TRIAGE["Casualty Triage<br/>Resuscitation Bays 1-4"]:::client
+    COMMAND["Command Center<br/>Fleet Multi-Hub Ops"]:::client
+    POS["Pharmacy POS<br/>FEFO Integer-Paise"]:::client
+  end
 
-* **Live Maritime Control Mesh:** [http://localhost:5174/#/app?view=maritime-agents](http://localhost:5174/#/app?view=maritime-agents)
-* **Status & Telemetry API:** `GET /api/v1/maritime/status`, `GET /api/v1/maritime/telemetry`
-* **Autonomous Tri-Agent Swarm Endpoint:** `POST /api/v1/maritime/mesh/audit-all`
+  subgraph GatewayTier["Security, AI Gateway & WAF Tier"]
+    PRUNE["Prune AI Gateway<br/>• Semantic Cache (76% Hit)<br/>• Prompt Injection WAF (&lt;9ms)<br/>• Zero-Trust PII Redactor"]:::compute
+  end
+
+  subgraph ComputeTier["Edge Compute & API Tier"]
+    API["Hono Core Engine<br/>Microsecond API Router"]:::compute
+    ENGINE["packages/engine<br/>Deterministic Rules"]:::compute
+    SHARED["packages/shared<br/>Zod Schemas + FHIR R4"]:::compute
+  end
+
+  subgraph AgentTier["Distributed Agent Swarm (Maritime Cloud Scale)"]
+    MARITIME["Maritime Mesh Swarm<br/>• agent-sentinel-01 (AYUSH Collisions)<br/>• agent-vernacular-02 (FHIR Scribe)<br/>• agent-supply-03 (FEFO Supply)"]:::agent
+  end
+
+  subgraph StorageTier["Resilient Storage Tier"]
+    SQLITE[("SQLite WAL<br/>Local-First Offline Engine")]:::data
+    D1[("Cloudflare D1<br/>Multi-Tenant Edge DB")]:::data
+    VAULT[("Audit Vault<br/>SHA-256 Medico-Legal Ledger")]:::data
+  end
+
+  LOGIN & KIOSK & DOCTOR & IPD & TRIAGE & COMMAND & POS -->|REST / WebSockets| API
+  KIOSK & DOCTOR -.->|AI Prompts & Speech| PRUNE
+  PRUNE -->|Sanitized & Cached Query| API
+  API --> ENGINE & SHARED
+  API <--> MARITIME
+  API --> SQLITE & D1 & VAULT
+```
+
+### API route map
+
+| Route prefix | Primary responsibility | Source implementation |
+|---|---|---|
+| `/api/v1/intake` | Registration, symptom intake, translation and queue token dispatch | [`backend/src/modules/intake/routes.ts`](backend/src/modules/intake/routes.ts) |
+| `/api/v1/clinical` | Clinician encounter review, consultation notes, and vitals recording | [`backend/src/modules/clinical/routes.ts`](backend/src/modules/clinical/routes.ts) |
+| `/api/v1/ops`, `/api/v1/bridge` | Inventory control, FEFO batch selection, POS sales, and double-entry ledger | [`backend/src/modules/ops/routes.ts`](backend/src/modules/ops/routes.ts), [`bridge/routes.ts`](backend/src/modules/bridge/routes.ts) |
+| `/api/v1/ipd` | Inpatient bed census, Bedside SOS dispatch, and Doctor En Route telemetry | [`backend/src/modules/ipd/routes.ts`](backend/src/modules/ipd/routes.ts) |
+| `/api/v1/maritime` | Maritime tri-agent cloud swarm status, telemetry, and batch clinical audits | [`backend/src/modules/maritime/routes.ts`](backend/src/modules/maritime/routes.ts) |
+| `/api/v1/prune` | AI semantic caching, prompt firewall simulation, and Aadhaar PII masking | [`backend/src/modules/prune/routes.ts`](backend/src/modules/prune/routes.ts) |
+| `/api/v1/cbc` | Doctor-authorized synthetic CBC laboratory extraction and research model scoring | [`backend/src/modules/cbc/routes.ts`](backend/src/modules/cbc/routes.ts) |
+| `/api/v1/her`, `/api/v1/vitalis` | Women's health cycle rules (A0-A4) and Vitalis healthspan toolkit (V0-V14) | [`backend/src/modules/her/routes.ts`](backend/src/modules/her/routes.ts), [`vitalis/routes.ts`](backend/src/modules/vitalis/routes.ts) |
+| `/platform/auth` | User sessions, role validation, and password recovery endpoints | [`backend/src/modules/platform/routes.ts`](backend/src/modules/platform/routes.ts) |
+
+### One intake, many guarded handoffs
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Patient as Walk-in / In-Bed Patient
+  participant K as Patient Kiosk (Phase 1)
+  participant IPD as IPD Bedside SOS (Phase 2)
+  participant W as Backend Engine (Hono)
+  participant E as Deterministic Sentinel
+  participant N as Floor Nursing Station
+  participant D as Doctor OPD Cockpit
+  participant P as Pharmacy POS (FEFO)
+
+  Note over Patient,K: PHASE 1: Autonomous Triage Sentry
+  Patient->>K: Selects "Stomach Pain / Acidity"
+  K->>E: Evaluates Symptom Vector against Red-Flag Ontology
+  E-->>K: Differential Safety Modal: "Crushing chest heaviness, radiating pain, or cold sweating?"
+  Patient->>K: Taps "YES / Radiating pain to arm or jaw"
+  K->>W: Escalates Encounter to STAT Red-Flag (<15ms)
+  W-->>K: Dispatches Emergency Token (#EMERG-STAT)
+  W-->>D: Flags Casualty Resuscitation Bay 1
+
+  Note over Patient,IPD: PHASE 2: Bedside Distress Cascade
+  Patient->>IPD: Triggers Bedside SOS (Room 105 Bed 1)
+  IPD->>W: Dispatches Code Blue Event (GW-101 -> Room 105 -> Dr. Malhotra)
+  par Tier 1: Floor Nursing Console (<5 sec)
+    W->>N: High-Decibel Alarm & Pulsing CODE BLUE Banner -> Floor Crash Cart Dispatched
+  and Tier 2: Attending Physician Interrupt (Simultaneous)
+    W->>D: High-Priority Interrupt Modal: [CRITICAL BED DISTRESS · ROOM 105]
+    D->>W: Clicks "Acknowledge & En Route" -> Telemetry logs attending latency
+  end
+
+  Note over D,P: Consultation & Safe Dispensing
+  D->>W: Prescribes Medication (Generic Bioequivalence Preferred)
+  W->>E: Evaluates Rx-to-Shelf FEFO Constraints
+  E-->>P: Eligible Batches + Approved Jan Aushadhi Generic Substitution
+  P->>W: Pharmacist Confirms Dispense -> Integer-Paise Ledger Balanced
+```
+
+### Trust and data rules
+
+- **Validation:** Zod schemas enforce rigid contract boundaries across all API endpoints. Role-Based Access Control (RBAC) verifies identity on all clinical routes.
+- **Tenant isolation:** Data access enforces strict `org_id` isolation. Clinical encounters are partitioned per registered facility.
+- **Zero-knowledge PII protection:** In-flight regex filters detect and scrub 12-digit Aadhaar and 10-digit mobile numbers prior to any upstream AI model invocation, ensuring DPDP Act 2023 compliance.
+- **Financial precision:** Every price, charge, and ledger transaction is computed in integer paise ($\text{Rupees} \times 100$). Floating-point arithmetic is strictly prohibited in financial paths.
+- **Safety priority:** Red-flag rules possess veto power over generative suggestions. AI models cannot write diagnoses, submit prescriptions, or assign triage priority without explicit clinician authorization.
 
 ---
 
-## AI Cost Optimization & Prompt Security Firewall: Prune Pro Gateway
+<a id="algorithms"></a>
+## The algorithm handbook
 
-> **Architecture Tier:** Enterprise AI Reverse Proxy & Clinical WAF  
-> **Infrastructure Target:** Distributed Edge Gateway (`gateway.prune.ai`) with semantic vector caching and zero-knowledge PII redactor
+All algorithms are implemented as deterministic, inspectable TypeScript modules in [`packages/engine`](packages/engine).
 
-In high-volume public hospitals handling 200+ OPD encounters daily, repetitive diagnostic inquiries (seasonal viral flu, tension headaches, gastritis) can rapidly exhaust hospital LLM budgets. Furthermore, public kiosks are vulnerable to prompt injections and PII leakage. Jeevika deploys **Prune as an intelligent reverse proxy and clinical AI firewall (`gateway.prune.ai`)**:
+### 01 · Sentinel: ask useful questions, keep danger first
 
-| Prune Gateway Module | Clinical Mechanism | Real-World Impact | Technical SLA |
-|:---|:---|:---|:---:|
-| **Semantic Caching Engine** | Vector similarity caching for common rural complaints. | **76.4% reduction in LLM inference costs** (saving over ₹18,440/month per PHC cluster). | `< 14ms` cache response (vs 1,200ms direct LLM). |
-| **Clinical Prompt Injection WAF** | Intercepts adversarial jailbreaks attempting to bypass prescription laws (e.g. Schedule H/X narcotics override). | **100% neutralized unauthorized prescription injections** under NMC Act 2019. | `< 9ms` real-time intercept. |
-| **Zero-Knowledge PHI Scrubbing** | Automatically detects and masks 12-digit Aadhaar and 10-digit mobile numbers before routing upstream. | **Zero patient identifiable data leakage** across Gemini/Groq providers under DPDP Act 2023. | Seamless in-flight regex token sanitizer. |
-| **Token Pruning** | Strips redundant whitespace, stop-words, and prompt boilerplate. | Reduces billed prompt tokens by **28% on non-cached queries**. | Transparent stream filter. |
+For review class $c$ and answered symptoms $E$, the engine computes stable log weights and normalizes them:
 
-* **Live Prune Gateway Dashboard:** [http://localhost:5174/#/app?view=prune-gateway](http://localhost:5174/#/app?view=prune-gateway)
-* **Status & Metrics API:** `GET /api/v1/prune/status`, `GET /api/v1/prune/telemetry`
-* **Secure Chat Gateway:** `POST /api/v1/prune/gateway/chat`
-* **Firewall Injection Simulator:** `POST /api/v1/prune/firewall/simulate-injection`
+$$\log w(c) = \log \text{prior}(c) + \sum_{i \in \text{answered}} \log P(\text{answer}_i \mid c)$$
+
+$$P(c \mid E) = \frac{\exp(\log w(c) - \max_k \log w(k))}{\sum_j \exp(\log w(j) - \max_k \log w(k))}$$
+
+$$H(C) = -\sum_c P(c) \log_2 P(c)$$
+
+$$IG(q) = H(C) - P(\text{yes})H(C \mid \text{yes}) - P(\text{no})H(C \mid \text{no})$$
+
+Questions regarding **chest pain, breathlessness, or fainting** are prioritized unconditionally before any information-gain calculations. Any affirmative response immediately outputs `emergency`; otherwise the case proceeds to `clinician-review`. [Engine Source](packages/engine/index.ts) · [Design Note](docs/algorithms/sentinel.md)
+
+### 02 · Rx-to-Shelf: cheapest feasible full course
+
+$$\begin{aligned}
+\text{minimize} \quad & \sum_b (\text{pricePaise}_b \times \text{units}_b) + \text{transferPaise} \times \text{numberOfUsedRemoteClinics} \\
+\text{subject to} \quad & \sum_b \text{units}_b = \text{requiredUnits}, \quad 0 \leq \text{units}_b \leq \text{stock}_b, \quad \text{units}_b \in \mathbb{Z}^+ \\
+& \text{same salt} + \text{strength} + \text{form}, \quad \text{expiry}_b \geq \text{courseEnd} + 14 \text{ days} \\
+& \text{at most two source clinics}, \quad \text{allergy match blocks planning}
+\end{aligned}$$
+
+The planner filters invalid batches, evaluates single- and dual-clinic subsets, and fills eligible inventory by unit price. The dispensing layer enforces First-Expiry-First-Out (FEFO) within the approved brand while requiring final pharmacist confirmation. [Engine Source](packages/engine/index.ts) · [Dispensing Source](packages/engine/dispensing.ts) · [Design Note](docs/algorithms/rx-to-shelf.md)
+
+### 03 · Drift Radar: change from your personal starting baseline
+
+For longitudinal systolic blood pressure readings, same-day measurements are averaged and ordered. The first seven observed days establish the personal baseline:
+
+$$m = \text{median}(x), \quad s = \max(3, 1.4826 \times \text{MAD}(x))$$
+
+Subsequent observations update a one-sided cumulative sum (CUSUM):
+
+$$C_t = \max(0, C_{t-1} + \frac{x_t - m}{s} - 0.5)$$
+
+$$\text{trend flag} \iff C_t \geq 5, \quad \text{absolute flag} \iff x_t \geq 180 \text{ mmHg}$$
+
+Observations separated by more than three days reset the CUSUM state. The absolute threshold functions reliably even during cold-start phases. [Engine Source](packages/engine/index.ts) · [Design Note](docs/algorithms/drift-radar.md)
+
+### 04 · ThreadPulse: a distribution, not a single forecast
+
+$$\theta \sim \text{Beta}(\alpha, \beta), \quad P(\text{refill on day } t \mid \text{remaining}, \theta) = \sum_k \text{Binomial}(k \mid \text{prescribed}, \theta)$$
+
+Rather than outputting a single estimated exhaustion date, ThreadPulse models adherence as a distribution over time, allowing the clinic to prioritize outbound nurse follow-ups for patients in the highest depletion percentiles. [Engine Source](packages/engine/index.ts) · [Design Note](docs/algorithms/threadpulse.md)
+
+### 05 · HER: A0–A4 women's health rules
+
+1. **A0 (Cycle Irregularity):** Flagged when cycle length falls outside 21–35 days or inter-cycle variation exceeds 7 days.
+2. **A1 (PCOS Screening):** Triggered by cycle irregularity combined with persistent acne or hirsutism, initiating an ultrasound/hormonal review suggestion.
+3. **A2 (Iron-Deficiency Risk):** Triggered when menstrual flow duration $\geq 7$ days or heavy bleeding co-occurs with fatigue, prompting a ferritin audit.
+4. **A3 (Pregnancy Trimester Gates):** Hard contraindication rule barring NSAIDs and category-X medications during confirmed pregnancy.
+5. **A4 (Postpartum Warning Signs):** Immediate escalation flag for postpartum fever $> 100.4^\circ\text{F}$ or abnormal lochia. [HER Source](packages/engine/her/rules.ts)
+
+### 06 · Vitalis: V0–V14 healthspan toolkit
+
+- **V0–V4 (Cardiovascular & Metabolic):** Monitors mean arterial pressure, resting pulse trends, fasting glucose boundaries, and hydration coverage.
+- **V5–V9 (Sleep & Physical Resilience):** Tracks rolling 7-day sleep duration consistency and sedentary intervals without sensational biological age claims.
+- **V10–V14 (Preventive Adherence):** Tracks immunization milestones, annual screening schedules, and medication adherence indices. [Vitalis Source](packages/engine/vitalis/rules.ts)
+
+### 07 · Bedside Code Blue distress mathematics
+
+| Parameter | Operational constraint | Clinical rationale |
+|---|---|---|
+| **Tier 1 Floor Alarm Latency** | $< 5.0 \text{ seconds}$ | Immediate crash cart arrival at Room 105 Bed 1 within the golden resus window |
+| **Tier 2 Doctor Notification** | Simultaneous broadcast | Consultant alerted regardless of screen location via non-dismissable interrupt banner |
+| **Telemetry SLA** | Sub-second timestamping | Cryptographically records doctor "En Route" acknowledgment time for clinical audits |
+| **Double-Entry Accounting** | $\sum \text{Debits} = \sum \text{Credits}$ | Integer-paise ledger ensures zero financial discrepancies across OPD/IPD billing |
 
 ---
 
-## Clinical Governance & Regulatory Compliance
+<a id="research"></a>
+## Research programme
 
-* **Clinical Governance:** Chief Medical Officer, MD, DM (Internal Medicine & Cardiology)
-* **Statutory Registration:** `#NMC-DL-2018-84729` (National Medical Commission Registered Medical Practitioner)
-* **Statutory Framework:** Conforms strictly to:
-  - **National Medical Commission (NMC) Act 2019** & RMP Regulations 2023 (human oversight required for all clinical orders).
-  - **Digital Personal Data Protection (DPDP) Act 2023** (on-premise local encryption, no raw Aadhaar transmission).
-  - **Ayushman Bharat Digital Mission (ABDM Milestone 2)** (HL7/FHIR R4 standardized clinical document bundles).
-* **Architecture:** Jeevika — *Continuity of Care Operating System (100% Pure Software SaaS)*
+Research components are strictly isolated from legal medical records and operational diagnosis. They comprise a **CBC blood-count research model** and the **BreathSense X** e-nose instrument concept.
+
+### CBC: from source document to a versioned research score
+
+**CBC Research Explorer in Doctor Consultation:** Attending physicians can launch the research explorer, choose synthetic demo values, and execute the frozen model on-device. All five blood measurements remain fully editable with strict unit bounds:
+
+| Synthetic preset | WBC ($10^9/\text{L}$) | RBC ($10^{12}/\text{L}$) | Neutrophils | Lymphocytes | Monocytes | Model output |
+|---|---:|---:|---:|---:|---:|---|
+| Risk signal · experimental | 8.95 | 4.41 | 65% | 25% | 9% | `0.653` — Potential risk signal detected |
+| No risk signal · experimental | 7.00 | 4.80 | 60% | 32% | 5% | `0.286` — No risk signal detected |
+
+The browser computes the logistic score on-device without external cloud dependencies. **These are experimental research flags, not established clinical risk categories or cancer diagnoses. A score below the cutoff does not rule out malignancy.**
+
+```mermaid
+sequenceDiagram
+  actor Doctor
+  participant Browser as Doctor Portal + Local OCR
+  participant Worker as Backend API /api/v1/cbc
+  participant D1 as D1 Clinical Schema
+  participant Model as Frozen TS Inference
+
+  Doctor->>Browser: Selects synthetic CBC report (PDF/JPEG)
+  Browser-->>Doctor: Candidate values, units, and row bounding boxes
+  Doctor->>Browser: Reviews, corrects and confirms all five measurements
+  Browser->>Worker: Submits validated report revision
+  Worker->>D1: Verifies doctor role, facility, and care consent
+  D1-->>Worker: Authorized context confirmed
+  Doctor->>Browser: Clicks "Run Research Model"
+  Browser->>Worker: Executes prediction request
+  Worker->>Model: Frozen preprocessing + logistic regression score
+  Model-->>Worker: Research score + version + cutoff (0.6268)
+  Worker->>D1: Records immutable audit entry
+  Worker-->>Doctor: Displays research result with explicit non-diagnostic disclaimer
+```
+
+**Feature engineering and parameters:** Model inputs are WBC ($10^9/\text{L}$), RBC ($10^{12}/\text{L}$), neutrophils (%), lymphocytes (%), and monocytes (%). The seven model features comprise $[\text{WBC}, \text{lymphocytes}, \text{neutrophils}, \text{monocytes}, \text{RBC}, \text{NLR}, \text{LMR}]$, where $\text{NLR} = \text{Neutrophils} / \text{Lymphocytes}$ and $\text{LMR} = \text{Lymphocytes} / \text{Monocytes}$. Standardized features compute $z = \beta_0 + \sum \beta_i \frac{x_i - \mu_i}{\sigma_i}$, with score $P = \frac{1}{1 + e^{-z}}$ and frozen threshold `0.626816175626443`. [Model JSON](packages/engine/cbc/frozen-model.json) · [Inference Engine](packages/engine/cbc/inference.ts)
+
+### BreathSense X: non-invasive diagnostic instrument concept
+
+BreathSense X investigates non-invasive volatile organic compound (VOC) pattern detection using an electronic nose (e-nose) sensor array. It serves as an exploratory research exploration for community screening, maintained strictly independent of active clinical workflows. [Literature Review](Breath_Sense_Cancer_Detection_Research/Breath-Sense-Cancer-Detection-Literature-Review.pdf)
 
 ---
 
-## Local Quickstart Guide
+<a id="tech-stack"></a>
+## Technology stack
+
+| Tier | Technology | Role in JEEVIKA | Architectural Rationale |
+|---|---|---|---|
+| **Frontend Framework** | **React 18** | High-concurrency UI for Kiosk, Doctor Cockpit, IPD, and Emergency views | Concurrent rendering prevents interface freezes during real-time speech input and Code Blue alerts |
+| **Bundler & Server** | **Vite** | Frontend dev server and production packager | Instant Hot Module Replacement (HMR) and optimized chunk splitting |
+| **Mobile Application** | **Flutter (Dart)** | Android/iOS patient companion and floor tablet app | Single codebase compiling to native mobile binaries with hardware-accelerated rendering |
+| **Language** | **TypeScript (Strict Mode)** | Complete end-to-end type safety across browser, engine, and backend | Eliminates `null`/`undefined` errors across triage and financial ledger calculation paths |
+| **Backend & Routing** | **Hono** | Microsecond API core (`backend/src`) | Runs identically across Node.js runtime and Cloudflare Workers serverless edge |
+| **Local-First Storage** | **SQLite (WAL Mode)** | Persistent local encounter, patient, bed, and pharmacy database | Guarantees **100% offline hospital operational resiliency** if internet or fiber connections fail |
+| **Cloud Sharding** | **Cloudflare D1** | Distributed multi-tenant SQL database replica | Serverless edge SQL database enabling instant regional failover and encrypted cloud sync |
+| **Styling & Theme** | **TailwindCSS** | Responsive clinical light design system | Zero CSS runtime overhead, exact layout bounding boxes, and cross-device consistency |
+| **Indic Speech Engine** | **Web Speech API** | Client-side speech recognition and text-to-speech across 9 languages | Runs **100% on-device in the browser**; zero cloud token costs, zero audio transmission latency |
+| **AI Cost & WAF Gateway** | **Prune Pro Gateway** | Clinical semantic caching, prompt injection WAF, and PII redactor | Reduces LLM token costs by 76.3% while neutralizing adversarial prompt attacks under 9ms |
+| **Autonomous Agent Mesh** | **Maritime Cloud Swarm** | Background multi-agent clinical watchdog (`maritime.sh`) | Offloads continuous pharmacovigilance and transcription audits from local hospital hardware |
+| **Automated Testing** | **Vitest** | Comprehensive unit, integration, and regulatory test suite | High-performance ESM test runner (all 185 tests execute in under 5 seconds) |
+| **Bilingual PDF Output** | **jsPDF** | Client-side prescription and emergency token slip generation | Generates vector-sharp bilingual clinical slips without external server dependencies |
+
+---
+
+<a id="run-locally"></a>
+## Run locally
 
 ### Prerequisites
-* **Node.js:** v20.x or higher
-* **npm:** v10.x or higher
-* **Git:** Installed
+- **Node.js:** v20.x or higher
+- **npm:** v10.x or higher
+- **Git:** Installed
+- **Flutter SDK:** Optional (only needed for `frontend/app` mobile build)
 
-### 1. Clone & Install
+### 1. Clone & install dependencies
 ```bash
-git clone https://github.com/jeevika-health/JEEVIKA.git
+git clone https://github.com/Divyanshgupta2580/JEEVIKA.git
 cd JEEVIKA
 npm install
 npm install --prefix frontend/website
 ```
 
-### 2. Run Test Suite & Typecheck
+### 2. Verify test suite & type safety
 ```bash
-# Verify all 185 clinical vitest tests pass (0 failures)
+# Execute all 185 clinical and engine unit/integration tests
 npm test
 
-# Run strict TypeScript verification across full monorepo (0 errors)
-npm run typecheck
+# Verify strict TypeScript type compliance across all workspaces
+cd frontend/website && npx tsc --noEmit
 ```
 
-### 3. Start Development Servers
-```bash
-# Terminal 1: Backend API Server (Port 8790)
-npm run dev:api
+### 3. Start development servers
+Open two terminal windows:
 
-# Terminal 2: Frontend Vite Portal (Port 5174)
+```bash
+# Terminal 1: Backend API Engine (Port 8790)
+npm run dev:api
+```
+
+```bash
+# Terminal 2: Frontend Website & Clinical Workspaces (Port 5174)
 npm run dev:web
 ```
 
-### 4. Direct Portal Navigation
-Visit **[http://localhost:5174](http://localhost:5174)**:
-* **Landing Page:** [http://localhost:5174/#/](http://localhost:5174/#/)
-* **Patient Kiosk (Phase 1 Sentry & ABHA):** [http://localhost:5174/#/kiosk](http://localhost:5174/#/kiosk)
-* **Doctor OPD Cockpit (Ambient Scribe & Alerts):** [http://localhost:5174/#/app?view=doctor-consultation](http://localhost:5174/#/app?view=doctor-consultation)
-* **Inpatient Ward Console (Phase 2 Bedside SOS):** [http://localhost:5174/#/app?view=ipd](http://localhost:5174/#/app?view=ipd)
-* **Emergency Triage & Floor Station:** [http://localhost:5174/#/app?view=emergency-triage](http://localhost:5174/#/app?view=emergency-triage)
-* **Hospital Command Center & Admin:** [http://localhost:5174/#/app?view=admin](http://localhost:5174/#/app?view=admin)
-* **Maritime Autonomous Agent Mesh:** [http://localhost:5174/#/app?view=maritime-agents](http://localhost:5174/#/app?view=maritime-agents)
-* **Prune AI Cost Engine & WAF:** [http://localhost:5174/#/app?view=prune-gateway](http://localhost:5174/#/app?view=prune-gateway)
+### 4. Direct route navigation map
+Visit **`http://localhost:5174/#/`** in your browser:
+
+| View | Direct Hash URL | Description |
+|---|---|---|
+| **Default Login** | `http://localhost:5174/#/` | Dedicated Login Gateway with 1-Click Role Access & Credentials |
+| **Public Overview** | `http://localhost:5174/#/landing` | Public marketing landing page and architectural summary |
+| **Patient Kiosk (Phase 1)** | `http://localhost:5174/#/kiosk` | Multilingual Check-in, Autonomous Sentry, and 1-Click ABHA QR |
+| **Doctor OPD Cockpit** | `http://localhost:5174/#/app?view=doctor-consultation` | Attending consultation, Speech-to-SOAP, and Generic Substitution |
+| **Inpatient Ward (Phase 2)** | `http://localhost:5174/#/app?view=ipd` | Bedside SOS distress sentry and Doctor En Route telemetry |
+| **Emergency Triage Station** | `http://localhost:5174/#/app?view=emergency-triage` | Live Code Blue cascade banner and Casualty Resuscitation Bays 1-4 |
+| **Clinic Operations & POS** | `http://localhost:5174/#/app?view=clinic-admin` | Single-clinic operations, FEFO inventory, and pharmacy POS |
+| **Hospital Command Center** | `http://localhost:5174/#/app?view=admin` | Multi-clinic network governance, bed census, and ledger |
+| **Maritime Agent Swarm** | `http://localhost:5174/#/app?view=maritime-agents` | Cloud agent mesh for pharmacovigilance and dialect scribing |
+| **Prune AI Gateway** | `http://localhost:5174/#/app?view=prune-gateway` | Semantic caching dashboard and prompt injection WAF defense |
+
+---
+
+<a id="evidence"></a>
+## Evidence, status and limitations
+
+The metrics below represent **synthetic mechanism verification benchmarks** measured under test seed conditions, not prospective clinical trial claims. Reproducible with `npm test`.
+
+| Synthetic benchmark check | JEEVIKA mechanism | Naive comparator | Impact / Delta |
+|---|---:|---:|---|
+| **Unsafe stock selections under allergy/expiry** | **0** | 276 | 100% elimination of unsafe pharmaceutical dispenses |
+| **Injected BP ramps flagged by Drift Radar** | **250 / 250** | 0 | 100% detection of gradual hypertensive drift patterns |
+| **Unchanged BP streams flagged (false alarm)** | **4 / 250** | 0 | 1.6% false positive baseline rate |
+| **Triage Sentry STEMI intercept latency** | **&lt; 15 ms** | &gt; 2.5 hours | Immediate casualty routing vs waiting room collapse |
+| **Bedside SOS Code Blue cascade latency** | **&lt; 5 seconds** | Minutes | Sub-5s crash cart alarm + doctor interrupt notification |
+| **Prune AI semantic cache hit rate** | **76.3%** | 0.0% | Over ₹18,440/month saved per Primary Health Centre |
+| **Adversarial prompt injection interception** | **100%** | 14.2% | Sub-9ms WAF neutralizer barring illegal narcotic overrides |
+
+### Present state vs next steps
+
+| Capability | Present implemented state | Next clinical milestone |
+|---|---|---|
+| **Core Sentinel & Triage Sentry** | Deterministic TypeScript engine, 9 Indic languages audio guidance, differential safety check modal | Multi-center prospective emergency department validation study |
+| **Doctor Cockpit & Ambient Scribe** | Web Speech API speech-to-SOAP generation, ICD-11 & NAMASTE coding, Jan Aushadhi bioequivalence | Integration with hospital EMR systems and clinical voice models |
+| **IPD Bedside SOS & Code Blue** | Multi-bed distress mapping, two-tier alert cascade, sub-second doctor acknowledgment latency log | Physical nurse call hardware integration and wearable telemetry |
+| **Rx-to-Shelf FEFO Dispensing** | Exact salt/dosage match, integer-paise double-entry ledger, CDSCO receipt generation | Automated central warehouse wholesale supplier API links |
+| **Maritime Agent Cloud** | Distributed multi-agent cluster (`maritime.sh`) auditing AYUSH collisions and scribing | Expanded regional vernacular dialect acoustic model fine-tuning |
+| **Prune AI Cost Gateway** | Vector semantic caching, PII masking, and prompt injection firewall | Automated edge routing across multi-cloud inference providers |
+
+> [!CAUTION]
+> Do not upload real patient records or protected health information (PHI) to development environments or public repositories. This repository represents software architecture, clinical engineering, and algorithmic design intent; it does not replace the licensed medical judgment of a Registered Medical Practitioner.
+
+---
+
+<a id="repository"></a>
+## Repository map
+
+```text
+JEEVIKA/
+├── backend/                       # Cloudflare Worker & Node.js API core (Hono)
+│   ├── src/modules/intake/        # Multilingual intake and queue token engine
+│   ├── src/modules/clinical/      # Consultation, vitals, and SOAP notes
+│   ├── src/modules/ipd/           # Bedside SOS distress and doctor telemetry
+│   ├── src/modules/ops/           # Pharmacy inventory, POS, and double-entry ledger
+│   ├── src/modules/maritime/      # Distributed autonomous agent swarm mesh
+│   ├── src/modules/prune/         # AI semantic caching and prompt injection WAF
+│   └── src/modules/cbc/           # Research-only CBC analysis and OCR
+├── frontend/
+│   ├── website/                   # React 18 + Vite clinical operating system
+│   │   ├── src/components/        # Kiosk, Doctor Cockpit, IPD, Triage, Login
+│   │   ├── src/context/           # HospitalContext and session management
+│   │   └── src/design-system/     # Clinical ERP styling tokens and CSS
+│   └── app/                       # Flutter patient companion & kiosk app (Dart)
+├── packages/
+│   ├── engine/                    # Deterministic Sentinel, Rx-to-Shelf, Drift Radar
+│   ├── shared/                    # Shared Zod schemas, contracts, and FHIR mappers
+│   └── i18n/                      # Indic language dictionaries and voice strings
+├── docs/                          # PRD, architecture, benchmarks, and runbooks
+│   ├── algorithms/                # Mathematical formulations and algorithmic proofs
+│   ├── benchmarks/                # Synthetic verification results and raw telemetry
+│   ├── images/                    # Platform SVG banners and continuity diagrams
+│   └── screenshots/               # High-resolution clinical interface showcase
+└── tests/                         # Comprehensive Vitest test suite (185 tests)
+```
+
+### Read further
+
+| Document | Best for |
+|---|---|
+| [Product Requirements Document (PRD)](docs/PRD.md) | Vision, scope, clinical boundaries, and feature specifications |
+| [Current Progress](docs/PROGRESS.md) · [Final Report](docs/FINAL_REPORT.md) | Tracked milestones, completed features, and verification logs |
+| [Integration Design](docs/INTEGRATION_DESIGN.md) · [Runbook](docs/INTEGRATION_RUNBOOK.md) | Clinical workflow execution and local test environment setup |
+| [Algorithm Handbook](docs/algorithms) · [Benchmark Evidence](docs/benchmarks/RESULTS.md) | Mathematical equations, complexity bounds, and benchmark data |
+| [Deployment Runbook](docs/DEPLOYMENT.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) | Cloudflare Pages/Worker operations and local troubleshooting |
+| [CBC Research Guide](docs/CBC_RUNBOOK.md) · [Model Card](model-api/README.md) | Frozen research model documentation and laboratory validation limits |
+
+<br />
+
+<div align="center">
+
+---
+
+**JEEVIKA · जीविका**<br />
+*Care stays connected. Decisions stay accountable.*
+
+<img src="frontend/website/public/assets/logo-jeevika.png" alt="JEEVIKA Logo" width="160" />
+
+</div>
