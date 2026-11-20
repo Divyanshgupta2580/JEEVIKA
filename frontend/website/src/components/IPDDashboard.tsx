@@ -806,30 +806,30 @@ export function IPDDashboard() {
     }, [admissions, beds, wards, selectedClinicId]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-16 md:pb-0">
+        <div className="space-y-8 animate-in fade-in duration-500">
             {/* Top Inpatient Code Blue Cascade Alert Banner */}
             {activeDistressList.length > 0 && (
                 <div className="bg-red-600 text-white rounded-2xl p-4 shadow-xl border-2 border-red-400 flex flex-wrap items-center justify-between gap-4 animate-pulse">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2.5 bg-white/20 rounded-xl shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-white/20 rounded-xl">
                             <AlertOctagon className="w-6 h-6 text-white" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
+                        <div>
+                            <div className="flex items-center gap-2">
                                 <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
                                     [INPATIENT CODE BLUE CASCADE]
                                 </span>
                                 <span className="text-xs font-mono opacity-90">{activeDistressList[0].dispatchedAt}</span>
                             </div>
-                            <p className="text-sm font-bold mt-1 break-words">
+                            <p className="text-sm font-bold mt-1">
                                 Room 105 · {activeDistressList[0].bedNumber} ({activeDistressList[0].patientName} - {activeDistressList[0].patientAge}F) · Reported by {activeDistressList[0].reporterName} · Reason: {activeDistressList[0].reason}
                             </p>
-                            <p className="text-xs text-white/90 font-medium break-words">
+                            <p className="text-xs text-white/90 font-medium">
                                 Floor Crash Cart Dispatched • Primary Doctor ({activeDistressList[0].assignedDoctorName}) Alerted (&lt;5s) • Status: {activeDistressList[0].status}
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
                         <Button
                             size="sm"
                             variant="outline"
@@ -932,20 +932,18 @@ export function IPDDashboard() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="admissions" value={activeTab} onValueChange={setActiveTab} className="space-y-6 max-w-full">
-                <div className="overflow-x-auto no-scrollbar max-w-full pb-1">
-                    <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60 inline-flex flex-nowrap w-max sm:w-auto">
-                        <TabsTrigger value="admissions" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
-                            <Calendar className="w-4 h-4 mr-1.5 sm:mr-2" /> Admissions
-                        </TabsTrigger>
-                        <TabsTrigger value="wards" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
-                            <Hotel className="w-4 h-4 mr-1.5 sm:mr-2" /> Wards & Beds
-                        </TabsTrigger>
-                        <TabsTrigger value="patients" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
-                            <UserPlus className="w-4 h-4 mr-1.5 sm:mr-2" /> Patient Directory
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
+            <Tabs defaultValue="admissions" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60">
+                    <TabsTrigger value="admissions" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
+                        <Calendar className="w-4 h-4 mr-2" /> Admissions
+                    </TabsTrigger>
+                    <TabsTrigger value="wards" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
+                        <Hotel className="w-4 h-4 mr-2" /> Wards & Beds
+                    </TabsTrigger>
+                    <TabsTrigger value="patients" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
+                        <UserPlus className="w-4 h-4 mr-2" /> Patient Directory
+                    </TabsTrigger>
+                </TabsList>
 
                 <TabsContent value="admissions" className="space-y-4">
                     <div className="relative">
@@ -959,116 +957,7 @@ export function IPDDashboard() {
                     </div>
 
                     <Card className="overflow-hidden border-slate-200">
-                        {/* Mobile Admissions Card View (< md) */}
-                        <div className="md:hidden divide-y divide-slate-100">
-                            {loading ? (
-                                <div className="p-8 text-center">
-                                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-                                </div>
-                            ) : filteredAdmissions.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400">
-                                    <Calendar size={36} className="mx-auto mb-2 opacity-40" />
-                                    <p className="font-bold text-sm">No Inpatient Records Found</p>
-                                </div>
-                            ) : (
-                                filteredAdmissions.map((adm) => {
-                                    const now = new Date();
-                                    const start = new Date(adm.admission_date);
-                                    const days = Math.max(1, Math.ceil(Math.abs(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-                                    const bedCharge = days * (adm.bed?.ward?.base_daily_charge || 0);
-                                    const pharmaTotal = adm.sales?.filter((s: any) => s.sale_type === 'PHARMACY').reduce((sum: number, s: any) => sum + (Number(s.amount || s.final_amount) || 0), 0) || 0;
-                                    const consulTotal = adm.sales?.filter((s: any) => s.sale_type === 'CONSULTATION').reduce((sum: number, s: any) => sum + (Number(s.amount || s.final_amount) || 0), 0) || 0;
-                                    const miscTotal = adm.misc_expenses?.reduce((sum: number, e: any) => sum + Number(e.amount), 0) || 0;
-                                    const paidAtPOS = adm.sales?.filter((s: any) => s.payment_mode !== 'IPD_BILL' && s.sale_type !== 'IPD' && s.sale_type !== 'IPD_ADMISSION_ADVANCE').reduce((sum: number, s: any) => sum + (Number(s.amount || s.final_amount) || 0), 0) || 0;
-                                    const runningTotal = bedCharge + pharmaTotal + consulTotal + miscTotal;
-                                    const balance = runningTotal - (adm.advance_paid || 0) - paidAtPOS;
-                                    const isDistressed = adm.bed?.status === "CRITICAL_DISTRESS_SOS" || activeDistressList.some(d => d.bedId === adm.bed_id && (d.status === "ACTIVE_DISTRESS" || d.status === "ATTENDING"));
-
-                                    return (
-                                        <div key={adm.id} className={`p-4 transition-colors space-y-3 ${isDistressed ? "bg-red-50/90 border-l-4 border-l-red-600 animate-pulse" : "bg-white"}`}>
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div>
-                                                    <div className="font-bold text-slate-900 text-base flex items-center gap-2 flex-wrap">
-                                                        <span>{adm.patient?.full_name || adm.temp_patient_name || 'Unknown Patient'}</span>
-                                                        {isDistressed && (
-                                                            <span className="text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-2 py-0.5 rounded-full">
-                                                                CODE BLUE
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs text-slate-500 font-mono mt-0.5">
-                                                        {adm.patient?.contact_number || adm.temp_patient_phone || 'No phone'}
-                                                    </div>
-                                                </div>
-                                                <Badge className={adm.status === 'admitted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs px-2.5 py-0.5' : 'bg-slate-100 text-slate-600 text-xs'}>
-                                                    {adm.status.toUpperCase()}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-medium">
-                                                <div>
-                                                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Ward & Bed</span>
-                                                    <span className="font-bold text-blue-700">{adm.bed?.ward?.name || 'General Ward'}</span> · <strong className="text-slate-800">Bed {adm.bed?.bed_number || '1'}</strong>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Admitting Doctor</span>
-                                                    <span className="font-bold text-slate-800 truncate block">Dr. {adm.doctor?.full_name || 'Staff'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Stay Duration</span>
-                                                    <span className="text-slate-700">{days} Days (Since {new Date(adm.admission_date).toLocaleDateString()})</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Current Balance</span>
-                                                    <span className="text-sm font-black text-slate-900">₹{balance.toLocaleString()}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 pt-1 flex-wrap">
-                                                <Button 
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setBedsideTarget({ bed: adm.bed || { id: adm.bed_id, bed_number: "Bed 1", ward_id: "ward_room_105", status: "occupied" }, admission: adm });
-                                                        setIsBedsideModalOpen(true);
-                                                    }}
-                                                    className={isDistressed ? "flex-1 bg-red-600 hover:bg-red-700 text-white font-black animate-pulse gap-1.5 h-9 rounded-xl shadow-md shadow-red-200 text-xs" : "flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold gap-1.5 h-9 rounded-xl text-xs"}
-                                                >
-                                                    <BellRing className="w-3.5 h-3.5 shrink-0" />
-                                                    <span>Bedside SOS</span>
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    onClick={() => {
-                                                        setSelectedAdmission(adm);
-                                                        setIsMiscModalOpen(true);
-                                                    }}
-                                                    className="h-9 px-3 text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-amber-50 hover:text-amber-700"
-                                                >
-                                                    <Plus className="w-3.5 h-3.5 mr-1" />
-                                                    <span>Add Charge</span>
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    onClick={() => {
-                                                        setSelectedAdmission(adm);
-                                                        setIsDischargeModalOpen(true);
-                                                    }}
-                                                    className="h-9 px-3 text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                                                >
-                                                    <Receipt className="w-3.5 h-3.5 mr-1" />
-                                                    <span>Discharge</span>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-
-                        {/* Desktop Admissions Table (>= md) */}
-                        <div className="hidden md:block overflow-x-auto">
+                        <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 border-b border-slate-100">
                                     <tr>
@@ -2126,7 +2015,7 @@ export function IPDDashboard() {
                                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                                     Symptom Trigger (Optional)
                                 </label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
                                     {["Severe Chest Tightness / Pain", "Acute Shortness of Breath", "Sudden Dizziness / Fainting", "Nurse Needed Immediately"].map(reason => (
                                         <button
                                             key={reason}
@@ -2144,9 +2033,9 @@ export function IPDDashboard() {
                                 type="button"
                                 disabled={isSubmitting}
                                 onClick={() => handleTriggerBedDistress(bedsideTarget.bed, bedsideTarget.admission, "Acute Bedside Distress Call", "PATIENT_BEDSIDE_SOS")}
-                                className="w-full py-3.5 sm:py-4 px-4 sm:px-6 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-2xl font-black text-xs sm:text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-2 sm:gap-3 transition text-center leading-tight"
+                                className="w-full py-4 px-6 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-3 transition"
                             >
-                                <BellRing className="w-6 h-6 animate-bounce shrink-0" />
+                                <BellRing className="w-6 h-6 animate-bounce" />
                                 <span>PRESS FOR EMERGENCY DOCTOR & NURSE ASSISTANCE</span>
                             </button>
                         </div>
@@ -2216,10 +2105,10 @@ export function IPDDashboard() {
                                     const targetAdm = admissions.find(a => a.bed_id === selectedNurseBedId);
                                     handleTriggerBedDistress(targetBed, targetAdm, selectedNurseReason, "NURSE_STAT_REPORT");
                                 }}
-                                className="w-full min-h-[50px] h-auto py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-red-200 flex items-center justify-center gap-2 text-center leading-snug"
+                                className="w-full h-13 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-xl shadow-lg shadow-red-200 gap-2"
                             >
-                                <AlertOctagon className="w-5 h-5 animate-pulse shrink-0" />
-                                <span>DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT</span>
+                                <AlertOctagon className="w-5 h-5 animate-pulse" />
+                                DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT
                             </Button>
                         </div>
                     </div>
@@ -2287,25 +2176,6 @@ export function IPDDashboard() {
                     })()}
                 />
             )}
-
-            {/* Mobile Fixed Nurse Quick SOS & Actions Bar (< md only) */}
-            <div className="md:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-2.5 shadow-2xl flex items-center gap-2">
-                <Button
-                    onClick={() => setIsNurseReporterOpen(true)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black text-xs h-11 rounded-xl shadow-md shadow-red-200 gap-1.5 flex items-center justify-center animate-pulse"
-                >
-                    <AlertOctagon className="w-4 h-4 shrink-0" />
-                    <span>Nurse STAT Bed SOS</span>
-                </Button>
-                <Button
-                    onClick={() => setIsAdmissionModalOpen(true)}
-                    variant="outline"
-                    className="border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs h-11 px-3.5 rounded-xl flex items-center justify-center gap-1.5"
-                >
-                    <Plus className="w-4 h-4 shrink-0" />
-                    <span>Admit Patient</span>
-                </Button>
-            </div>
         </div>
     );
 }
