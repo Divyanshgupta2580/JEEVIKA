@@ -211,8 +211,15 @@ try {
   assert.equal((await bucket.list()).objects.length, 0);
   const logout = await worker.dispatchFetch("http://local/api/v1/auth/logout", { method: "POST", headers });
   assert.equal(logout.status, 200);
+  const closed = new Promise<number>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Socket remained open after session revocation")), 5000);
+    socket.addEventListener("close", (event) => {
+      clearTimeout(timer);
+      resolve(event.code);
+    }, { once: true });
+  });
   assert.equal((await textFrame(JSON.stringify({ id: "revoked", path: "/encounters", method: "GET" }))).status, 401);
-  socket.close();
+  assert.equal(await closed, 1008);
   console.log(
     "PASS: actual Worker + authenticated WebSocket + D1 + private R2 upload/download + confirmation + frozen inference + source deletion",
   );

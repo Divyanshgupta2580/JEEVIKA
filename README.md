@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/banner-jeevika.svg" alt="JEEVIKA — The Continuity-of-Care Operating System" width="100%" />
+<img src="docs/images/banner-jeevika.png" alt="JEEVIKA — The Continuity-of-Care Operating System" width="100%" />
 
 <br />
 
@@ -65,120 +65,124 @@ A person's healthcare story typically fractures at every organizational boundary
 
 The interfaces below demonstrate JEEVIKA's clinical design system: high-contrast typography, accessible color accents, responsive layout geometry, and zero-clash modal layers.
 
-<table width="100%" style="border-collapse: separate; border-spacing: 12px; margin: 16px 0;">
+<table width="100%" style="border-collapse: separate; border-spacing: 16px; margin: 16px 0;">
   <tr>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/01_desktop_login_page.png" target="_blank">
         <img src="docs/screenshots/01_desktop_login_page.png" alt="Protected Login & Role Access" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>1. Protected Authentication Gateway</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Default entry route featuring 1-Click Role Access across 7 personas and Staff Credential sign-in.</span>
+        <span style="font-size: 12px; color: #64748b;">Default entry route featuring 1-Click Role Access across 7 hospital personas and Staff Credential sign-in.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/02_patient_kiosk.png" target="_blank">
         <img src="docs/screenshots/02_patient_kiosk.png" alt="Patient Intake Kiosk" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>2. Patient Intake Kiosk (Phase 1)</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Autonomous Clinical Triage Sentry, 9 Indic languages audio guidance, and 1-Click ABHA QR scan.</span>
+        <span style="font-size: 12px; color: #64748b;">Autonomous Clinical Triage Sentry, 9 Indic languages audio guidance, and 1-Click ABHA QR scan.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/08_differential_triage_interceptor.png" target="_blank">
         <img src="docs/screenshots/08_differential_triage_interceptor.png" alt="Differential Triage Interceptor" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>3. Differential Triage Interceptor</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Intercepts ambiguous gastric/acidity complaints to prevent STEMI heart attack waiting room deaths.</span>
+        <span style="font-size: 12px; color: #64748b;">Intercepts ambiguous gastric/acidity complaints to prevent STEMI heart attack waiting room deaths.</span>
       </div>
     </td>
-  </tr>
-  <tr>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/09_stat_resuscitation_token.png" target="_blank">
         <img src="docs/screenshots/09_stat_resuscitation_token.png" alt="STAT Emergency Token" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>4. STAT Emergency Token (#EMERG)</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Instant sub-15ms priority elevation routed directly to Casualty Resuscitation Bay 1.</span>
+        <span style="font-size: 12px; color: #64748b;">Instant sub-15ms priority elevation routed directly to Casualty Resuscitation Bay 1.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/10_ipd_bedside_sos.png" target="_blank">
         <img src="docs/screenshots/10_ipd_bedside_sos.png" alt="IPD Bedside Distress SOS" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>5. IPD Bedside Distress Sentry (Phase 2)</strong><br />
-        <span style="font-size: 11px; color: #64748b;">In-bed emergency call button mapped to Room 105, Bed 1, Priya Sharma, and Dr. Malhotra.</span>
+        <span style="font-size: 12px; color: #64748b;">In-bed emergency call button mapped to Room 105, Bed 1, Priya Sharma, and Dr. Malhotra.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/11_doctor_distress_alert.png" target="_blank">
         <img src="docs/screenshots/11_doctor_distress_alert.png" alt="Doctor Distress Interrupt Alert" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>6. Doctor Distress Interrupt Alert</strong><br />
-        <span style="font-size: 11px; color: #64748b;">High-priority interrupt banner on Dr. Malhotra's screen with 1-tap "Acknowledge & En Route".</span>
+        <span style="font-size: 12px; color: #64748b;">High-priority interrupt banner on Dr. Malhotra's screen with 1-tap "Acknowledge & En Route".</span>
       </div>
     </td>
   </tr>
   <tr>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/12_nurse_stat_reporter.png" target="_blank">
         <img src="docs/screenshots/12_nurse_stat_reporter.png" alt="Nurse STAT Distress Reporter" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>7. Nurse STAT Distress Reporter</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Floor nursing drawer operational on desktop and mobile viewports for incapacitated patients.</span>
+        <span style="font-size: 12px; color: #64748b;">Floor nursing drawer operational on desktop and mobile viewports for incapacitated patients.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/03_doctor_opd_cockpit.png" target="_blank">
         <img src="docs/screenshots/03_doctor_opd_cockpit.png" alt="Doctor OPD Cockpit" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>8. Doctor OPD Cockpit & Ambient Scribe</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Attending status tracking, Ambient Scribe (Speech-to-SOAP), and PMBJP generic substitution.</span>
-      </div>
-    </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="docs/screenshots/04_emergency_triage.png" target="_blank">
-        <img src="docs/screenshots/04_emergency_triage.png" alt="Emergency & Trauma Triage" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
-      </a>
-      <div style="padding-top: 10px;">
-        <strong>9. Floor Emergency Triage Station</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Live Code Blue Cascade banner, ESI-1 trauma scoring, and Resuscitation Bays 1-4.</span>
+        <span style="font-size: 12px; color: #64748b;">Attending status tracking, Ambient Scribe (Speech-to-SOAP), and PMBJP generic substitution.</span>
       </div>
     </td>
   </tr>
   <tr>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+      <a href="docs/screenshots/04_emergency_triage.png" target="_blank">
+        <img src="docs/screenshots/04_emergency_triage.png" alt="Emergency & Trauma Triage" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 12px; text-align: left;">
+        <strong>9. Floor Emergency Triage Station</strong><br />
+        <span style="font-size: 12px; color: #64748b;">Live Code Blue Cascade banner, ESI-1 trauma scoring, and Resuscitation Bays 1-4.</span>
+      </div>
+    </td>
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/05_hospital_command_center.png" target="_blank">
         <img src="docs/screenshots/05_hospital_command_center.png" alt="Hospital Command Center" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
+      <div style="padding-top: 12px; text-align: left;">
         <strong>10. Hospital Command Center</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Integer-paise double-entry ledger, bed census, and multi-clinic network inventory.</span>
+        <span style="font-size: 12px; color: #64748b;">Integer-paise double-entry ledger, bed census, and multi-clinic network inventory.</span>
       </div>
     </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-      <a href="docs/screenshots/02_mobile_login_roles.png" target="_blank">
-        <img src="docs/screenshots/02_mobile_login_roles.png" alt="Mobile Clinical Pad" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
-      </a>
-      <div style="padding-top: 10px;">
-        <strong>11. Mobile Clinical Pad</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Fully responsive viewports on iOS/Android for bedside rounds and nursing distress reporting.</span>
-      </div>
-    </td>
-    <td width="33.33%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/07_prune_ai_gateway.png" target="_blank">
         <img src="docs/screenshots/07_prune_ai_gateway.png" alt="Prune AI Cost Engine & WAF" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
-      <div style="padding-top: 10px;">
-        <strong>12. Prune AI Cost Engine & WAF</strong><br />
-        <span style="font-size: 11px; color: #64748b;">Sub-20ms semantic caching, prompt injection WAF defense, and DPDP Act Aadhaar PII masking.</span>
+      <div style="padding-top: 12px; text-align: left;">
+        <strong>11. Prune AI Cost Engine & WAF</strong><br />
+        <span style="font-size: 12px; color: #64748b;">Sub-20ms semantic caching, prompt injection WAF defense, and DPDP Act Aadhaar PII masking.</span>
+      </div>
+    </td>
+    <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+      <a href="docs/screenshots/02_mobile_login_roles.png" target="_blank">
+        <img src="docs/screenshots/02_mobile_login_roles.png" alt="Mobile Clinical Pad" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+      </a>
+      <div style="padding-top: 12px; text-align: left;">
+        <strong>12. Mobile Clinical Pad</strong><br />
+        <span style="font-size: 12px; color: #64748b;">Fully responsive viewports on iOS/Android for bedside rounds and nursing distress reporting.</span>
       </div>
     </td>
   </tr>

@@ -3,6 +3,7 @@ import type { Database } from "./database";
 export type Env = {
   DB: Database;
   ENVIRONMENT: string;
+  PUBLIC_ORIGIN?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };
   CBC_DOCUMENTS?: R2Bucket;
   CBC_ENABLED?: string;

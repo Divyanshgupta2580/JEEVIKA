@@ -62,8 +62,9 @@ import { integrationOpenapi } from "../../packages/shared/integration-openapi";
 import type { IntegrationContext } from "./context";
 import { tenantDb as integrationTenantDb } from "./database";
 import { jsonBody } from "./http";
-import { authorizeDataSocket, dataProtocol, dataSocketPath } from "./data-socket";
+import { authorizeDataSocket, dataProtocol, dataSocketPath, deliverDataSocketMessage } from "./data-socket";
 import { equalHash, newToken, passwordHash, tokenHash } from "./security";
+import { clinicalOriginAllowed, validateStaffSession } from "./staff-session";
 
 // Export Durable Objects for Cloudflare runtime binding
 export { ClinicInventory } from "./do/ClinicInventory";
@@ -84,6 +85,7 @@ export type Env = {
   TRIAGE_SESSION: DurableObjectNamespace;
   ORG_AUDIT: DurableObjectNamespace;
   ENVIRONMENT: string;
+  PUBLIC_ORIGIN?: string;
   API_VERSION: string;
   SARVAM_API_KEY?: string;
   SARVAM_SPEECH_ENABLED?: string;
@@ -289,8 +291,8 @@ export function createIntegrationApp() {
     c.header("X-Request-Id", c.get("requestId"));
     if (c.req.path.startsWith("/api/")) c.header("Cache-Control", "no-store");
     const origin = c.req.header("origin");
-    const isLocalDev = origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-    if (origin && origin !== new URL(c.req.url).origin && !isLocalDev)
+    const isLocalDev = c.env?.ENVIRONMENT !== "production" && origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    if (!clinicalOriginAllowed(c.req.raw, c.env))
       throw new HTTPException(403, {
         message: "Cross-origin requests are disabled",
       });
@@ -432,28 +434,10 @@ export function createIntegrationApp() {
     const authorization = c.req.header("Authorization") ?? "";
     if (!authorization.startsWith("Bearer "))
       throw new HTTPException(401, { message: "Session required" });
-    const token = authorization.slice(7);
-    const orgId = token.split(".")[0] ?? "";
-    if (!/^[a-z0-9-]{1,80}$/.test(orgId) || token.length > 300)
-      throw new HTTPException(401, { message: "Session required" });
-    const db = integrationTenantDb({ db: c.env.DB, orgId });
-    const user = await db
-      .statement(
-        `SELECT u.id,u.clinic_id,u.role FROM sessions s
-      JOIN users u ON u.org_id=s.org_id AND u.id=s.user_id
-      WHERE s.org_id = :org AND s.token_hash = ? AND s.expires_at > ?`,
-        await tokenHash(token),
-        new Date().toISOString(),
-      )
-      .first<UserRow>();
-    if (!user)
+    const session = await validateStaffSession(c.env, authorization.slice(7));
+    if (!session)
       throw new HTTPException(401, { message: "Session expired or revoked" });
-    c.set("principal", {
-      orgId,
-      userId: user.id,
-      clinicId: user.clinic_id,
-      role: user.role,
-    });
+    c.set("principal", session.principal);
     await next();
   });
   integrationApp.get("/api/v1/auth/me", (c) => c.json(c.get("principal")));
@@ -685,16 +669,23 @@ export function createIntegrationApp() {
 const app = new Hono<{ Bindings: Env }>();
 
 app.get(dataSocketPath, async (c) => {
-  const handle = await authorizeDataSocket(c.req.raw, c.env, (request, env) => app.fetch(request, env));
+  if (typeof WebSocketPair === "undefined") {
+    return c.json({ error: "WebSocket upgrade required" }, 426);
+  }
+  let handle: Awaited<ReturnType<typeof authorizeDataSocket>>;
+  try {
+    handle = await authorizeDataSocket(c.req.raw, c.env, (request, env) => app.fetch(request, env));
+  } catch {
+    return c.json({ error: "WebSocket authentication unavailable" }, 503);
+  }
   if (!handle) return c.json({ error: "WebSocket session required" }, 401);
 
   const { 0: client, 1: server } = new WebSocketPair();
   server.binaryType = "arraybuffer";
   server.accept();
   server.addEventListener("close", () => server.close());
-  server.addEventListener("message", async ({ data }) => {
-    const response = await handle(data);
-    if (server.readyState === WebSocket.OPEN) server.send(response);
+  server.addEventListener("message", ({ data }) => {
+    void deliverDataSocketMessage(handle, () => data, server);
   });
   return new Response(null, {
     status: 101,

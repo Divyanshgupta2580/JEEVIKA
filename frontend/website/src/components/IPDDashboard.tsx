@@ -933,15 +933,15 @@ export function IPDDashboard() {
             </div>
 
             <Tabs defaultValue="admissions" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60">
-                    <TabsTrigger value="admissions" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <Calendar className="w-4 h-4 mr-2" /> Admissions
+                <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60 max-sm:grid max-sm:h-auto max-sm:w-full max-sm:grid-cols-3">
+                    <TabsTrigger value="admissions" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold max-sm:flex-col max-sm:gap-1 max-sm:whitespace-normal max-sm:px-1.5 max-sm:text-center max-sm:text-xs">
+                        <Calendar className="w-4 h-4 mr-2 max-sm:mr-0" /> Admissions
                     </TabsTrigger>
-                    <TabsTrigger value="wards" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <Hotel className="w-4 h-4 mr-2" /> Wards & Beds
+                    <TabsTrigger value="wards" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold max-sm:flex-col max-sm:gap-1 max-sm:whitespace-normal max-sm:px-1.5 max-sm:text-center max-sm:text-xs">
+                        <Hotel className="w-4 h-4 mr-2 max-sm:mr-0" /> Wards & Beds
                     </TabsTrigger>
-                    <TabsTrigger value="patients" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <UserPlus className="w-4 h-4 mr-2" /> Patient Directory
+                    <TabsTrigger value="patients" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold max-sm:flex-col max-sm:gap-1 max-sm:whitespace-normal max-sm:px-1.5 max-sm:text-center max-sm:text-xs">
+                        <UserPlus className="w-4 h-4 mr-2 max-sm:mr-0" /> Patient Directory
                     </TabsTrigger>
                 </TabsList>
 

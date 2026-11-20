@@ -198,7 +198,7 @@ Implementation: one env var `JEEVIKA_MODE` hides nav items; all three modes ship
 
 ### A1. Executive summary
 
-* **Name:** **JEEVIKA (जीविका)** *(alternates: "Setu-Care", "Sutra Health")*
+* **Name:** **JEEVIKA (जीविका)**
 * **Tagline:** *One thread from first symptom to full recovery.*
 * **Pitch (paragraph):** In India, care breaks at every hand-off: a patient who speaks Bhojpuri gets two minutes with a doctor; the prescription is illegible; the pharmacy is out of stock; the patient stops taking the drug on day 12 and returns sicker. JEEVIKA stitches those hand-offs into one consented Patient Thread: voice-first AI intake in the patient's language, an operations OS that turns prescriptions into expiry-safe, cost-optimised dispensing across a clinic network, and a WhatsApp-native home module that watches each patient against *their own* baseline and tells nurses whom to call first. Four original algorithms — not a chatbot wrapper — make the loop auditable and safe.
 * **30-second elevator:** *"Health systems fail at hand-offs, not at hospitals. JEEVIKA is the thread: Hindi voice intake that triages safely, a clinic OS that turns the prescription into the right medicine at the lowest safe cost, and WhatsApp monitoring that spots a patient getting worse before they know it — all on one consented record. We built four custom algorithms so every AI decision is explainable, and we run on ₹-level cost per patient."*

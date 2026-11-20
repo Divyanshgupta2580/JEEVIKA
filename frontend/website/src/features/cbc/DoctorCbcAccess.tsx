@@ -54,13 +54,18 @@ export function DoctorCbcAccess({
         const raw = sessionStorage.getItem(sessionKey);
         if (caps.enabled && raw) {
           const saved = loginResponseSchema.parse(JSON.parse(raw));
-          await cbcApi.me(saved.token);
+          const principal = await cbcApi.me(saved.token);
+          if (principal.role !== "DOCTOR") {
+            sessionStorage.removeItem(sessionKey);
+            return;
+          }
           if (!live || generation.current !== restoreGeneration) return;
           socketToken.current = saved.token;
           const data = await cbcApi.encounters(saved.token, lifetime.signal);
           if (live && generation.current === restoreGeneration) {
-            setSession(saved);
-            onConnect(saved, data.encounters);
+            const verified = { ...saved, principal };
+            setSession(verified);
+            onConnect(verified, data.encounters);
           }
         }
       } catch {

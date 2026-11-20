@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from "../../context";
-import { passwordHash, tokenHash, equalHash, newToken } from "../../security";
+import { passwordHash, tokenHash, equalHash } from "../../security";
 import { tenantDb } from "../../db/tenant";
-import { memorySessions, validatePatientSession } from "../../patient-session";
+import { issuePatientSession, revokePatientSession, validatePatientSession } from "../../patient-session";
 import {
   patientSignupSchema,
   patientLoginSchema,
@@ -162,29 +162,13 @@ patientAuthRouter.post("/signup", async (c) => {
     }
   }
 
-  // Generate Session Token
-  const rawToken = `${orgId}.pat.${newToken()}`;
-  const sHash = await tokenHash(rawToken);
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
-
-  memorySessions.set(sHash, { orgId, patientId, expiresAt });
-
-  if (c.env?.DB) {
-    try {
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      await tDb.patientAuth.createSession({
-        tokenHash: sHash,
-        patientId,
-        expiresAt,
-      });
-    } catch (_) {}
-  }
+  const session = await issuePatientSession(c.env, orgId, patientId);
+  if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
 
   return c.json(
     {
       success: true,
-      token: rawToken,
-      expiresAt,
+      ...session,
       patient: patientData,
       preferences: defaultPrefs,
       onboardingComplete: false,
@@ -241,15 +225,11 @@ patientAuthRouter.post("/login", async (c) => {
     if (cleanId === "pat-048291" || cleanId === "9876543210" || cleanId.includes("048291")) {
       const demoPatient = patientStore.get("pat-048291");
       if (demoPatient) {
-        const rawToken = `${orgId}.pat.${newToken()}`;
-        const sHash = await tokenHash(rawToken);
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        memorySessions.set(sHash, { orgId, patientId: "pat-048291", expiresAt });
-
+        const session = await issuePatientSession(c.env, orgId, "pat-048291", true);
+        if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
         return c.json({
           success: true,
-          token: rawToken,
-          expiresAt,
+          ...session,
           patient: demoPatient,
           preferences: memoryPreferences.get(`${orgId}:${"pat-048291"}`) || {
             primaryFocus: "longevity",
@@ -271,15 +251,11 @@ patientAuthRouter.post("/login", async (c) => {
     ) {
       const demoPatient = patientStore.get("pat-048292") || patientStore.get("91-5910-2941-8402") || patientStore.get("9811122334");
       if (demoPatient) {
-        const rawToken = `${orgId}.pat.${newToken()}`;
-        const sHash = await tokenHash(rawToken);
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        memorySessions.set(sHash, { orgId, patientId: demoPatient.id, expiresAt });
-
+        const session = await issuePatientSession(c.env, orgId, demoPatient.id, true);
+        if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
         return c.json({
           success: true,
-          token: rawToken,
-          expiresAt,
+          ...session,
           patient: demoPatient,
           preferences: memoryPreferences.get(`${orgId}:${demoPatient.id}`) || {
             primaryFocus: "digestive_wellness",
@@ -327,20 +303,11 @@ patientAuthRouter.post("/login", async (c) => {
     } catch (_) {}
   }
 
-  const rawToken = `${orgId}.pat.${newToken()}`;
-  const sHash = await tokenHash(rawToken);
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-  memorySessions.set(sHash, { orgId, patientId: cred.patientId, expiresAt });
-
+  const session = await issuePatientSession(c.env, orgId, cred.patientId);
+  if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
   if (c.env?.DB) {
     try {
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      await tDb.patientAuth.createSession({
-        tokenHash: sHash,
-        patientId: cred.patientId,
-        expiresAt,
-      });
-      await tDb.patientAuth.updateLastLogin(cred.patientId);
+      await tenantDb(c.env.DB as unknown as D1Database, { orgId }).patientAuth.updateLastLogin(cred.patientId);
     } catch (_) {}
   }
 
@@ -355,8 +322,7 @@ patientAuthRouter.post("/login", async (c) => {
 
   return c.json({
     success: true,
-    token: rawToken,
-    expiresAt,
+    ...session,
     patient,
     preferences: prefs,
     ayurveda,
@@ -366,18 +332,12 @@ patientAuthRouter.post("/login", async (c) => {
 
 // POST /api/v1/auth/patient/logout
 patientAuthRouter.post("/logout", async (c) => {
-  const authHeader = c.req.header("Authorization") ?? "";
-  if (authHeader.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
-    const sHash = await tokenHash(token);
-    memorySessions.delete(sHash);
-    if (c.env?.DB) {
-      try {
-        const orgId = token.split(".")[0];
-        if (!orgId || !/^[a-z0-9_-]{1,80}$/.test(orgId)) return c.json({ success: true });
-        const tDb = tenantDb(c.env.DB as any, { orgId });
-        await tDb.patientAuth.deleteSession(sHash);
-      } catch (_) {}
+  const authorization = c.req.header("Authorization") ?? "";
+  if (authorization.startsWith("Bearer ")) {
+    try {
+      await revokePatientSession(c.env, authorization.slice(7));
+    } catch {
+      return c.json({ success: false, error: "Patient session could not be revoked" }, 503);
     }
   }
   return c.json({ success: true, message: "Logged out successfully" });

@@ -197,12 +197,12 @@ export function AppLayout({
 
             {/* SIDEBAR - HIDDEN FOR FULL-BLEED CLINICAL PORTALS (DOCTOR, NURSE, KIOSK) */}
             {!isFullBleedPortal && (
-            <aside className={`
+            <aside id="workspace-navigation" aria-label="Workspace navigation" className={`
                 ${isCollapsed ? 'w-20' : 'w-60'} ayu-global-sidebar bg-sidebar border-r border-slate-200 flex flex-col shrink-0 h-screen fixed lg:static z-50
                 transform transition-transform duration-300 ease-in-out
-                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                ${isMobileMenuOpen ? 'translate-x-0' : 'invisible -translate-x-full lg:visible lg:translate-x-0'}
             `}>
-                <div className={`p-4 border-b border-slate-200 flex ${isCollapsed ? 'justify-center' : 'justify-between'} items-center`}>
+                <div className={`p-4 border-b border-slate-200 flex justify-between items-center ${isCollapsed ? 'lg:justify-center' : ''}`}>
                     <div className="flex items-center gap-2.5 min-w-0">
                         <img
                             src="/assets/logo-jeevika.png"
@@ -218,11 +218,9 @@ export function AppLayout({
                             </div>
                         )}
                     </div>
-                    {!isCollapsed && (
-                        <button className="lg:hidden text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>
-                            <SymbolIcon className="material-symbols-outlined">close</SymbolIcon>
-                        </button>
-                    )}
+                    <button type="button" aria-label="Close workspace menu" className="lg:hidden p-2 text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>
+                        <SymbolIcon className="material-symbols-outlined">close</SymbolIcon>
+                    </button>
                 </div>
 
                 <button
@@ -434,10 +432,10 @@ export function AppLayout({
 
                 {/* HEADER */}
                 {view !== 'patient-kiosk' && (
-                <header className="h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
-                    <div className="flex items-center gap-4">
+                <header className="ayu-workspace-header h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
+                    <div className="ayu-workspace-heading flex items-center gap-4">
                         {!isFullBleedPortal && (
-                            <button className="lg:hidden p-2.5 -ml-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all flex items-center justify-center" onClick={() => setIsMobileMenuOpen(true)}>
+                            <button type="button" aria-label="Open workspace menu" aria-controls="workspace-navigation" aria-expanded={isMobileMenuOpen} className="lg:hidden shrink-0 p-2.5 -ml-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all flex items-center justify-center" onClick={() => setIsMobileMenuOpen(true)}>
                                 <SymbolIcon className="material-symbols-outlined text-[24px]">menu</SymbolIcon>
                             </button>
                         )}
@@ -454,7 +452,7 @@ export function AppLayout({
                     </div>
 
                     {/* DEDICATED EXIT TO PORTALS BUTTON - STITCH MINIMAL TASTE */}
-                    <div className="flex items-center gap-3">
+                    <div className="ayu-workspace-shortcuts flex items-center gap-3">
                         <button
                             type="button"
                             onClick={() => setView('maritime-agents')}
@@ -488,13 +486,15 @@ export function AppLayout({
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="ayu-workspace-tools flex items-center gap-4">
                         <button
+                            type="button"
+                            aria-label="Show guide"
                             onClick={showGuide}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100/50 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
                         >
                             <Play className="w-3.5 h-3.5" />
-                            Show guide
+                            <span className="hidden sm:inline">Show guide</span>
                         </button>
                         {/* Notifications */}
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -515,6 +515,9 @@ export function AppLayout({
                                 </button>
                             )}
                             <button
+                                type="button"
+                                aria-label="Open notifications"
+                                aria-expanded={isNotificationsOpen}
                                 onClick={() => setIsNotificationsOpen(true)}
                                 className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 group"
                             >
@@ -532,10 +535,10 @@ export function AppLayout({
                             onNavigate={setView}
                         />
                         {/* HEADER USER PROFILE BADGE & LOGOUT */}
-                        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <div className="ayu-workspace-account flex items-center gap-2 pl-3 border-l border-slate-200">
                             <div
                                 title={`${userProfile?.full_name || 'Chief Medical Officer, MD, DM'} (${getBrandSubtitle()})`}
-                                className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm shrink-0"
+                                className="ayu-workspace-avatar w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm shrink-0"
                             >
                                 {userProfile?.full_name?.[0] || 'C'}
                             </div>

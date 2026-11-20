@@ -46,7 +46,7 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
 
             {/* Panel */}
             <div
-                className="absolute right-4 top-16 w-96 max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-top-2 duration-200"
+                className="absolute right-4 top-16 w-96 max-w-[calc(100%-2rem)] max-h-[70dvh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-top-2 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -60,7 +60,7 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                             </span>
                         )}
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                    <button type="button" aria-label="Close notifications" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
                         <X className="w-4 h-4 text-slate-400" />
                     </button>
                 </div>

@@ -81,6 +81,48 @@ export function migrationScripts() {
     .filter(Boolean)
     .concat(readFileSync("backend/cbc-migrations/0006_cbc.sql", "utf8"));
 }
+const patientAuthMigrations = [
+  ["backend/migrations", "0006_patient_auth_and_preferences.sql"],
+  ["backend/local/migrations", "0007_patient_auth_tenant_foreign_keys.sql"],
+] as const;
+
+function migratePatientAuth(db: LocalDatabase) {
+  // SQLite checks the old, invalid child foreign key during DROP TABLE when enabled.
+  // Re-enable enforcement after the atomic rebuild, and check all new references before committing.
+  db.raw.exec("PRAGMA foreign_keys = OFF");
+  let began = false;
+  try {
+    db.raw.exec("BEGIN IMMEDIATE");
+    began = true;
+    db.raw.exec("CREATE TABLE IF NOT EXISTS standalone_schema_migrations (name TEXT PRIMARY KEY)");
+    const applied = db.raw.prepare("SELECT 1 FROM standalone_schema_migrations WHERE name = ?");
+    const record = db.raw.prepare("INSERT INTO standalone_schema_migrations(name) VALUES (?)");
+    const columns = new Set(db.raw.prepare("PRAGMA table_info(patients)").all().map((column) => column.name));
+    for (const [directory, name] of patientAuthMigrations) {
+      if (applied.get(name)) continue;
+      const script = readFileSync(join(directory, name), "utf8");
+      for (const statement of splitSqlScript(script)) {
+        // Existing databases may already have received part or all of 0006.
+        const column = statement.match(/^ALTER TABLE patients ADD COLUMN (\w+)/m)?.[1];
+        if (column && columns.has(column)) continue;
+        db.raw.exec(statement);
+        if (column) columns.add(column);
+      }
+      record.run(name);
+    }
+    for (const table of ["patient_credentials", "patient_sessions", "patient_ayurvedic_profiles", "patient_app_preferences"]) {
+      if (db.raw.prepare(`PRAGMA foreign_key_check(${table})`).get())
+        throw new Error(`Patient auth migration found an invalid tenant reference in ${table}`);
+    }
+    db.raw.exec("COMMIT");
+  } catch (error) {
+    if (began) db.raw.exec("ROLLBACK");
+    throw error;
+  } finally {
+    db.raw.exec("PRAGMA foreign_keys = ON");
+  }
+}
+
 export function migrateLocal(db: LocalDatabase) {
   // Current scripts are additive/idempotent. Keep the schema files in order.
   for (const script of migrationScripts()) {
@@ -124,4 +166,5 @@ export function migrateLocal(db: LocalDatabase) {
         ('org-jeevika-primary', 'east', 'East Clinic');
     `);
   } catch {}
+  migratePatientAuth(db);
 }
