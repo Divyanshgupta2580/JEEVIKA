@@ -23,7 +23,11 @@ export type DataRequest = (
   key?: string,
 ) => Promise<{ status: number; body?: unknown }>;
 
-export function integrationClient(token = "", transport: typeof fetch = fetch, dataRequest?: DataRequest) {
+export function integrationClient(
+  token = "",
+  transport: typeof fetch = fetch,
+  dataRequest?: DataRequest,
+) {
   async function request(
     path: string,
     method = "GET",
@@ -44,7 +48,8 @@ export function integrationClient(token = "", transport: typeof fetch = fetch, d
       status = response.status;
       data = await response.json();
     } else {
-      if (!dataRequest) throw new ApiError("Authenticated data connection required", 401);
+      if (!dataRequest)
+        throw new ApiError("Authenticated data connection required", 401);
       const response = await dataRequest(path, method, body, key);
       status = response.status;
       data = response.body;
@@ -54,9 +59,7 @@ export function integrationClient(token = "", transport: typeof fetch = fetch, d
         .object({ error: z.object({ message: z.string() }) })
         .safeParse(data);
       throw new ApiError(
-        error.success
-          ? error.data.error.message
-          : `Request failed (${status})`,
+        error.success ? error.data.error.message : `Request failed (${status})`,
         status,
       );
     }
