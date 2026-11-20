@@ -319,6 +319,8 @@ function AppContent() {
         } finally {
             // Clear all session-related localStorage
             localStorage.removeItem('lastActiveView');
+            localStorage.removeItem('jeevika_demo_session');
+            localStorage.removeItem('cf_auth_session');
             // Remove auth tokens from localStorage
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
@@ -666,6 +668,36 @@ function SeoManager() {
     return null;
 }
 
+function ProtectedRoute({ children }: { children: ReactNode }) {
+    const { session, profile, loading } = useHospital();
+    const location = useLocation();
+
+    if (loading) {
+        return <WorkspaceSkeleton />;
+    }
+
+    if (!session || !profile) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    return <>{children}</>;
+}
+
+function PublicAuthRoute({ children }: { children: ReactNode }) {
+    const { session, profile, loading } = useHospital();
+
+    if (loading) {
+        return <WorkspaceSkeleton />;
+    }
+
+    if (session && profile) {
+        const lastView = localStorage.getItem('lastActiveView') || 'admin';
+        return <Navigate to={`/app?view=${lastView}`} replace />;
+    }
+
+    return <>{children}</>;
+}
+
 function AppRouter() {
     const { loading, isPasswordRecovery } = useHospital();
     const location = useLocation();
@@ -691,7 +723,17 @@ function AppRouter() {
             <AnalyticsTracker />
             <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<PageWrapper><LandingPage /></PageWrapper>} />
+                    {/* Default root path redirects to /login */}
+                    <Route path="/" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/login" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/register" element={<PublicAuthRoute><PageWrapper><RegisterPage /></PageWrapper></PublicAuthRoute>} />
+
+                    {/* Protected Clinical Workspaces */}
+                    <Route path="/app/*" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
+                    <Route path="/kiosk" element={<ProtectedRoute><div className="min-h-screen bg-slate-100 py-6"><PatientKiosk /></div></ProtectedRoute>} />
+
+                    {/* Informational Pages */}
+                    <Route path="/landing" element={<PageWrapper><LandingPage /></PageWrapper>} />
                     <Route path="/about" element={<PageWrapper><AboutPage /></PageWrapper>} />
                     <Route path="/news" element={<PageWrapper><NewsPage /></PageWrapper>} />
                     <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
@@ -700,11 +742,9 @@ function AppRouter() {
                     <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
                     <Route path="/careers" element={<PageWrapper><CareersPage /></PageWrapper>} />
                     <Route path="/support" element={<PageWrapper><SupportPage /></PageWrapper>} />
-                    <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
-                    <Route path="/register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
-                    <Route path="/kiosk" element={<div className="min-h-screen bg-slate-100 py-6"><PatientKiosk /></div>} />
-                    <Route path="/app/*" element={<AppContent />} />
-                    <Route path="*" element={<Navigate to="/" />} />
+
+                    {/* Catch-all redirects to /login */}
+                    <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </AnimatePresence>
         </>

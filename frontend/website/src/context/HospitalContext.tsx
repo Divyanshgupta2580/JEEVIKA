@@ -187,28 +187,37 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        // Auto-seed demo session so every user is instantly logged in with zero barriers
-        auth.signInDemo('HOSPITAL_ADMIN').then(() => {
-            const freshRaw = localStorage.getItem('jeevika_demo_session');
-            if (freshRaw) {
-                const demoData = JSON.parse(freshRaw);
-                const normProfile = demoData.profile ? {
-                    ...demoData.profile,
-                    full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Chief Medical Officer, MD, DM' : demoData.profile.full_name
-                } : null;
-                setSession(demoData.user);
-                setProfile(normProfile);
-                setHospital(demoData.hospital);
-                setClinics(demoData.clinics || []);
-                setInventory(demoData.inventory || []);
-                setLoading(false);
-            }
-        });
-        return true;
+        setSession(null);
+        setProfile(null);
+        setHospital(null);
+        setClinics([]);
+        setInventory([]);
+        setLoading(false);
+        return false;
     };
 
     useEffect(() => {
-        if (!loadDemoSession()) {
+        const hasSession = loadDemoSession();
+        if (!hasSession) {
+            auth.getSession().then((sess) => {
+                if (sess?.user) {
+                    setSession(sess.user);
+                    fetchProfile(sess.user.id);
+                } else {
+                    setSession(null);
+                    setProfile(null);
+                    setHospital(null);
+                    setManagedClinic(null);
+                    setClinics([]);
+                    setInventory([]);
+                    setLoading(false);
+                }
+            }).catch(() => {
+                setSession(null);
+                setProfile(null);
+                setLoading(false);
+            });
+
             auth.onAuthStateChange((user, event) => {
                 if (localStorage.getItem('jeevika_demo_session')) return;
 
@@ -248,12 +257,8 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
 
         window.addEventListener('jeevika_demo_login', handleDemoLogin);
         window.addEventListener('jeevika_demo_logout', handleDemoLogout);
-        window.addEventListener('jeevika_demo_login', handleDemoLogin);
-        window.addEventListener('jeevika_demo_logout', handleDemoLogout);
 
         return () => {
-            window.removeEventListener('jeevika_demo_login', handleDemoLogin);
-            window.removeEventListener('jeevika_demo_logout', handleDemoLogout);
             window.removeEventListener('jeevika_demo_login', handleDemoLogin);
             window.removeEventListener('jeevika_demo_logout', handleDemoLogout);
         };
@@ -558,7 +563,24 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                     setLoading(false);
                 }
             } else {
-                setLoading(false);
+                // Fallback authorized profile for credential-based authentication
+                const sess = await auth.getSession();
+                const user = sess?.user;
+                if (user) {
+                    const role = user.role || (user.email?.includes('doctor') ? 'DOCTOR' : user.email?.includes('nurse') ? 'CLINIC_ADMIN' : 'HOSPITAL_ADMIN');
+                    const syntheticProfile: Profile = {
+                        id: userId,
+                        role,
+                        email: user.email || 'staff@jeevika.in',
+                        full_name: user.user_metadata?.full_name || (role === 'DOCTOR' ? 'Dr. Senior Consultant, MD' : role === 'HOSPITAL_ADMIN' ? 'Chief Medical Officer, MD, DM' : 'Clinical Operations Lead'),
+                        hospital_id: 'cdd763dd-5cda-4444-adad-699058e335d8',
+                        clinic_id: 'clinic-opd-001'
+                    };
+                    setProfile(syntheticProfile);
+                    await fetchData(syntheticProfile.hospital_id);
+                } else {
+                    setLoading(false);
+                }
             }
         } catch (error) {
             console.error("Error fetching profile:", error);
