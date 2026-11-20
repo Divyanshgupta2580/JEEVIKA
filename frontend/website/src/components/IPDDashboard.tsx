@@ -810,26 +810,26 @@ export function IPDDashboard() {
             {/* Top Inpatient Code Blue Cascade Alert Banner */}
             {activeDistressList.length > 0 && (
                 <div className="bg-red-600 text-white rounded-2xl p-4 shadow-xl border-2 border-red-400 flex flex-wrap items-center justify-between gap-4 animate-pulse">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-white/20 rounded-xl">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2.5 bg-white/20 rounded-xl shrink-0">
                             <AlertOctagon className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
                                     [INPATIENT CODE BLUE CASCADE]
                                 </span>
                                 <span className="text-xs font-mono opacity-90">{activeDistressList[0].dispatchedAt}</span>
                             </div>
-                            <p className="text-sm font-bold mt-1">
+                            <p className="text-sm font-bold mt-1 break-words">
                                 Room 105 · {activeDistressList[0].bedNumber} ({activeDistressList[0].patientName} - {activeDistressList[0].patientAge}F) · Reported by {activeDistressList[0].reporterName} · Reason: {activeDistressList[0].reason}
                             </p>
-                            <p className="text-xs text-white/90 font-medium">
+                            <p className="text-xs text-white/90 font-medium break-words">
                                 Floor Crash Cart Dispatched • Primary Doctor ({activeDistressList[0].assignedDoctorName}) Alerted (&lt;5s) • Status: {activeDistressList[0].status}
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Button
                             size="sm"
                             variant="outline"
@@ -932,18 +932,20 @@ export function IPDDashboard() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="admissions" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60">
-                    <TabsTrigger value="admissions" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <Calendar className="w-4 h-4 mr-2" /> Admissions
-                    </TabsTrigger>
-                    <TabsTrigger value="wards" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <Hotel className="w-4 h-4 mr-2" /> Wards & Beds
-                    </TabsTrigger>
-                    <TabsTrigger value="patients" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold">
-                        <UserPlus className="w-4 h-4 mr-2" /> Patient Directory
-                    </TabsTrigger>
-                </TabsList>
+            <Tabs defaultValue="admissions" value={activeTab} onValueChange={setActiveTab} className="space-y-6 max-w-full">
+                <div className="overflow-x-auto no-scrollbar max-w-full pb-1">
+                    <TabsList className="bg-slate-100/50 p-1 rounded-xl border border-slate-200/60 inline-flex flex-nowrap w-max sm:w-auto">
+                        <TabsTrigger value="admissions" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
+                            <Calendar className="w-4 h-4 mr-1.5 sm:mr-2" /> Admissions
+                        </TabsTrigger>
+                        <TabsTrigger value="wards" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
+                            <Hotel className="w-4 h-4 mr-1.5 sm:mr-2" /> Wards & Beds
+                        </TabsTrigger>
+                        <TabsTrigger value="patients" className="rounded-lg px-4 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary font-bold text-xs sm:text-sm">
+                            <UserPlus className="w-4 h-4 mr-1.5 sm:mr-2" /> Patient Directory
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
                 <TabsContent value="admissions" className="space-y-4">
                     <div className="relative">
@@ -2015,7 +2017,7 @@ export function IPDDashboard() {
                                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                                     Symptom Trigger (Optional)
                                 </label>
-                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                     {["Severe Chest Tightness / Pain", "Acute Shortness of Breath", "Sudden Dizziness / Fainting", "Nurse Needed Immediately"].map(reason => (
                                         <button
                                             key={reason}
@@ -2033,9 +2035,9 @@ export function IPDDashboard() {
                                 type="button"
                                 disabled={isSubmitting}
                                 onClick={() => handleTriggerBedDistress(bedsideTarget.bed, bedsideTarget.admission, "Acute Bedside Distress Call", "PATIENT_BEDSIDE_SOS")}
-                                className="w-full py-4 px-6 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-3 transition"
+                                className="w-full py-3.5 sm:py-4 px-4 sm:px-6 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-2xl font-black text-xs sm:text-sm shadow-xl shadow-red-950 flex items-center justify-center gap-2 sm:gap-3 transition text-center leading-tight"
                             >
-                                <BellRing className="w-6 h-6 animate-bounce" />
+                                <BellRing className="w-6 h-6 animate-bounce shrink-0" />
                                 <span>PRESS FOR EMERGENCY DOCTOR & NURSE ASSISTANCE</span>
                             </button>
                         </div>
@@ -2105,10 +2107,10 @@ export function IPDDashboard() {
                                     const targetAdm = admissions.find(a => a.bed_id === selectedNurseBedId);
                                     handleTriggerBedDistress(targetBed, targetAdm, selectedNurseReason, "NURSE_STAT_REPORT");
                                 }}
-                                className="w-full h-13 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-xl shadow-lg shadow-red-200 gap-2"
+                                className="w-full min-h-[50px] h-auto py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-red-200 flex items-center justify-center gap-2 text-center leading-snug"
                             >
-                                <AlertOctagon className="w-5 h-5 animate-pulse" />
-                                DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT
+                                <AlertOctagon className="w-5 h-5 animate-pulse shrink-0" />
+                                <span>DISPATCH STAT ESCALATION TO FLOOR & DOCTOR COCKPIT</span>
                             </Button>
                         </div>
                     </div>

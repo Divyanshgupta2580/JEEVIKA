@@ -305,6 +305,18 @@ export function AppLayout({
                                 active={(view as string) === 'billing'}
                                 onClick={() => setView('billing')}
                             />
+                            <NavItem
+                                icon="cloud"
+                                label="Maritime Cloud Agents"
+                                active={(view as string) === 'maritime-agents'}
+                                onClick={() => setView('maritime-agents')}
+                            />
+                            <NavItem
+                                icon="shield"
+                                label="Prune AI Gateway"
+                                active={(view as string) === 'prune-gateway'}
+                                onClick={() => setView('prune-gateway')}
+                            />
                         </>
                     )}
 
@@ -368,6 +380,18 @@ export function AppLayout({
                                 label="Earnings & Ledger"
                                 active={(view as string) === 'earnings'}
                                 onClick={() => setView('earnings')}
+                            />
+                            <NavItem
+                                icon="cloud"
+                                label="Maritime Cloud Agents"
+                                active={(view as string) === 'maritime-agents'}
+                                onClick={() => setView('maritime-agents')}
+                            />
+                            <NavItem
+                                icon="shield"
+                                label="Prune AI Gateway"
+                                active={(view as string) === 'prune-gateway'}
+                                onClick={() => setView('prune-gateway')}
                             />
                         </>
                     )}
@@ -434,27 +458,27 @@ export function AppLayout({
 
                 {/* HEADER */}
                 {view !== 'patient-kiosk' && (
-                <header className="h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
-                    <div className="flex items-center gap-4">
+                <header className="h-20 border-b border-slate-100 flex items-center justify-between px-3 sm:px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
                         {!isFullBleedPortal && (
-                            <button className="lg:hidden p-2.5 -ml-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all flex items-center justify-center" onClick={() => setIsMobileMenuOpen(true)}>
+                            <button className="lg:hidden p-2 -ml-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all flex items-center justify-center shrink-0" onClick={() => setIsMobileMenuOpen(true)}>
                                 <SymbolIcon className="material-symbols-outlined text-[24px]">menu</SymbolIcon>
                             </button>
                         )}
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${portalMeta.badgeClass}`}>
+                                <span className={`text-[9px] sm:text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border truncate max-w-[200px] sm:max-w-none ${portalMeta.badgeClass}`}>
                                     {portalMeta.badge}
                                 </span>
                             </div>
-                            <h1 className="text-xl font-bold text-slate-900 tracking-tight capitalize leading-none">
+                            <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-slate-900 tracking-tight capitalize leading-none truncate max-w-[150px] sm:max-w-xs md:max-w-none">
                                 {portalMeta.name}
                             </h1>
                         </div>
                     </div>
 
                     {/* DEDICATED EXIT TO PORTALS BUTTON - STITCH MINIMAL TASTE */}
-                    <div className="flex items-center gap-3">
+                    <div className="hidden xl:flex items-center gap-3 shrink-0">
                         <button
                             type="button"
                             onClick={() => setView('maritime-agents')}
@@ -473,6 +497,9 @@ export function AppLayout({
                             <Shield className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Prune Gateway</span>
                         </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <button
                             type="button"
                             onClick={() => {
@@ -480,24 +507,22 @@ export function AppLayout({
                                 onSelectClinicId?.(null);
                                 navigate('/');
                             }}
-                            className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 hover:text-slate-950 text-xs font-semibold tracking-tight shadow-sm transition-all duration-150 cursor-pointer active:scale-95"
+                            className="group inline-flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 hover:text-slate-950 text-xs font-semibold tracking-tight shadow-sm transition-all duration-150 cursor-pointer active:scale-95 shrink-0"
                             title="Return to Portal Selection (Choose a different dashboard)"
                         >
                             <SymbolIcon className="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-slate-700 group-hover:-translate-x-0.5 transition-all">arrow_back</SymbolIcon>
-                            <span>Exit to Portals</span>
+                            <span className="hidden sm:inline">Exit to Portals</span>
                         </button>
-                    </div>
 
-                    <div className="flex items-center gap-4">
                         <button
                             onClick={showGuide}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100/50 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100/50 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors shrink-0"
                         >
                             <Play className="w-3.5 h-3.5" />
-                            Show guide
+                            <span>Show guide</span>
                         </button>
                         {/* Notifications */}
-                        <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             {Notification.permission !== 'granted' && (
                                 <button
                                     onClick={async () => {
@@ -507,7 +532,7 @@ export function AppLayout({
                                             window.location.reload();
                                         }
                                     }}
-                                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                                    className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors shrink-0"
                                     title="Enable Desktop Notifications"
                                 >
                                     <SymbolIcon className="material-symbols-outlined text-[16px]">notifications_active</SymbolIcon>
@@ -516,7 +541,7 @@ export function AppLayout({
                             )}
                             <button
                                 onClick={() => setIsNotificationsOpen(true)}
-                                className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 group"
+                                className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 group shrink-0"
                             >
                                 <SymbolIcon className="material-symbols-outlined text-2xl group-hover:rotate-[15deg] transition-transform">notifications</SymbolIcon>
                                 {unseenCount > 0 && (
@@ -532,7 +557,7 @@ export function AppLayout({
                             onNavigate={setView}
                         />
                         {/* HEADER USER PROFILE BADGE & LOGOUT */}
-                        <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <div className="flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 border-l border-slate-200 shrink-0">
                             <div
                                 title={`${userProfile?.full_name || 'Chief Medical Officer, MD, DM'} (${getBrandSubtitle()})`}
                                 className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm shrink-0"
@@ -546,7 +571,7 @@ export function AppLayout({
                             <button
                                 onClick={onLogout}
                                 title="Sign Out"
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-0.5 shrink-0"
                             >
                                 <SymbolIcon className="material-symbols-outlined text-[18px]">logout</SymbolIcon>
                             </button>
@@ -558,7 +583,7 @@ export function AppLayout({
                 )}
 
                 {/* SCROLLABLE INNER CONTENT */}
-                <div id="tour-workspace-content" className={view === 'patient-kiosk' ? "flex-1 w-full" : "flex-1 p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"}>
+                <div id="tour-workspace-content" className={view === 'patient-kiosk' ? "flex-1 w-full" : "flex-1 p-2 sm:p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"}>
                     {showGuideInvitation && !isTourActive && <section className="ayu-guide-invitation" aria-label="Workspace introduction"><div><strong>New to this workspace?</strong><p>Take a short guide without leaving this page.</p></div><button type="button" onClick={showGuide}>Show me around</button><button type="button" onClick={dismissGuideInvitation}>Not now</button></section>}
                     {children}
                 </div>
