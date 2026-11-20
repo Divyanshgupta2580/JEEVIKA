@@ -829,7 +829,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
     }
 
     return (
-        <div className="h-[calc(100vh-100px)] flex flex-col animate-in fade-in duration-500 max-w-[1600px] mx-auto">
+        <div className="min-h-[calc(100vh-100px)] lg:h-[calc(100vh-100px)] flex flex-col animate-in fade-in duration-500 max-w-[1600px] mx-auto">
             {/* TOP HEADER */}
             <header className="h-14 sm:h-16 shrink-0 border border-slate-200 bg-white rounded-t-lg sm:rounded-t-2xl flex items-center justify-between px-3 sm:px-6 shadow-sm z-20">
                 <div className="flex items-center gap-2 sm:gap-4">
@@ -858,7 +858,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
             </header>
 
             {/* MAIN DESKTOP LAYOUT */}
-            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden lg:border-x border-b border-slate-200 rounded-b-lg sm:rounded-b-2xl bg-slate-50 z-10">
+            <main className="flex-1 flex flex-col lg:flex-row overflow-visible lg:overflow-hidden lg:border-x border-b border-slate-200 rounded-b-lg sm:rounded-b-2xl bg-slate-50 z-10">
 
                 {/* LEFT SIDEBAR - CATEGORIES */}
                 <aside className="w-full lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white p-2 sm:p-4 flex flex-row lg:flex-col gap-2 relative z-10 shadow-sm overflow-x-auto no-scrollbar">
@@ -1314,7 +1314,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
 
                 {/* RIGHT SIDEBAR - CART (Only visible in Pharmacy view) */}
                 {view === 'pharmacy' && (
-                    <aside className="w-full lg:w-80 xl:w-[400px] shrink-0 lg:border-l border-t lg:border-t-0 border-slate-200 bg-white flex flex-col z-20 shadow-sm lg:shadow-[-2px_0_10px_-4px_rgba(0,0,0,0.05)] h-auto max-h-[45vh] lg:max-h-full">
+                    <aside className="w-full lg:w-80 xl:w-[400px] shrink-0 lg:border-l border-t lg:border-t-0 border-slate-200 bg-white flex flex-col z-20 shadow-sm lg:shadow-[-2px_0_10px_-4px_rgba(0,0,0,0.05)] h-auto lg:h-full max-h-none lg:max-h-full">
                         <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50">
                             <div className="flex items-center justify-between mb-3 sm:mb-4">
                                 <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2"><SymbolIcon className="material-symbols-outlined text-emerald-600 text-[18px] sm:text-[24px]">receipt</SymbolIcon> Current Bill</h2>

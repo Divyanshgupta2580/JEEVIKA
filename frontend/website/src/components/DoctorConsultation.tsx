@@ -9,7 +9,7 @@ const queueIdentity = (item: PatientQueueItem) => item.cbcEncounterId ?? item.pa
 import {
   Users, RefreshCw, Code2, Download, CheckCircle2,
   Languages, Activity, Stethoscope, Pill, AlertTriangle,
-  Clock, ArrowRight, Search, Plus, Trash2, Volume2,
+  Clock, ArrowRight, ArrowLeft, Search, Plus, Trash2, Volume2,
   VolumeX, ShieldCheck, Zap, Sparkles, BedDouble,
   Check, X, Smartphone, QrCode, Copy, Mic,
   ShieldAlert, Shield, Lock, Cloud, Leaf, AlertOctagon, UserCheck
@@ -1052,6 +1052,8 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
   const [activeDistressAlert, setActiveDistressAlert] = useState<any>(null);
   const [isDoctorEnRoute, setIsDoctorEnRoute] = useState<boolean>(false);
   const [doctorAckLatency, setDoctorAckLatency] = useState<number | null>(null);
+  // Mobile Doctor Workspace View: 'queue' vs 'consultation'
+  const [mobileDoctorTab, setMobileDoctorTab] = useState<'queue' | 'consultation'>('consultation');
 
   useEffect(() => {
     const syncDistress = async () => {
@@ -1616,6 +1618,7 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
     if (!selected) return;
     const patientId = selected.patientId;
     setSelectedPatientId(selectionId);
+    setMobileDoctorTab('consultation');
     setIsPrescriptionSent(false);
     setIsIpdAdmitted(false);
     setActiveCitationId(null);
@@ -2201,11 +2204,35 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
       <CbcBoundary><CbcResearchDemo /></CbcBoundary>
       <DoctorCbcAccess onConnect={connectCbc} />
 
+      {/* Mobile Segmented Doctor View Switcher (< lg only) */}
+      <div className="lg:hidden flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 mb-4 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setMobileDoctorTab('queue')}
+          className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition ${
+            mobileDoctorTab === 'queue' ? 'bg-white text-blue-700 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Users className="w-4 h-4 text-blue-600" />
+          <span>Patient Queue ({filteredQueue.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileDoctorTab('consultation')}
+          className={`flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition ${
+            mobileDoctorTab === 'consultation' ? 'bg-white text-teal-800 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Stethoscope className="w-4 h-4 text-teal-600" />
+          <span>Active Consult ({activePatient.name.split(' ')[0]})</span>
+        </button>
+      </div>
+
       {/* Main Grid: Left Sidebar Queue (4 cols) + Right Clinical Pad (8 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* Left Column: Rapid Patient Queue Sidebar */}
-        <div id="tour-clinical-queue" className="lg:col-span-4 space-y-4">
+        <div id="tour-clinical-queue" className={`lg:col-span-4 space-y-4 ${mobileDoctorTab === 'queue' ? 'block' : 'hidden lg:block'}`}>
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm space-y-3.5">
 
             {/* Queue Header & Search */}
@@ -2384,7 +2411,22 @@ export function DoctorConsultation({ onSendToPos, onAdmitToIpd }: DoctorConsulta
         </div>
 
         {/* Right Column: 15-Second Clinical Console & SOAP Suite (8 cols) */}
-        <div id="tour-clinical-record" className="lg:col-span-8 space-y-5">
+        <div id="tour-clinical-record" className={`lg:col-span-8 space-y-5 ${mobileDoctorTab === 'consultation' ? 'block' : 'hidden lg:block'}`}>
+          {/* Mobile Quick Switcher Back to Queue */}
+          <div className="lg:hidden flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-3 py-2 text-xs mb-2">
+            <button
+              type="button"
+              onClick={() => setMobileDoctorTab('queue')}
+              className="font-bold text-teal-800 flex items-center gap-1.5 hover:underline"
+            >
+              <ArrowLeft className="w-4 h-4 text-teal-700" />
+              <span>Switch to Patient Intake Queue</span>
+            </button>
+            <span className="font-mono text-[10px] text-teal-700 font-bold bg-teal-100/80 px-2 py-0.5 rounded">
+              Token: {activePatient.token}
+            </span>
+          </div>
+
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
 
             {/* Active Patient Clinical Profile Header */}
