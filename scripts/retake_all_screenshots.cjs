@@ -18,11 +18,32 @@ async function retakeAllScreenshots() {
   });
   const page = await desktopContext.newPage();
 
-  // Screen 1: Desktop Login Page
+  // Screen 1: Desktop Login Page (1-Click Role Access)
   console.log('1. Capturing 01_desktop_login_page.png...');
   await page.goto('http://localhost:5174/#/login', { waitUntil: 'networkidle' });
   await page.waitForTimeout(1000);
   await page.screenshot({ path: path.join(outDir, '01_desktop_login_page.png') });
+
+  // Screen 1b: Desktop Login Page (Staff Credentials Sign-In)
+  console.log('1b. Capturing desktop staff credentials sign-in for 02_mobile_login_roles.png...');
+  try {
+    const credTab = page.locator('button:has-text("Staff Credentials")');
+    if (await credTab.isVisible()) {
+      await credTab.click();
+      await page.waitForTimeout(600);
+    }
+  } catch (_) {}
+  await page.screenshot({ path: path.join(outDir, '02_mobile_login_roles.png') });
+  await page.screenshot({ path: path.join(outDir, '02_desktop_staff_credentials.png') });
+
+  // Reset back to roles tab before moving on
+  try {
+    const rolesTab = page.locator('button:has-text("1-Click Role Access")');
+    if (await rolesTab.isVisible()) {
+      await rolesTab.click();
+      await page.waitForTimeout(400);
+    }
+  } catch (_) {}
 
   // Screen 2: Patient Intake Kiosk (Phase 1)
   console.log('2. Capturing 02_patient_kiosk.png...');
@@ -152,35 +173,9 @@ async function retakeAllScreenshots() {
   await page.screenshot({ path: path.join(outDir, '01_landing_page.png') });
 
   await desktopContext.close();
-
-  // 2. Mobile Context (iPhone 14 standard: 390x844 at 2x scale)
-  const mobileContext = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2
-  });
-  const mobilePage = await mobileContext.newPage();
-
-  // Screen 14: Mobile Clinical Pad / Login Roles
-  console.log('14. Capturing 02_mobile_login_roles.png...');
-  await mobilePage.goto('http://localhost:5174/#/login', { waitUntil: 'networkidle' });
-  await mobilePage.waitForTimeout(1000);
-  await mobilePage.screenshot({ path: path.join(outDir, '02_mobile_login_roles.png') });
-
-  // Screen 15: Mobile Login Credentials
-  console.log('15. Capturing 03_mobile_login_credentials.png...');
-  try {
-    const credTab = mobilePage.locator('button:has-text("Staff Credentials")');
-    if (await credTab.isVisible()) {
-      await credTab.click();
-      await mobilePage.waitForTimeout(600);
-    }
-  } catch (_) {}
-  await mobilePage.screenshot({ path: path.join(outDir, '03_mobile_login_credentials.png') });
-
-  await mobileContext.close();
   await browser.close();
 
-  console.log('All 15 screenshots successfully captured and saved to docs/screenshots/!');
+  console.log('All screenshots successfully captured in high-resolution 2x desktop format and saved to docs/screenshots/!');
 }
 
 retakeAllScreenshots().catch(err => {

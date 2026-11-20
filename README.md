@@ -17,7 +17,7 @@ Deterministic rule engines govern safety. Clinicians retain legal and ethical co
 [![React 18](https://img.shields.io/badge/Web-React%2018%20%2B%20Vite-149ECA?logo=react&logoColor=white)](frontend/website)
 [![Flutter](https://img.shields.io/badge/Android%20%2F%20iOS-Flutter-02569B?logo=flutter&logoColor=white)](frontend/app)
 [![Hono API](https://img.shields.io/badge/API-Hono%20%7C%20Node%2020-E36002?logo=hono&logoColor=white)](backend)
-[![Vitest Passing](https://img.shields.io/badge/Vitest-185%2F185%20Passing-00C853?logo=vitest&logoColor=white)](tests)
+[![Vitest Passing](https://img.shields.io/badge/Vitest-191%2F191%20Passing-00C853?logo=vitest&logoColor=white)](tests)
 [![Research](https://img.shields.io/badge/Research-CBC%20%2B%20BreathSense-7256AD)](#research)
 [![ABDM Ready](https://img.shields.io/badge/NHA-ABDM%20Milestone%202%20FHIR%20R4-orange)](packages/engine)
 
@@ -178,11 +178,11 @@ The interfaces below demonstrate JEEVIKA's clinical design system: high-contrast
     </td>
     <td width="50%" align="center" valign="top" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
       <a href="docs/screenshots/02_mobile_login_roles.png" target="_blank">
-        <img src="docs/screenshots/02_mobile_login_roles.png" alt="Mobile Clinical Pad" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
+        <img src="docs/screenshots/02_mobile_login_roles.png" alt="Staff Credential & Protected Role Gateway" width="100%" style="border-radius: 8px; border: 1px solid #cbd5e1; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" />
       </a>
       <div style="padding-top: 12px; text-align: left;">
-        <strong>12. Mobile Clinical Pad</strong><br />
-        <span style="font-size: 12px; color: #64748b;">Fully responsive viewports on iOS/Android for bedside rounds and nursing distress reporting.</span>
+        <strong>12. Staff Credential & Role-Based Access</strong><br />
+        <span style="font-size: 12px; color: #64748b;">Enterprise credential authentication and role-based access control with session security and quick-fill staff profiles.</span>
       </div>
     </td>
   </tr>
@@ -195,28 +195,117 @@ The interfaces below demonstrate JEEVIKA's clinical design system: high-contrast
 
 ### Web: patient, clinical and operations
 
-| Module | Purpose | Key capabilities | Implementation |
-|---|---|---|---|
-| **Protected Authentication Gateway** | Hospital access control and credential management | Segmented tab interface with 1-Click Role Access (7 hospital personas) and Staff Credential sign-in; protected routing across all clinical views | [`frontend/website/src/components/LoginPage.tsx`](frontend/website/src/components/LoginPage.tsx), [`App.tsx`](frontend/website/src/App.tsx) |
-| **Patient Kiosk (Phase 1)** | Self-service multilingual hospital reception | Autonomous Triage Sentry; 9 Indic languages voice guidance; 1-click ABHA QR scanner; differential safety check modal intercepting acidity for STEMI | [`frontend/website/src/components/PatientKiosk.tsx`](frontend/website/src/components/PatientKiosk.tsx), [`packages/engine`](packages/engine) |
-| **Doctor OPD Cockpit** | Clinical consultation and decision support | Attending workflow; Ambient Scribe (Speech-to-SOAP); ICD-11 & NAMASTE coding; PMBJP generic substitution (-88%); CBC research review | [`frontend/website/src/components/DoctorConsultation.tsx`](frontend/website/src/components/DoctorConsultation.tsx) |
-| **Emergency & Trauma Triage** | High-acuity resuscitation management | Live hospital-wide Code Blue cascade banner; ESI-1 trauma triage scoring; real-time queue allocation for Casualty Resuscitation Bays 1-4 | [`frontend/website/src/components/EmergencyTriage.tsx`](frontend/website/src/components/EmergencyTriage.tsx) |
-| **Inpatient (IPD) Ward Console** | Bed tracking and Phase 2 bedside emergency sentinel | Real-time bed census; Bedside SOS trigger for admitted patients; Nurse STAT Reporter drawer; sub-second Doctor En Route telemetry logging | [`frontend/website/src/components/IPDDashboard.tsx`](frontend/website/src/components/IPDDashboard.tsx) |
-| **Clinic Operations Hub & POS** | Single-clinic management and dispensing | Prescription-to-shelf FEFO allocation; loose tablet dispensing; barcode verification; GST invoice generation; CDSCO Form 20/21 compliance | [`frontend/website/src/components/POSDashboard.tsx`](frontend/website/src/components/POSDashboard.tsx), [`ClinicAdminDashboard.tsx`](frontend/website/src/components/ClinicAdminDashboard.tsx) |
-| **Hospital Command Center** | Multi-clinic healthcare network management | Fleet-wide bed occupancy census; multi-clinic inventory rebalancing; integer-paise financial ledger; cryptographic audit vault | [`frontend/website/src/components/HospitalDashboard.tsx`](frontend/website/src/components/HospitalDashboard.tsx) |
-| **CA Financial Suite & Audit** | Regulatory tax and ledger integrity | Double-entry balance sheet; profit & loss statements; bank reconciliation (BRS); SHA-256 tamper-evident audit lock | [`frontend/website/src/components/CAFinancialSuite.tsx`](frontend/website/src/components/CAFinancialSuite.tsx) |
-| **Maritime Agent Swarm Mesh** | Continuous clinical background auditing | Tri-agent cloud swarm (`agent-sentinel-01`, `agent-vernacular-02`, `agent-supply-03`) monitoring drug collisions, scribing, and supply | [`frontend/website/src/components/MaritimeAgentMesh.tsx`](frontend/website/src/components/MaritimeAgentMesh.tsx), [`backend/src/modules/maritime`](backend/src/modules/maritime) |
-| **Prune AI Gateway & WAF** | LLM cost control and prompt defense | Semantic caching (76.3% hit rate); sub-9ms prompt injection WAF defense; zero-knowledge Aadhaar/mobile PII scrubbing | [`frontend/website/src/components/PruneGatewayDashboard.tsx`](frontend/website/src/components/PruneGatewayDashboard.tsx), [`backend/src/modules/prune`](backend/src/modules/prune) |
+<table width="100%" style="border-collapse: collapse; margin: 16px 0;">
+  <thead>
+    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+      <th width="15%" align="left" style="padding: 10px 12px; font-weight: 700;">Module</th>
+      <th width="18%" align="left" style="padding: 10px 12px; font-weight: 700;">Purpose</th>
+      <th width="53%" align="left" style="padding: 10px 12px; font-weight: 700;">Key capabilities</th>
+      <th width="14%" align="left" style="padding: 10px 12px; font-weight: 700;">Implementation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Protected Authentication Gateway</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Hospital access control and credential management</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Segmented tab interface with 1-Click Role Access (7 hospital personas) and Staff Credential sign-in; protected routing across all clinical views</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/LoginPage.tsx"><code>LoginPage.tsx</code></a>, <a href="frontend/website/src/App.tsx"><code>App.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Patient Kiosk (Phase 1)</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Self-service multilingual hospital reception</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Autonomous Triage Sentry; 9 Indic languages voice guidance; 1-click ABHA QR scanner; differential safety check modal intercepting acidity for STEMI</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/PatientKiosk.tsx"><code>PatientKiosk.tsx</code></a>, <a href="packages/engine"><code>packages/engine</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Doctor OPD Cockpit</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Clinical consultation and decision support</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Attending workflow; Ambient Scribe (Speech-to-SOAP); ICD-11 &amp; NAMASTE coding; PMBJP generic substitution (-88%); CBC research review</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/DoctorConsultation.tsx"><code>DoctorConsultation.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Emergency &amp; Trauma Triage</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">High-acuity resuscitation management</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Live hospital-wide Code Blue cascade banner; ESI-1 trauma triage scoring; real-time queue allocation for Casualty Resuscitation Bays 1-4</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/EmergencyTriage.tsx"><code>EmergencyTriage.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Inpatient (IPD) Ward Console</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Bed tracking and Phase 2 bedside emergency sentinel</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Real-time bed census; Bedside SOS trigger for admitted patients; Nurse STAT Reporter drawer; sub-second Doctor En Route telemetry logging</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/IPDDashboard.tsx"><code>IPDDashboard.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Clinic Operations Hub &amp; POS</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Single-clinic management and dispensing</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Prescription-to-shelf FEFO allocation; loose tablet dispensing; barcode verification; GST invoice generation; CDSCO Form 20/21 compliance</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/POSDashboard.tsx"><code>POSDashboard.tsx</code></a>, <a href="frontend/website/src/components/ClinicAdminDashboard.tsx"><code>ClinicAdminDashboard.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Hospital Command Center</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Multi-clinic healthcare network management</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Fleet-wide bed occupancy census; multi-clinic inventory rebalancing; integer-paise financial ledger; cryptographic audit vault</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/HospitalDashboard.tsx"><code>HospitalDashboard.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>CA Financial Suite &amp; Audit</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Regulatory tax and ledger integrity</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Double-entry balance sheet; profit &amp; loss statements; bank reconciliation (BRS); SHA-256 tamper-evident audit lock</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/CAFinancialSuite.tsx"><code>CAFinancialSuite.tsx</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Maritime Agent Swarm Mesh</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Continuous clinical background auditing</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Tri-agent cloud swarm (<code>agent-sentinel-01</code>, <code>agent-vernacular-02</code>, <code>agent-supply-03</code>) monitoring drug collisions, scribing, and supply</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/MaritimeAgentMesh.tsx"><code>MaritimeAgentMesh.tsx</code></a>, <a href="backend/src/modules/maritime"><code>backend/maritime</code></a></td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Prune AI Gateway &amp; WAF</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">LLM cost control and prompt defense</td>
+      <td style="padding: 10px 12px; vertical-align: top;">Semantic caching (76.3% hit rate); sub-9ms prompt injection WAF defense; zero-knowledge Aadhaar/mobile PII scrubbing</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/website/src/components/PruneGatewayDashboard.tsx"><code>PruneGatewayDashboard.tsx</code></a>, <a href="backend/src/modules/prune"><code>backend/prune</code></a></td>
+    </tr>
+  </tbody>
+</table>
 
 ### Flutter patient and kiosk application
 
-| Screen | Responsibility | Source path |
-|---|---|---|
-| **Intake kiosk** | Touchscreen and audio check-in for walk-in patients | [`frontend/app/lib/features/intake`](frontend/app/lib/features/intake) |
-| **Home health companion** | Longitudinal medicine tracker, daily check-in, and nurse chat | [`frontend/app/lib/features/home`](frontend/app/lib/features/home) |
-| **HER cycle & women's care** | Symptom logging, cycle phase tracking, and maternal wellness rules | [`frontend/app/lib/features/her`](frontend/app/lib/features/her) |
-| **Vitalis healthspan** | Modifiable lifestyle markers, preventive adherence, and sleep tracking | [`frontend/app/lib/features/vitalis`](frontend/app/lib/features/vitalis) |
-| **Personalized gentle yoga** | Contraindication-filtered physical wellness postures | [`frontend/app/lib/features/yoga`](frontend/app/lib/features/yoga) |
+<table width="100%" style="border-collapse: collapse; margin: 16px 0;">
+  <thead>
+    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+      <th width="20%" align="left" style="padding: 10px 12px; font-weight: 700;">Screen</th>
+      <th width="62%" align="left" style="padding: 10px 12px; font-weight: 700;">Responsibility</th>
+      <th width="18%" align="left" style="padding: 10px 12px; font-weight: 700;">Source path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Intake kiosk</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Touchscreen and audio check-in for walk-in patients</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/app/lib/features/intake"><code>features/intake</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Home health companion</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Longitudinal medicine tracker, daily check-in, and nurse chat</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/app/lib/features/home"><code>features/home</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>HER cycle &amp; women's care</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Symptom logging, cycle phase tracking, and maternal wellness rules</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/app/lib/features/her"><code>features/her</code></a></td>
+    </tr>
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Vitalis healthspan</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Modifiable lifestyle markers, preventive adherence, and sleep tracking</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/app/lib/features/vitalis"><code>features/vitalis</code></a></td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; vertical-align: top;"><strong>Personalized gentle yoga</strong></td>
+      <td style="padding: 10px 12px; vertical-align: top;">Contraindication-filtered physical wellness postures</td>
+      <td style="padding: 10px 12px; vertical-align: top;"><a href="frontend/app/lib/features/yoga"><code>features/yoga</code></a></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -471,7 +560,7 @@ BreathSense X investigates non-invasive volatile organic compound (VOC) pattern 
 | **Indic Speech Engine** | **Web Speech API** | Client-side speech recognition and text-to-speech across 9 languages | Runs **100% on-device in the browser**; zero cloud token costs, zero audio transmission latency |
 | **AI Cost & WAF Gateway** | **Prune Pro Gateway** | Clinical semantic caching, prompt injection WAF, and PII redactor | Reduces LLM token costs by 76.3% while neutralizing adversarial prompt attacks under 9ms |
 | **Autonomous Agent Mesh** | **Maritime Cloud Swarm** | Background multi-agent clinical watchdog (`maritime.sh`) | Offloads continuous pharmacovigilance and transcription audits from local hospital hardware |
-| **Automated Testing** | **Vitest** | Comprehensive unit, integration, and regulatory test suite | High-performance ESM test runner (all 185 tests execute in under 5 seconds) |
+| **Automated Testing** | **Vitest** | Comprehensive unit, integration, and regulatory test suite | High-performance ESM test runner (all 191 tests execute in under 5 seconds) |
 | **Bilingual PDF Output** | **jsPDF** | Client-side prescription and emergency token slip generation | Generates vector-sharp bilingual clinical slips without external server dependencies |
 
 ---
@@ -495,7 +584,7 @@ npm install --prefix frontend/website
 
 ### 2. Verify test suite & type safety
 ```bash
-# Execute all 185 clinical and engine unit/integration tests
+# Execute all 191 clinical and engine unit/integration tests
 npm test
 
 # Verify strict TypeScript type compliance across all workspaces
@@ -592,7 +681,7 @@ JEEVIKA/
 │   ├── benchmarks/                # Synthetic verification results and raw telemetry
 │   ├── images/                    # Platform SVG banners and continuity diagrams
 │   └── screenshots/               # High-resolution clinical interface showcase
-└── tests/                         # Comprehensive Vitest test suite (185 tests)
+└── tests/                         # Comprehensive Vitest test suite (191 tests)
 ```
 
 ### Read further
