@@ -1,9 +1,10 @@
+import { useLocation } from "react-router-dom";
 import { useState } from 'react'
 import { authService as auth } from '@/lib/authService'
 import { Button, Input, PasswordInput, Label } from '@/components/ui/basic'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/basic'
 import { 
-    Lock, Mail, Loader2, AlertCircle, ArrowRight, ArrowLeft, 
+    Lock, Mail, Loader2, AlertCircle, ArrowRight,
     Building2, Stethoscope, ShieldAlert, Activity, User, 
     Zap, CheckCircle2, Shield, KeyRound, ExternalLink, Sparkles
 } from 'lucide-react'
@@ -144,6 +145,7 @@ export function LoginPage() {
     const [manualLoading, setManualLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const { toast } = useToast()
+    const location = useLocation()
 
     // 1-Click Direct Portal Access
     const handleDirectLogin = async (
@@ -189,33 +191,21 @@ export function LoginPage() {
                 })
                 setIsForgotMode(false)
             } else {
-                // If the email corresponds to a demo role, bootstrap rich demo session for optimal experience
-                const lowerEmail = email.toLowerCase()
-                let mappedRole: PortalProfile['role'] = 'HOSPITAL_ADMIN'
-                let targetView = 'admin'
-
-                if (lowerEmail.includes('doctor')) {
-                    mappedRole = 'DOCTOR'
-                    targetView = 'doctor-consultation'
-                } else if (lowerEmail.includes('nurse')) {
-                    mappedRole = 'NURSE'
-                    targetView = 'ipd'
-                } else if (lowerEmail.includes('super')) {
-                    mappedRole = 'SUPER_ADMIN'
-                    targetView = 'admin'
-                } else if (lowerEmail.includes('clinic')) {
-                    mappedRole = 'CLINIC_ADMIN'
-                    targetView = 'clinic-admin'
-                }
-
+                const user = await auth.signIn(email.trim(), password)
+                const targetView = user.role === 'DOCTOR' ? 'doctor-consultation'
+                    : user.role === 'NURSE' ? 'ipd'
+                        : user.role === 'CASHIER' ? 'pos' : 'admin'
                 localStorage.setItem('lastActiveView', targetView)
-                await auth.signInDemo(mappedRole as any)
+                const from = location.state?.from
+                const target = from?.pathname === '/kiosk' || /^\/app(?:\/|$)/.test(from?.pathname ?? '')
+                    ? from.pathname + (from.search ?? '') + (from.hash ?? '')
+                    : `/app?view=${targetView}`
                 toast({
                     title: 'Authentication Successful',
                     description: `Signed in as ${email}. Entering workspace...`,
                     className: 'bg-emerald-50 border-emerald-200 text-emerald-900'
                 })
-                window.location.hash = `#/app?view=${targetView}`
+                window.location.hash = `#${target}`
             }
         } catch (err: any) {
             console.error("Auth Error:", err)

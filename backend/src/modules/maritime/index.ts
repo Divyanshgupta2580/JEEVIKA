@@ -121,7 +121,7 @@ const agentsList: MaritimeAgent[] = [
 ];
 
 function getMaritimeConfig(c?: any) {
-  const apiKey = (c?.env?.MARITIME_API_KEY as string | undefined) || process.env.MARITIME_API_KEY || "mk_xHz5brraQKX0KNY0L_njRKLhjVnyS9rZXn8CEyaL3cg";
+  const apiKey = (c?.env?.MARITIME_API_KEY as string | undefined) || process.env.MARITIME_API_KEY || "";
   const baseUrl = (c?.env?.MARITIME_BASE_URL as string | undefined) || process.env.MARITIME_BASE_URL || "https://api.maritime.sh";
   const participantCode = (c?.env?.MARITIME_PARTICIPANT_CODE as string | undefined) || process.env.MARITIME_PARTICIPANT_CODE || "JEEVIKA_ENTERPRISE";
   return { apiKey, baseUrl, participantCode };
@@ -172,6 +172,7 @@ maritimeRouter.get("/telemetry", (c) => {
 
 // POST /api/v1/maritime/agents/:agentId/run
 maritimeRouter.post("/agents/:agentId/run", async (c) => {
+  const { apiKey, baseUrl, participantCode } = getMaritimeConfig(c);
   const agentId = c.req.param("agentId");
   const body = await c.req.json().catch(() => ({})) as Record<string, any>;
   const startTime = Date.now();
@@ -282,8 +283,8 @@ maritimeRouter.post("/agents/:agentId/run", async (c) => {
     telemetry: {
       participantCode: "JEEVIKA_ENTERPRISE",
       tier: "Enterprise Scale Plan",
-      apiKeyConfigured: true,
-      apiKeyMasked: "mk_xHz5...L3cg",
+      apiKeyConfigured: !!apiKey,
+      apiKeyMasked: apiKey ? `${apiKey.slice(0, 7)}...${apiKey.slice(-4)}` : "not_configured",
       liveCloudVerified: true,
       ...resultPayload
     }
@@ -314,6 +315,7 @@ maritimeRouter.post("/agents/:agentId/run", async (c) => {
 
 // POST /api/v1/maritime/mesh/audit-all
 maritimeRouter.post("/mesh/audit-all", async (c) => {
+  const { apiKey, baseUrl, participantCode } = getMaritimeConfig(c);
   const body = await c.req.json().catch(() => ({})) as Record<string, any>;
   const patientName = body.prescription?.patientName || body.patientName || "Ramesh Chandra (52M)";
 
@@ -401,8 +403,8 @@ maritimeRouter.post("/mesh/audit-all", async (c) => {
     safetyStatus: sentinelInteractions.length > 0 ? "WARNING" : "PASS",
     telemetry: {
       participantCode: "JEEVIKA_ENTERPRISE",
-      apiKeyConfigured: true,
-      apiKeyMasked: "mk_xHz5...L3cg",
+      apiKeyConfigured: !!apiKey,
+      apiKeyMasked: apiKey ? `${apiKey.slice(0, 7)}...${apiKey.slice(-4)}` : "not_configured",
       liveCloudVerified: true,
       sentinelInteractions,
       scribeNotes,

@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 import "../../../../core/constants/app_colors.dart";
+import "../../../../core/router/app_router.dart";
 import "../../../../core/constants/app_strings.dart";
 import "../providers/auth_provider.dart";
 import "../../../onboarding/presentation/providers/user_profile_provider.dart";
@@ -48,10 +49,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       }
       if (!mounted) return;
       final isOnboarded = session?.onboardingComplete ?? false;
-      if (isOnboarded) {
-        context.go("/");
-      } else {
-        context.go("/onboarding");
+      if (ref.read(authProvider).isAuthenticated) {
+        context.go(afterPatientLogin(
+          GoRouterState.of(context).uri,
+          onboardingComplete: isOnboarded,
+        ));
       }
     }
   }
@@ -210,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                 ? null
                                 : () => _handleLogin(
                                       identifier: _phoneController.text.trim(),
-                                      password: _phonePasswordController.text.trim().isEmpty ? "demo123" : _phonePasswordController.text.trim(),
+                                      password: _phonePasswordController.text,
                                     ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
@@ -269,7 +271,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                 ? null
                                 : () => _handleLogin(
                                       identifier: _emailController.text.trim(),
-                                      password: _emailPasswordController.text.trim().isEmpty ? "demo123" : _emailPasswordController.text.trim(),
+                                      password: _emailPasswordController.text,
                                     ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,

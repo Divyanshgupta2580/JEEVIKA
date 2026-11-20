@@ -1,3 +1,6 @@
+import "package:flutter/foundation.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../../features/auth/presentation/providers/auth_provider.dart";
 import "package:go_router/go_router.dart";
 import "../../features/portal/presentation/screens/portal_selection_screen.dart";
 import "../../features/auth/presentation/screens/login_screen.dart";
@@ -38,8 +41,28 @@ import "../../features/vitalis/presentation/screens/vitalis_summary_screen.dart"
 import "../../features/vitalis/presentation/screens/vitalis_settings_screen.dart";
 import "../../features/prescription/presentation/screens/medicine_reminder_screen.dart";
 
-final appRouter = GoRouter(
+const _publicPaths = {"/login", "/signup"};
+const _legacyRedirects = {"/kiosk", "/identify", "/converse", "/scan", "/summarize", "/queue"};
+const _staffPaths = {"/doctor", "/nurse", "/hq", "/clinical"};
+
+class _RouterRefresh extends ChangeNotifier {
+  void refresh() => notifyListeners();
+}
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = _RouterRefresh();
+  ref.listen(authProvider, (_, _) => refresh.refresh());
+  final router = GoRouter(
   initialLocation: "/",
+  refreshListenable: refresh,
+  redirect: (context, state) async {
+    final path = state.uri.path;
+    if (_publicPaths.contains(path) || _legacyRedirects.contains(path)) return null;
+    if (_staffPaths.contains(path)) return "/login";
+    await ref.read(authProvider.notifier).ready;
+    if (ref.read(authProvider).isAuthenticated) return null;
+    return Uri(path: "/login", queryParameters: {"from": state.uri.toString()}).toString();
+  },
   routes: [
     GoRoute(
       path: "/",
@@ -239,3 +262,19 @@ final appRouter = GoRouter(
     ),
   ],
 );
+  ref.onDispose(() {
+    router.dispose();
+    refresh.dispose();
+  });
+  return router;
+});
+
+String afterPatientLogin(Uri loginUri, {required bool onboardingComplete}) {
+  if (!onboardingComplete) return "/onboarding";
+  final from = Uri.tryParse(loginUri.queryParameters["from"] ?? "");
+  if (from == null || from.hasScheme || from.hasAuthority || !from.path.startsWith("/") ||
+      _publicPaths.contains(from.path) || _staffPaths.contains(from.path) || _legacyRedirects.contains(from.path)) {
+    return "/";
+  }
+  return from.toString();
+}

@@ -9,6 +9,7 @@ class AuthSession {
   final String? email;
   final String? abhaNumber;
   final bool onboardingComplete;
+  final DateTime? expiresAt;
 
   const AuthSession({
     required this.token,
@@ -18,17 +19,19 @@ class AuthSession {
     this.email,
     this.abhaNumber,
     this.onboardingComplete = false,
+    this.expiresAt,
   });
 
   Map<String, dynamic> toJson() => {
-        "token": token,
-        "patientId": patientId,
-        "patientName": patientName,
-        "phone": phone,
-        "email": email,
-        "abhaNumber": abhaNumber,
-        "onboardingComplete": onboardingComplete,
-      };
+    "token": token,
+    "patientId": patientId,
+    "patientName": patientName,
+    "phone": phone,
+    "email": email,
+    "abhaNumber": abhaNumber,
+    "onboardingComplete": onboardingComplete,
+    "expiresAt": expiresAt?.toIso8601String(),
+  };
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
     return AuthSession(
@@ -39,6 +42,7 @@ class AuthSession {
       email: json["email"]?.toString(),
       abhaNumber: json["abhaNumber"]?.toString(),
       onboardingComplete: json["onboardingComplete"] == true,
+      expiresAt: DateTime.tryParse(json["expiresAt"]?.toString() ?? ""),
     );
   }
 
@@ -50,6 +54,7 @@ class AuthSession {
     String? email,
     String? abhaNumber,
     bool? onboardingComplete,
+    DateTime? expiresAt,
   }) {
     return AuthSession(
       token: token ?? this.token,
@@ -59,6 +64,7 @@ class AuthSession {
       email: email ?? this.email,
       abhaNumber: abhaNumber ?? this.abhaNumber,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 }

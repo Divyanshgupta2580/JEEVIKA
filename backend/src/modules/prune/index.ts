@@ -57,7 +57,7 @@ const AADHAAR_REGEX = /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g;
 const PHONE_REGEX = /\b(?:\+91[-\s]?)?[6-9]\d{9}\b/g;
 
 function getPruneConfig(c?: any) {
-  const apiKey = (c?.env?.PRUNE_API_KEY as string | undefined) || process.env.PRUNE_API_KEY || "prune_b0Ag6iHgkjQqqDKbk8Ai6sQmWZ87EixG";
+  const apiKey = (c?.env?.PRUNE_API_KEY as string | undefined) || process.env.PRUNE_API_KEY || "";
   const baseUrl = (c?.env?.PRUNE_BASE_URL as string | undefined) || process.env.PRUNE_BASE_URL || "https://api.withprune.com/v1";
   const model = (c?.env?.PRUNE_MODEL as string | undefined) || process.env.PRUNE_MODEL || "gemini/gemini-3.5-flash-lite";
   return { apiKey, baseUrl, model };

@@ -11,11 +11,13 @@ import {
   principalSchema,
 } from "../../../../../packages/shared/integration";
 import { CLOUDFLARE_API_BASE } from "../../lib/supabase";
+import { closeDataSocket, socketRequest } from "../../lib/dataSocket";
 
 export type DoctorSession = z.infer<typeof loginResponseSchema>;
 export const sessionKey = "jeevika.cbc.doctor-session.v1";
 function expireCurrentSession(token?: string) {
   if (!token) return;
+  closeDataSocket(token);
   try {
     const raw = sessionStorage.getItem(sessionKey);
     const current = raw
@@ -38,7 +40,11 @@ export async function call<T>(
   signal?: AbortSignal,
   key?: string,
 ): Promise<T> {
-  const response = await fetch(`${CLOUDFLARE_API_BASE}${path}`, {
+  if (token && path === "/auth/logout") closeDataSocket(token);
+  const overSocket = token && (path === "/encounters" || path.startsWith("/cbc/"));
+  const response = overSocket
+    ? await socketRequest(token, path, method, body, signal, body === undefined ? undefined : key ?? crypto.randomUUID())
+    : await fetch(`${CLOUDFLARE_API_BASE}${path}`, {
     method,
     signal,
     cache: "no-store",
@@ -53,7 +59,7 @@ export async function call<T>(
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  if (!response.ok) {
+  if (response.status >= 400) {
     if (response.status === 401) {
       expireCurrentSession(token);
     }
@@ -73,10 +79,13 @@ export async function call<T>(
                   : "CBC service unavailable. Your consultation notes are unchanged.";
     throw new Error(message);
   }
-  return schema.parse(await response.json());
+  return schema.parse("json" in response ? await response.json() : response.body);
 }
 export const cbcApi = {
-  capabilities: () => call("/cbc/capabilities", cbcCapabilitiesSchema),
+  available: (signal?: AbortSignal) =>
+    call("/auth/clinical", z.object({ enabled: z.boolean() }), undefined, "GET", undefined, signal),
+  capabilities: (token: string, signal?: AbortSignal) =>
+    call("/cbc/capabilities", cbcCapabilitiesSchema, token, "GET", undefined, signal),
   login: (orgId: string, email: string, password: string) =>
     call("/auth/login", loginResponseSchema, undefined, "POST", {
       orgId,
@@ -84,8 +93,8 @@ export const cbcApi = {
       password,
     }),
   me: (token: string) => call("/auth/me", principalSchema, token),
-  encounters: (token: string) =>
-    call("/encounters", encounterListSchema, token),
+  encounters: (token: string, signal?: AbortSignal) =>
+    call("/encounters", encounterListSchema, token, "GET", undefined, signal),
   list: (
     token: string,
     encounterId: string,
@@ -105,6 +114,7 @@ export const cbcApi = {
     encounterId: string,
     researchConsent: boolean,
     key: string,
+    signal?: AbortSignal,
   ) =>
     call(
       "/cbc/reports",
@@ -112,7 +122,7 @@ export const cbcApi = {
       token,
       "POST",
       { encounterId, processingConsent: true, researchConsent },
-      undefined,
+      signal,
       key,
     ),
   confirm: (
@@ -122,6 +132,7 @@ export const cbcApi = {
     measurements: CbcMeasurement[],
     collectionDate: string | null,
     key: string,
+    signal?: AbortSignal,
   ) =>
     call(
       `/cbc/reports/${id}/confirm`,
@@ -129,14 +140,12 @@ export const cbcApi = {
       token,
       "POST",
       { expectedRevision, measurements, collectionDate, panelReviewed: true },
-      undefined,
+      signal,
       key,
     ),
-  predict: (token: string, id: string, revision: number) =>
-    call(`/cbc/reports/${id}/predict`, cbcReportSchema, token, "POST", {
-      revision,
-    }),
-  remove: (token: string, id: string) =>
+  predict: (token: string, id: string, revision: number, signal?: AbortSignal) =>
+    call(`/cbc/reports/${id}/predict`, cbcReportSchema, token, "POST", { revision }, signal),
+  remove: (token: string, id: string, signal?: AbortSignal) =>
     call(
       `/cbc/reports/${id}`,
       z.object({
@@ -145,33 +154,24 @@ export const cbcApi = {
       }),
       token,
       "DELETE",
+      undefined,
+      signal,
     ),
-  async retain(token: string, id: string, file: File, mime: string) {
-    const res = await fetch(
-      `${CLOUDFLARE_API_BASE}/cbc/reports/${id}/document`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": mime,
-          "X-Source-Retention-Consent": "true",
-        },
-        body: file,
-      },
-    );
-    if (!res.ok)
+  async retain(token: string, id: string, file: File, mime: string, signal?: AbortSignal) {
+    const bytes = await file.arrayBuffer();
+    const res = await socketRequest(token, `/cbc/reports/${id}/document`, "PUT", undefined, signal, undefined, { bytes, type: mime });
+    if (res.status === 401) expireCurrentSession(token);
+    if (res.status < 200 || res.status >= 300)
       throw new Error(
         "Original file was not retained. Retry or save measurements without the original.",
       );
-    return cbcReportSchema.parse(await res.json());
+    return cbcReportSchema.parse(res.body);
   },
-  async source(token: string, id: string) {
-    const res = await fetch(
-      `${CLOUDFLARE_API_BASE}/cbc/reports/${id}/document`,
-      { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
-    );
-    if (!res.ok)
+  async source(token: string, id: string, signal?: AbortSignal) {
+    const res = await socketRequest(token, `/cbc/reports/${id}/document`, "GET", undefined, signal);
+    if (res.status === 401) expireCurrentSession(token);
+    if (res.status !== 200 || !res.bytes || !res.documentType)
       throw new Error("Original source is unavailable or access was revoked.");
-    return res.blob();
+    return new Blob([res.bytes], { type: res.documentType });
   },
 };

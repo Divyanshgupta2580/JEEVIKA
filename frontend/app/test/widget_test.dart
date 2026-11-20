@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:kiosk_app/main.dart";
+import "package:kiosk_app/core/router/app_router.dart";
 import "package:kiosk_app/core/constants/app_strings.dart";
 import "package:kiosk_app/features/portal/presentation/screens/portal_selection_screen.dart";
 import "package:kiosk_app/features/doctor/presentation/screens/doctor_consultation_screen.dart";
@@ -34,9 +35,29 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets("Jeevika app initializes properly", (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: JeevikaApp()));
-    expect(find.text(AppStrings.appName), findsOneWidget);
+  testWidgets("Private mobile routes require a verified session", (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const JeevikaApp()),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(PortalSelectionScreen), findsNothing);
+
+    final router = container.read(appRouterProvider);
+    router.go("/her/cycle-calendar");
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(HerCycleScreen), findsNothing);
+    final uri = router.routeInformationProvider.value.uri;
+    expect(uri.path, "/login");
+    expect(afterPatientLogin(uri, onboardingComplete: true), "/her/cycle-calendar");
+
+    router.go("/doctor");
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(DoctorConsultationScreen), findsNothing);
   });
 
   group("Mobile 360x640 Viewport Zero-Overflow Tests", () {

@@ -1,3 +1,6 @@
+import "dart:async";
+
+import "../../../../core/network/data_socket.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../data/models/auth_models.dart";
@@ -13,13 +16,15 @@ class AuthState {
   final AuthSession? session;
   final String? errorMessage;
 
-  const AuthState({
-    this.isLoading = false,
-    this.session,
-    this.errorMessage,
-  });
+  const AuthState({this.isLoading = false, this.session, this.errorMessage});
 
-  bool get isAuthenticated => session != null && session!.token.isNotEmpty;
+  bool get isAuthenticated {
+    final current = session;
+    return current != null &&
+        current.token.isNotEmpty &&
+        (current.expiresAt == null ||
+            current.expiresAt!.isAfter(DateTime.now()));
+  }
 
   AuthState copyWith({
     bool? isLoading,
@@ -36,25 +41,54 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository repository;
+  Timer? _expiry;
 
-  AuthNotifier(this.repository) : super(const AuthState()) {
-    init();
+  late final Future<void> ready = _restore();
+
+  AuthNotifier(this.repository) : super(const AuthState(isLoading: true)) {
+    unawaited(ready);
   }
 
-  Future<void> init() async {
-    state = state.copyWith(isLoading: true);
+  Future<void> _restore() async {
     final restored = await repository.restoreSession();
-    state = state.copyWith(isLoading: false, session: restored);
+    if (mounted) _setSession(restored);
+  }
+
+  void _setSession(AuthSession? session) {
+    DataSocket.instance.setSession(
+      session?.token,
+      onUnauthorized: () {
+        if (mounted && state.session?.token == session?.token) {
+          unawaited(logout());
+        }
+      },
+    );
+    _expiry?.cancel();
+    state = AuthState(session: session);
+    final expiry = session?.expiresAt;
+    if (expiry != null) {
+      _expiry = Timer(
+        expiry.difference(DateTime.now()),
+        () => unawaited(logout()),
+      );
+    }
   }
 
   Future<bool> login(String identifier, String password) async {
+    await ready;
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final session = await repository.login(identifier: identifier, password: password);
-      state = state.copyWith(isLoading: false, session: session);
+      final session = await repository.login(
+        identifier: identifier,
+        password: password,
+      );
+      _setSession(session);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString().replaceFirst("Exception: ", ""));
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst("Exception: ", ""),
+      );
       return false;
     }
   }
@@ -69,6 +103,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? abhaNumber,
     String preferredLang = "hi",
   }) async {
+    await ready;
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final session = await repository.signup(
@@ -81,10 +116,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         abhaNumber: abhaNumber,
         preferredLang: preferredLang,
       );
-      state = state.copyWith(isLoading: false, session: session);
+      _setSession(session);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString().replaceFirst("Exception: ", ""));
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst("Exception: ", ""),
+      );
       return false;
     }
   }
@@ -98,10 +136,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    if (state.session != null) {
-      await repository.logout(state.session!.token);
-    }
-    state = const AuthState();
+    await ready;
+    final token = state.session?.token;
+    _setSession(null);
+    if (token != null) await repository.logout(token);
+  }
+
+  @override
+  void dispose() {
+    _expiry?.cancel();
+    DataSocket.instance.setSession(null);
+    super.dispose();
   }
 }
 

@@ -1,8 +1,7 @@
 import "dart:convert";
 import "package:flutter/foundation.dart";
-import "package:http/http.dart" as http;
 import "package:shared_preferences/shared_preferences.dart";
-import "../../../../core/network/api_config.dart";
+import "../../../../core/network/data_socket.dart";
 import "../models/user_profile_model.dart";
 
 class UserProfileRepository {
@@ -24,9 +23,15 @@ class UserProfileRepository {
   Future<void> saveLocalProfile(UserProfile profile) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("$_profilePrefix${profile.patientId}", jsonEncode(profile.toJson()));
+      await prefs.setString(
+        "$_profilePrefix${profile.patientId}",
+        jsonEncode(profile.toJson()),
+      );
       // Also save to generic current profile key
-      await prefs.setString("jeevika_active_profile_v1", jsonEncode(profile.toJson()));
+      await prefs.setString(
+        "jeevika_active_profile_v1",
+        jsonEncode(profile.toJson()),
+      );
     } catch (e) {
       debugPrint("Error saving local profile: $e");
     }
@@ -40,41 +45,28 @@ class UserProfileRepository {
     final local = await getLocalProfile(patientId);
 
     try {
-      final headers = {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      };
-
-      // 1. Fetch preferences
-      final prefRes = await http
-          .get(Uri.parse("${ApiConfig.baseUrl}/patient/$patientId/preferences"), headers: headers)
-          .timeout(const Duration(seconds: 4));
-
-      Map<String, dynamic>? prefData;
-      if (prefRes.statusCode == 200) {
-        final d = jsonDecode(prefRes.body) as Map<String, dynamic>;
-        prefData = d["preferences"] as Map<String, dynamic>?;
-      }
-
-      // 2. Fetch ayurveda
-      final ayurRes = await http
-          .get(Uri.parse("${ApiConfig.baseUrl}/patient/$patientId/ayurveda"), headers: headers)
-          .timeout(const Duration(seconds: 4));
-
-      Map<String, dynamic>? ayurData;
-      if (ayurRes.statusCode == 200) {
-        final d = jsonDecode(ayurRes.body) as Map<String, dynamic>;
-        ayurData = d["ayurveda"] as Map<String, dynamic>?;
-      }
+      final path = "/patient/$patientId";
+      final responses = await Future.wait([
+        DataSocket.instance.request(token, "GET", "$path/preferences"),
+        DataSocket.instance.request(token, "GET", "$path/ayurveda"),
+      ]);
+      final preferences = responses[0] as Map<String, dynamic>;
+      final ayurveda = responses[1] as Map<String, dynamic>;
+      final prefData = preferences["preferences"] as Map<String, dynamic>?;
+      final ayurData = ayurveda["ayurveda"] as Map<String, dynamic>?;
 
       if (local != null) {
         final updated = local.copyWith(
-          primaryFocus: prefData?["primaryFocus"]?.toString() ?? local.primaryFocus,
+          primaryFocus:
+              prefData?["primaryFocus"]?.toString() ?? local.primaryFocus,
           themeMode: prefData?["themeMode"]?.toString() ?? local.themeMode,
           language: prefData?["language"]?.toString() ?? local.language,
-          primaryDosha: ayurData?["primaryDosha"]?.toString() ?? local.primaryDosha,
-          secondaryDosha: ayurData?["secondaryDosha"]?.toString() ?? local.secondaryDosha,
-          prakritiSummary: ayurData?["prakritiSummary"]?.toString() ?? local.prakritiSummary,
+          primaryDosha:
+              ayurData?["primaryDosha"]?.toString() ?? local.primaryDosha,
+          secondaryDosha:
+              ayurData?["secondaryDosha"]?.toString() ?? local.secondaryDosha,
+          prakritiSummary:
+              ayurData?["prakritiSummary"]?.toString() ?? local.prakritiSummary,
         );
         await saveLocalProfile(updated);
         return updated;
@@ -97,10 +89,8 @@ class UserProfileRepository {
     await saveLocalProfile(profile);
 
     try {
-      final headers = {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      };
+      final socket = DataSocket.instance;
+      final path = "/patient/${profile.patientId}";
 
       // Sync Profile
       final profilePayload = <String, dynamic>{
@@ -117,37 +107,34 @@ class UserProfileRepository {
       if (profile.address != null && profile.address!.isNotEmpty) {
         profilePayload["address"] = profile.address;
       }
-      if (profile.emergencyContact != null && profile.emergencyContact!.isNotEmpty) {
+      if (profile.emergencyContact != null &&
+          profile.emergencyContact!.isNotEmpty) {
         profilePayload["emergencyContact"] = profile.emergencyContact;
       }
 
-      await http.put(
-        Uri.parse("${ApiConfig.baseUrl}/patient/${profile.patientId}/profile"),
-        headers: headers,
-        body: jsonEncode(profilePayload),
-      );
+      await socket.request(token, "PUT", "$path/profile", body: profilePayload);
 
-      // Sync Preferences
-      await http.put(
-        Uri.parse("${ApiConfig.baseUrl}/patient/${profile.patientId}/preferences"),
-        headers: headers,
-        body: jsonEncode({
+      await socket.request(
+        token,
+        "PUT",
+        "$path/preferences",
+        body: {
           "primaryFocus": profile.primaryFocus,
           "themeMode": profile.themeMode,
           "language": profile.language,
-        }),
+        },
       );
 
-      // Sync Ayurveda
-      await http.put(
-        Uri.parse("${ApiConfig.baseUrl}/patient/${profile.patientId}/ayurveda"),
-        headers: headers,
-        body: jsonEncode({
+      await socket.request(
+        token,
+        "PUT",
+        "$path/ayurveda",
+        body: {
           "primaryDosha": profile.primaryDosha,
           "secondaryDosha": profile.secondaryDosha,
           "prakritiSummary": profile.prakritiSummary,
           "agniType": profile.agniType,
-        }),
+        },
       );
     } catch (e) {
       debugPrint("Sync to backend skipped or queued: $e");

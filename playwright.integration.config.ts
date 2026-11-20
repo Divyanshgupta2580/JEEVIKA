@@ -1,7 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
+
+const port = process.env.INTEGRATION_E2E_PORT ?? "8790";
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: "tests/integration-browser",
-  use: { baseURL: "http://127.0.0.1:8790", ...devices["Desktop Chrome"] },
-  webServer: { env: { INTEGRATION_DB: `.local/integration-e2e-${process.pid}.sqlite` }, command: "npm run integration:dev", url: "http://127.0.0.1:8790/healthz", reuseExistingServer: process.env.REUSE_SERVER === "1", timeout: 30000 },
+  use: { baseURL, ...devices["Desktop Chrome"] },
+  webServer: {
+    env: {
+      INTEGRATION_PORT: port,
+      INTEGRATION_DB: `.local/integration-e2e-${process.pid}.sqlite`,
+      INTEGRATION_ASSETS_DIR: `.local/integration-e2e-assets-${process.pid}`,
+      INTEGRATION_E2E_CLINICAL: "1",
+      VITE_API_URL: "/api/v1",
+    },
+    command: "vite build --config frontend/website/vite.config.ts && node --import tsx backend/local/server.ts",
+    url: `${baseURL}/healthz`,
+    reuseExistingServer: process.env.REUSE_SERVER === "1",
+    timeout: 30000,
+  },
   reporter: "list",
 });

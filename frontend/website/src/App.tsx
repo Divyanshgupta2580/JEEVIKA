@@ -685,14 +685,19 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 function PublicAuthRoute({ children }: { children: ReactNode }) {
     const { session, profile, loading } = useHospital();
+    const location = useLocation();
 
     if (loading) {
         return <WorkspaceSkeleton />;
     }
 
     if (session && profile) {
+        const from = location.state?.from;
+        if (from?.pathname === '/kiosk' || /^\/app(?:\/|$)/.test(from?.pathname ?? '')) {
+            return <Navigate to={{ pathname: from.pathname, search: from.search, hash: from.hash }} replace />;
+        }
         const lastView = localStorage.getItem('lastActiveView') || 'admin';
-        return <Navigate to={`/app?view=${lastView}`} replace />;
+        return <Navigate to={`/app?view=${encodeURIComponent(lastView)}`} replace />;
     }
 
     return <>{children}</>;

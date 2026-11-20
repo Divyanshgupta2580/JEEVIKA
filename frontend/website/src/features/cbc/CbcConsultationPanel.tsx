@@ -70,6 +70,7 @@ export default function CbcConsultationPanel(props: Props) {
   });
   const live = useRef(true),
     abort = useRef<AbortController | null>(null),
+    network = useRef<AbortController>(),
     previewUrls = useRef<string[]>([]);
   const attempt = useRef<{
     createKey: string;
@@ -92,6 +93,7 @@ export default function CbcConsultationPanel(props: Props) {
   useEffect(() => {
     live.current = true;
     const controller = new AbortController();
+    network.current = controller;
     if (ready && session && encounterId) {
       void cbcApi
         .list(session.token, encounterId, controller.signal)
@@ -108,7 +110,7 @@ export default function CbcConsultationPanel(props: Props) {
             );
         });
       void cbcApi
-        .capabilities()
+        .capabilities(session.token, controller.signal)
         .then((data) => {
           if (live.current) setCaps(data);
         })
@@ -260,7 +262,7 @@ export default function CbcConsultationPanel(props: Props) {
       "A patient-name label in this file differs from the selected consultation. Select the correct patient/report; saving is blocked.";
   async function reload() {
     if (!session || !encounterId) return;
-    const data = await cbcApi.list(session.token, encounterId);
+    const data = await cbcApi.list(session.token, encounterId, network.current?.signal);
     if (live.current) {
       setReports(data.reports);
       setCursor(data.nextCursor);
@@ -292,6 +294,7 @@ export default function CbcConsultationPanel(props: Props) {
     setBusy(true);
     setError("");
     try {
+      const signal = network.current?.signal;
       const values = measurements();
       normalizeCbc(values);
       const pending = attempt.current;
@@ -301,13 +304,14 @@ export default function CbcConsultationPanel(props: Props) {
           encounterId,
           researchConsent,
           pending.createKey,
+          signal,
         );
         pending.id = draft.id;
       }
       const reportId = selected?.id ?? pending.id;
       if (!reportId) throw new Error("Create the report before saving.");
       if (retain && file && !pending.retained && !selected) {
-        await cbcApi.retain(session.token, reportId, file, mime);
+        await cbcApi.retain(session.token, reportId, file, mime, signal);
         pending.retained = true;
       }
       const fingerprint = JSON.stringify({
@@ -328,6 +332,7 @@ export default function CbcConsultationPanel(props: Props) {
           values,
           date || null,
           key,
+          signal,
         ),
       );
     } catch (e) {
@@ -343,7 +348,7 @@ export default function CbcConsultationPanel(props: Props) {
     setError("");
     try {
       accept(
-        await cbcApi.predict(session.token, selected.id, selected.revision),
+        await cbcApi.predict(session.token, selected.id, selected.revision, network.current?.signal),
       );
     } catch (e) {
       if (live.current)
@@ -853,7 +858,7 @@ export default function CbcConsultationPanel(props: Props) {
                     onClick={() => {
                       if (!session) return;
                       void cbcApi
-                        .source(session.token, report.id)
+                        .source(session.token, report.id, network.current?.signal)
                         .then((blob) => {
                           if (!live.current) return;
                           const url = URL.createObjectURL(blob);
@@ -893,7 +898,7 @@ export default function CbcConsultationPanel(props: Props) {
                       return;
                     setBusy(true);
                     void cbcApi
-                      .remove(session.token, report.id)
+                      .remove(session.token, report.id, network.current?.signal)
                       .then(async (result) => {
                         if (!live.current) return;
                         if (selected?.id === report.id) newDraft();
@@ -926,7 +931,7 @@ export default function CbcConsultationPanel(props: Props) {
                 onClick={() => {
                   if (!session || !encounterId) return;
                   void cbcApi
-                    .list(session.token, encounterId, undefined, cursor)
+                    .list(session.token, encounterId, network.current?.signal, cursor)
                     .then((data) => {
                       if (live.current) {
                         setReports((prev) => [...prev, ...data.reports]);

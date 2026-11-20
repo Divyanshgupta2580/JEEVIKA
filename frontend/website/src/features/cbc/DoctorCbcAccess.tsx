@@ -1,3 +1,4 @@
+import { closeDataSocket } from "../../lib/dataSocket";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
@@ -18,13 +19,19 @@ export function DoctorCbcAccess({
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const generation = useRef(0);
+  const socketToken = useRef<string>();
+  const viewLifetime = useRef<AbortController>();
   const mounted = useRef(true);
   useEffect(() => {
     let live = true;
+    const lifetime = new AbortController();
+    viewLifetime.current = lifetime;
     mounted.current = true;
     const restoreGeneration = generation.current;
     const expire = () => {
       generation.current++;
+      if (socketToken.current) closeDataSocket(socketToken.current);
+      socketToken.current = undefined;
       sessionStorage.removeItem(sessionKey);
       setSession(null);
       onConnect(null, []);
@@ -41,14 +48,16 @@ export function DoctorCbcAccess({
     window.addEventListener("jeevika_demo_logout", expire);
     void (async () => {
       try {
-        const caps = await cbcApi.capabilities();
+        const caps = await cbcApi.available(lifetime.signal);
         if (!live) return;
         setAvailable(caps.enabled);
         const raw = sessionStorage.getItem(sessionKey);
         if (caps.enabled && raw) {
           const saved = loginResponseSchema.parse(JSON.parse(raw));
           await cbcApi.me(saved.token);
-          const data = await cbcApi.encounters(saved.token);
+          if (!live || generation.current !== restoreGeneration) return;
+          socketToken.current = saved.token;
+          const data = await cbcApi.encounters(saved.token, lifetime.signal);
           if (live && generation.current === restoreGeneration) {
             setSession(saved);
             onConnect(saved, data.encounters);
@@ -63,6 +72,9 @@ export function DoctorCbcAccess({
     })();
     return () => {
       live = false;
+      lifetime.abort();
+      if (socketToken.current) closeDataSocket(socketToken.current);
+      socketToken.current = undefined;
       mounted.current = false;
       generation.current++;
       window.removeEventListener("cbc-session-expired", expire);
@@ -77,6 +89,7 @@ export function DoctorCbcAccess({
       () => window.dispatchEvent(new Event("cbc-session-expired")),
       Math.max(0, remaining),
     );
+    const lifetime = new AbortController();
     let refreshing = false,
       live = true;
     const refresh = async () => {
@@ -86,10 +99,12 @@ export function DoctorCbcAccess({
         const principal = await cbcApi.me(session.token);
         if (principal.role !== "DOCTOR")
           throw new Error("Doctor authorization ended");
-        const data = await cbcApi.encounters(session.token);
+        if (!live) return;
+        const data = await cbcApi.encounters(session.token, lifetime.signal);
         if (live) onConnect(session, data.encounters);
-      } catch {
-        if (live) window.dispatchEvent(new Event("cbc-session-expired"));
+      } catch (error) {
+        if (live && error instanceof Error && error.message === "Doctor authorization ended")
+          window.dispatchEvent(new Event("cbc-session-expired"));
       } finally {
         refreshing = false;
       }
@@ -101,6 +116,7 @@ export function DoctorCbcAccess({
     window.addEventListener("focus", focus);
     return () => {
       live = false;
+      lifetime.abort();
       clearTimeout(expiry);
       clearInterval(interval);
       window.removeEventListener("focus", focus);
@@ -109,6 +125,7 @@ export function DoctorCbcAccess({
   async function connect(form: HTMLFormElement) {
     const fields = new FormData(form),
       requestGeneration = ++generation.current;
+    const signal = viewLifetime.current?.signal;
     setBusy(true);
     setMessage("");
     try {
@@ -119,13 +136,17 @@ export function DoctorCbcAccess({
       );
       if (result.principal.role !== "DOCTOR")
         throw new Error("Connect using an authorized doctor account.");
-      const data = await cbcApi.encounters(result.token);
+      if (!mounted.current || generation.current !== requestGeneration) return;
+      socketToken.current = result.token;
+      const data = await cbcApi.encounters(result.token, signal);
       if (!mounted.current || generation.current !== requestGeneration) return;
       sessionStorage.setItem(sessionKey, JSON.stringify(result));
       setSession(result);
       onConnect(result, data.encounters);
       form.reset();
     } catch (error) {
+      if (socketToken.current) closeDataSocket(socketToken.current);
+      socketToken.current = undefined;
       setMessage(error instanceof Error ? error.message : "Could not connect.");
     } finally {
       setBusy(false);
@@ -134,6 +155,7 @@ export function DoctorCbcAccess({
   async function addSynthetic() {
     if (!session || !name.trim()) return;
     const requestGeneration = generation.current;
+    const signal = viewLifetime.current?.signal;
     setBusy(true);
     setMessage("");
     try {
@@ -148,8 +170,9 @@ export function DoctorCbcAccess({
         answers: { chestPain: "no", breathless: "no", fainting: "no" },
         careConsent: true,
         synthetic: true,
-      });
-      const data = await cbcApi.encounters(session.token);
+      }, signal);
+      if (!mounted.current || generation.current !== requestGeneration) return;
+      const data = await cbcApi.encounters(session.token, signal);
       if (mounted.current && generation.current === requestGeneration) {
         onConnect(session, data.encounters);
         setName("");
@@ -247,6 +270,7 @@ export function DoctorCbcAccess({
                   session.token,
                   "POST",
                 ).catch(() => {});
+                socketToken.current = undefined;
                 sessionStorage.removeItem(sessionKey);
                 setSession(null);
                 onConnect(null, []);

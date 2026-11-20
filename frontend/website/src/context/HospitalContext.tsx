@@ -187,65 +187,13 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        setSession(null);
-        setProfile(null);
-        setHospital(null);
-        setClinics([]);
-        setInventory([]);
-        setLoading(false);
         return false;
     };
 
     useEffect(() => {
-        const hasSession = loadDemoSession();
-        if (!hasSession) {
-            auth.getSession().then((sess) => {
-                if (sess?.user) {
-                    setSession(sess.user);
-                    fetchProfile(sess.user.id);
-                } else {
-                    setSession(null);
-                    setProfile(null);
-                    setHospital(null);
-                    setManagedClinic(null);
-                    setClinics([]);
-                    setInventory([]);
-                    setLoading(false);
-                }
-            }).catch(() => {
-                setSession(null);
-                setProfile(null);
-                setLoading(false);
-            });
-
-            auth.onAuthStateChange((user, event) => {
-                if (localStorage.getItem('jeevika_demo_session')) return;
-
-                setSession(user);
-
-                // Handle Password Recovery Event
-                if (event === 'PASSWORD_RECOVERY') {
-                    setIsPasswordRecovery(true);
-                }
-
-                if (user) {
-                    fetchProfile(user.id);
-                } else {
-                    setProfile(null);
-                    setHospital(null);
-                    setManagedClinic(null);
-                    setClinics([]);
-                    setInventory([]);
-                    setLoading(false);
-                }
-            });
-        }
-
-        const handleDemoLogin = () => {
-            loadDemoSession();
-        };
-
-        const handleDemoLogout = () => {
+        let active = true;
+        let changed = false;
+        const clearSession = () => {
             setSession(null);
             setProfile(null);
             setHospital(null);
@@ -254,13 +202,43 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
             setInventory([]);
             setLoading(false);
         };
+        const unsubscribe = auth.onAuthStateChange((user, event) => {
+            changed = true;
+            if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
+            if (user) {
+                setLoading(true);
+                setSession(user);
+                void fetchProfile(user.id);
+            } else {
+                clearSession();
+            }
+        });
 
+        if (!loadDemoSession()) {
+            void auth.getSession().then((session) => {
+                if (!active || changed) return;
+                if (session?.user) {
+                    setSession(session.user);
+                    void fetchProfile(session.user.id);
+                } else {
+                    clearSession();
+                }
+            }).catch(() => {
+                if (active && !changed) clearSession();
+            });
+        }
+
+        const handleDemoLogin = () => {
+            changed = true;
+            loadDemoSession();
+        };
         window.addEventListener('jeevika_demo_login', handleDemoLogin);
-        window.addEventListener('jeevika_demo_logout', handleDemoLogout);
-
+        window.addEventListener('jeevika_demo_logout', clearSession);
         return () => {
+            active = false;
+            unsubscribe();
             window.removeEventListener('jeevika_demo_login', handleDemoLogin);
-            window.removeEventListener('jeevika_demo_logout', handleDemoLogout);
+            window.removeEventListener('jeevika_demo_logout', clearSession);
         };
     }, []);
 

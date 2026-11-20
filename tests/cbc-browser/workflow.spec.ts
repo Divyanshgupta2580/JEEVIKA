@@ -101,10 +101,37 @@ function textPdf() {
   });
   return Buffer.from(doc.output("arraybuffer"));
 }
+async function enterStaffCredentials(page: Page, password: string) {
+  await page.getByRole("button", { name: "Staff Credentials" }).click();
+  await page.getByLabel("Staff Email", { exact: true }).fill("doctor@demo.test");
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Sign In with Credentials" }).click();
+}
+
+test("guards private routes, verifies credentials, and restores an authenticated deep link", async ({ page }) => {
+  await page.goto("/erp.html#/kiosk");
+  await expect(page).toHaveURL(/#\/login$/);
+  await page.goto("/erp.html?guard=workspace#/app?view=doctor-consultation");
+  await expect(page).toHaveURL(/#\/login$/);
+  await enterStaffCredentials(page, "invalid-password");
+  await expect(page.getByText("Invalid email or password.", { exact: true }).first()).toBeVisible();
+  await expect(page).toHaveURL(/#\/login$/);
+  await page.getByLabel("Password", { exact: true }).fill(demoPassword);
+  await page.getByRole("button", { name: "Sign In with Credentials" }).click();
+  await expect(page).toHaveURL(/#\/app\?view=doctor-consultation$/);
+  const workspace = page.getByRole("heading", { name: "Doctor Consultation (OPD)" });
+  await expect(workspace).toBeVisible();
+  await page.reload();
+  await expect(workspace).toBeVisible();
+  await expect(page).toHaveURL(/#\/app\?view=doctor-consultation$/);
+});
+
 async function openDashboard(page: Page) {
   await page.goto("/erp.html#/app?view=doctor-consultation");
+  await expect(page).toHaveURL(/#\/login$/);
+  await enterStaffCredentials(page, demoPassword);
   await expect(
-    page.getByRole("heading", { name: "Your consultation workspace" }),
+    page.getByRole("heading", { name: "Doctor Consultation (OPD)" }),
   ).toBeVisible();
   const access = page.getByRole("region", { name: "CBC clinical access" });
   await access.getByLabel("Organization", { exact: true }).fill("demo");

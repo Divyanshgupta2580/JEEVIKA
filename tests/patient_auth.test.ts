@@ -117,7 +117,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
       `/api/v1/patient/${patientId}/profile`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
         body: JSON.stringify({
           bloodGroup: "B+",
           allergies: ["Peanuts", "Dust"],
@@ -141,7 +141,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-Tenant-Id": "org_test",
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           primaryFocus: "womens_health",
@@ -167,7 +167,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-Tenant-Id": "org_test",
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           primaryDosha: "PITTA_KAPHA",
@@ -199,6 +199,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
       `/api/v1/patient/${patientId}/ayurveda`,
       {
         method: "GET",
+        headers: { Authorization: `Bearer ${sessionToken}` },
       },
     );
     expect(getRes.status).toBe(200);

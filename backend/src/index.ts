@@ -13,7 +13,7 @@ import { platformRouter } from "./modules/platform/routes";
 import { herRouter } from "./modules/her/routes";
 import { vitalisRouter } from "./modules/vitalis/routes";
 import { patientAuthRouter, patientProfileRouter } from "./modules/patient_auth/routes";
-import { cbcRouter } from "./modules/cbc/routes";
+import { cbcRouter, clinicalAccessEnabled } from "./modules/cbc/routes";
 import { pruneCbcSources } from "./modules/cbc/maintenance";
 import { maritimeRouter } from "./modules/maritime";
 import { pruneRouter } from "./modules/prune";
@@ -62,6 +62,7 @@ import { integrationOpenapi } from "../../packages/shared/integration-openapi";
 import type { IntegrationContext } from "./context";
 import { tenantDb as integrationTenantDb } from "./database";
 import { jsonBody } from "./http";
+import { authorizeDataSocket, dataProtocol, dataSocketPath } from "./data-socket";
 import { equalHash, newToken, passwordHash, tokenHash } from "./security";
 
 // Export Durable Objects for Cloudflare runtime binding
@@ -415,6 +416,7 @@ export function createIntegrationApp() {
       },
     });
   });
+  integrationApp.get("/api/v1/auth/clinical", (c) => c.json({ enabled: clinicalAccessEnabled(c.env) }));
   integrationApp.use("/api/v1/*", async (c, next) => {
     if (c.req.path === "/api/v1/auth/login") {
       return next();
@@ -681,6 +683,25 @@ export function createIntegrationApp() {
 // =========================================================================
 
 const app = new Hono<{ Bindings: Env }>();
+
+app.get(dataSocketPath, async (c) => {
+  const handle = await authorizeDataSocket(c.req.raw, c.env, (request, env) => app.fetch(request, env));
+  if (!handle) return c.json({ error: "WebSocket session required" }, 401);
+
+  const { 0: client, 1: server } = new WebSocketPair();
+  server.binaryType = "arraybuffer";
+  server.accept();
+  server.addEventListener("close", () => server.close());
+  server.addEventListener("message", async ({ data }) => {
+    const response = await handle(data);
+    if (server.readyState === WebSocket.OPEN) server.send(response);
+  });
+  return new Response(null, {
+    status: 101,
+    webSocket: client,
+    headers: { "Sec-WebSocket-Protocol": dataProtocol },
+  });
+});
 
 // Explicit CORS allowlist — no wildcard. Only known origins accepted.
 const ALLOWED_ORIGINS = new Set([
@@ -1013,19 +1034,23 @@ const defaultPriyaPrescription: PrescriptionRecord = {
   opdRoom: "OPD-4",
   doctorNotes:
     "Evidence-based allopathic regimen for acid peptic disease and gastroesophageal reflux: Take PPI 30 mins before breakfast. Avoid spicy and fried foods. Maintain dinner-to-sleep interval > 2 hours.",
-  items: [
+  dietRestrictions: [
+    "Avoid spicy, oily and heavily fried foods",
+    "Eat small, frequent meals rather than large heavy meals",
+    "Maintain dinner-to-sleep interval greater than 2 hours",
+  ],
+  hydrationTarget: "2.5L water daily",
+  followUpDate: "Nov 02, 2026 · OPD-4 · In 14 Days",
+  medicines: [
     {
-      medicationName: "Pantoprazole Gastro-Resistant 40mg + Domperidone 30mg SR",
-      genericName: "Pantoprazole + Domperidone SR",
-      dosage: "40mg / 30mg",
-      frequency: "OD (1-0-0)",
-      durationDays: 14,
+      id: "med-p01",
+      prescriptionId: "#RX-2026-P5910",
+      name: "Pantoprazole Gastro-Resistant 40mg + Domperidone 30mg SR",
+      dosageForm: "Capsule",
+      strength: "40mg / 30mg",
+      timeSlot: "morning",
+      scheduledTime: "07:30 AM",
       instructions: "Take 30 minutes before morning breakfast with plain water",
-      isAyush: false,
-      isJanAushadhiGeneric: true,
-      janAushadhiPriceInr: 22,
-      brandedMarketPriceInr: 165,
-      savingsPercent: 86,
       batchNumber: "BAT-2026-P40",
       expiryDate: "09/2028",
       isTaken: false,
@@ -1033,17 +1058,14 @@ const defaultPriyaPrescription: PrescriptionRecord = {
       takenAt: null,
     },
     {
-      medicationName: "Sucralfate 1000mg + Oxetacaine 20mg Suspension (200ml)",
-      genericName: "Sucralfate + Oxetacaine Oral Gel",
-      dosage: "10ml",
-      frequency: "TDS (1-1-1)",
-      durationDays: 7,
+      id: "med-p02",
+      prescriptionId: "#RX-2026-P5910",
+      name: "Sucralfate 1000mg + Oxetacaine 20mg Suspension (200ml)",
+      dosageForm: "Suspension",
+      strength: "10ml",
+      timeSlot: "afternoon",
+      scheduledTime: "02:00 PM",
       instructions: "Take 10ml 1 hour after meals and at bedtime. Do not drink water immediately.",
-      isAyush: false,
-      isJanAushadhiGeneric: true,
-      janAushadhiPriceInr: 45,
-      brandedMarketPriceInr: 210,
-      savingsPercent: 78,
       batchNumber: "BAT-2026-S10",
       expiryDate: "11/2027",
       isTaken: false,
@@ -1051,17 +1073,14 @@ const defaultPriyaPrescription: PrescriptionRecord = {
       takenAt: null,
     },
     {
-      medicationName: "Digestive Enzyme Syrup (Fungal Diastase + Pepsin 100ml)",
-      genericName: "Digestive Enzymes Liquid",
-      dosage: "5ml",
-      frequency: "BD (1-0-1)",
-      durationDays: 10,
+      id: "med-p03",
+      prescriptionId: "#RX-2026-P5910",
+      name: "Digestive Enzyme Syrup (Fungal Diastase + Pepsin 100ml)",
+      dosageForm: "Syrup",
+      strength: "5ml",
+      timeSlot: "night",
+      scheduledTime: "09:00 PM",
       instructions: "Immediately after lunch and dinner",
-      isAyush: false,
-      isJanAushadhiGeneric: true,
-      janAushadhiPriceInr: 30,
-      brandedMarketPriceInr: 120,
-      savingsPercent: 75,
       batchNumber: "BAT-2026-D05",
       expiryDate: "08/2027",
       isTaken: false,

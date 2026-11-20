@@ -2,6 +2,7 @@ import {
   type FormEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -20,7 +21,9 @@ import {
   type Encounter,
   intakeSchema,
   type Principal,
+  loginResponseSchema,
 } from "../../../packages/shared/integration";
+import { closeDataSocket, socketRequest } from "./lib/dataSocket";
 import "./style.css";
 import "./design-system/workspace.css";
 import {
@@ -40,6 +43,12 @@ import { WebsiteLanguageSelect } from "./components/WebsiteLanguageSelect";
 import { startWebsiteLocalization } from "../../../packages/i18n/website";
 
 type Client = ReturnType<typeof integrationClient>;
+type ClinicalSession = z.infer<typeof loginResponseSchema>;
+const clinicalSessionKey = "jeevika.clinician-session.v1";
+
+function privateRoute(route: string) {
+  return route === "/clinician" || route === "/kiosk" || /^\/thread\/[\w-]+$/.test(route);
+}
 const questions = [
   ["chestPain", "Chest pain"],
   ["breathless", "Difficulty breathing"],
@@ -70,7 +79,7 @@ function useRoute() {
 function Login({
   onLogin,
 }: {
-  onLogin: (token: string, principal: Principal) => void;
+  onLogin: (session: ClinicalSession) => void;
 }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -85,7 +94,7 @@ function Login({
         email: String(data.get("email")),
         password: String(data.get("password")),
       });
-      onLogin(session.token, session.principal);
+      onLogin(session);
     } catch (error) {
       setError(message(error));
     } finally {
@@ -761,16 +770,26 @@ function Clinician({
   );
 }
 function App() {
-  const [session, setSession] = useState<{
-    token: string;
-    principal: Principal;
-  } | null>(null);
+  const [session, setSession] = useState<ClinicalSession | null>();
   const [online, setOnline] = useState(navigator.onLine);
   const [navOpen, setNavOpen] = useState(false);
-
-  const [error, setError] = useState("");
   const route = useRoute();
-  const [api, setApi] = useState<Client>(() => integrationClient());
+  const destination = useRef("/clinician");
+  const token = session?.token;
+  const lifetime = useMemo(() => new AbortController(), [token]);
+  const expire = useCallback((currentToken: string) => {
+    closeDataSocket(currentToken);
+    sessionStorage.removeItem(clinicalSessionKey);
+    setSession(null);
+  }, []);
+  const api = useMemo(() => integrationClient(token, fetch, token
+    ? async (path, method, body, key) => {
+      const response = await socketRequest(token, path, method, body, lifetime.signal, key, undefined, "/api/v1");
+      if (response.status === 401) expire(token);
+      return response;
+    }
+    : undefined), [token, lifetime, expire]);
+
   useEffect(() => startWebsiteLocalization(), []);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -781,24 +800,60 @@ function App() {
       window.removeEventListener("offline", update);
     };
   }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const raw = sessionStorage.getItem(clinicalSessionKey);
+        const saved = loginResponseSchema.parse(JSON.parse(raw ?? "null"));
+        if (Date.parse(saved.expiresAt) <= Date.now()) throw new Error("Clinical session expired");
+        const principal = await integrationClient(saved.token, (input, init) =>
+          fetch(input, { ...init, signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) })
+        ).me();
+        if (!controller.signal.aborted) setSession({ ...saved, principal });
+      } catch {
+        if (!controller.signal.aborted) {
+          sessionStorage.removeItem(clinicalSessionKey);
+          setSession(null);
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, []);
+  useEffect(() => {
+    if (!session) return;
+    const timer = window.setTimeout(() => expire(session.token), Math.max(0, Date.parse(session.expiresAt) - Date.now()));
+    return () => {
+      window.clearTimeout(timer);
+      lifetime.abort();
+      closeDataSocket(session.token);
+    };
+  }, [session, lifetime, expire]);
+
+  useEffect(() => {
+    if (session === null && route !== "/login") {
+      if (privateRoute(route)) destination.current = route;
+      window.location.replace("#/login");
+    }
+    if (session && !privateRoute(route)) window.location.replace(`#${destination.current}`);
+  }, [route, session]);
+
+  if (session === undefined) return <div className="workspace" aria-busy="true" />;
   if (!session)
     return (
       <Login
-        onLogin={(token, principal) => {
-          setSession({ token, principal });
-          setApi(integrationClient(token));
-          setError("");
+        onLogin={(authenticated) => {
+          sessionStorage.setItem(clinicalSessionKey, JSON.stringify(authenticated));
+          setSession(authenticated);
         }}
       />
     );
+  if (!privateRoute(route)) return null;
   async function logout() {
-    try {
-      await api.logout();
-      setSession(null);
-      setApi(integrationClient());
-    } catch (error) {
-      setError(message(error));
-    }
+    if (!token) return;
+    lifetime.abort();
+    expire(token);
+    await api.logout().catch(() => {});
   }
   const isKiosk = route === "/kiosk";
   const detailId = route.startsWith("/thread/") ? route.slice(8) : undefined;
@@ -894,11 +949,6 @@ function App() {
             <p role="status" className="error">
               You are offline. Server actions will show errors; no fabricated
               records are substituted.
-            </p>
-          )}
-          {error && (
-            <p role="alert" className="error">
-              {error}
             </p>
           )}
           {session.principal.role === "CASHIER" ? (

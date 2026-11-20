@@ -53,10 +53,10 @@ const currentCare = `EXISTS (SELECT 1 FROM consents c WHERE c.org_id=cbc_reports
 function dbFor(c: Ctx) {
   return tenantDb({ db: c.env.DB, orgId: c.get("principal").orgId });
 }
-function enabled(c: Ctx) {
+export function clinicalAccessEnabled(env: Ctx["env"]) {
   return (
-    ["development", "test"].includes(c.env.ENVIRONMENT) &&
-    c.env.CBC_ENABLED !== "false"
+    ["development", "test"].includes(env.ENVIRONMENT) &&
+    env.CBC_ENABLED !== "false"
   );
 }
 async function encounter(c: Ctx, id: string) {
@@ -139,16 +139,16 @@ function audit(c: Ctx, encounterId: string, action: string) {
 export const cbcRouter = new Hono<IntegrationContext>();
 cbcRouter.get("/capabilities", (c) =>
   c.json({
-    enabled: enabled(c),
+    enabled: clinicalAccessEnabled(c.env),
     syntheticOnly: true,
-    sourceRetention: enabled(c) && !!c.env.CBC_DOCUMENTS,
-    inference: enabled(c) && c.env.CBC_INFERENCE_ENABLED !== "false",
+    sourceRetention: clinicalAccessEnabled(c.env) && !!c.env.CBC_DOCUMENTS,
+    inference: clinicalAccessEnabled(c.env) && c.env.CBC_INFERENCE_ENABLED !== "false",
     maxFileBytes: 10485760,
     maxPages: 5,
   }),
 );
 cbcRouter.use("*", async (c, next) => {
-  if (!enabled(c))
+  if (!clinicalAccessEnabled(c.env))
     throw new HTTPException(503, {
       message:
         "CBC is available only in the authenticated synthetic clinical workspace",

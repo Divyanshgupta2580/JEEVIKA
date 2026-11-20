@@ -16,32 +16,48 @@ export class ApiError extends Error {
     super(message);
   }
 }
-export function integrationClient(token = "", transport: typeof fetch = fetch) {
+export type DataRequest = (
+  path: string,
+  method: string,
+  body?: unknown,
+  key?: string,
+) => Promise<{ status: number; body?: unknown }>;
+
+export function integrationClient(token = "", transport: typeof fetch = fetch, dataRequest?: DataRequest) {
   async function request(
     path: string,
     method = "GET",
     body?: unknown,
     key?: string,
   ): Promise<unknown> {
-    const response = await transport(`/api/v1${path}`, {
-      method,
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        "Content-Type": "application/json",
-        ...(key ? { "Idempotency-Key": key } : {}),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
-    const data: unknown = await response.json();
-    if (!response.ok) {
+    let status: number;
+    let data: unknown;
+    if (path.startsWith("/auth/")) {
+      const response = await transport(`/api/v1${path}`, {
+        method,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json",
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+      status = response.status;
+      data = await response.json();
+    } else {
+      if (!dataRequest) throw new ApiError("Authenticated data connection required", 401);
+      const response = await dataRequest(path, method, body, key);
+      status = response.status;
+      data = response.body;
+    }
+    if (status < 200 || status >= 300) {
       const error = z
         .object({ error: z.object({ message: z.string() }) })
         .safeParse(data);
       throw new ApiError(
         error.success
           ? error.data.error.message
-          : `Request failed (${response.status})`,
-        response.status,
+          : `Request failed (${status})`,
+        status,
       );
     }
     return data;

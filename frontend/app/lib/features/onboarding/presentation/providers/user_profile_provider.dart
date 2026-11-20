@@ -56,6 +56,8 @@ class UserProfileNotifier extends StateNotifier<UserProfileState> {
   }
 
   Future<void> _init() async {
+    await ref.read(authProvider.notifier).ready;
+    if (!mounted) return;
     final auth = ref.read(authProvider);
     if (auth.session != null) {
       await loadProfile(auth.session!.patientId, auth.session!.token);
@@ -65,6 +67,7 @@ class UserProfileNotifier extends StateNotifier<UserProfileState> {
   Future<void> loadProfile(String patientId, String token) async {
     state = state.copyWith(isLoading: true);
     final p = await repository.fetchAndSyncProfile(patientId: patientId, token: token);
+    if (!mounted || ref.read(authProvider).session?.token != token) return;
     state = state.copyWith(isLoading: false, profile: p);
   }
 

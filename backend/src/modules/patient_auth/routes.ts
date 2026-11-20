@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from "../../context";
 import { passwordHash, tokenHash, equalHash, newToken } from "../../security";
 import { tenantDb } from "../../db/tenant";
+import { memorySessions, validatePatientSession } from "../../patient-session";
 import {
   patientSignupSchema,
   patientLoginSchema,
@@ -26,7 +27,6 @@ interface InMemoryCredential {
 }
 
 const memoryCredentials = new Map<string, InMemoryCredential>(); // Key: orgId:phoneHash or orgId:email
-const memorySessions = new Map<string, { orgId: string; patientId: string; expiresAt: string }>(); // Key: tokenHash
 const memoryPreferences = new Map<string, any>(); // Key: patientId
 const memoryAyurveda = new Map<string, any>(); // Key: patientId
 
@@ -122,7 +122,7 @@ patientAuthRouter.post("/signup", async (c) => {
     reminderAfternoonTime: "13:00",
     reminderNightTime: "20:30",
   };
-  memoryPreferences.set(patientId, defaultPrefs);
+  memoryPreferences.set(`${orgId}:${patientId}`, defaultPrefs);
 
   // Persist to D1 if available
   if (c.env?.DB) {
@@ -184,6 +184,7 @@ patientAuthRouter.post("/signup", async (c) => {
     {
       success: true,
       token: rawToken,
+      expiresAt,
       patient: patientData,
       preferences: defaultPrefs,
       onboardingComplete: false,
@@ -234,6 +235,8 @@ patientAuthRouter.post("/login", async (c) => {
   }
 
   if (!cred) {
+    if (password !== "demo" || (c.env && !["development", "test"].includes(c.env.ENVIRONMENT)))
+      return c.json({ success: false, error: "Invalid phone number, email, or password" }, 401);
     // If not found as mobile registered, check if this is the demo patient pat-048291 (Ramesh) or pat-048292 (Priya)
     if (cleanId === "pat-048291" || cleanId === "9876543210" || cleanId.includes("048291")) {
       const demoPatient = patientStore.get("pat-048291");
@@ -246,8 +249,9 @@ patientAuthRouter.post("/login", async (c) => {
         return c.json({
           success: true,
           token: rawToken,
+          expiresAt,
           patient: demoPatient,
-          preferences: memoryPreferences.get("pat-048291") || {
+          preferences: memoryPreferences.get(`${orgId}:${"pat-048291"}`) || {
             primaryFocus: "longevity",
             primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
             themeMode: "light",
@@ -275,8 +279,9 @@ patientAuthRouter.post("/login", async (c) => {
         return c.json({
           success: true,
           token: rawToken,
+          expiresAt,
           patient: demoPatient,
-          preferences: memoryPreferences.get(demoPatient.id) || {
+          preferences: memoryPreferences.get(`${orgId}:${demoPatient.id}`) || {
             primaryFocus: "digestive_wellness",
             primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
             themeMode: "light",
@@ -339,18 +344,19 @@ patientAuthRouter.post("/login", async (c) => {
     } catch (_) {}
   }
 
-  const prefs = memoryPreferences.get(cred.patientId) || {
+  const prefs = memoryPreferences.get(`${orgId}:${cred.patientId}`) || {
     primaryFocus: "longevity",
     primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
     themeMode: "light",
     language: patient?.preferredLang || "hi",
   };
 
-  const ayurveda = memoryAyurveda.get(cred.patientId) || null;
+  const ayurveda = memoryAyurveda.get(`${orgId}:${cred.patientId}`) || null;
 
   return c.json({
     success: true,
     token: rawToken,
+    expiresAt,
     patient,
     preferences: prefs,
     ayurveda,
@@ -367,7 +373,8 @@ patientAuthRouter.post("/logout", async (c) => {
     memorySessions.delete(sHash);
     if (c.env?.DB) {
       try {
-        const orgId = getOrgId(c);
+        const orgId = token.split(".")[0];
+        if (!orgId || !/^[a-z0-9_-]{1,80}$/.test(orgId)) return c.json({ success: true });
         const tDb = tenantDb(c.env.DB as any, { orgId });
         await tDb.patientAuth.deleteSession(sHash);
       } catch (_) {}
@@ -378,41 +385,26 @@ patientAuthRouter.post("/logout", async (c) => {
 
 // GET /api/v1/auth/patient/me
 patientAuthRouter.get("/me", async (c) => {
-  const authHeader = c.req.header("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return c.json({ success: false, error: "Missing Bearer token" }, 401);
-  }
+  const authorization = c.req.header("Authorization") ?? "";
+  const session = authorization.startsWith("Bearer ")
+    ? await validatePatientSession(c.env, authorization.slice(7))
+    : null;
+  if (!session) return c.json({ success: false, error: "Session invalid or expired" }, 401);
 
-  const token = authHeader.slice(7);
-  const sHash = await tokenHash(token);
-  let session = memorySessions.get(sHash);
-
-  if (!session && c.env?.DB) {
-    try {
-      const orgId = getOrgId(c);
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      const d1Session = await tDb.patientAuth.validateSession(sHash);
-      if (d1Session) {
-        session = { orgId: d1Session.org_id, patientId: d1Session.patient_id, expiresAt: d1Session.expires_at };
-      }
-    } catch (_) {}
-  }
-
-  if (!session) {
-    return c.json({ success: false, error: "Session invalid or expired" }, 401);
-  }
-
-  let patient = patientStore.get(session.patientId);
-  const prefs = memoryPreferences.get(session.patientId) || {
+  const record = patientStore.get(session.patientId);
+  const patient = record?.orgId === session.orgId ? record : undefined;
+  const prefs = memoryPreferences.get(`${session.orgId}:${session.patientId}`) || {
     primaryFocus: "longevity",
     primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
     themeMode: "light",
     language: "hi",
   };
-  const ayurveda = memoryAyurveda.get(session.patientId) || null;
+  const ayurveda = memoryAyurveda.get(`${session.orgId}:${session.patientId}`) || null;
 
   return c.json({
     success: true,
+    patientId: session.patientId,
+    expiresAt: session.expiresAt,
     patient,
     preferences: prefs,
     ayurveda,
@@ -421,21 +413,27 @@ patientAuthRouter.get("/me", async (c) => {
 });
 
 // Patient Personalization & Customization Routes
-export const patientProfileRouter = new Hono<{ Bindings: Env }>();
+export const patientProfileRouter = new Hono<{
+  Bindings: Env;
+  Variables: { patientOrgId: string };
+}>();
+patientProfileRouter.use("/:id/*", async (c, next) => {
+  const authorization = c.req.header("Authorization") ?? "";
+  const session = authorization.startsWith("Bearer ")
+    ? await validatePatientSession(c.env, authorization.slice(7))
+    : null;
+  if (!session) return c.json({ success: false, error: "Session invalid or expired" }, 401);
+  if (c.req.param("id") !== session.patientId)
+    return c.json({ success: false, error: "Patient access denied" }, 403);
+  c.set("patientOrgId", session.orgId);
+  await next();
+});
 
 // GET /api/v1/patient/:id/profile
 patientProfileRouter.get("/:id/profile", async (c) => {
   const patientId = c.req.param("id");
   let patient = patientStore.get(patientId);
-  if (!patient) {
-    for (const p of patientStore.values()) {
-      if (p.id === patientId || p.phone === patientId) {
-        patient = p;
-        break;
-      }
-    }
-  }
-  if (!patient) return c.json({ success: false, error: "Patient not found" }, 404);
+  if (!patient || patient.orgId !== c.get("patientOrgId")) return c.json({ success: false, error: "Patient not found" }, 404);
   return c.json({ success: true, patient });
 });
 
@@ -451,6 +449,9 @@ patientProfileRouter.put("/:id/profile", async (c) => {
 
   const input = parseResult.data;
   let patient = patientStore.get(patientId);
+  if (patient && patient.orgId !== c.get("patientOrgId")) {
+    return c.json({ success: false, error: "Patient not found" }, 404);
+  }
   if (patient) {
     const updated = {
       ...patient,
@@ -474,7 +475,7 @@ patientProfileRouter.put("/:id/profile", async (c) => {
 // GET /api/v1/patient/:id/preferences
 patientProfileRouter.get("/:id/preferences", async (c) => {
   const patientId = c.req.param("id");
-  const prefs = memoryPreferences.get(patientId) || {
+  const prefs = memoryPreferences.get(`${c.get("patientOrgId")}:${patientId}`) || {
     primaryFocus: "longevity",
     primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
     themeMode: "light",
@@ -502,13 +503,13 @@ patientProfileRouter.put("/:id/preferences", async (c) => {
     return c.json({ success: false, error: "Invalid preferences data", issues: parseResult.error.issues }, 400);
   }
 
-  const existing = memoryPreferences.get(patientId) || {};
+  const existing = memoryPreferences.get(`${c.get("patientOrgId")}:${patientId}`) || {};
   const updated = { ...existing, ...parseResult.data, patientId };
-  memoryPreferences.set(patientId, updated);
+  memoryPreferences.set(`${c.get("patientOrgId")}:${patientId}`, updated);
 
   if (c.env?.DB) {
     try {
-      const orgId = getOrgId(c);
+      const orgId = c.get("patientOrgId");
       const tDb = tenantDb(c.env.DB as any, { orgId });
       await tDb.patientPreferences.upsert({
         id: `pref-${patientId}`,
@@ -533,7 +534,7 @@ patientProfileRouter.put("/:id/preferences", async (c) => {
 // GET /api/v1/patient/:id/ayurveda
 patientProfileRouter.get("/:id/ayurveda", async (c) => {
   const patientId = c.req.param("id");
-  const ayurveda = memoryAyurveda.get(patientId) || null;
+  const ayurveda = memoryAyurveda.get(`${c.get("patientOrgId")}:${patientId}`) || null;
   return c.json({ success: true, ayurveda });
 });
 
@@ -553,11 +554,11 @@ patientProfileRouter.put("/:id/ayurveda", async (c) => {
     patientId,
     assessedAt: new Date().toISOString(),
   };
-  memoryAyurveda.set(patientId, updated);
+  memoryAyurveda.set(`${c.get("patientOrgId")}:${patientId}`, updated);
 
   if (c.env?.DB) {
     try {
-      const orgId = getOrgId(c);
+      const orgId = c.get("patientOrgId");
       const tDb = tenantDb(c.env.DB as any, { orgId });
       await tDb.patientAyurveda.upsert({
         id: `ayur-${patientId}`,
