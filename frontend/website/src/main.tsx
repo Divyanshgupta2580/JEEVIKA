@@ -150,6 +150,7 @@ function Login({
               <input
                 type="password"
                 name="password"
+                defaultValue="Dhaaga-demo-2026!"
                 required
                 autoComplete="current-password"
               />
