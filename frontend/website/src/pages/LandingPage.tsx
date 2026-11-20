@@ -105,6 +105,63 @@ export default function LandingPage() {
             border: 1px solid rgba(64, 96, 82, 0.45) !important;
           }
         }
+        @media (max-width: 768px) {
+          .ds-workspace-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+            margin-top: 24px !important;
+          }
+          .ds-workspace-card.featured {
+            grid-column: 1 / -1 !important;
+            grid-row: auto !important;
+            text-align: center !important;
+            align-items: center !important;
+          }
+          .ds-workspace-card {
+            padding: 18px 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+          }
+          .ds-workspace-icon {
+            margin: 0 auto 12px !important;
+          }
+          .ds-site .ds-workspace-card h3 {
+            font-size: 15px !important;
+            text-align: center !important;
+            width: 100% !important;
+          }
+          .ds-site .ds-workspace-card p {
+            font-size: 12px !important;
+            text-align: center !important;
+            margin: 0 auto 14px !important;
+            max-width: 100% !important;
+          }
+          .ds-workspace-action {
+            font-size: 11px !important;
+            gap: 6px !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            text-align: center !important;
+            margin-top: auto !important;
+            width: 100% !important;
+          }
+          .ds-language-preview {
+            margin-top: 16px !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          .ds-language-preview span {
+            font-size: 13px !important;
+            padding: 10px 6px !important;
+            text-align: center !important;
+          }
+        }
       `}</style>
       <div ref={node} dangerouslySetInnerHTML={{ __html: markup }} />
     </>
