@@ -39,46 +39,13 @@ const Hero: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  ReactGA.event({
-                    category: "App Launch",
-                    action: "Clicked Instant Launch",
-                  });
-                  localStorage.setItem('lastActiveView', 'admin');
-                  navigate('/app');
+                  ReactGA.event({ category: "Authentication", action: "Opened Staff Sign-In" });
+                  navigate('/login');
                 }}
                 className="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 hover:text-blue-600 hover:border-blue-400 px-8 py-4 rounded-2xl text-lg font-bold shadow-sm transition-all hover:-translate-y-1 w-full sm:w-auto text-center cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Instant Launch</span>
-                <span className="text-xs bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">No Login</span>
+                <span>Staff Sign-In</span>
               </button>
-            </div>
-
-            {/* Quick 5-Portal Profile Dock */}
-            <div className="pt-4 border-t border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                1-Click Direct Entry by Profile:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: 'HQ Group', icon: 'domain', view: 'admin', color: 'hover:border-indigo-500 hover:text-indigo-600' },
-                  { label: 'Clinic Hub', icon: 'local_hospital', view: 'clinic-admin', color: 'hover:border-blue-500 hover:text-blue-600' },
-                  { label: 'Doctor OPD', icon: 'stethoscope', view: 'doctor-consultation', color: 'hover:border-teal-500 hover:text-teal-600' },
-                  { label: 'Nurse STAT', icon: 'emergency', view: 'emergency-triage', color: 'hover:border-rose-500 hover:text-rose-600' },
-                  { label: 'Patient Kiosk', icon: 'touch_app', view: 'patient-kiosk', color: 'hover:border-amber-500 hover:text-amber-600' }
-                ].map((item) => (
-                  <button
-                    key={item.view}
-                    onClick={() => {
-                      localStorage.setItem('lastActiveView', item.view);
-                      navigate(`/app?view=${item.view}`);
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer ${item.color}`}
-                  >
-                    <SymbolIcon className="material-symbols-outlined text-[16px]">{item.icon}</SymbolIcon>
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 

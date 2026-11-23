@@ -198,27 +198,6 @@ export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onCo
                     </CardContent>
                 </Card>
 
-                {/* TROUBLESHOOTING: Self-Correction for Misclassified Users */}
-                <div className="mt-8 text-center">
-                    <p className="text-slate-500 text-sm mb-2">Not a Hospital Owner?</p>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-400 hover:text-blue-600"
-                        onClick={async () => {
-                            if (confirm("Are you a Clinic Admin/Staff erroneously sent here? This will switch your role to CLINIC_ADMIN.")) {
-                                try {
-                                    await db.update('profiles', userProfile.id, { role: 'CLINIC_ADMIN' })
-                                    window.location.reload()
-                                } catch (error: any) {
-                                    alert("Error fixing role: " + error.message)
-                                }
-                            }
-                        }}
-                    >
-                        I am a Clinic Admin (Fix My Role)
-                    </Button>
-                </div>
             </div>
         )
     }

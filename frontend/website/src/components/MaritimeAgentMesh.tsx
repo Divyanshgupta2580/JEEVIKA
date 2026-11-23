@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Shield, Activity, RefreshCw, Cpu, Layers, Sparkles, Cloud, Zap, Terminal, ArrowRight } from 'lucide-react';
-import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
+import { CLOUDFLARE_API_BASE } from '@/lib/api';
 
 interface AgentInfo {
   id: string;

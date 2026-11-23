@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Shield, Zap, Lock, RefreshCw, Terminal, CheckCircle2, XCircle, ArrowRight, ShieldAlert, FileText, Check } from 'lucide-react';
-import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
+import { CLOUDFLARE_API_BASE } from '@/lib/api';
 
 interface PruneLogItem {
   id: string;

@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
               )
             ))}
             <Link
-              to="/app"
+              to="/login"
               onClick={() => {
                 ReactGA.event({
                   category: "App Engagement",
@@ -182,7 +182,7 @@ const Navbar: React.FC = () => {
               }}
               className="block w-full bg-primary hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-bold text-center shadow-lg transition-colors"
             >
-              Launch Dashboards (No Login)
+              Staff Sign-In
             </Link>
           </div>
         </div>

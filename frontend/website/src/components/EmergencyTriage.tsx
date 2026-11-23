@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { dataService as db } from '@/lib/dataService';
 import { useHospital } from '@/context/HospitalContext';
-import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
+import { CLOUDFLARE_API_BASE } from '@/lib/api';
 
 export interface EmergencyCase {
   id: string;

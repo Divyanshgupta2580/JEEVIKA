@@ -10,7 +10,7 @@ import {
   loginResponseSchema,
   principalSchema,
 } from "../../../../../packages/shared/integration";
-import { CLOUDFLARE_API_BASE } from "../../lib/supabase";
+import { CLOUDFLARE_API_BASE } from "../../lib/api";
 import { closeDataSocket, socketRequest } from "../../lib/dataSocket";
 
 export type DoctorSession = z.infer<typeof loginResponseSchema>;

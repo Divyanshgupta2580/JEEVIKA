@@ -215,7 +215,7 @@ const Offers: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase tracking-widest mb-4">
             <Sparkles className="w-4 h-4 text-blue-600" />
-            <span>Zero Login Walls · 1-Click Interactive Access</span>
+            <span>Authenticated Role-Based Workspaces</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
             The 5 Specialized Healthcare Portals

@@ -74,3 +74,32 @@ describe("Prune AI Cost Optimization & Security Gateway (Production WAF & Semant
     expect(data.logs.length).toBeGreaterThan(0);
   });
 });
+
+describe("POS inventory invariants", () => {
+  it("rejects malformed POS quantities", async () => {
+    const res = await app.request("http://127.0.0.1/api/v1/ops/pos/sale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clinicId: "clinic-delhi-01", units: -1 }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects sales that would oversell stock", async () => {
+    const res = await app.request("http://127.0.0.1/api/v1/ops/pos/sale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clinicId: "clinic-delhi-01", units: 100000 }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns conflict when clinic stock is insufficient", async () => {
+    const res = await app.request("http://127.0.0.1/api/v1/ops/pos/sale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clinicId: "clinic-delhi-01", units: 9999 }),
+    });
+    expect(res.status).toBe(409);
+  });
+});

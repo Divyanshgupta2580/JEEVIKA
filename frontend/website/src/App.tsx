@@ -319,11 +319,10 @@ function AppContent() {
         } finally {
             // Clear all session-related localStorage
             localStorage.removeItem('lastActiveView');
-            localStorage.removeItem('jeevika_demo_session');
             localStorage.removeItem('cf_auth_session');
             // Remove auth tokens from localStorage
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
+                if (key.includes('auth') || key.startsWith('jeevika-')) {
                     localStorage.removeItem(key);
                 }
             });

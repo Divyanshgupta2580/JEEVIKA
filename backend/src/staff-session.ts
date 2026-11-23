@@ -10,8 +10,6 @@ export function clinicalOriginAllowed(request: Request, env?: Env) {
 }
 
 export async function validateStaffSession(env: Env, token: string) {
-  // Standalone production does not issue staff sessions. Reject any carried over from a development database.
-  if (env.PUBLIC_ORIGIN && env.ENVIRONMENT === "production") return null;
   const orgId = sessionOrgId(token, "staff");
   if (!orgId) return null;
   const row = await tenantDb({ db: env.DB, orgId })

@@ -1,8 +1,34 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { computeLedger, predictRefillWarning, savingsMeter } from "../../../../packages/engine";
 import { demoPlan } from "../../../../packages/shared/demo";
+import type { Env } from "../../context";
 
-export const opsRouter = new Hono();
+export const opsRouter = new Hono<{ Bindings: Env }>();
+
+const DEFAULT_ORG_ID = "org-jeevika-primary";
+
+const posSaleItemSchema = z.object({
+  salt: z.string().trim().min(1).max(100).optional(),
+  units: z.number().int().positive().max(10000),
+  pricePaise: z.number().int().nonnegative().max(100000000).optional(),
+  costPaise: z.number().int().nonnegative().max(100000000).optional(),
+});
+
+const posSaleSchema = z.object({
+  clinic_id: z.string().trim().min(1).max(80).optional(),
+  clinicId: z.string().trim().min(1).max(80).optional(),
+  prescription_id: z.string().trim().min(1).max(100).optional(),
+  prescriptionId: z.string().trim().min(1).max(100).optional(),
+  rxId: z.string().trim().min(1).max(100).optional(),
+  patient_id: z.string().trim().min(1).max(100).optional(),
+  patientId: z.string().trim().min(1).max(100).optional(),
+  saleId: z.string().trim().min(1).max(100).optional(),
+  units: z.number().int().positive().max(10000).optional(),
+  unitPricePaise: z.number().int().nonnegative().max(100000000).optional(),
+  unitCostPaise: z.number().int().nonnegative().max(100000000).optional(),
+  items: z.array(posSaleItemSchema).max(100).optional(),
+}).passthrough();
 
 interface ClinicInventoryItem {
   salt: string;
@@ -295,6 +321,7 @@ const hqDepotStock: Record<string, number> = {
 };
 
 interface PosSaleRecord {
+  orgId: string;
   saleId: string;
   clinicId: string;
   prescriptionId?: string;
@@ -370,34 +397,37 @@ opsRouter.get("/inventory/radar", async (c) => {
 });
 
 opsRouter.post("/pos/sale", async (c) => {
-  let body: any = {};
-  try {
-    body = await c.req.json();
-  } catch {
-    // default
+  const parsed = posSaleSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json({
+      success: false,
+      error: "Invalid POS sale",
+      issues: parsed.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+    }, 400);
   }
 
-  const clinicId = body?.clinic_id || body?.clinicId || "clinic-delhi-01";
-  const prescriptionId = body?.prescription_id || body?.prescriptionId || body?.rxId || null;
-  const patientId = body?.patient_id || body?.patientId || null;
-  const saleId = body?.saleId || "sale_" + Date.now();
+  const body = parsed.data;
+  const clinicId = body.clinic_id ?? body.clinicId ?? "clinic-delhi-01";
+  const prescriptionId = body.prescription_id ?? body.prescriptionId ?? body.rxId ?? null;
+  const patientId = body.patient_id ?? body.patientId ?? null;
+  const saleId = body.saleId ?? `sale_${crypto.randomUUID()}`;
   const dateStr = new Date().toISOString().slice(0, 10);
 
-  let units = typeof body?.units === "number" ? body.units : 30;
-  let unitPricePaise = typeof body?.unitPricePaise === "number" ? body.unitPricePaise : 1500;
-  let unitCostPaise = typeof body?.unitCostPaise === "number" ? body.unitCostPaise : 800;
+  let units = body.units ?? 30;
+  let unitPricePaise = body.unitPricePaise ?? 1500;
+  let unitCostPaise = body.unitCostPaise ?? 800;
   let totalSalePaise = units * unitPricePaise;
   let totalCogsPaise = units * unitCostPaise;
 
   // If items array is provided (e.g. from doctor consultation or detailed POS)
-  if (Array.isArray(body?.items) && body.items.length > 0) {
+  if (body.items && body.items.length > 0) {
     let sumUnits = 0;
     let sumSalePaise = 0;
     let sumCogsPaise = 0;
     for (const item of body.items) {
-      const u = typeof item.units === "number" ? item.units : 1;
-      const p = typeof item.pricePaise === "number" ? item.pricePaise : 1500;
-      const cs = typeof item.costPaise === "number" ? item.costPaise : Math.round(p * 0.5333);
+      const u = item.units;
+      const p = item.pricePaise ?? unitPricePaise;
+      const cs = item.costPaise ?? Math.floor((p * 53 + 50) / 100);
       sumUnits += u;
       sumSalePaise += u * p;
       sumCogsPaise += u * cs;
@@ -429,10 +459,28 @@ opsRouter.post("/pos/sale", async (c) => {
     clinicStockStore.set(clinicId, clinicItems);
   }
 
-  const primaryItem = clinicItems[0];
-  if (primaryItem) {
-    primaryItem.stockUnits = Math.max(0, primaryItem.stockUnits - units);
+  const remainingBeforeSale = clinicItems.reduce((sum, item) => sum + item.stockUnits, 0);
+  if (remainingBeforeSale < units) {
+    return c.json({
+      success: false,
+      error: "Insufficient inventory",
+      clinicId,
+      requestedUnits: units,
+      availableUnits: remainingBeforeSale,
+    }, 409);
   }
+
+  let unitsToAllocate = units;
+  const fefoItems = [...clinicItems].sort((a, b) => a.expiry.localeCompare(b.expiry));
+  const allocations: Array<{ item: ClinicInventoryItem; units: number }> = [];
+  for (const item of fefoItems) {
+    if (unitsToAllocate <= 0) break;
+    const allocated = Math.min(item.stockUnits, unitsToAllocate);
+    item.stockUnits -= allocated;
+    unitsToAllocate -= allocated;
+    allocations.push({ item, units: allocated });
+  }
+  const primaryItem = fefoItems[0];
 
   // Balanced double-entry posting: Cash (dr) / Revenue (cr) and COGS (dr) / Inventory (cr)
   const ledgerResult = computeLedger({
@@ -459,6 +507,7 @@ opsRouter.post("/pos/sale", async (c) => {
   });
 
   const saleRecord: PosSaleRecord = {
+    orgId: DEFAULT_ORG_ID,
     saleId,
     clinicId,
     prescriptionId: prescriptionId || undefined,
@@ -469,16 +518,17 @@ opsRouter.post("/pos/sale", async (c) => {
     status: "completed",
     createdAt: new Date().toISOString(),
   };
-  salesStore.push(saleRecord);
 
-  // If DB bound, record in D1 if available
-  const db = (c.env as any)?.DB;
-  if (db) {
+  // If DB bound, record in D1 with mandatory tenant scope.
+  if (c.env?.DB) {
     try {
-      await db.prepare(
-        "INSERT OR REPLACE INTO sales (org_id, id, reservation_id, clinic_id, created_by, created_at, status, total_paise, net_paise, tax_paise, cgst_paise, sgst_paise, igst_paise, cost_paise) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, 0, 0, 0, 0, ?)"
+      await c.env.DB.prepare(
+        `INSERT OR REPLACE INTO sales
+          (org_id, id, reservation_id, clinic_id, created_by, created_at, status,
+           total_paise, net_paise, tax_paise, cgst_paise, sgst_paise, igst_paise, cost_paise)
+         VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, 0, 0, 0, 0, ?)`
       ).bind(
-        "org-jeevika-primary",
+        DEFAULT_ORG_ID,
         saleId,
         prescriptionId || `res_${saleId}`,
         clinicId,
@@ -488,10 +538,18 @@ opsRouter.post("/pos/sale", async (c) => {
         totalSalePaise,
         totalCogsPaise
       ).run();
-    } catch {
-      // In-memory fallback
+    } catch (error) {
+      for (const allocation of allocations) {
+        allocation.item.stockUnits += allocation.units;
+      }
+      console.error("POS sale persistence failed", error);
+      return c.json({
+        success: false,
+        error: "Sale could not be persisted",
+      }, 503);
     }
   }
+  salesStore.push(saleRecord);
 
   return c.json({
     saleId,
@@ -513,14 +571,14 @@ opsRouter.post("/pos/sale", async (c) => {
 });
 
 opsRouter.post("/savings-meter", async (c) => {
-  let body: any = null;
+  let body: unknown = null;
   try {
     body = await c.req.json();
   } catch {
     // fallback
   }
 
-  if (!body || !body.prescription) {
+  if (typeof body !== "object" || body === null || !("prescription" in body)) {
     const demo = demoPlan();
     body = {
       prescription: {
@@ -586,14 +644,14 @@ opsRouter.get("/ledger/summary", async (c) => {
   ];
 
   if (clinicId && clinicId !== "all" && clinicId !== "org-all") {
-    const clinicSales = salesStore.filter((s) => s.clinicId === clinicId);
+    const clinicSales = salesStore.filter((s) => s.orgId === DEFAULT_ORG_ID && s.clinicId === clinicId);
     const liveRevenuePaise = clinicSales.reduce((acc, s) => acc + s.totalSalePaise, 0);
     const liveCogsPaise = clinicSales.reduce((acc, s) => acc + s.totalCogsPaise, 0);
 
-    const share = clinicId === "clinic-delhi-01" ? 0.6 : 0.4;
-    const proratedRev = Math.round(12500000 * share) + liveRevenuePaise;
-    const proratedCogs = Math.round(8200000 * share) + liveCogsPaise;
-    const proratedExp = Math.round(2100000 * share);
+    const sharePercent = clinicId === "clinic-delhi-01" ? 60 : 40;
+    const proratedRev = Math.floor((12500000 * sharePercent + 50) / 100) + liveRevenuePaise;
+    const proratedCogs = Math.floor((8200000 * sharePercent + 50) / 100) + liveCogsPaise;
+    const proratedExp = Math.floor((2100000 * sharePercent + 50) / 100);
 
     const clinicJournals = [
       {
@@ -670,6 +728,6 @@ opsRouter.get("/ledger/summary", async (c) => {
       { clinicId: "clinic-south-004", name: "Bengaluru Metro Health Hub", revenuePaise: 6800000, profitPaise: 1240000 },
       { clinicId: "clinic-ayush-003", name: "AYUSH Integrated Holistic Center", revenuePaise: 3100000, profitPaise: 620000 },
     ],
-    liveSalesRecorded: salesStore.length,
+    liveSalesRecorded: salesStore.filter((sale) => sale.orgId === DEFAULT_ORG_ID).length,
   });
 });

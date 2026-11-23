@@ -3,7 +3,7 @@ import { VoiceInput } from './VoiceInput';
 import { ArrowLeft, Volume2, VolumeX, ShieldCheck, Camera, AlertTriangle, AlertCircle, QrCode, Smartphone, Globe, Shield, Cloud, Check, FileText, Pill, FlaskConical, Download, Mic, Upload, ShieldAlert, HeartPulse, Activity, ArrowRight } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { dataService } from '@/lib/dataService';
-import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
+import { CLOUDFLARE_API_BASE } from '@/lib/api';
 import { getWebsiteLocale, setWebsiteLocale, type WebsiteLocale } from '../../../../packages/i18n/website';
 import { getClinicalRedFlags } from '../../../../packages/engine/clinicalIntake';
 

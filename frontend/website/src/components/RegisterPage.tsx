@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService as auth } from '@/lib/authService';
 import { Button, Input, PasswordInput, Label, Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/basic';
-import { UserPlus, Mail, Lock, Loader2, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, Building2, Stethoscope, ShieldAlert, Zap } from 'lucide-react';
+import { UserPlus, Mail, Lock, Loader2, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export function RegisterPage() {
@@ -18,27 +18,6 @@ export function RegisterPage() {
 
     const plan = searchParams.get('plan') || 'free';
     const billing = searchParams.get('billing') || 'monthly';
-
-    const handleDemoLogin = async (role: 'HOSPITAL_ADMIN' | 'DOCTOR' | 'CLINIC_ADMIN') => {
-        setLoading(true);
-        try {
-            await auth.signInDemo(role);
-            toast({
-                title: 'Instant Evaluator Access Granted',
-                description: `Authenticated as ${role === 'HOSPITAL_ADMIN' ? 'Hospital Medical Director' : role === 'DOCTOR' ? 'Consulting Doctor' : 'Emergency Triage Lead'}`,
-                className: 'bg-emerald-50 border-emerald-200 text-emerald-900'
-            });
-            navigate('/app');
-        } catch (err: any) {
-            toast({
-                title: 'Demo Access Failed',
-                description: err.message,
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -194,48 +173,6 @@ export function RegisterPage() {
                                     </span>
                                 )}
                             </Button>
-
-                            <div className="relative pt-1">
-                                <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t border-slate-200" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white/90 px-3 text-slate-500 font-bold tracking-wider rounded inline-flex items-center gap-1.5">
-                                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                                        Instant Evaluator Bypass
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleDemoLogin('HOSPITAL_ADMIN')}
-                                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-900 transition-all text-center group shadow-sm"
-                                >
-                                    <Building2 className="w-5 h-5 mb-1 text-blue-600 group-hover:scale-110 transition-transform" />
-                                    <span className="text-xs font-bold leading-tight">Admin Suite</span>
-                                    <span className="text-[10px] text-blue-600 font-medium">All ERP Modules</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDemoLogin('DOCTOR')}
-                                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-900 transition-all text-center group shadow-sm"
-                                >
-                                    <Stethoscope className="w-5 h-5 mb-1 text-emerald-600 group-hover:scale-110 transition-transform" />
-                                    <span className="text-xs font-bold leading-tight">Doctor SOAP</span>
-                                    <span className="text-[10px] text-emerald-600 font-medium">15s Rx Console</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDemoLogin('CLINIC_ADMIN')}
-                                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-900 transition-all text-center group shadow-sm"
-                                >
-                                    <ShieldAlert className="w-5 h-5 mb-1 text-rose-600 group-hover:scale-110 transition-transform" />
-                                    <span className="text-xs font-bold leading-tight">Emergency</span>
-                                    <span className="text-[10px] text-rose-600 font-medium">STAT Triage</span>
-                                </button>
-                            </div>
                         </div>
                     </form>
                 </CardContent>

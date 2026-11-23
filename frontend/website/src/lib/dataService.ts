@@ -1,4 +1,4 @@
-import { CLOUDFLARE_API_BASE } from './supabase';
+import { CLOUDFLARE_API_BASE } from './api';
 
 export interface DataService {
     get: (table: string, id: string) => Promise<any>;

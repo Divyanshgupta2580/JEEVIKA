@@ -155,41 +155,6 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
     // Completely disable downgrade resolution blocking modal
     const requiresDowngradeResolution = false;
 
-    const loadDemoSession = () => {
-        // Clean out any stale legacy tokens
-        try {
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('sb-') || key.includes('supabase')) {
-                    localStorage.removeItem(key);
-                }
-            });
-        } catch (_) {}
-
-        const demoRaw = localStorage.getItem('jeevika_demo_session');
-        if (demoRaw) {
-            try {
-                const demoData = JSON.parse(demoRaw);
-                if (demoData.clinics?.length >= 5 && demoData.inventory?.length >= 10 && localStorage.getItem('cf_d1_store_sales')) {
-                    const normProfile = demoData.profile ? {
-                        ...demoData.profile,
-                        full_name: ['DOCTOR', 'HOSPITAL_ADMIN', 'ADMIN'].includes(demoData.profile.role) ? 'Chief Medical Officer, MD, DM' : demoData.profile.full_name
-                    } : null;
-                    setSession(demoData.user);
-                    setProfile(normProfile);
-                    setHospital(demoData.hospital);
-                    setClinics(demoData.clinics || []);
-                    setInventory(demoData.inventory || []);
-                    setLoading(false);
-                    return true;
-                }
-            } catch (e) {
-                console.error("Error loading demo session:", e);
-            }
-        }
-
-        return false;
-    };
-
     useEffect(() => {
         let active = true;
         let changed = false;
@@ -214,30 +179,22 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        if (!loadDemoSession()) {
-            void auth.getSession().then((session) => {
-                if (!active || changed) return;
-                if (session?.user) {
-                    setSession(session.user);
-                    void fetchProfile(session.user.id);
-                } else {
-                    clearSession();
-                }
-            }).catch(() => {
-                if (active && !changed) clearSession();
-            });
-        }
+        void auth.getSession().then((session) => {
+            if (!active || changed) return;
+            if (session?.user) {
+                setSession(session.user);
+                void fetchProfile(session.user.id);
+            } else {
+                clearSession();
+            }
+        }).catch(() => {
+            if (active && !changed) clearSession();
+        });
 
-        const handleDemoLogin = () => {
-            changed = true;
-            loadDemoSession();
-        };
-        window.addEventListener('jeevika_demo_login', handleDemoLogin);
         window.addEventListener('jeevika_demo_logout', clearSession);
         return () => {
             active = false;
             unsubscribe();
-            window.removeEventListener('jeevika_demo_login', handleDemoLogin);
             window.removeEventListener('jeevika_demo_logout', clearSession);
         };
     }, []);

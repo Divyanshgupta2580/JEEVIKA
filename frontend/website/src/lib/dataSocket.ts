@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { packSocketDocument, unpackSocketDocument } from "../../../../packages/shared/socket-binary";
-import { CLOUDFLARE_API_BASE } from "./supabase";
+import { CLOUDFLARE_API_BASE } from "./api";
 
 const protocol = "jeevika.data.v1";
 const responseSchema = z.object({

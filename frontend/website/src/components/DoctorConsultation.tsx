@@ -19,7 +19,7 @@ import { PatientVernacularGuide } from './PatientVernacularGuide';
 import { jsPDF } from 'jspdf';
 import { useHospital } from '@/context/HospitalContext';
 import { dataService } from '@/lib/dataService';
-import { CLOUDFLARE_API_BASE } from '@/lib/supabase';
+import { CLOUDFLARE_API_BASE } from '@/lib/api';
 import { checkHerbDrugInteractions } from '../lib/herbDrugInteractions';
 
 export interface PrescriptionItem {

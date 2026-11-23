@@ -13,7 +13,7 @@ interface AppLayoutProps {
     children: React.ReactNode
     onLogout: () => void
     view: string
-    setView: (view: any) => void
+    setView: (view: string) => void
     lockNavigation?: boolean
     selectedClinicId?: string | null
     onSelectClinicId?: (id: string | null) => void
@@ -118,7 +118,15 @@ export function AppLayout({
     const dismissGuideInvitation = () => { setShowGuideInvitation(false); try { localStorage.setItem(`jeevika_tour_dismissed:${view}`,'true'); } catch {} };
 
     // Helper for Navigation Items
-    const NavItem = ({ icon, label, active, onClick, disabled, id }: any) => (
+    type NavItemProps = {
+        icon: string;
+        label: string;
+        active: boolean;
+        onClick: () => void;
+        disabled?: boolean;
+        id?: string;
+    };
+    const NavItem = ({ icon, label, active, onClick, disabled, id }: NavItemProps) => (
         <button
             id={id}
             title={label}
