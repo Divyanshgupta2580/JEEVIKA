@@ -60,3 +60,4 @@ google-services.json
 GoogleService-Info.plist
 **/local.properties
 
+.vercel
