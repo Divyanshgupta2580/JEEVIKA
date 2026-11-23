@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run integration:build",
+  "buildCommand": "npm install --prefix frontend/website && npm run integration:build",
   "outputDirectory": "dist/integration",
   "framework": "vite",
   "rewrites": [
