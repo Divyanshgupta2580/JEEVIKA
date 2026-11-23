@@ -36,12 +36,11 @@ const Offers: React.FC = () => {
 
   const handleLaunch = (viewKey: string, title: string) => {
     ReactGA.event({
-      category: 'Dashboard Launch',
-      action: `Launched ${title}`,
+      category: 'Authentication',
+      action: `Requested ${title}`,
       label: viewKey,
     });
-    localStorage.setItem('lastActiveView', viewKey);
-    navigate(`/app?view=${viewKey}`);
+    navigate('/login');
   };
 
   const dashboards: DashboardOffering[] = [
@@ -322,7 +321,7 @@ const Offers: React.FC = () => {
                     </ul>
                   </div>
 
-                  {/* 1-Click Launch Button */}
+                  {/* Authenticated launch */}
                   <button
                     onClick={() => handleLaunch(dash.viewKey, dash.title)}
                     className="w-full bg-slate-900 hover:bg-blue-600 text-white py-4 px-6 rounded-2xl font-bold shadow-lg shadow-slate-900/10 hover:shadow-blue-600/30 transition-all duration-300 flex items-center justify-center gap-2 group/btn hover:-translate-y-0.5 cursor-pointer"
