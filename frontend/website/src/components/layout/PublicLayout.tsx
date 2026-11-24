@@ -283,7 +283,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
               />
               <div className="flex items-baseline gap-1.5">
-                <span className="font-serif text-2xl font-bold tracking-tight text-[#087F72]">
+                <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#087F72]">
                   Ayu<span className="text-[#D98558]">सेतु</span>
                 </span>
                 <span className="text-xs font-bold font-mono tracking-wider text-[#61716B] uppercase hidden sm:inline">
@@ -310,7 +310,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Link
               to="/home/sign-in"
               className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#182724] hover:text-[#087F72] transition-colors"
@@ -320,10 +320,11 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             </Link>
             <a
               href="#ds-workspaces"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#087F72] hover:bg-[#06695F] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#087F72] hover:bg-[#06695F] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all active:scale-[0.98]"
             >
-              <span>Enter workspace</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="hidden sm:inline">Enter workspace</span>
+              <span className="sm:hidden">Workspaces</span>
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </a>
           </div>
         </div>
