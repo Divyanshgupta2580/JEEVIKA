@@ -466,7 +466,11 @@ it("posts received stock, dispenses one signed prescription, and balances the le
       }),
     ]),
   );
-  const lock = { lockDate: new Date().toISOString().slice(0, 10) };
+  const lock = {
+    lockDate: new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+    }).format(new Date()),
+  };
   expect(
     (
       await fixture.request("/clinical/ledger/lock", {

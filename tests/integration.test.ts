@@ -382,5 +382,24 @@ describe("persistent integration boundaries", () => {
         )
       ).status,
     ).toBe(503);
+    const demoModeLogin = await app.request(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          orgId: "demo",
+          email: "doctor@demo.test",
+          password: demoPassword,
+        }),
+      },
+      { DB: db, ENVIRONMENT: "production", DEMO_MODE: "true" },
+    );
+    expect(demoModeLogin.status).toBe(200);
+    const cbcDemoCaps = await app.request(
+      "/api/v1/cbc/capabilities",
+      {},
+      { DB: db, ENVIRONMENT: "production", DEMO_MODE: "true" },
+    );
+    expect(await cbcDemoCaps.json()).toMatchObject({ enabled: true });
   });
 });

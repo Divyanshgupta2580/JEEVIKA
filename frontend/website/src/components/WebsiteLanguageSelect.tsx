@@ -26,6 +26,7 @@ export function WebsiteLanguageSelect() {
       <select
         data-website-locale
         aria-label="Choose language"
+        className="min-h-0 h-auto border-0 bg-transparent py-0.5 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
         value={locale}
         onChange={(event) => {
           const selected = event.target.value as WebsiteLocale;

@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -16,6 +16,33 @@ import {
   ArrowRight
 } from "lucide-react";
 
+/** Scroll smoothly to a section on the public overview without overriding HashRouter routes. */
+export function useScrollToPublicSection() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return useCallback(
+    (sectionId: string) => {
+      const scroll = () => {
+        const target = document.getElementById(sectionId);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (sectionId === "public-main") {
+          target.focus({ preventScroll: true });
+        }
+      };
+
+      if (location.pathname !== "/") {
+        navigate("/");
+        window.setTimeout(scroll, 80);
+        return;
+      }
+      scroll();
+    },
+    [location.pathname, navigate],
+  );
+}
+
 interface PublicLayoutProps {
   children: ReactNode;
 }
@@ -25,12 +52,25 @@ export function PublicLayout({ children }: PublicLayoutProps) {
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(true);
   // Mobile side panel open state: false = hidden, true = FULL SCREEN overlay where nothing else is visible
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const scrollToSection = useScrollToPublicSection();
+
+  useEffect(() => {
+    if (isDesktopCollapsed && !isMobileMenuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDesktopCollapsed(true);
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isDesktopCollapsed, isMobileMenuOpen]);
 
   const navLinks = [
-    { label: "Platform", href: "/#ds-platform" },
-    { label: "Our approach", href: "/#ds-journey" },
-    { label: "Trust & care", href: "/#ds-safety" },
-    { label: "Patient Kiosk", href: "/kiosk" },
+    { label: "Platform", sectionId: "ds-platform" },
+    { label: "Our approach", sectionId: "ds-journey" },
+    { label: "Trust & care", sectionId: "ds-safety" },
+    { label: "Patient Kiosk", to: "/kiosk" },
   ];
 
   const workspaceLinks = [
@@ -85,6 +125,10 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       {/* Skip Link for Accessibility */}
       <a
         href="#public-main"
+        onClick={(event) => {
+          event.preventDefault();
+          scrollToSection("public-main");
+        }}
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[110] focus:px-4 focus:py-2 focus:bg-[#087F72] focus:text-white focus:rounded-md focus:shadow-lg"
       >
         Skip to public content
@@ -188,27 +232,36 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#61716B] mb-2">
               Platform & Ethics
             </h2>
-            <Link
-              to="/#ds-platform"
-              onClick={handleLinkClick}
-              className="block py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
+            <button
+              type="button"
+              onClick={() => {
+                handleLinkClick();
+                scrollToSection("ds-platform");
+              }}
+              className="block w-full text-left py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
             >
               Platform Overview
-            </Link>
-            <Link
-              to="/#ds-journey"
-              onClick={handleLinkClick}
-              className="block py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleLinkClick();
+                scrollToSection("ds-journey");
+              }}
+              className="block w-full text-left py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
             >
               Our Approach to Continuous Care
-            </Link>
-            <Link
-              to="/#ds-safety"
-              onClick={handleLinkClick}
-              className="block py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleLinkClick();
+                scrollToSection("ds-safety");
+              }}
+              className="block w-full text-left py-2 text-sm font-medium text-[#182724] hover:text-[#087F72]"
             >
               Clinical Oversight & Safety
-            </Link>
+            </button>
             <Link
               to="/login"
               onClick={handleLinkClick}
@@ -268,15 +321,26 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#50645B]"
             aria-label="Public website links"
           >
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="hover:text-[#087F72] transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.to ? (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="hover:text-[#087F72] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => link.sectionId && scrollToSection(link.sectionId)}
+                  className="hover:text-[#087F72] transition-colors cursor-pointer"
+                >
+                  {link.label}
+                </button>
+              ),
+            )}
           </nav>
 
           {/* Right: Actions */}
@@ -288,14 +352,15 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               <LogIn className="w-4 h-4" />
               <span>Patient sign-in</span>
             </Link>
-            <a
-              href="#ds-workspaces"
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#087F72] hover:bg-[#06695F] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all active:scale-[0.98]"
+            <button
+              type="button"
+              onClick={() => scrollToSection("ds-workspaces")}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#087F72] hover:bg-[#06695F] text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="hidden sm:inline">Enter workspace</span>
               <span className="sm:hidden">Workspaces</span>
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </a>
+            </button>
           </div>
         </div>
       </header>

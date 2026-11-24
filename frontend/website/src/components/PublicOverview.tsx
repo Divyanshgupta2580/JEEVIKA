@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useScrollToPublicSection } from "@/components/layout/PublicLayout";
 import {
   ArrowRight,
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 export function PublicOverview() {
+  const scrollToSection = useScrollToPublicSection();
   return (
     <main id="public-main" tabIndex={-1} className="w-full pb-20 focus:outline-none">
       <section className="w-full border-b border-[#EAE6DF] bg-[#FAF8F5] pb-16 pt-8 lg:py-14">
@@ -49,12 +51,13 @@ export function PublicOverview() {
                   <span>Explore Jeevika</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <a
-                  href="#ds-platform"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/90 hover:bg-[#F1F5F2] text-[#182724] border border-[#DFE5DA] font-semibold text-sm sm:text-base shadow-sm transition-all"
+                <button
+                  type="button"
+                  onClick={() => scrollToSection("ds-platform")}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/90 hover:bg-[#F1F5F2] text-[#182724] border border-[#DFE5DA] font-semibold text-sm sm:text-base shadow-sm transition-all cursor-pointer"
                 >
                   <span>View platform</span>
-                </a>
+                </button>
               </div>
 
               {/* Reassurance Sub-bullet */}
@@ -79,7 +82,7 @@ export function PublicOverview() {
       {/* ───────────────────────────────────────────────────────────
           2. FOUNDATION 4-METRIC STRIP
          ─────────────────────────────────────────────────────────── */}
-      <section className="relative z-10 -mt-6 sm:-mt-8 max-w-5xl mx-auto px-4">
+      <section id="ds-platform" className="relative z-10 -mt-6 sm:-mt-8 max-w-5xl mx-auto px-4 scroll-mt-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 sm:p-6 rounded-2xl bg-[#FFFDF6] border border-[#E9E8DA] shadow-lg">
           <div className="flex items-center gap-3.5 sm:border-r border-[#E9E8DA] sm:pr-4">
             <span className="text-3xl sm:text-4xl font-extrabold text-[#256356]">5</span>
@@ -111,7 +114,7 @@ export function PublicOverview() {
       {/* ───────────────────────────────────────────────────────────
           3. HUMAN HEALTHCARE STORIES: SMILING CHILD, CARING DOCTOR, HAPPY RECOVERY
          ─────────────────────────────────────────────────────────── */}
-      <section id="ds-journey" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="ds-journey" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 scroll-mt-20">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold uppercase tracking-wider text-[#8B6E47] block mb-2">
             Care without the gaps
@@ -232,7 +235,7 @@ export function PublicOverview() {
       {/* ───────────────────────────────────────────────────────────
           4. WORKSPACES DIRECTORY ("Where would you like to begin?")
          ─────────────────────────────────────────────────────────── */}
-      <section id="ds-workspaces" className="bg-[#FFFDF9] py-20 border-t border-b border-[#EAE6DF]">
+      <section id="ds-workspaces" className="bg-[#FFFDF9] py-20 border-t border-b border-[#EAE6DF] scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
             <span className="text-xs font-bold uppercase tracking-wider text-[#8B6E47] block mb-2">
@@ -417,7 +420,7 @@ export function PublicOverview() {
       {/* ───────────────────────────────────────────────────────────
           5. PLATFORM & ETHICAL SAFETY SECTION
          ─────────────────────────────────────────────────────────── */}
-      <section id="ds-safety" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section id="ds-safety" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 scroll-mt-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-5 space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-[#8B6E47]">
@@ -518,7 +521,7 @@ export function PublicOverview() {
         <div className="flex items-center gap-4">
           <Link to="/privacy" className="hover:text-[#087F72]">Privacy & Consent</Link>
           <Link to="/support" className="hover:text-[#087F72]">Support</Link>
-          <a href="#public-main" className="hover:text-[#087F72]">Back to top ↑</a>
+          <button type="button" onClick={() => scrollToSection("public-main")} className="hover:text-[#087F72] cursor-pointer">Back to top ↑</button>
         </div>
       </footer>
     </main>

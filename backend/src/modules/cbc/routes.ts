@@ -55,7 +55,8 @@ function dbFor(c: Ctx) {
 }
 export function clinicalAccessEnabled(env: Ctx["env"]) {
   return (
-    ["development", "test"].includes(env.ENVIRONMENT) &&
+    (["development", "test"].includes(env.ENVIRONMENT) ||
+      env.DEMO_MODE === "true") &&
     env.CBC_ENABLED !== "false"
   );
 }

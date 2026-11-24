@@ -92,6 +92,8 @@ export type Env = {
   TRIAGE_SESSION: DurableObjectNamespace;
   ORG_AUDIT: DurableObjectNamespace;
   ENVIRONMENT: string;
+  DEMO_MODE?: string;
+  PLATFORM_SUPER_ADMINS?: string;
   PUBLIC_ORIGIN?: string;
   API_VERSION: string;
   SARVAM_API_KEY?: string;
@@ -387,7 +389,10 @@ export function createIntegrationApp() {
     }),
   );
   integrationApp.post("/api/v1/auth/login", async (c) => {
-    if (c.env.ENVIRONMENT !== "development" && c.env.ENVIRONMENT !== "test")
+    const demoAuthEnabled =
+      ["development", "test"].includes(c.env.ENVIRONMENT) ||
+      c.env.DEMO_MODE === "true";
+    if (!demoAuthEnabled)
       throw new HTTPException(503, {
         message: "Production authentication is not configured",
       });
@@ -456,8 +461,7 @@ export function createIntegrationApp() {
       return next();
     }
     if (c.req.path === "/api/v1/cbc/capabilities") return next();
-    if (c.req.path.startsWith("/api/v1/cbc") &&
-        (!["development", "test"].includes(c.env.ENVIRONMENT) || c.env.CBC_ENABLED === "false")) {
+    if (c.req.path.startsWith("/api/v1/cbc") && !clinicalAccessEnabled(c.env)) {
       throw new HTTPException(503, { message: "CBC clinical workspace is not enabled" });
     }
     if (!c.req.path.startsWith("/api/v1/encounters") && !c.req.path.startsWith("/api/v1/auth") && !c.req.path.startsWith("/api/v1/cbc")) {

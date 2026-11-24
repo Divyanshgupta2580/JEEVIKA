@@ -155,7 +155,7 @@ export function LoginPage() {
                                                 <Label htmlFor="staff-password" className="text-xs font-semibold text-slate-700">Password</Label>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setIsForgotMode(true)}
+                                                    onClick={() => { setError(null); setIsForgotMode(true); }}
                                                     className="text-xs text-blue-600 hover:underline font-semibold"
                                                 >
                                                     Forgot Password?
@@ -197,7 +197,7 @@ export function LoginPage() {
                                     {isForgotMode && (
                                         <button
                                             type="button"
-                                            onClick={() => setIsForgotMode(false)}
+                                            onClick={() => { setError(null); setIsForgotMode(false); }}
                                             className="w-full text-xs text-center text-slate-500 hover:text-slate-800 font-semibold pt-1"
                                         >
                                             Return to Sign In

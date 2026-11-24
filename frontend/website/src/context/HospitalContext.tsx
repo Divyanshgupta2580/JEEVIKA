@@ -509,7 +509,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                         email: user.email || 'staff@jeevika.in',
                         full_name: user.user_metadata?.full_name || (role === 'DOCTOR' ? 'Dr. Senior Consultant, MD' : role === 'HOSPITAL_ADMIN' ? 'Chief Medical Officer, MD, DM' : 'Clinical Operations Lead'),
                         hospital_id: 'cdd763dd-5cda-4444-adad-699058e335d8',
-                        clinic_id: 'clinic-opd-001'
+                        clinic_id: user.clinicId || 'clinic-opd-001'
                     };
                     setProfile(syntheticProfile);
                     await fetchData(syntheticProfile.hospital_id);
