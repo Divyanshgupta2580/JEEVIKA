@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://jeevika-api.workers.dev/api/v1/:path*"
+      "destination": "https://jeevika-api.jeevika-health.workers.dev/api/v1/:path*"
     },
     {
       "source": "/healthz",
-      "destination": "https://jeevika-api.workers.dev/healthz"
+      "destination": "https://jeevika-api.jeevika-health.workers.dev/healthz"
     },
     {
       "source": "/((?!assets/|.*\\.[^/]+$).*)",

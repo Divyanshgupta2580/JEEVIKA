@@ -3,6 +3,7 @@ import type { Database } from "./database";
 export type Env = {
   DB: Database;
   ENVIRONMENT: string;
+  DEMO_MODE?: string;
   PUBLIC_ORIGIN?: string;
   PLATFORM_SUPER_ADMINS?: string;
   PRUNE_API_KEY?: string;

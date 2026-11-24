@@ -4,7 +4,7 @@ const isPagesDev =
   window.location.hostname.endsWith("pages.dev");
 
 const defaultApiUrl = isPagesDev
-  ? "https://jeevika-api.workers.dev/api/v1"
+  ? "https://jeevika-api.jeevika-health.workers.dev/api/v1"
   : "/api/v1";
 
 export const CLOUDFLARE_API_BASE = (

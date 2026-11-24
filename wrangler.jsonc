@@ -10,14 +10,14 @@
     {
       "binding": "DB",
       "database_name": "dhaaga-db",
-      "database_id": "65320ab1-5c2a-4031-9928-994e5042540e",
-      "migrations_dir": "backend/migrations"
+      "database_id": "d5d65397-2840-4926-b811-ac534fade5f1",
+      "migrations_dir": ".local/integration-migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "cb97d755d3da4d79ab334749741d4904"
+      "id": "b7197004e5324cc0a843ad0f276eaabd"
     }
   ],
   "durable_objects": {
@@ -53,6 +53,8 @@
   ],
   "vars": {
     "ENVIRONMENT": "production",
+    "DEMO_MODE": "true",
+    "PUBLIC_ORIGIN": "https://jeevika-beta.vercel.app",
     "API_VERSION": "v1"
   }
 }

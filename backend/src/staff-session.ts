@@ -5,8 +5,14 @@ import { sessionOrgId, tokenHash } from "./security";
 
 export function clinicalOriginAllowed(request: Request, env?: Env) {
   const origin = request.headers.get("Origin");
-  return origin === null || origin === (env?.PUBLIC_ORIGIN ?? new URL(request.url).origin) ||
-    (env?.ENVIRONMENT !== "production" && /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin));
+  if (!origin) return true;
+  if (origin === (env?.PUBLIC_ORIGIN ?? new URL(request.url).origin)) return true;
+  if (env?.PUBLIC_ORIGIN && env.PUBLIC_ORIGIN.split(",").map((s) => s.trim()).includes(origin)) return true;
+  if (/^https:\/\/[a-zA-Z0-9.-]+\.vercel\.app$/.test(origin)) return true;
+  return (
+    env?.ENVIRONMENT !== "production" &&
+    /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin)
+  );
 }
 
 // Explicit deployment grants are scoped to a verified organization and staff ID.

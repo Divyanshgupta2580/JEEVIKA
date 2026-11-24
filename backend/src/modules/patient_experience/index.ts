@@ -38,7 +38,11 @@ const demoScope = {
   patientId: "phase5-synthetic-patient",
 };
 const isDemo = (env: Env | undefined) =>
-  Boolean(env?.DB && ["development", "test"].includes(env.ENVIRONMENT));
+  Boolean(
+    env?.DB &&
+      (["development", "test", "demo"].includes(env.ENVIRONMENT) ||
+        env.DEMO_MODE === "true"),
+  );
 const day = (date = new Date()) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(date);
 const boundedBody = bodyLimit({ maxSize: 16000 });
