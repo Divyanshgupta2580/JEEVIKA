@@ -8,7 +8,17 @@ export const patientSchema = z.object({
   name: z.string().min(1).max(120),
   gender: z.enum(["female", "male", "other", "unknown"]),
   birthDate: z.iso.date(),
-  language: z.enum(["en-IN", "hi-IN", "pa-IN", "ta-IN", "te-IN"]),
+  language: z.enum([
+    "en-IN",
+    "hi-IN",
+    "pa-IN",
+    "ta-IN",
+    "te-IN",
+    "mr-IN",
+    "bn-IN",
+    "gu-IN",
+    "kn-IN",
+  ]),
 });
 export type Patient = z.infer<typeof patientSchema>;
 export const observationSchema = z.object({

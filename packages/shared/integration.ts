@@ -2,10 +2,15 @@ import { z } from "zod";
 import { patientSchema, sentinelInputSchema } from "./contracts";
 
 export const roleSchema = z.enum([
+  "SUPER_ADMIN",
+  "OWNER",
   "HOSPITAL_ADMIN",
+  "CLINIC_ADMIN",
   "DOCTOR",
   "NURSE",
+  "STAT_NURSE",
   "CASHIER",
+  "PATIENT",
 ]);
 export const principalSchema = z.object({
   userId: z.string(),
@@ -64,6 +69,10 @@ export const encounterSchema = z.object({
   reviewedAt: z.iso.datetime().nullable(),
   reviewNote: z.string().nullable(),
   consentActive: z.boolean(),
+  tokenNumber: z.string().optional(),
+  documentReview: z.string().optional(),
+  outreachReviewRequested: z.boolean().optional(),
+  prescriptionStatus: z.enum(["signed", "dispensed"]).optional(),
 });
 export type Encounter = z.infer<typeof encounterSchema>;
 export const encounterListSchema = z.object({

@@ -13,10 +13,8 @@ import {
   integrationClient,
 } from "../../../packages/api-client/integration";
 import { sentinel } from "../../../packages/engine";
-import {
-  patientSchema,
-  type sentinelInputSchema,
-} from "../../../packages/shared/contracts";
+import { patientLanguages } from "../../../packages/shared/patient-experience";
+import type { sentinelInputSchema } from "../../../packages/shared/contracts";
 import {
   type Encounter,
   intakeSchema,
@@ -297,18 +295,8 @@ function Intake({
                 value={language}
                 onChange={(event) => setLanguage(event.target.value)}
               >
-                {patientSchema.shape.language.options.map((language) => (
-                  <option key={language} value={language}>
-                    {
-                      {
-                        "en-IN": "English",
-                        "hi-IN": "Hindi",
-                        "pa-IN": "Punjabi",
-                        "ta-IN": "Tamil",
-                        "te-IN": "Telugu",
-                      }[language]
-                    }
-                  </option>
+                {Object.values(patientLanguages).map(([label, locale]) => (
+                  <option key={locale} value={locale} lang={locale}>{label}</option>
                 ))}
               </select>
             </label>

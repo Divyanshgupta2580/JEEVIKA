@@ -102,7 +102,6 @@ function textPdf() {
   return Buffer.from(doc.output("arraybuffer"));
 }
 async function enterStaffCredentials(page: Page, password: string) {
-  await page.getByRole("button", { name: "Staff Credentials" }).click();
   await page.getByLabel("Staff Email", { exact: true }).fill("doctor@demo.test");
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign In with Credentials" }).click();
@@ -110,20 +109,22 @@ async function enterStaffCredentials(page: Page, password: string) {
 
 test("guards private routes, verifies credentials, and restores an authenticated deep link", async ({ page }) => {
   await page.goto("/erp.html#/kiosk");
-  await expect(page).toHaveURL(/#\/login$/);
-  await page.goto("/erp.html?guard=workspace#/app?view=doctor-consultation");
+  await expect(page).toHaveURL(/#\/kiosk$/);
+  await expect(page.getByRole("heading", { name: "Choose a language" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign In with Credentials" })).toHaveCount(0);
+  await page.goto("/erp.html?guard=workspace#/app/doctor/cbc");
   await expect(page).toHaveURL(/#\/login$/);
   await enterStaffCredentials(page, "invalid-password");
   await expect(page.getByText("Invalid email or password.", { exact: true }).first()).toBeVisible();
   await expect(page).toHaveURL(/#\/login$/);
   await page.getByLabel("Password", { exact: true }).fill(demoPassword);
   await page.getByRole("button", { name: "Sign In with Credentials" }).click();
-  await expect(page).toHaveURL(/#\/app\?view=doctor-consultation$/);
+  await expect(page).toHaveURL(/#\/app\/doctor\/cbc$/);
   const workspace = page.getByRole("heading", { name: "Doctor Consultation (OPD)" });
   await expect(workspace).toBeVisible();
   await page.reload();
   await expect(workspace).toBeVisible();
-  await expect(page).toHaveURL(/#\/app\?view=doctor-consultation$/);
+  await expect(page).toHaveURL(/#\/app\/doctor\/cbc$/);
 });
 
 async function openDashboard(page: Page) {

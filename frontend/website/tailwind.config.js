@@ -7,6 +7,29 @@ export default {
                 sans: ['Plus Jakarta Sans', 'sans-serif'],
             },
             colors: {
+                canvas: "var(--ds-surface-canvas)",
+                surface: "var(--ds-surface)",
+                "surface-subtle": "var(--ds-surface-subtle)",
+                emergency: {
+                    DEFAULT: "var(--ds-emergency)",
+                    soft: "var(--ds-emergency-soft)",
+                },
+                critical: {
+                    DEFAULT: "var(--ds-critical)",
+                    soft: "var(--ds-critical-soft)",
+                },
+                warning: {
+                    DEFAULT: "var(--ds-warning)",
+                    soft: "var(--ds-warning-soft)",
+                },
+                success: {
+                    DEFAULT: "var(--ds-success)",
+                    soft: "var(--ds-success-soft)",
+                },
+                info: {
+                    DEFAULT: "var(--ds-info)",
+                    soft: "var(--ds-info-soft)",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

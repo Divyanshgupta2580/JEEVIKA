@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
@@ -12,11 +12,16 @@ import { homeRouter } from "./modules/home/routes";
 import { platformRouter } from "./modules/platform/routes";
 import { herRouter } from "./modules/her/routes";
 import { vitalisRouter } from "./modules/vitalis/routes";
+import { companionRouter, kioskRouter, patientOtpRouter } from "./modules/patient_experience";
 import { patientAuthRouter, patientProfileRouter } from "./modules/patient_auth/routes";
 import { cbcRouter, clinicalAccessEnabled } from "./modules/cbc/routes";
 import { pruneCbcSources } from "./modules/cbc/maintenance";
 import { maritimeRouter } from "./modules/maritime";
 import { pruneRouter } from "./modules/prune";
+import { procurementHandoffs } from "./modules/dispensing/procurement";
+import { clinicalPharmacyRouter, postedLedgerRouter } from "./modules/dispensing";
+import { bedsRouter, outreachRouter, wardRouter } from "./modules/clinical_ops";
+import { ayushRouter } from "./modules/ayush";
 import { createApp } from "../../apps/api/app";
 
 import {
@@ -64,7 +69,7 @@ import { tenantDb as integrationTenantDb } from "./database";
 import { jsonBody } from "./http";
 import { authorizeDataSocket, dataProtocol, dataSocketPath, deliverDataSocketMessage } from "./data-socket";
 import { equalHash, newToken, passwordHash, tokenHash } from "./security";
-import { clinicalOriginAllowed, validateStaffSession } from "./staff-session";
+import { clinicalOriginAllowed, effectiveStaffRole, validateStaffSession } from "./staff-session";
 
 // Export Durable Objects for Cloudflare runtime binding
 export { ClinicInventory } from "./do/ClinicInventory";
@@ -242,9 +247,15 @@ type EncounterRow = {
   reviewed_at: string | null;
   review_note: string | null;
   revoked_at: string | null;
+  prescription_status?: "signed" | "dispensed" | null;
 };
 
-const encounterSelect = `SELECT e.*, p.name, p.language, c.revoked_at FROM encounters e
+const encounterSelect = `SELECT e.*, p.name, p.language, c.revoked_at,
+ (SELECT CASE WHEN EXISTS(
+   SELECT 1 FROM reservations v WHERE v.org_id=r.org_id AND v.prescription_id=r.id AND v.status='dispensed'
+  ) THEN 'dispensed' ELSE 'signed' END FROM signed_prescriptions r
+  WHERE r.org_id=e.org_id AND r.clinic_id=e.clinic_id AND r.encounter_id=e.id) AS prescription_status
+ FROM encounters e
  JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
  JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care'
  WHERE e.org_id = :org AND e.clinic_id = ?`;
@@ -266,6 +277,7 @@ function mapEncounter(row: EncounterRow) {
     reviewedAt: row.reviewed_at,
     reviewNote: row.review_note,
     consentActive: row.revoked_at === null,
+    prescriptionStatus: row.prescription_status ?? undefined,
   });
 }
 
@@ -385,7 +397,10 @@ export function createIntegrationApp() {
       });
     const user = await db
       .statement(
-        "SELECT * FROM users WHERE org_id = :org AND email = ?",
+        `SELECT u.id,u.clinic_id,COALESCE(r.role,u.role) AS role,u.password_hash,u.password_salt FROM users u
+         LEFT JOIN staff_clinic_roles r ON r.org_id=u.org_id AND r.clinic_id=u.clinic_id AND r.user_id=u.id
+           AND ((r.role='CLINIC_ADMIN' AND u.role='CASHIER') OR (r.role='STAT_NURSE' AND u.role='NURSE'))
+         WHERE u.org_id=:org AND u.email=?`,
         input.email.toLowerCase(),
       )
       .first<UserRow>();
@@ -414,7 +429,7 @@ export function createIntegrationApp() {
         orgId: input.orgId,
         userId: user.id,
         clinicId: user.clinic_id,
-        role: user.role,
+        role: effectiveStaffRole(c.env, input.orgId, user.id, user.role),
       },
     });
   });
@@ -454,7 +469,8 @@ export function createIntegrationApp() {
     return c.json({ loggedOut: true });
   });
   integrationApp.use("/api/v1/encounters*", async (c, next) => {
-    if (c.get("principal").role === "CASHIER")
+    const { role } = c.get("principal");
+    if (!["DOCTOR", "NURSE", "STAT_NURSE"].includes(role))
       throw new HTTPException(403, { message: "Clinical role required" });
     await next();
   });
@@ -548,25 +564,6 @@ export function createIntegrationApp() {
         ),
       ]);
 
-      const gUpper = input.patient.gender.toUpperCase();
-      const mappedGender: "MALE" | "FEMALE" | "OTHER" =
-        gUpper === "FEMALE" || gUpper === "F"
-          ? "FEMALE"
-          : gUpper === "OTHER" || gUpper === "O"
-            ? "OTHER"
-            : "MALE";
-      savePatientToStore({
-        id: patientId,
-        orgId: p.orgId,
-        name: input.patient.name,
-        phone: "+91 9876543210",
-        phoneHash: await tokenHash(patientId),
-        dob: input.patient.birthDate,
-        gender: mappedGender,
-        preferredLang: input.patient.language || "hi",
-        createdAt: at,
-        updatedAt: at,
-      });
     } catch (error) {
       const winner = await existing();
       if (winner) return replay(winner);
@@ -580,13 +577,50 @@ export function createIntegrationApp() {
   });
   integrationApp.get("/api/v1/encounters", async (c) => {
     const p = c.get("principal");
-    const { results } = await integrationTenantDb({ db: c.env.DB, orgId: p.orgId })
+    const db = integrationTenantDb({ db: c.env.DB, orgId: p.orgId });
+    const { results } = await db
       .statement(
         `${encounterSelect} AND c.revoked_at IS NULL ORDER BY CASE e.status WHEN 'emergency' THEN 0 WHEN 'waiting' THEN 1 ELSE 2 END,e.created_at DESC LIMIT 100`,
         p.clinicId,
       )
       .all<EncounterRow>();
-    return c.json({ encounters: results.map(mapEncounter) });
+    const kiosk = await db.statement(
+      `SELECT k.encounter_id,k.token_number,k.complaint_text,k.document_text,e.created_at,e.status,e.id,e.patient_id,
+        e.clinic_id,e.chief_complaint,e.answers_json,e.red_flags_json,e.next_question,e.reviewed_by,e.reviewed_at,
+        e.review_note,p.name,p.language,c.revoked_at
+       FROM kiosk_intakes k
+       JOIN encounters e ON e.org_id=k.org_id AND e.id=k.encounter_id AND e.clinic_id=k.clinic_id
+       JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
+       JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care'
+       WHERE k.org_id=:org AND k.clinic_id=? AND (
+         c.revoked_at IS NULL OR json_extract(k.consent_json, '$.care')=0
+       )
+       ORDER BY e.created_at DESC LIMIT 100`, p.clinicId,
+    ).all<EncounterRow & { token_number: string; complaint_text: string | null; document_text: string | null }>().catch(() => ({ results: [] }));
+    const rows = new Map(results.map((row) => [row.id, mapEncounter(row)]));
+    for (const row of kiosk.results) {
+      rows.set(row.id, {
+        ...mapEncounter({ ...row, chief_complaint: row.complaint_text ? `${row.chief_complaint} · ${row.complaint_text}` : row.chief_complaint }),
+        tokenNumber: row.token_number,
+        prescriptionStatus: rows.get(row.id)?.prescriptionStatus,
+        documentReview: row.revoked_at ? undefined : row.document_text ?? undefined,
+      });
+    }
+    const referrals = p.role === "DOCTOR"
+      ? await db.statement(`SELECT a.encounter_id FROM nurse_outreach n
+           JOIN care_admissions a ON a.org_id=n.org_id AND a.clinic_id=n.clinic_id AND a.id=n.admission_id
+           JOIN consents c ON c.org_id=a.org_id AND c.encounter_id=a.encounter_id AND c.purpose='care' AND c.revoked_at IS NULL
+           WHERE n.org_id=:org AND n.clinic_id=? AND n.outcome='opd-requested'
+           ORDER BY n.created_at DESC LIMIT 100`, p.clinicId).all<{ encounter_id: string }>()
+      : { results: [] };
+    for (const { encounter_id } of referrals.results) {
+      const row = rows.get(encounter_id);
+      if (row) rows.set(encounter_id, { ...row, outreachReviewRequested: true });
+    }
+    const encounters = [...rows.values()]
+      .sort((a, b) => Number(b.status === "emergency") - Number(a.status === "emergency") || b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 100);
+    return c.json({ encounters });
   });
   integrationApp.get("/api/v1/encounters/:id", async (c) => {
     const p = c.get("principal");
@@ -1759,6 +1793,84 @@ patientsRouter.put("/:id", async (c) => {
 // Mount module routers under /api/v1
 const v1 = new Hono<{ Bindings: Env }>();
 
+async function requireStaffRole(
+  c: Context<{ Bindings: Env }>,
+  next: () => Promise<void>,
+  allowedRoles: Principal["role"][],
+  options: { mutating?: boolean } = {},
+) {
+  if (c.env?.ENVIRONMENT !== "production") {
+    await next();
+    return;
+  }
+  const authorization = c.req.header("Authorization") ?? "";
+  if (!authorization.startsWith("Bearer "))
+    throw new HTTPException(401, { message: "Session required" });
+  const session = await validateStaffSession(c.env, authorization.slice(7));
+  if (!session)
+    throw new HTTPException(401, { message: "Session expired or revoked" });
+  if (!allowedRoles.includes(session.principal.role))
+    throw new HTTPException(403, { message: "Role not authorized" });
+  if (options.mutating) {
+    if (["HOSPITAL_ADMIN", "CLINIC_ADMIN"].includes(session.principal.role))
+      throw new HTTPException(403, { message: "Read-only route" });
+  }
+  await next();
+}
+
+v1.use("/ipd/*", async (c, next) => {
+  const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(c.req.method);
+  await requireStaffRole(
+    c,
+    next,
+    ["DOCTOR", "NURSE", "HOSPITAL_ADMIN", "CLINIC_ADMIN"],
+    { mutating },
+  );
+});
+
+v1.use("/casualty/*", async (c, next) => {
+  await requireStaffRole(c, next, ["STAT_NURSE", "NURSE", "DOCTOR"]);
+});
+
+v1.use("/ops/pos/*", async (c, next) => {
+  await requireStaffRole(c, next, ["CASHIER", "CLINIC_ADMIN"]);
+});
+
+v1.use("/inventory/*", async (c, next) => {
+  const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(c.req.method);
+  if (c.env?.ENVIRONMENT === "production") {
+    const authorization = c.req.header("Authorization") ?? "";
+    if (!authorization.startsWith("Bearer "))
+      throw new HTTPException(401, { message: "Session required" });
+    const session = await validateStaffSession(c.env, authorization.slice(7));
+    if (!session)
+      throw new HTTPException(401, { message: "Session expired or revoked" });
+    if (!["HOSPITAL_ADMIN", "CLINIC_ADMIN", "CASHIER"].includes(session.principal.role))
+      throw new HTTPException(403, { message: "Role not authorized" });
+    if (mutating && session.principal.role === "CASHIER")
+      throw new HTTPException(403, { message: "Read-only inventory access" });
+    await next();
+  } else {
+    await next();
+  }
+});
+
+v1.use("/procurement/grn", async (c, next) => {
+  await requireStaffRole(c, next, ["SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN", "CASHIER"]);
+});
+
+v1.use("/procurement/suppliers/*", async (c, next) => {
+  await requireStaffRole(c, next, ["SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN"]);
+});
+
+v1.use("/procurement/orders/*", async (c, next) => {
+  await requireStaffRole(c, next, ["SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN"]);
+});
+
+v1.use("/ca/*", async (c, next) => {
+  await requireStaffRole(c, next, ["SUPER_ADMIN", "HOSPITAL_ADMIN"]);
+});
+
 // Inpatient Rapid Response System (RRS) & Bedside Code Blue Distress Store
 interface IpdDistressEventRecord {
   id: string;
@@ -1788,6 +1900,10 @@ interface IpdDistressEventRecord {
 const ipdDistressStore = new Map<string, IpdDistressEventRecord>();
 
 const ipdRouter = new Hono<{ Bindings: Env }>();
+ipdRouter.use("*", async (c, next) => {
+  if (c.env?.DB) return c.json({ error: "Use the authenticated clinical workspace" }, 410);
+  await next();
+});
 
 ipdRouter.post("/beds/:bedId/distress", async (c) => {
   const bedId = c.req.param("bedId");
@@ -1876,8 +1992,20 @@ ipdRouter.post("/distress/:id/acknowledge", async (c) => {
   return c.json({ success: true, event });
 });
 
+v1.route("/clinical/ipd", wardRouter);
+v1.route("/clinical/casualty", bedsRouter);
+v1.route("/clinical/pharmacy", clinicalPharmacyRouter);
+v1.route("/clinical/ledger", postedLedgerRouter);
+v1.route("/clinical/procurement", procurementHandoffs);
+v1.route("/clinical/nurse-calls", outreachRouter);
 v1.route("/ipd", ipdRouter);
 v1.route("/intake", intakeRouter);
+for (const path of ["/ops/pos/sale", "/ops/inventory/radar", "/ops/ledger/summary"]) {
+  v1.use(path, async (c, next) => {
+    if (c.env?.DB) return c.json({ error: "Use the authenticated operations workspace" }, 410);
+    await next();
+  });
+}
 v1.route("/ops", opsRouter);
 v1.route("/bridge", bridgeRouter);
 v1.route("/home", homeRouter);
@@ -1890,9 +2018,13 @@ v1.route("/patients", patientsRouter);
 v1.route("/her", herRouter);
 v1.route("/vitalis", vitalisRouter);
 v1.route("/auth/patient", patientAuthRouter);
+v1.route("/auth/patient/otp", patientOtpRouter);
+v1.route("/kiosk", kioskRouter);
+v1.route("/home/companion", companionRouter);
 v1.route("/patient", patientProfileRouter);
 v1.route("/maritime", maritimeRouter);
 v1.route("/prune", pruneRouter);
+v1.route("/ayush", ayushRouter);
 
 // Deterministic algorithm evaluation endpoint
 v1.post("/algorithms/:name", async (c) => {

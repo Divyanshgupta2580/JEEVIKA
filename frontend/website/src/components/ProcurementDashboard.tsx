@@ -7,7 +7,7 @@ import {
     DropdownMenuSeparator
 } from '@/components/ui/DropdownMenu';
 import { Plus, Search, MoreVertical, CheckCircle, Building2, Edit3, Trash2, User, Phone, Mail, PlusCircle, Printer, IndianRupee, AlertCircle, CheckCircle2, Trash, History, FileText } from 'lucide-react';
-import { Button, Input, Label } from '@/components/ui/basic';
+import { Badge, Button, Input, Label } from '@/components/ui/basic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,8 +58,9 @@ const INDIAN_STATES = [
 
 import { numberToWords } from '@/lib/utils';
 
-export default function ProcurementDashboard() {
+export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: boolean }) {
     const { profile, clinics, hospital, pendingPOItem, setPendingPOItem } = useHospital();
+    const canManageProcurement = ['HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'].includes(profile?.role || '');
     const { toast } = useToast();
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
@@ -70,7 +71,7 @@ export default function ProcurementDashboard() {
     const [editCreditLimitValue, setEditCreditLimitValue] = useState(0);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedTab, setSelectedTab] = useState('orders');
+    const [selectedTab, setSelectedTab] = useState(grnOnly ? 'grn' : 'orders');
     const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
     const [supplierPrices, setSupplierPrices] = useState<any[]>([]);
     
@@ -161,7 +162,7 @@ export default function ProcurementDashboard() {
                     inventory_item_id: pendingPOItem.id || pendingPOItem.inventory_item_id
                 }]);
             }
-            setIsPOModalOpen(true);
+            if (canManageProcurement) setIsPOModalOpen(true);
             setPendingPOItem(null); // Clear it
         }
     }, [pendingPOItem, setPendingPOItem]);
@@ -328,6 +329,10 @@ export default function ProcurementDashboard() {
 
     const handleRecordPayment = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canManageProcurement) {
+            toast({ title: 'Read-only access', description: 'This account cannot record procurement payments.', variant: 'destructive' });
+            return;
+        }
         try {
             await db.create('supplier_payments', {
                 ...newPayment,
@@ -348,6 +353,10 @@ export default function ProcurementDashboard() {
 
     const handleRecordNote = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canManageProcurement) {
+            toast({ title: 'Read-only access', description: 'This account cannot record procurement notes.', variant: 'destructive' });
+            return;
+        }
         if (!selectedSupplierId) return;
         
         try {
@@ -489,6 +498,10 @@ export default function ProcurementDashboard() {
 
     const handleCreateSupplier = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canManageProcurement) {
+            toast({ title: 'Read-only access', description: 'This account cannot create or edit suppliers.', variant: 'destructive' });
+            return;
+        }
         try {
             if (isEditingSupplier && editingSupplierId) {
                 await db.update('suppliers', editingSupplierId, newSupplier);
@@ -524,6 +537,7 @@ export default function ProcurementDashboard() {
     }
 
     const handleEditSupplier = (supplier: any) => {
+        if (!canManageProcurement) return;
         setNewSupplier({
             name: supplier.name || '',
             contact_person: supplier.contact_person || '',
@@ -548,6 +562,10 @@ export default function ProcurementDashboard() {
 
     async function handleCreatePO(e: React.FormEvent) {
         e.preventDefault();
+        if (!canManageProcurement) {
+            toast({ title: 'Read-only access', description: 'This account cannot create purchase orders.', variant: 'destructive' });
+            return;
+        }
         if (poItems.length === 0) {
             toast({ title: 'Empty Order', description: 'Please add items to the order', variant: 'destructive' });
             return;
@@ -961,9 +979,16 @@ export default function ProcurementDashboard() {
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <TabsList className="bg-slate-100 p-1 rounded-xl">
-                        <TabsTrigger value="orders" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Orders</TabsTrigger>
-                        <TabsTrigger value="suppliers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Suppliers</TabsTrigger>
-                        <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Payments</TabsTrigger>
+                        {grnOnly ? (
+                            <TabsTrigger value="grn" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">GRN</TabsTrigger>
+                        ) : (
+                            <>
+                                <TabsTrigger value="orders" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Orders</TabsTrigger>
+                                <TabsTrigger value="suppliers" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Suppliers</TabsTrigger>
+                                <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Payments</TabsTrigger>
+                                {canManageProcurement && <TabsTrigger value="grn" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">GRN</TabsTrigger>}
+                            </>
+                        )}
                     </TabsList>
                     
                     <div className="flex items-center gap-2">
@@ -1073,7 +1098,9 @@ export default function ProcurementDashboard() {
                                         <div className="border border-slate-100 rounded-xl overflow-hidden">
                                             <div className="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-100">
                                                 <span className="font-bold text-xs uppercase text-slate-500 tracking-widest">Order Items</span>
-                                                <Button type="button" size="sm" variant="outline" onClick={() => setPoItems([...poItems, { item_name: '', quantity: 1, price: 0, units_per_pack: 1, mrp: 0, hsn_code: '', gst_rate: 18, discount_percent: 0 }])}>Add Item</Button>
+                                                {canManageProcurement && (
+                                                    <Button type="button" size="sm" variant="outline" onClick={() => setPoItems([...poItems, { item_name: '', quantity: 1, price: 0, units_per_pack: 1, mrp: 0, hsn_code: '', gst_rate: 18, discount_percent: 0 }])}>Add Item</Button>
+                                                )}
                                             </div>
                                             <div className="px-3 py-2 bg-slate-100 border-b border-slate-200 grid grid-cols-[1fr_80px_80px_80px_80px_60px_60px_40px] gap-2 items-center text-center">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase text-left ml-1">Item Name</span>
@@ -1329,7 +1356,7 @@ export default function ProcurementDashboard() {
                             </Dialog>
                         )}
                         {selectedTab === 'payments' && (
-                            <Button 
+                            canManageProcurement ? <Button
                                 className="bg-blue-600 hover:bg-blue-700"
                                 onClick={() => {
                                     setNewPayment({ supplier_id: '', purchase_order_id: '', amount: 0, payment_method: 'Bank Transfer', status: 'completed', notes: '' });
@@ -1337,7 +1364,7 @@ export default function ProcurementDashboard() {
                                 }}
                             >
                                 <Plus className="w-4 h-4 mr-2" /> Record Payment
-                            </Button>
+                            </Button> : null
                         )}
                     </div>
                 </div>
@@ -1513,7 +1540,7 @@ export default function ProcurementDashboard() {
                         ))}
                         <button 
                             className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-all group min-h-[220px] bg-slate-50/30"
-                            onClick={() => setIsSupplierModalOpen(true)}
+                            onClick={() => canManageProcurement && setIsSupplierModalOpen(true)}
                         >
                             <PlusCircle className="w-12 h-12 group-hover:scale-110 transition-transform opacity-30" />
                             <span className="font-bold text-sm">Register New Supplier</span>
@@ -1619,6 +1646,36 @@ export default function ProcurementDashboard() {
                                     )}
                                 </TableBody>
                             </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="grn" className="space-y-4">
+                    <Card className="border-slate-200 shadow-sm">
+                        <CardHeader className="border-b border-slate-100">
+                            <CardTitle>Goods Received Note (GRN)</CardTitle>
+                            <CardDescription>
+                                Match physical delivery against an authorized purchase order before accepting stock.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="rounded-xl border border-[var(--ds-border-subtle)] p-4">
+                                    <h3 className="text-sm font-bold text-[var(--ds-text-primary)]">PO match</h3>
+                                    <p className="mt-2 text-sm text-[var(--ds-text-secondary)]">
+                                        Select a purchase order and reconcile its received, damaged and accepted quantities.
+                                    </p>
+                                    <Button variant="outline" className="mt-4" onClick={() => setSelectedTab('orders')} disabled={profile?.role === 'CASHIER'}>
+                                        View authorized PO
+                                    </Button>
+                                </div>
+                                <div className="rounded-xl border border-[var(--ds-border-subtle)] p-4">
+                                    <h3 className="text-sm font-bold text-[var(--ds-text-primary)]">Stock posting</h3>
+                                    <p className="mt-2 text-sm text-[var(--ds-text-secondary)]">
+                                        Accepted quantities may be posted only through the Inventory-owned stock mutation workflow.
+                                    </p>
+                                    <Badge variant="outline" className="mt-4">Inventory control required</Badge>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

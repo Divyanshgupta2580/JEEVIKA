@@ -11,7 +11,7 @@ export default defineConfig({
       INTEGRATION_PORT: port,
       INTEGRATION_DB: `.local/integration-e2e-${process.pid}.sqlite`,
       INTEGRATION_ASSETS_DIR: `.local/integration-e2e-assets-${process.pid}`,
-      INTEGRATION_E2E_CLINICAL: "1",
+      INTEGRATION_E2E_CLINICAL: process.env.INTEGRATION_E2E_CLINICAL ?? "1",
       VITE_API_URL: "/api/v1",
     },
     command: "vite build --config frontend/website/vite.config.ts && node --import tsx backend/local/server.ts",

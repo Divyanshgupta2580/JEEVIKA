@@ -1,0 +1,156 @@
+:root {
+  color-scheme: light;
+
+  --ds-surface-canvas: #f7f9f8;
+  --ds-surface: #ffffff;
+  --ds-surface-subtle: #f1f5f2;
+  --ds-surface-raised: #ffffff;
+
+  --ds-text-primary: #17231d;
+  --ds-text-secondary: #536159;
+  --ds-text-tertiary: #66726b;
+  --ds-text-inverse: #ffffff;
+
+  --ds-primary: #087f72;
+  --ds-primary-hover: #066d62;
+  --ds-primary-active: #05574f;
+  --ds-primary-soft: #e7f4f0;
+  --ds-focus: #087f72;
+
+  --ds-border-subtle: #e3e9e5;
+  --ds-border-default: #cfd8d3;
+  --ds-border-strong: #aab8b0;
+  --ds-border-control: #7d8c84;
+
+  --ds-emergency: #b60020;
+  --ds-emergency-soft: #fdecef;
+  --ds-critical: #c62828;
+  --ds-critical-soft: #fff0f0;
+  --ds-warning: #7a4e00;
+  --ds-warning-soft: #fff4d6;
+  --ds-success: #16794a;
+  --ds-success-soft: #eaf6ef;
+  --ds-info: #1769aa;
+  --ds-info-soft: #edf5fb;
+
+  --ds-radius-xs: 4px;
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 24px;
+  --ds-radius-pill: 999px;
+
+  --ds-shadow-none: none;
+  --ds-shadow-float: 0 8px 24px rgba(23, 35, 29, 0.08);
+
+  --ds-font-latin:
+    "Noto Sans",
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+  --ds-space-12: 48px;
+
+  --ds-leading-tight: 1.25;
+  --ds-leading-normal: 1.5;
+  --ds-leading-relaxed: 1.7;
+  --ds-leading-indic: 1.8;
+
+  --ds-z-nav: 30;
+  --ds-z-topbar: 40;
+  --ds-z-emergency: 50;
+  --ds-z-drawer: 60;
+  --ds-z-modal: 70;
+  --ds-z-blocking-modal: 80;
+  --ds-z-toast: 90;
+
+  --ds-touch-staff: 44px;
+  --ds-touch-mobile: 48px;
+  --ds-touch-kiosk: 56px;
+
+  --ds-motion-fast: 120ms;
+  --ds-motion-normal: 180ms;
+  --ds-motion-slow: 320ms;
+  --ds-ease-standard: cubic-bezier(.2, .7, .2, 1);
+
+  --ds-kiosk-body-min: 18px;
+}
+
+html {
+  color-scheme: light;
+  background: var(--ds-surface-canvas);
+  font-family: var(--ds-font-latin);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body {
+  background: var(--ds-surface-canvas);
+  color: var(--ds-text-primary);
+}
+
+:lang(hi),
+:lang(mr),
+:lang(pa),
+:lang(ta),
+:lang(bn),
+:lang(te),
+:lang(gu),
+:lang(kn) {
+  line-height: var(--ds-leading-indic);
+  font-family:
+    "Noto Sans",
+    "Noto Sans Devanagari",
+    "Noto Sans Gurmukhi",
+    "Noto Sans Tamil",
+    "Noto Sans Bengali",
+    "Noto Sans Telugu",
+    "Noto Sans Gujarati",
+    "Noto Sans Kannada",
+    system-ui,
+    sans-serif;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--ds-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.kiosk-intake {
+  font-size: 18px;
+  line-height: var(--ds-leading-indic);
+}
+.kiosk-intake :where(button, a, label, input:not([type="checkbox"], [type="radio"])) {
+  min-height: var(--ds-touch-kiosk);
+}
+.kiosk-intake :where(button, input, textarea, select, label, p) {
+  font-size: inherit;
+  line-height: inherit;
+}
+.kiosk-intake button {
+  height: auto;
+  white-space: normal;
+  padding-block: 0.45rem;
+}

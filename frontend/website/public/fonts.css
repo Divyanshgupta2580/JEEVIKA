@@ -1,1 +1,72 @@
-/* System fonts keep the clinical workspace usable without external requests. */
+/* Local Noto Sans assets. See the bundled SIL Open Font Licenses. */
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosans.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+2000-206F,U+20AC,U+20B9;
+}
+
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosansdevanagari.woff2') format('woff2');
+  unicode-range: U+0900-097F,U+A8E0-A8FF;
+}
+
+@font-face {
+  font-family: 'Noto Sans Gurmukhi';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosansgurmukhi.woff2') format('woff2');
+  unicode-range: U+0A00-0A7F;
+}
+
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosanstamil.woff2') format('woff2');
+  unicode-range: U+0B80-0BFF;
+}
+
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosansbengali.woff2') format('woff2');
+  unicode-range: U+0980-09FF;
+}
+
+@font-face {
+  font-family: 'Noto Sans Telugu';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosanstelugu.woff2') format('woff2');
+  unicode-range: U+0C00-0C7F;
+}
+
+@font-face {
+  font-family: 'Noto Sans Gujarati';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosansgujarati.woff2') format('woff2');
+  unicode-range: U+0A80-0AFF;
+}
+
+@font-face {
+  font-family: 'Noto Sans Kannada';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/notosanskannada.ttf') format('truetype');
+  unicode-range: U+0C80-0CFF;
+}

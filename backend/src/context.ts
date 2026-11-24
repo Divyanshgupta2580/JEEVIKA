@@ -4,6 +4,10 @@ export type Env = {
   DB: Database;
   ENVIRONMENT: string;
   PUBLIC_ORIGIN?: string;
+  PLATFORM_SUPER_ADMINS?: string;
+  PRUNE_API_KEY?: string;
+  PRUNE_BASE_URL?: string;
+  PRUNE_MODEL?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };
   CBC_DOCUMENTS?: R2Bucket;
   CBC_ENABLED?: string;

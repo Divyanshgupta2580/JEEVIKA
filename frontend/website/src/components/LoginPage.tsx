@@ -1,11 +1,12 @@
 import { useLocation } from "react-router-dom";
+import { landingRoute } from '@/lib/rbac';
 import { useState } from 'react'
 import { authService as auth } from '@/lib/authService'
 import { Button, Input, PasswordInput, Label } from '@/components/ui/basic'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/basic'
 import {
     Lock, Mail, Loader2, AlertCircle, ArrowRight,
-    CheckCircle2, Shield, ExternalLink, Sparkles
+    CheckCircle2, ExternalLink, Sparkles
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/components/ui/use-toast'
@@ -35,14 +36,10 @@ export function LoginPage() {
                 setIsForgotMode(false)
             } else {
                 const user = await auth.signIn(email.trim(), password)
-                const targetView = user.role === 'DOCTOR' ? 'doctor-consultation'
-                    : user.role === 'NURSE' ? 'ipd'
-                        : user.role === 'CASHIER' ? 'pos' : 'admin'
-                localStorage.setItem('lastActiveView', targetView)
                 const from = location.state?.from
-                const target = from?.pathname === '/kiosk' || /^\/app(?:\/|$)/.test(from?.pathname ?? '')
+                const target = /^\/app(?:\/|$)/.test(from?.pathname ?? '')
                     ? from.pathname + (from.search ?? '') + (from.hash ?? '')
-                    : `/app?view=${targetView}`
+                    : landingRoute(user.role)
                 toast({
                     title: 'Authentication Successful',
                     description: `Signed in as ${email}. Entering workspace...`,

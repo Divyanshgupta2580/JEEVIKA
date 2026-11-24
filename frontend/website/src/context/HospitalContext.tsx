@@ -273,7 +273,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
             });
 
             notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setNotifications(notifs);
+            setNotifications(notifs.filter(({ type }) => !/^(codeblue|sos|distress|ipddistress|tierenroute|tier2enroute)$/.test(type.toLowerCase().replace(/[^a-z0-9]/g, ''))));
         } catch (e) {
             console.error('Error fetching context notifications:', e);
         }

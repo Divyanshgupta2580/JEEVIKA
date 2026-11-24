@@ -43,6 +43,7 @@ const env = {
   DB: db,
   ENVIRONMENT: mode,
   PUBLIC_ORIGIN: publicOrigin,
+  PLATFORM_SUPER_ADMINS: process.env.PLATFORM_SUPER_ADMINS,
   SARVAM_API_KEY: process.env.SARVAM_API_KEY,
   SARVAM_SPEECH_ENABLED: process.env.SARVAM_SPEECH_ENABLED ?? "true",
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,

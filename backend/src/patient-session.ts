@@ -15,6 +15,7 @@ export async function issuePatientSession(
   orgId: string,
   patientId: string,
   syntheticOnly = false,
+  durableOnly = false,
 ) {
   const token = `${orgId}.pat.${newToken()}`;
   if (!sessionOrgId(token, "patient")) return null;
@@ -29,10 +30,10 @@ export async function issuePatientSession(
       });
       return { token, expiresAt };
     } catch {
-      if (!allowsMemorySession(env)) return null;
+      if (durableOnly || !allowsMemorySession(env)) return null;
     }
   }
-  if (!allowsMemorySession(env)) return null;
+  if (durableOnly || !allowsMemorySession(env)) return null;
   memorySessions.set(hash, { orgId, patientId, expiresAt });
   return { token, expiresAt };
 }

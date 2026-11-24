@@ -36,6 +36,8 @@ function getOrgId(c: any): string {
 
 // POST /api/v1/auth/patient/signup
 patientAuthRouter.post("/signup", async (c) => {
+  if (c.env?.ENVIRONMENT && !["development", "test"].includes(c.env.ENVIRONMENT))
+    return c.json({ success: false, error: "Self-registration is unavailable. Contact your clinic." }, 503);
   const orgId = getOrgId(c);
   const rawBody = await c.req.json().catch(() => ({}));
   const parseResult = patientSignupSchema.safeParse(rawBody);

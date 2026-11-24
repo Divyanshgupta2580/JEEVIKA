@@ -7,7 +7,9 @@ import { NotificationsPanel } from '@/components/ui/NotificationsPanel'
 import { requestNotificationPermission } from '@/lib/notifications'
 import { useTour } from '@/context/TourContext'
 import { workspaceTour } from '@/tourSteps'
-import { Play, Cloud, Shield } from 'lucide-react'
+import { Play } from 'lucide-react'
+import { routeAccess, staffNavItems } from '@/lib/rbac'
+import { ShellEmergency } from '@/components/ShellEmergency'
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -29,9 +31,10 @@ export function AppLayout({
     onSelectClinicId
 }: AppLayoutProps) {
     const navigate = useNavigate();
-    const { profile: userProfile, hospital, clinics, unseenCount } = useHospital()
+    const { session, profile: userProfile, hospital, clinics, unseenCount } = useHospital()
     const { startTour, scope, isTourActive, endTour } = useTour()
     const role = userProfile?.role
+    const verifiedRole = typeof session?.role === "string" ? session.role : null
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
@@ -54,8 +57,8 @@ export function AppLayout({
         if (view === 'maritime-agents') {
             return {
                 number: '05',
-                name: 'Maritime Autonomous Agent Mesh (Scale Tier)',
-                badge: 'SPECIAL TRACK · MARITIME CLOUD AGENTS',
+                name: 'Swarm Mesh',
+                badge: 'PLATFORM ADMINISTRATION',
                 badgeClass: 'bg-blue-50 text-blue-800 border-blue-300',
                 dotClass: 'bg-blue-600'
             };
@@ -63,8 +66,8 @@ export function AppLayout({
         if (view === 'prune-gateway') {
             return {
                 number: '06',
-                name: 'Prune AI Cost Engine & Security Gateway',
-                badge: 'SPECIAL TRACK · PRUNE PRO AI GATEWAY',
+                name: 'Prune AI Gateway',
+                badge: 'PLATFORM ADMINISTRATION',
                 badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
                 dotClass: 'bg-emerald-600'
             };
@@ -244,156 +247,25 @@ export function AppLayout({
                     {!isCollapsed && <span className="ayu-nav-label">Collapse navigation</span>}
                 </button>
                 <div className="flex-1 overflow-y-auto no-scrollbar py-4 px-2 space-y-1">
-                    {view === 'doctor-consultation' && (
-                      <NavItem icon="stethoscope" label="Consultation" active={true} onClick={()=>setView('doctor-consultation')}/>
-                    )}
-                    {view === 'emergency-triage' && (
-                      <NavItem icon="warning" label="Emergency triage" active={true} onClick={()=>setView('emergency-triage')}/>
-                    )}
-                    {view === 'ayush-center' && (
-                      <NavItem icon="local_hospital" label="AYUSH assessment" active={true} onClick={()=>setView('ayush-center')}/>
-                    )}
-                    {/* HQ COMMAND CENTER MENU (PORTAL 04) */}
-                    {!isClinicPortal && !isClinicalPortal && (
-                        <>
-                            <NavItem
-                                id="tour-dashboard"
-                                icon="domain"
-                                label="HQ Command Center"
-                                active={(view as string) === 'admin'}
-                                onClick={() => {
-                                    onSelectClinicId?.(null);
-                                    setView('admin');
-                                }}
-                                disabled={false}
-                            />
-                            <NavItem
-                                id="tour-hospitals"
-                                icon="domain"
-                                label="Hospitals Registry"
-                                active={(view as string) === 'hospitals'}
-                                onClick={() => setView('hospitals')}
-                            />
-                            <NavItem
-                                icon="shield_person"
-                                label="Audit Logs"
-                                active={(view as string) === 'audit_logs'}
-                                onClick={() => setView('audit_logs')}
-                            />
-                            <NavItem
-                                icon="account_balance"
-                                label="Finance Suite"
-                                active={(view as string) === 'ca-suite'}
-                                onClick={() => setView('ca-suite')}
-                            />
-                            <NavItem
-                                icon="shopping_cart_checkout"
-                                label="Central Procurement"
-                                active={(view as string) === 'procurement'}
-                                onClick={() => setView('procurement')}
-                            />
-                            <NavItem
-                                icon="payments"
-                                label="Group Expenses"
-                                active={(view as string) === 'expenses'}
-                                onClick={() => setView('expenses')}
-                            />
-                            <NavItem
-                                icon="conveyor_belt"
-                                label="Equipments Listing"
-                                active={(view as string) === 'equipments'}
-                                onClick={() => setView('equipments')}
-                            />
-                            <NavItem
-                                id="tour-billing"
-                                icon="receipt_long"
-                                label="Subscription & Billing"
-                                active={(view as string) === 'billing'}
-                                onClick={() => setView('billing')}
-                            />
-                        </>
-                    )}
-
-                    {/* CLINIC OPERATIONS & POS MENU (PORTAL 05) */}
-                    {isClinicPortal && (
-                        <>
-                            <NavItem
-                                icon="local_hospital"
-                                label="Clinic Operations Hub"
-                                active={(view as string) === 'clinic-admin'}
-                                onClick={() => setView('clinic-admin')}
-                            />
-                            <NavItem
-                                icon="how_to_reg"
-                                label="Patient Intake (Kiosk)"
-                                active={(view as string) === 'patient-kiosk'}
-                                onClick={() => setView('patient-kiosk')}
-                            />
-                            <NavItem
-                                icon="point_of_sale"
-                                label="Billing & POS"
-                                active={(view as string) === 'pos'}
-                                onClick={() => setView('pos')}
-                            />
-                            <NavItem
-                                id="tour-inventory"
-                                icon="inventory"
-                                label="Inventory Control"
-                                active={(view as string) === 'inventory-dashboard'}
-                                onClick={() => setView('inventory-dashboard')}
-                            />
-                            <NavItem
-                                id="tour-staff"
-                                icon="badge"
-                                label="Staff Management"
-                                active={(view as string) === 'staff' || (view as string) === 'staff-management'}
-                                onClick={() => setView('staff')}
-                            />
-                            <NavItem
-                                icon="how_to_reg"
-                                label="Attendance"
-                                active={(view as string) === 'attendance'}
-                                onClick={() => setView('attendance')}
-                            />
-                            <NavItem
-                                id="tour-shifts"
-                                icon="schedule"
-                                label="Shift Management"
-                                active={(view as string) === 'shift-management'}
-                                onClick={() => setView('shift-management')}
-                            />
-                            <NavItem
-                                icon="hotel"
-                                label="IPD Inpatients"
-                                active={(view as string) === 'ipd'}
-                                onClick={() => setView('ipd')}
-                            />
-                            <NavItem
-                                id="tour-earnings"
-                                icon="account_balance_wallet"
-                                label="Earnings & Ledger"
-                                active={(view as string) === 'earnings'}
-                                onClick={() => setView('earnings')}
-                            />
-                        </>
-                    )}
+                    {staffNavItems(verifiedRole)
+                        .filter(({ route }) => routeAccess(route, verifiedRole) !== 'None')
+                        .map((item) => (
+                        <NavItem
+                            key={item.id}
+                            id={`tour-${item.id}`}
+                            icon={item.icon}
+                            label={item.label}
+                            active={view === item.view}
+                            onClick={() => {
+                                if (item.view === 'admin') onSelectClinicId?.(null);
+                                setView(item.view);
+                            }}
+                        />
+                    ))}
 
                 </div>
 
                 <div className={`p-3 border-t border-slate-200 mt-auto shrink-0 bg-white ${isCollapsed ? 'space-y-2' : 'space-y-1'}`}>
-                    {/* SETTINGS MENU ITEM - FIXED TO BOTTOM */}
-                    {['ADMIN', 'HOSPITAL_ADMIN', 'CLINIC_ADMIN', 'SUPER_ADMIN', 'OWNER', 'DOCTOR'].includes(role || '') && (
-                        <div>
-                            <NavItem
-                                id="tour-settings"
-                                icon="tune"
-                                label="Settings"
-                                active={view === 'settings'}
-                                onClick={() => setView('settings')}
-                                disabled={lockNavigation}
-                            />
-                        </div>
-                    )}
 
                     {isCollapsed ? (
                         <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-100">
@@ -461,24 +333,6 @@ export function AppLayout({
 
                     {/* DEDICATED EXIT TO PORTALS BUTTON - STITCH MINIMAL TASTE */}
                     <div className="ayu-workspace-shortcuts flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setView('maritime-agents')}
-                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'maritime-agents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50/80 hover:bg-blue-100 text-blue-700 border-blue-200/80'}`}
-                            title="Maritime Autonomous Clinical Agent Mesh (Production Swarm)"
-                        >
-                            <Cloud className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Maritime Agents</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setView('prune-gateway')}
-                            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${view === 'prune-gateway' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80'}`}
-                            title="Prune AI Cost Optimization & Security Gateway (Production WAF)"
-                        >
-                            <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Prune Gateway</span>
-                        </button>
                         <button
                             type="button"
                             onClick={() => {
@@ -567,6 +421,8 @@ export function AppLayout({
                     </div>
                 </header>
                 )}
+
+                {!isFullBleedPortal && <ShellEmergency role={verifiedRole ?? undefined} userId={session?.id} view={view} />}
 
                 {/* SCROLLABLE INNER CONTENT */}
                 <div id="tour-workspace-content" className={view === 'patient-kiosk' ? "flex-1 w-full" : "flex-1 p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"}>

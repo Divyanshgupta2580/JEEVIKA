@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { dataService as db } from '@/lib/dataService'
 import { useHospital } from '@/context/HospitalContext'
 import { ReceiptModal } from '@/components/ui/ReceiptModal'
+import { paiseDiscount, paiseToRupeesString, rupeesToPaise } from '@/lib/utils'
 import { PatientVernacularGuide } from './PatientVernacularGuide'
 
 type POSView = 'pharmacy' | 'consultation' | 'ipd';
@@ -44,6 +45,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
         id: string, 
         name: string, 
         price: number, 
+        pricePaise: number,
         quantity: number, 
         maxQty: number,
         unitsPerPack: number,
@@ -385,11 +387,13 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
 
         setIsProcessing(true);
         try {
-            const amount = parseFloat(consultationFee);
-            if (isNaN(amount) || amount <= 0) throw new Error("Invalid Consultation Fee");
+            const amountPaise = rupeesToPaise(consultationFee);
+            if (amountPaise <= 0) throw new Error("Invalid Consultation Fee");
 
-            const discountPercent = parseFloat(consultationDiscountPercent) || 0;
-            const finalAmount = consultationDiscountedFee !== '' ? parseFloat(consultationDiscountedFee) : amount;
+            const discountPercentHundredths = rupeesToPaise(consultationDiscountPercent);
+            const finalAmountPaise = consultationDiscountedFee !== ''
+                ? rupeesToPaise(consultationDiscountedFee)
+                : amountPaise;
 
             // 1. Ensure patient exists in registry
             const pId = await ensurePatientExists(patientName, patientPhone, patientAddress);
@@ -402,9 +406,9 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                 p_doctor_name: doctorName,
                 p_sale_type: 'CONSULTATION',
                 p_payment_mode: paymentMode,
-                p_amount: finalAmount,
-                p_subtotal: amount,
-                p_discount_percentage: discountPercent,
+                p_amount: finalAmountPaise,
+                p_subtotal: amountPaise,
+                p_discount_percentage: discountPercentHundredths / 100,
                 p_items: [], // No inventory items for consultation
                 p_admission_id: selectedAdmissionId,
                 p_patient_id: pId, // Pass permanent patient ID
@@ -423,16 +427,16 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                 patient_name: patientName, 
                 patient_address: patientAddress,
                 doctor_name: doctorName, 
-                amount: finalAmount, 
-                subtotal: amount,
-                discount_percentage: discountPercent,
+                amount: paiseToRupeesString(finalAmountPaise),
+                subtotal: paiseToRupeesString(amountPaise),
+                discount_percentage: discountPercentHundredths / 100,
                 payment_mode: paymentMode, 
                 sale_type: 'CONSULTATION',
                 daily_serial_number,
                 payment_status: isPayLater ? 'pending' : 'paid'
             };
             setLastSaleData(recordedSale);
-            setLastSaleItems([{ item_name: 'Consultation Fee', quantity: 1, price: amount }]);
+            setLastSaleItems([{ item_name: 'Consultation Fee', quantity: 1, price: paiseToRupeesString(amountPaise) }]);
             setIsReceiptOpen(true);
 
             // Reset
@@ -453,13 +457,10 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
         if (!consultationDiscountPercent) {
             setConsultationDiscountedFee(consultationFee);
         } else {
-            const amount = parseFloat(consultationFee);
-            const pct = parseFloat(consultationDiscountPercent) || 0;
-            const discounted = amount - (amount * (pct / 100));
-            // Only update if it is different to prevent cycles if user is manually typing in the discounted total
-            if (Math.abs(parseFloat(consultationDiscountedFee || '0') - discounted) > 0.01) {
-                 setConsultationDiscountedFee(discounted.toFixed(2));
-            }
+            const amountPaise = rupeesToPaise(consultationFee);
+            const pctHundredths = rupeesToPaise(consultationDiscountPercent);
+            const discounted = paiseToRupeesString(paiseDiscount(pctHundredths, amountPaise));
+            if (consultationDiscountedFee !== discounted) setConsultationDiscountedFee(discounted);
         }
     }, [consultationFee, consultationDiscountPercent]);
 
@@ -529,6 +530,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                     id: promptItem.id,
                     name: promptItem.item_name,
                     price: pricePerUnit,
+                    pricePaise: rupeesToPaise(pricePerUnit),
                     quantity: qty,
                     maxQty: promptItem.quantity,
                     unitsPerPack: upp,
@@ -560,18 +562,23 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
         }));
     };
 
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartTotalPaise = cart.reduce(
+        (sum, item) => sum + (item.pricePaise * item.quantity),
+        0,
+    );
+    const cartTotal = paiseToRupeesString(cartTotalPaise);
 
     // Sync Pharmacy Discount with Cart Total
     useEffect(() => {
         if (!pharmacyDiscountPercent) {
-            setPharmacyDiscountedTotal(cartTotal.toFixed(2));
+            setPharmacyDiscountedTotal(cartTotal);
         } else {
-            const pct = parseFloat(pharmacyDiscountPercent) || 0;
-            const discounted = cartTotal - (cartTotal * (pct / 100));
+            const pctHundredths = rupeesToPaise(pharmacyDiscountPercent);
+            const discountedPaise = paiseDiscount(pctHundredths, cartTotalPaise);
+            const discounted = paiseToRupeesString(discountedPaise);
             // Only update if it is different to prevent cycles if user is manually typing in the discounted total
-            if (Math.abs(parseFloat(pharmacyDiscountedTotal || '0') - discounted) > 0.01) {
-                 setPharmacyDiscountedTotal(discounted.toFixed(2));
+            if (pharmacyDiscountedTotal !== discounted) {
+                 setPharmacyDiscountedTotal(discounted);
             }
         }
     }, [cartTotal, pharmacyDiscountPercent]);
@@ -593,48 +600,23 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
 
             setIsProcessing(true);
         try {
-            const discountPercent = parseFloat(pharmacyDiscountPercent) || 0;
-            const finalAmount = pharmacyDiscountedTotal !== '' ? parseFloat(pharmacyDiscountedTotal) : cartTotal;
+            const discountPercentHundredths = rupeesToPaise(pharmacyDiscountPercent);
+            const finalAmountPaise = pharmacyDiscountedTotal !== ''
+                ? rupeesToPaise(pharmacyDiscountedTotal)
+                : cartTotalPaise;
             
-            const saleItems = cart.map(c => ({ 
-                inventory_id: c.id, 
-                quantity: c.totalTablets, 
-                price: c.price,
-                is_loose_sale: c.isLoose,
-                units_sold: c.quantity
-            }));
-
             // 1. Ensure patient exists in registry
             const pId = await ensurePatientExists(patientName, patientPhone, patientAddress);
             
-            // 2. Process sale via RPC
-            const result = await db.callRpc('process_sale', {
-                p_hospital_id: profile?.hospital_id,
-                p_clinic_id: selectedClinicId,
-                p_patient_name: patientName,
-                p_doctor_name: doctorName,
-                p_sale_type: 'PHARMACY',
-                p_payment_mode: paymentMode,
-                p_amount: finalAmount,
-                p_subtotal: cartTotal,
-                p_discount_percentage: discountPercent,
-                p_items: saleItems,
-                p_admission_id: selectedAdmissionId,
-                p_patient_id: pId, // Pass permanent patient ID
-                p_patient_phone: patientPhone,
-                p_patient_address: patientAddress
-            });
-
-            const { sale_id: saleId } = result;
-
-            // 3. Submit sale transaction to POST /api/v1/ops/pos/sale with paise amounts
-            const amountPaise = Math.round(finalAmount * 100);
+            // 2. Submit sale transaction once through the integer-paise POS API
+            const amountPaise = finalAmountPaise;
+            const saleId = `sale_${Date.now()}`;
             const unitsTotal = cart.reduce((sum, item) => sum + item.quantity, 0);
             const opsItems = cart.map(c => ({
                 name: c.name,
                 units: c.totalTablets,
-                pricePaise: Math.round(c.price * 100),
-                costPaise: Math.round(c.price * 53.33),
+                pricePaise: c.pricePaise,
+                costPaise: Math.floor((c.pricePaise * 5333 + 5000) / 10000),
                 inventoryId: c.id
             }));
 
@@ -696,9 +678,9 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                 patient_name: patientName, 
                 patient_address: patientAddress,
                 doctor_name: doctorName, 
-                amount: finalAmount, 
+                amount: paiseToRupeesString(finalAmountPaise),
                 subtotal: cartTotal,
-                discount_percentage: discountPercent,
+                discount_percentage: discountPercentHundredths / 100,
                 payment_mode: paymentMode, 
                 sale_type: 'PHARMACY' 
             };
@@ -734,13 +716,13 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
         setIsProcessing(true);
         try {
             const hId = profile.hospital_id;
-            const advance = parseFloat(admissionAdvance) || 0;
+            const advancePaise = rupeesToPaise(admissionAdvance);
 
             // 0. Ensure Patient Exists
             const registeredPatientId = await ensurePatientExists(patientName, patientPhone, patientAddress);
 
             // 1. Create IPD Admission
-            const admission = await db.create('ipd_admissions', {
+            await db.create('ipd_admissions', {
                 hospital_id: hId,
                 clinic_id: selectedClinicId,
                 patient_id: registeredPatientId,
@@ -749,7 +731,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                 admission_date: new Date().toISOString(),
                 status: 'admitted',
                 reason_for_admission: ipdReason,
-                advance_paid: advance,
+                advance_paid: advancePaise,
                 temp_patient_name: patientName,
                 temp_patient_phone: patientPhone,
                 temp_patient_address: patientAddress
@@ -759,36 +741,32 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
             await db.update('beds', selectedBedId, { status: 'occupied' });
 
             // 3. Record Sale (Advance Payment)
-            if (advance > 0) {
-                const result = await db.callRpc('process_sale', {
-                    p_hospital_id: hId,
-                    p_clinic_id: selectedClinicId,
-                    p_patient_name: patientName,
-                    p_doctor_name: doctors.find(d => d.id === selectedDoctorId)?.full_name || 'Assigned Doctor',
-                    p_sale_type: 'IPD',
-                    p_payment_mode: paymentMode,
-                    p_amount: advance,
-                    p_subtotal: advance,
-                    p_discount_percentage: 0,
-                    p_items: [], // Placeholder item or empty
-                    p_admission_id: admission.id,
-                    p_patient_id: registeredPatientId
-                });
-
-                const { sale_id: saleId } = result;
+            if (advancePaise > 0) {
+                const saleId = `sale_${Date.now()}`;
+                if (db.submitPosSale) {
+                    await db.submitPosSale({
+                        clinicId: selectedClinicId ?? undefined,
+                        patientId: registeredPatientId ?? undefined,
+                        patientName,
+                        totalSalePaise: advancePaise,
+                        items: [],
+                        paymentMethod: paymentMode,
+                        saleId,
+                    });
+                }
 
                 const recordedSale = { 
                     id: saleId, 
                     patient_name: patientName, 
                     doctor_name: doctors.find(d => d.id === selectedDoctorId)?.full_name,
-                    amount: advance, 
-                    subtotal: advance,
+                    amount: paiseToRupeesString(advancePaise),
+                    subtotal: paiseToRupeesString(advancePaise),
                     discount_percentage: 0,
                     payment_mode: paymentMode, 
                     sale_type: 'IPD ADMISSION' 
                 };
                 setLastSaleData(recordedSale);
-                setLastSaleItems([{ item_name: 'Admission Advance Deposit', quantity: 1, price: advance }]);
+                setLastSaleItems([{ item_name: 'Admission Advance Deposit', quantity: 1, price: paiseToRupeesString(advancePaise) }]);
                 setIsReceiptOpen(true);
             }
 
@@ -1453,7 +1431,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                     <div key={c.id} className="flex justify-between items-center group gap-2">
                                         <div className="flex-1 min-w-0 pr-2">
                                             <h4 className="text-xs sm:text-sm font-bold text-slate-800 leading-tight mb-0.5 sm:mb-1 truncate">{c.name}</h4>
-                                            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium">₹{c.price.toFixed(2)} / {c.isLoose ? 'unit' : 'pack'}</p>
+                                            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium">₹{paiseToRupeesString(c.pricePaise)} / {c.isLoose ? 'unit' : 'pack'}</p>
                                         </div>
                                         <div className="text-right shrink-0">
                                             <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight mb-0.5 sm:mb-1">₹{(c.price * c.quantity).toFixed(2)}</p>
@@ -1472,7 +1450,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                             <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
                                 <div className="flex justify-between text-xs sm:text-sm">
                                     <span className="text-slate-500 font-medium">Subtotal</span>
-                                    <span className="font-bold text-slate-700">₹{cartTotal.toFixed(2)}</span>
+                                    <span className="font-bold text-slate-700">₹{cartTotal}</span>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 sm:gap-3 items-end pt-2">
@@ -1501,16 +1479,14 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                                 value={pharmacyDiscountedTotal}
                                                 onChange={e => {
                                                     setPharmacyDiscountedTotal(e.target.value);
-                                                    const discounted = parseFloat(e.target.value);
-                                                    if (cartTotal > 0 && discounted >= 0 && discounted <= cartTotal) {
-                                                        const pct = ((cartTotal - discounted) / cartTotal) * 100;
-                                                        if (Math.abs(parseFloat(pharmacyDiscountPercent || '0') - pct) > 0.1) {
-                                                            setPharmacyDiscountPercent(pct.toFixed(2));
-                                                        }
+                                                    const discountedPaise = rupeesToPaise(e.target.value);
+                                                    if (cartTotalPaise > 0 && discountedPaise >= 0 && discountedPaise <= cartTotalPaise) {
+                                                        const pctHundredths = Math.floor(((cartTotalPaise - discountedPaise) * 10000 + cartTotalPaise / 2) / cartTotalPaise);
+                                                        setPharmacyDiscountPercent(paiseToRupeesString(pctHundredths));
                                                     }
                                                 }}
                                                 placeholder="0.00"
-                                                disabled={cartTotal === 0}
+                                                disabled={cartTotalPaise === 0}
                                                 className="pl-6 h-8 sm:h-9 text-xs sm:text-sm font-bold bg-slate-50"
                                             />
                                         </div>
@@ -1518,7 +1494,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                 </div>
                                 <div className="flex justify-between text-base sm:text-lg font-bold border-t border-slate-200 pt-2 mt-2">
                                     <span className="text-slate-900">Total</span>
-                                    <span className="text-emerald-600">₹{parseFloat(pharmacyDiscountedTotal || cartTotal.toString()).toFixed(2)}</span>
+                                    <span className="text-emerald-600">₹{pharmacyDiscountedTotal || cartTotal}</span>
                                 </div>
                             </div>
 

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { build } from "esbuild";
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";
+import { migrationScripts, splitSqlScript } from "../backend/local/migrate";
 import { demoPassword, seedDemo } from "../backend/local/seed";
 import {
   cbcFields,
@@ -70,17 +71,9 @@ const worker = new Miniflare(
 );
 try {
   const db = await worker.getD1Database("DB");
-  for (const path of [
-    "backend/migrations/0001_intake.sql",
-    "backend/cbc-migrations/0006_cbc.sql",
-  ])
-    await db.batch(
-      readFileSync(path, "utf8")
-        .split(";")
-        .map((sql) => sql.trim())
-        .filter(Boolean)
-        .map((sql) => db.prepare(sql)),
-    );
+  for (const script of migrationScripts()) {
+    await db.batch(splitSqlScript(script).map((sql) => db.prepare(sql)));
+  }
   await seedDemo(db);
   const auth = await worker.dispatchFetch("http://local/api/v1/auth/login", {
     method: "POST",

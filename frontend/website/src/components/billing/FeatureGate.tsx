@@ -64,7 +64,7 @@ export function FeatureGate({
             </div>
 
             {/* Lock overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-xl z-10">
                 <div className="text-center p-6 max-w-sm">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200/50">
                         <Lock className="w-7 h-7 text-white" />

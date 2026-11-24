@@ -1,85 +1,151 @@
-import { describe, expect, it } from "vitest";
-import { app } from "../backend/src/index";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { phase4Fixture } from "./phase4-fixture";
 
-describe("Maritime Autonomous Agent Cloud Integration (Enterprise Multi-Agent Mesh)", () => {
-  it("returns Maritime cluster status with Scale Plan tier and 3 active agents", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/status");
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.provider).toBe("Maritime Cloud");
-    expect(data.participantCode).toBe("JEEVIKA_ENTERPRISE");
-    expect(data.tier).toContain("Enterprise Scale Cluster");
-    expect(data.activeAgentsCount).toBe(3);
-    expect(data.agents.length).toBe(3);
-    expect(data.agents.map((a: any) => a.id)).toContain("agent-sentinel-01");
+let fixture: Awaited<ReturnType<typeof phase4Fixture>>;
+let superAdmin: string;
+let hospitalAdmin: string;
+let doctor: string;
+
+beforeAll(async () => {
+  fixture = await phase4Fixture();
+  const [admin, hospital, clinician] = await Promise.all([
+    fixture.login("admin"),
+    fixture.login("admin", "other-org"),
+    fixture.login("doctor"),
+  ]);
+  expect(admin.principal.role).toBe("SUPER_ADMIN");
+  expect(hospital.principal.role).toBe("HOSPITAL_ADMIN");
+  superAdmin = admin.token;
+  hospitalAdmin = hospital.token;
+  doctor = clinician.token;
+});
+afterAll(() => fixture.db.close());
+
+describe("Swarm Mesh", () => {
+  it("requires a verified staff session and restricts reads to authorized roles", async () => {
+    expect((await fixture.request("/maritime/status")).status).toBe(401);
+    expect(
+      (await fixture.request("/maritime/status", { token: doctor })).status,
+    ).toBe(403);
+    expect(
+      (await fixture.request("/maritime/status", { token: hospitalAdmin }))
+        .status,
+    ).toBe(200);
+    expect(
+      (
+        await fixture.request("/maritime/mesh/audit-all", {
+          token: hospitalAdmin,
+          method: "POST",
+          body: { mode: "simulation" },
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await fixture.request("/maritime/mesh/audit-all", {
+          token: superAdmin,
+          method: "POST",
+          body: { mode: "simulation" },
+          origin: "https://unrelated.example",
+        })
+      ).status,
+    ).toBe(403);
   });
 
-  it("executes Jeevika-Clinical-Sentinel agent to audit herb-drug interactions", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/agents/agent-sentinel-01/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        drugs: [{ medicineName: "Warfarin", dosage: "5mg" }],
-        herbs: [{ drug: "Guggulu (Commiphora mukul)" }]
-      })
+  it("reports unverified live status honestly and records scoped simulation findings", async () => {
+    const initial = await fixture.request("/maritime/status", {
+      token: superAdmin,
     });
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.agent.id).toBe("agent-sentinel-01");
-    expect(data.safetyStatus).toBe("WARNING");
-    expect(data.result.interactionsFound).toBeGreaterThanOrEqual(1);
-    expect(data.latencyMs).toBeGreaterThan(0);
-  });
-
-  it("executes Jeevika-Vernacular-Scribe agent to normalize Indic speech", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/agents/agent-vernacular-02/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        transcript: "Mujhe seene me dard shuru ho gaya aur paseena aa raha hai",
-        language: "hi-IN"
-      })
+    expect(initial.status).toBe(200);
+    expect(await initial.json()).toMatchObject({
+      status: "UNAVAILABLE",
+      agents: expect.arrayContaining([
+        expect.objectContaining({
+          id: "agent-sentinel-01",
+          status: "UNAVAILABLE",
+          simulation: null,
+        }),
+        expect.objectContaining({
+          id: "agent-vernacular-02",
+          status: "UNAVAILABLE",
+          simulation: null,
+        }),
+        expect.objectContaining({
+          id: "agent-supply-03",
+          status: "UNAVAILABLE",
+          simulation: null,
+        }),
+      ]),
     });
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.result.soapEncounter.subjective).toContain("seene me dard");
-    expect(data.result.redFlags.length).toBeGreaterThan(0);
-  });
 
-  it("executes Jeevika-Supply-Optimizer agent for Jan Aushadhi generic substitution", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/agents/agent-supply-03/run", {
+    const run = await fixture.request("/maritime/mesh/audit-all", {
+      token: superAdmin,
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({})
+      body: { mode: "simulation" },
     });
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.result.savingsPercentage).toContain("85");
+    expect(run.status).toBe(201);
+    expect(await run.json()).toEqual({ source: "SIMULATION", checksRun: 3 });
+    const logs = await fixture.request("/maritime/telemetry", {
+      token: superAdmin,
+    });
+    expect(await logs.json()).toEqual({
+      source: "SIMULATION",
+      logs: expect.arrayContaining([
+        expect.objectContaining({ agent_id: "agent-sentinel-01", findings: 1 }),
+        expect.objectContaining({
+          agent_id: "agent-vernacular-02",
+          findings: expect.any(Number),
+        }),
+        expect.objectContaining({
+          agent_id: "agent-supply-03",
+          findings: expect.any(Number),
+        }),
+      ]),
+    });
+    const updated = await fixture.request("/maritime/status", {
+      token: superAdmin,
+    });
+    expect(await updated.json()).toMatchObject({
+      status: "UNAVAILABLE",
+      agents: expect.arrayContaining([
+        expect.objectContaining({
+          simulation: expect.objectContaining({ runs: 1 }),
+        }),
+      ]),
+    });
+    const foreign = await fixture.request("/maritime/telemetry", {
+      token: hospitalAdmin,
+    });
+    expect(await foreign.json()).toEqual({ source: "SIMULATION", logs: [] });
   });
 
-  it("executes full-mesh tri-agent concurrent audit", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/mesh/audit-all", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patientName: "Ramesh Chandra (52M)" })
-    });
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.swarmSummary.sentinelAgent.status).toBe("COMPLETED");
-    expect(data.swarmSummary.scribeAgent.status).toBe("COMPLETED");
-    expect(data.swarmSummary.supplyAgent.status).toBe("COMPLETED");
-  });
-
-  it("retrieves live telemetry logs stream", async () => {
-    const res = await app.request("http://127.0.0.1/api/v1/maritime/telemetry");
-    expect(res.status).toBe(200);
-    const data = await res.json() as any;
-    expect(data.success).toBe(true);
-    expect(data.logs.length).toBeGreaterThanOrEqual(3);
+  it("requires exact agent IDs and refuses arbitrary simulation input", async () => {
+    expect(
+      (
+        await fixture.request("/maritime/agents/sentinel/run", {
+          token: superAdmin,
+          method: "POST",
+          body: { mode: "simulation" },
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await fixture.request("/maritime/agents/agent-sentinel-01/run", {
+          token: superAdmin,
+          method: "POST",
+          body: { mode: "simulation", transcript: "Confidential data fixture" },
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await fixture.request("/maritime/agents/agent-sentinel-01/run", {
+          token: superAdmin,
+          method: "POST",
+          body: { mode: "simulation" },
+        })
+      ).status,
+    ).toBe(201);
   });
 });

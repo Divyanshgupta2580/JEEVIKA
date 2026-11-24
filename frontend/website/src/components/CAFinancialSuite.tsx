@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Badge, Skeleton } from '@/components/ui/basic';
 import { Button } from '@/components/ui/basic';
+import { rupeesToPaise } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -57,6 +58,7 @@ type BankEntry = {
 
 export function CAFinancialSuite() {
     const { profile } = useHospital();
+    const canManageFinancial = ['SUPER_ADMIN', 'OWNER'].includes(profile?.role || '');
     const { toast } = useToast();
 
     const [loading, setLoading] = useState(true);
@@ -106,7 +108,13 @@ export function CAFinancialSuite() {
         const formData = new FormData(e.currentTarget);
         const debitAccount = formData.get('debit_account') as string;
         const creditAccount = formData.get('credit_account') as string;
-        const amount = parseFloat(formData.get('amount') as string);
+        const amountPaise = rupeesToPaise(formData.get('amount') as string);
+        if (amountPaise <= 0) {
+            toast({ variant: 'destructive', title: 'Invalid Entry', description: 'Amount must be greater than zero.' });
+            setIsSubmittingJv(false);
+            return;
+        }
+        const amount = amountPaise / 100;
         const narration = formData.get('narration') as string;
         const date = formData.get('date') as string;
 
@@ -661,14 +669,14 @@ export function CAFinancialSuite() {
                         <History className="w-4 h-4" />
                     </Button>
 
-                    <Button
+                    {canManageFinancial && <button
                         onClick={handleLockAudit}
                         disabled={auditLocking}
                         className="bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all active:scale-95"
                     >
                         {auditLocking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
                         Lock Audit
-                    </Button>
+                    </button>}
                 </div>
             </header>
 
@@ -957,7 +965,7 @@ export function CAFinancialSuite() {
                                 <p className="text-xs text-slate-400 uppercase tracking-widest mt-0.5">Double-Entry Logging</p>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
-                                <Dialog open={isJvModalOpen} onOpenChange={setIsJvModalOpen}>
+                                {canManageFinancial && <Dialog open={isJvModalOpen} onOpenChange={setIsJvModalOpen}>
                                     <DialogTrigger asChild>
                                         <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
                                             <Calculator className="w-3.5 h-3.5 mr-2" /> New Journal Entry
@@ -1019,7 +1027,7 @@ export function CAFinancialSuite() {
                                             </div>
                                         </form>
                                     </DialogContent>
-                                </Dialog>
+                                </Dialog>}
                                 <Button variant="outline" size="sm" className="h-8 shadow-sm" onClick={handleExportCSV}>
                                     <Download className="w-3.5 h-3.5 mr-2" /> Export CSV
                                 </Button>
@@ -1309,9 +1317,11 @@ export function CAFinancialSuite() {
                                             </div>
                                             <div className="flex justify-end gap-3 pt-2">
                                                 <Button type="button" variant="outline" onClick={() => setIsBrsModalOpen(false)}>Cancel</Button>
-                                                <Button type="submit" disabled={isSubmittingBank} className="bg-indigo-600 text-white">
-                                                    {isSubmittingBank ? 'Saving...' : 'Save Entry'}
-                                                </Button>
+                                                {canManageFinancial && (
+                                                    <Button type="submit" disabled={isSubmittingBank} className="bg-indigo-600 text-white">
+                                                        {isSubmittingBank ? 'Saving...' : 'Save Entry'}
+                                                    </Button>
+                                                )}
                                             </div>
                                         </form>
                                     </DialogContent>

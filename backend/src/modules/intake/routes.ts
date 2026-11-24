@@ -864,7 +864,9 @@ intakeRouter.get("/queue", async (c) => {
   const db = (c.env as any)?.DB;
   if (db) {
     try {
-      const rows = await db.prepare("SELECT * FROM encounters ORDER BY created_at DESC LIMIT 50").all();
+      const rows = await db.prepare(
+        "SELECT e.* FROM encounters e WHERE NOT EXISTS (SELECT 1 FROM kiosk_intakes k WHERE k.org_id=e.org_id AND k.encounter_id=e.id) ORDER BY e.created_at DESC LIMIT 50",
+      ).all().catch(() => db.prepare("SELECT * FROM encounters ORDER BY created_at DESC LIMIT 50").all());
       if (rows?.results && rows.results.length > 0) {
         for (const r of rows.results as any[]) {
           if (!seen.has(r.id)) {

@@ -5,6 +5,35 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
+export function rupeesToPaise(value: number | string): number {
+    if (typeof value === "string") {
+        const normalized = value.trim();
+        if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(normalized)) return 0;
+        const [rupees, paise = ""] = normalized.split(".");
+        return Number(rupees) * 100 + Number(paise.padEnd(2, "0").slice(0, 2));
+    }
+    if (!Number.isFinite(value)) return 0;
+    const rupees = Math.trunc(value);
+    const paise = Math.round((value - rupees) * 100);
+    return rupees * 100 + paise;
+}
+
+export function paiseToRupeesString(paise: number): string {
+    const safePaise = Number.isSafeInteger(paise) ? paise : 0;
+    const absolute = Math.abs(safePaise);
+    const rupees = Math.trunc(absolute / 100);
+    const remainder = absolute % 100;
+    const sign = safePaise < 0 ? "-" : "";
+    return `${sign}${rupees}.${remainder.toString().padStart(2, "0")}`;
+}
+
+export function paiseDiscount(discountPercentHundredths: number, subtotalPaise: number): number {
+    if (!Number.isSafeInteger(subtotalPaise) || !Number.isSafeInteger(discountPercentHundredths)) return 0;
+    if (discountPercentHundredths <= 0) return subtotalPaise;
+    if (discountPercentHundredths >= 10000) return 0;
+    return Math.floor((subtotalPaise * (10000 - discountPercentHundredths) + 5000) / 10000);
+}
+
 export function generateWhatsAppMessage(
     date: string,
     revenue: number,

@@ -2,7 +2,6 @@ import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import React, { useState, useEffect, useMemo } from 'react';
 import { dataService as db } from '@/lib/dataService';
 import { useHospital } from '@/context/HospitalContext';
-import { CLOUDFLARE_API_BASE } from '@/lib/api';
 import { 
     Plus, 
     Hotel, 
@@ -30,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { distressChanged } from "@/components/ShellEmergency";
+import { staffApi } from "@/lib/staffApi";
 
 export interface InpatientDistressEvent {
     id: string;
@@ -112,6 +113,8 @@ const WARD_TYPES = ["General", "ICU", "Semi-Private", "Private", "Emergency", "M
 export function IPDDashboard() {
     const { hospital, clinics, profile } = useHospital();
     const role = profile?.role;
+    const canMutateIPD = role === 'DOCTOR' || role === 'NURSE';
+    const canReportDistress = role === 'NURSE';
     const { toast } = useToast();
     const [selectedClinicId, setSelectedClinicId] = useState<string>(
         role === 'CLINIC_ADMIN' ? (profile?.clinic_id || 'all') : 'all'
@@ -160,119 +163,26 @@ export function IPDDashboard() {
     const [rangeEnd, setRangeEnd] = useState('10');
 
     // Inpatient Rapid Response System (RRS) & Bedside Code Blue State
-    const [activeDistressList, setActiveDistressList] = useState<InpatientDistressEvent[]>([]);
+    const activeDistressList: InpatientDistressEvent[] = [];
     const [isBedsideModalOpen, setIsBedsideModalOpen] = useState(false);
     const [bedsideTarget, setBedsideTarget] = useState<{ bed: Bed; admission?: Admission } | null>(null);
     const [isNurseReporterOpen, setIsNurseReporterOpen] = useState(false);
     const [selectedNurseBedId, setSelectedNurseBedId] = useState('GW-101');
     const [selectedNurseReason, setSelectedNurseReason] = useState('Acute Desaturation (SpO2 < 85%)');
 
-    const playCodeBlueTone = () => {
-        try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioCtx) return;
-            const ctx = new AudioCtx();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.35);
-        } catch (_) {}
-    };
-
-    const syncDistress = async () => {
-        try {
-            const res = await fetch(`${CLOUDFLARE_API_BASE}/ipd/distress/active`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.events) {
-                    setActiveDistressList(data.events);
-                }
-            }
-        } catch (_) {}
-    };
-
-    useEffect(() => {
-        syncDistress();
-        const unsub = db.subscribe('ipd_distress_events', () => {
-            syncDistress();
-            playCodeBlueTone();
-        });
-        const timer = setInterval(syncDistress, 3000);
-        return () => {
-            if (typeof unsub === 'function') unsub();
-            clearInterval(timer);
-        };
-    }, []);
-
-    const handleTriggerBedDistress = async (
-        targetBed: Bed,
-        targetAdmission?: Admission,
-        reason: string = 'Acute Desaturation',
-        reporterType: 'PATIENT_BEDSIDE_SOS' | 'NURSE_STAT_REPORT' = 'PATIENT_BEDSIDE_SOS'
-    ) => {
+    const handleTriggerBedDistress = async (targetBed: Bed, _targetAdmission?: Admission, reason = "Acute distress", _reporterType?: string) => {
         setIsSubmitting(true);
         try {
-            const patientName = targetAdmission?.patient?.full_name || 'Priya Sharma';
-            const patientAge = (targetAdmission?.patient as any)?.age || 34;
-            const patientGender = (targetAdmission?.patient as any)?.gender || 'Female';
-            const doctorName = targetAdmission?.doctor?.full_name || 'Dr. Malhotra';
-            const roomName = targetAdmission?.bed?.ward?.name || 'Room 105';
-
-            const payload = {
-                bedNumber: targetBed.bed_number,
-                roomId: roomName,
-                wardName: roomName,
-                patientId: targetAdmission?.patient_id || 'pat_priya_01',
-                patientName,
-                patientAge,
-                patientGender,
-                assignedDoctorId: targetAdmission?.admitting_doctor_id || 'doc_malhotra',
-                assignedDoctorName: doctorName,
-                reporterType,
-                reporterName: reporterType === 'PATIENT_BEDSIDE_SOS' ? 'Patient Bedside SOS' : 'Nurse Triage Lead • RN-402',
-                reporterId: reporterType === 'NURSE_STAT_REPORT' ? 'RN-402' : undefined,
-                reason,
-                acuity: 'CODE_BLUE_CRITICAL'
-            };
-
-            await fetch(`${CLOUDFLARE_API_BASE}/ipd/beds/${targetBed.id}/distress`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(() => null);
-
-            await db.create('ipd_distress_events', {
-                ...payload,
-                bedId: targetBed.id,
-                status: 'ACTIVE_DISTRESS',
-                timestamp: new Date().toISOString()
+            await staffApi(`/clinical/ipd/beds/${encodeURIComponent(targetBed.id)}/distress`, {
+                method: "POST", body: JSON.stringify({ reason }),
             });
-
-            setBeds(prev => prev.map(b => b.id === targetBed.id ? { ...b, status: 'CRITICAL_DISTRESS_SOS' as const } : b));
-            playCodeBlueTone();
-
-            toast({
-                title: 'CODE BLUE ESCALATION DISPATCHED',
-                description: `Emergency alert sent to Floor Nurse Station & ${doctorName} for ${patientName} (${roomName} · ${targetBed.bed_number}).`,
-                variant: 'destructive'
-            });
-
+            window.dispatchEvent(new Event(distressChanged));
             setIsBedsideModalOpen(false);
             setIsNurseReporterOpen(false);
-            syncDistress();
-        } catch (err) {
-            console.error('Distress dispatch error:', err);
-            toast({ title: 'Alert Error', description: 'Failed to dispatch Code Blue alert', variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+            toast({ title: "Code Blue recorded" });
+        } catch (error) {
+            toast({ title: "Code Blue was not recorded", description: error instanceof Error ? error.message : undefined, variant: "destructive" });
+        } finally { setIsSubmitting(false); }
     };
 
     const fetchInitialData = async () => {
@@ -807,46 +717,6 @@ export function IPDDashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Top Inpatient Code Blue Cascade Alert Banner */}
-            {activeDistressList.length > 0 && (
-                <div className="bg-red-600 text-white rounded-2xl p-4 shadow-xl border-2 border-red-400 flex flex-wrap items-center justify-between gap-4 animate-pulse">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-white/20 rounded-xl">
-                            <AlertOctagon className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-black uppercase tracking-wider bg-white text-red-700 px-2.5 py-0.5 rounded-full">
-                                    [INPATIENT CODE BLUE CASCADE]
-                                </span>
-                                <span className="text-xs font-mono opacity-90">{activeDistressList[0].dispatchedAt}</span>
-                            </div>
-                            <p className="text-sm font-bold mt-1">
-                                Room 105 · {activeDistressList[0].bedNumber} ({activeDistressList[0].patientName} - {activeDistressList[0].patientAge}F) · Reported by {activeDistressList[0].reporterName} · Reason: {activeDistressList[0].reason}
-                            </p>
-                            <p className="text-xs text-white/90 font-medium">
-                                Floor Crash Cart Dispatched • Primary Doctor ({activeDistressList[0].assignedDoctorName}) Alerted (&lt;5s) • Status: {activeDistressList[0].status}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-white text-red-700 hover:bg-slate-100 text-xs font-black shadow-md border-transparent"
-                            onClick={() => {
-                                const target = admissions.find(a => a.bed_id === activeDistressList[0].bedId);
-                                if (target) {
-                                    setBedsideTarget({ bed: target.bed || { id: target.bed_id, bed_number: activeDistressList[0].bedNumber, ward_id: 'ward_room_105', status: 'CRITICAL_DISTRESS_SOS' }, admission: target });
-                                    setIsBedsideModalOpen(true);
-                                }
-                            }}
-                        >
-                            View Bed Distress Console
-                        </Button>
-                    </div>
-                </div>
-            )}
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200/60 pb-6">
                 <div className="flex items-center gap-4">
@@ -880,19 +750,23 @@ export function IPDDashboard() {
                         </Select>
                     </div>
 
-                    <Button 
-                        onClick={() => setIsNurseReporterOpen(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200 gap-2 h-11 px-5 rounded-2xl font-bold transition-all active:scale-95"
-                    >
-                        <Radio className="w-4 h-4 animate-pulse" /> Nurse STAT Bed Distress Reporter
-                    </Button>
+                    {canReportDistress && (
+                        <Button
+                            onClick={() => setIsNurseReporterOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200 gap-2 h-11 px-5 rounded-2xl font-bold transition-all active:scale-95"
+                        >
+                            <Radio className="w-4 h-4 animate-pulse" /> Nurse STAT Bed Distress Reporter
+                        </Button>
+                    )}
 
-                    <Button 
-                        onClick={() => setIsAdmissionModalOpen(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 gap-2 h-11 px-6 rounded-2xl font-bold transition-all active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" /> New Admission
-                    </Button>
+                    {canMutateIPD && (
+                        <Button
+                            onClick={() => setIsAdmissionModalOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 gap-2 h-11 px-6 rounded-2xl font-bold transition-all active:scale-95"
+                        >
+                            <Plus className="w-4 h-4" /> New Admission
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -1078,18 +952,21 @@ export function IPDDashboard() {
                                                                 <BellRing className="w-3.5 h-3.5" />
                                                                 <span className="text-xs">Bedside SOS</span>
                                                             </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                onClick={() => {
-                                                                    setSelectedAdmission(adm);
-                                                                    setIsMiscModalOpen(true);
-                                                                }}
-                                                                className="h-9 w-9 p-0 rounded-xl hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-all font-bold"
-                                                                title="Add Charges"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </Button>
+                                                            {canMutateIPD && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setSelectedAdmission(adm);
+                                                                        setIsMiscModalOpen(true);
+                                                                    }}
+                                                                    className="h-9 w-9 p-0 rounded-xl hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-all font-bold"
+                                                                    title="Add Charges"
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
+                                                            {canMutateIPD && (
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="sm"
@@ -1102,14 +979,17 @@ export function IPDDashboard() {
                                                             >
                                                                 <Receipt className="w-4 h-4" />
                                                             </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                className="h-9 w-9 p-0 rounded-xl hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition-all"
-                                                                title="Archive"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
+                                                            )}
+                                                            {canMutateIPD && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-9 w-9 p-0 rounded-xl hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition-all"
+                                                                    title="Archive"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>

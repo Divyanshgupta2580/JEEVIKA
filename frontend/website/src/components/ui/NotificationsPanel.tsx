@@ -55,7 +55,7 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                         <SymbolIcon className="material-symbols-outlined text-slate-700">notifications</SymbolIcon>
                         <h3 className="font-bold text-slate-900">Notifications</h3>
                         {notifications.length > 0 && (
-                            <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                                 {notifications.length}
                             </span>
                         )}

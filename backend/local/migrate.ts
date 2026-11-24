@@ -63,23 +63,21 @@ export function splitSqlScript(sql: string): string[] {
   if (remaining) statements.push(remaining);
   return statements;
 }
+export const clinicalMigrationPaths = [
+  "backend/migrations/0001_intake.sql",
+  "backend/migrations/0002_jeevika_her.sql",
+  "backend/migrations/0002_pharmacy.sql",
+  "backend/migrations/0003_jeevika_vitalis.sql",
+  "backend/migrations/0005_clinic_token_sequences.sql",
+  "backend/cbc-migrations/0006_cbc.sql",
+  "backend/migrations/0008_phase4.sql",
+  "backend/migrations/0009_patient_experience.sql",
+  "backend/migrations/0010_clinical_handoffs.sql",
+  "backend/migrations/0011_procurement_stock.sql",
+] as const;
+
 export function migrationScripts() {
-  return [
-    "0001_intake.sql",
-    "0002_pharmacy.sql",
-    "0002_jeevika_her.sql",
-    "0003_jeevika_vitalis.sql",
-    "0005_clinic_token_sequences.sql",
-  ]
-    .map((name) => {
-      try {
-        return readFileSync(join("backend/migrations", name), "utf8");
-      } catch {
-        return "";
-      }
-    })
-    .filter(Boolean)
-    .concat(readFileSync("backend/cbc-migrations/0006_cbc.sql", "utf8"));
+  return clinicalMigrationPaths.map((path) => readFileSync(path, "utf8"));
 }
 const patientAuthMigrations = [
   ["backend/migrations", "0006_patient_auth_and_preferences.sql"],

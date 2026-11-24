@@ -1,18 +1,11 @@
 import { copyFileSync, mkdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
+import { clinicalMigrationPaths } from "../backend/local/migrate";
 
-// Same explicit schema family as backend/local/migrate.ts; never mix the operational schema.
+// The standalone server, D1 and Worker smoke use the same migration set.
 const destination = resolve(".local/integration-migrations");
 mkdirSync(destination, { recursive: true });
-for (const name of [
-  "0001_intake.sql",
-  "0002_pharmacy.sql",
-  "0002_jeevika_her.sql",
-  "0003_jeevika_vitalis.sql",
-])
-  copyFileSync(`backend/migrations/${name}`, `${destination}/${name}`);
-copyFileSync(
-  "backend/cbc-migrations/0006_cbc.sql",
-  `${destination}/0006_cbc.sql`,
-);
+for (const path of clinicalMigrationPaths) {
+  copyFileSync(path, resolve(destination, basename(path)));
+}
 console.log("Prepared the canonical clinical migration set (including CBC).");

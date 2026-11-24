@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";
+import { migrationScripts, splitSqlScript } from "../backend/local/migrate";
 import { demoPassword, seedDemo } from "../backend/local/seed";
 import { tenantDb } from "../backend/src/database";
 import {
@@ -19,15 +19,9 @@ const worker = new Miniflare(
 );
 try {
   const db = await worker.getD1Database("DB");
-  // This initial migration contains plain statements only (no trigger bodies).
-  const migration = readFileSync("backend/migrations/0001_intake.sql", "utf8");
-  await db.batch(
-    migration
-      .split(";")
-      .map((sql) => sql.trim())
-      .filter(Boolean)
-      .map((sql) => db.prepare(sql)),
-  );
+  for (const script of migrationScripts()) {
+    await db.batch(splitSqlScript(script).map((sql) => db.prepare(sql)));
+  }
   await seedDemo(db);
   const auth = await worker.dispatchFetch(
     "http://localhost/api/v1/auth/login",
@@ -125,6 +119,22 @@ try {
     },
   );
   assert.equal(review.status, 200);
+  const bed = await worker.dispatchFetch(
+    "http://localhost/api/v1/clinical/ipd/locations",
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ room: "Synthetic ward", label: "Test bed" }),
+    },
+  );
+  assert.equal(bed.status, 201);
+  const board = await worker.dispatchFetch(
+    "http://localhost/api/v1/clinical/ipd/board",
+    { headers },
+  );
+  assert.equal(board.status, 200);
+  const { locations } = (await board.json()) as { locations: unknown[] };
+  assert.equal(locations.length, 1);
   const revoke = await worker.dispatchFetch(
     `http://localhost/api/v1/encounters/${encounter.id}/revoke`,
     { method: "POST", headers },
@@ -136,7 +146,7 @@ try {
   );
   assert.equal(denied.status, 404);
   console.log(
-    "PASS: real local workerd/D1 login, atomic intake, concurrent replay, batch rollback, review and revocation",
+    "PASS: real local workerd/D1 login, atomic intake, concurrent replay, batch rollback, review, scoped ward board and revocation",
   );
 } finally {
   await worker.dispose();

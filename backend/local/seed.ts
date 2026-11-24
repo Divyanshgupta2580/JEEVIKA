@@ -19,6 +19,9 @@ export async function seedDemo(database: Database) {
       ["admin", "north", "HOSPITAL_ADMIN"],
       ["cashier", "north", "CASHIER"],
       ["east-doctor", "east", "DOCTOR"],
+      ["east-cashier", "east", "CASHIER"],
+      ["clinic-admin", "north", "CASHIER"],
+      ["stat-nurse", "north", "NURSE"],
     ] as const) {
       const salt = crypto.randomUUID();
       await db
@@ -33,5 +36,13 @@ export async function seedDemo(database: Database) {
         )
         .run();
     }
+    await db.batch([
+      db.statement(
+        "INSERT OR IGNORE INTO staff_clinic_roles (org_id,clinic_id,user_id,role) VALUES (:org,'north','clinic-admin','CLINIC_ADMIN')",
+      ),
+      db.statement(
+        "INSERT OR IGNORE INTO staff_clinic_roles (org_id,clinic_id,user_id,role) VALUES (:org,'north','stat-nurse','STAT_NURSE')",
+      ),
+    ]);
   }
 }
