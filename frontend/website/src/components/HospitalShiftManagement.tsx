@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { Building2, ArrowRight, Clock, Users, ChevronRight } from 'lucide-react'
-import { useHospital } from '@/context/HospitalContext'
+import { useStaffData } from '@/lib/staffApi'
 import { ShiftManagement } from './ShiftManagement'
 import { Button } from '@/components/ui/basic'
 
 export function HospitalShiftManagement() {
-    const { clinics } = useHospital()
+    const { data, error } = useStaffData<{ clinics: { id: string; name: string }[] }>('/clinical/command/clinics')
+    const clinics = data?.clinics ?? []
     const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
+
+    if (error) return <p role="alert">{error}</p>
+    if (!data) return <p role="status">Loading clinic roster…</p>
 
     if (selectedClinicId) {
         return (
@@ -83,7 +87,7 @@ export function HospitalShiftManagement() {
                             </div>
 
                             <h3 className="text-lg font-bold text-slate-900 mb-1">{clinic.name}</h3>
-                            <p className="text-xs text-slate-500 mb-6 line-clamp-1">{clinic.address || 'No address provided'}</p>
+                            <p className="text-xs text-slate-500 mb-6 line-clamp-1">Manage this clinic’s roster</p>
 
                             <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                 <div className="flex items-center gap-4">

@@ -1,8 +1,7 @@
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import { useState, useEffect } from 'react'
 import { Loader2, Plus, Pencil, Trash2, Clock, Users, AlertTriangle } from 'lucide-react'
-import { dataService as db } from '@/lib/dataService'
-import { useHospital } from '@/context/HospitalContext'
+import { staffApi } from '@/lib/staffApi'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button, Input, Label, Skeleton } from '@/components/ui/basic'
 import { useToast } from '@/components/ui/use-toast'
@@ -10,13 +9,11 @@ import { useToast } from '@/components/ui/use-toast'
 interface Shift {
     id: string
     clinic_id: string
-    hospital_id: string
     name: string
     start_time: string
     end_time: string
     grace_minutes: number
     late_cutoff_minutes: number
-    is_active: boolean
     created_at: string
     staff_count?: number
 }
@@ -26,9 +23,9 @@ interface StaffMember {
     full_name: string
     role: string
     shift_id: string | null
-    department: string
-    clinic_id?: string
-    clinics?: any
+    department?: string
+    clinic_id: string
+    clinic_name: string
 }
 
 interface ShiftManagementProps {
@@ -36,7 +33,8 @@ interface ShiftManagementProps {
 }
 
 export function ShiftManagement({ clinicId }: ShiftManagementProps) {
-    const { hospital, clinics: allClinics } = useHospital()
+    const roster = `/clinical/command/roster/${encodeURIComponent(clinicId)}`
+    const canManage = clinicId !== 'all'
     const { toast } = useToast()
 
     const [shifts, setShifts] = useState<Shift[]>([])
@@ -61,79 +59,46 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
     const [assigningShift, setAssigningShift] = useState<Shift | null>(null)
 
     useEffect(() => {
-        fetchData()
-    }, [clinicId])
+        const request = new AbortController()
+        void fetchData(request.signal)
+        return () => request.abort()
+    }, [roster])
 
-    const fetchData = async () => {
+    const fetchData = async (signal?: AbortSignal) => {
         setLoading(true)
         try {
-            const shiftsFilters: any = {}
-            if (clinicId !== 'all') {
-                shiftsFilters.clinic_id = clinicId
-            } else if (hospital?.id) {
-                shiftsFilters.hospital_id = hospital.id
+            const data = await staffApi<{ shifts: Shift[]; staff: StaffMember[] }>(roster, { signal })
+            if (signal?.aborted) return
+            const counts = new Map<string, number>()
+            for (const item of data.staff) {
+                if (item.shift_id) counts.set(item.shift_id, (counts.get(item.shift_id) ?? 0) + 1)
             }
-
-            const shiftsData = await db.list('clinic_shifts', {
-                filters: shiftsFilters,
-                sort: { column: 'start_time', ascending: true }
-            })
-
-            const staffFilters: any = { status: 'Active' }
-            if (clinicId !== 'all') {
-                staffFilters.clinic_id = clinicId
-            } else if (hospital?.id) {
-                staffFilters.hospital_id = hospital.id
-            }
-
-            const staffRawData = await db.list('staff_details', {
-                filters: staffFilters
-            })
-
-            // Manually map clinic names since we don't have joins in DataService.list
-            const staffData = staffRawData.map((s: any) => ({
-                ...s,
-                clinics: allClinics.find(c => c.id === s.clinic_id)
-            }))
-
-            // Count staff per shift
-            const enrichedShifts = (shiftsData || []).map((shift: any) => ({
-                ...shift,
-                staff_count: (staffData || []).filter((s: any) => s.shift_id === shift.id).length
-            }))
-
-            setShifts(enrichedShifts)
-            setStaffList(staffData || [])
-        } catch (error: any) {
-            console.error('Error fetching shifts:', error)
-            toast({ title: 'Error', description: 'Failed to load shift data.', variant: 'destructive' })
+            setShifts(data.shifts.map(shift => ({ ...shift, staff_count: counts.get(shift.id) ?? 0 })))
+            setStaffList(data.staff)
+        } catch (error: unknown) {
+            if (signal?.aborted) return
+            setShifts([])
+            setStaffList([])
+            toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to load shift data.', variant: 'destructive' })
         } finally {
-            setLoading(false)
+            if (!signal?.aborted) setLoading(false)
         }
     }
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!hospital?.id) return
+        if (!canManage) return
         setIsSubmitting(true)
 
         try {
-            await db.create('clinic_shifts', {
-                clinic_id: clinicId,
-                hospital_id: hospital.id,
-                name: formData.name,
-                start_time: formData.start_time,
-                end_time: formData.end_time,
-                grace_minutes: formData.grace_minutes,
-                late_cutoff_minutes: formData.late_cutoff_minutes
-            })
+            await staffApi(`${roster}/shifts`, { method: 'POST', body: JSON.stringify(formData) })
 
             toast({ title: 'Shift Created', description: `"${formData.name}" has been added.` })
             setIsCreateOpen(false)
             resetForm()
             fetchData()
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message, variant: 'destructive' })
+        } catch (error: unknown) {
+            toast({ title: 'Error', description: error instanceof Error ? error.message : "The request failed.", variant: 'destructive' })
         } finally {
             setIsSubmitting(false)
         }
@@ -141,49 +106,44 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
     const handleEdit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!editingShift) return
+        if (!editingShift || !canManage) return
         setIsSubmitting(true)
 
         try {
-            await db.update('clinic_shifts', editingShift.id, {
-                name: formData.name,
-                start_time: formData.start_time,
-                end_time: formData.end_time,
-                grace_minutes: formData.grace_minutes,
-                late_cutoff_minutes: formData.late_cutoff_minutes
-            })
+            await staffApi(`${roster}/shifts/${editingShift.id}`, { method: 'PUT', body: JSON.stringify(formData) })
 
             toast({ title: 'Shift Updated', description: `"${formData.name}" has been updated.` })
             setIsEditOpen(false)
             setEditingShift(null)
             resetForm()
             fetchData()
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message, variant: 'destructive' })
+        } catch (error: unknown) {
+            toast({ title: 'Error', description: error instanceof Error ? error.message : "The request failed.", variant: 'destructive' })
         } finally {
             setIsSubmitting(false)
         }
     }
 
     const handleDelete = async (shift: Shift) => {
-        if (!confirm(`Delete "${shift.name}"? Staff assigned to this shift will be unassigned.`)) return
+        if (!canManage || !confirm(`Delete "${shift.name}"? Staff assigned to this shift will be unassigned.`)) return
 
         try {
-            await db.remove('clinic_shifts', shift.id)
+            await staffApi(`${roster}/shifts/${shift.id}`, { method: 'DELETE' })
             toast({ title: 'Shift Deleted', description: `"${shift.name}" has been removed.` })
             fetchData()
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message, variant: 'destructive' })
+        } catch (error: unknown) {
+            toast({ title: 'Error', description: error instanceof Error ? error.message : "The request failed.", variant: 'destructive' })
         }
     }
 
     const handleAssignStaff = async (staffId: string, shiftId: string | null) => {
+        if (!canManage) return
         try {
-            await db.update('staff_details', staffId, { shift_id: shiftId })
+            await staffApi(`${roster}/staff/${encodeURIComponent(staffId)}/shift`, { method: 'PUT', body: JSON.stringify({ shiftId }) })
             toast({ title: 'Updated', description: 'Staff shift assignment updated.' })
             fetchData()
-        } catch (error: any) {
-            toast({ title: 'Error', description: error.message, variant: 'destructive' })
+        } catch (error: unknown) {
+            toast({ title: 'Error', description: error instanceof Error ? error.message : "The request failed.", variant: 'destructive' })
         }
     }
 
@@ -347,7 +307,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                     </div>
                 </div>
 
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                {canManage && <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                     <DialogTrigger asChild>
                         <Button
                             onClick={() => { resetForm(); setIsCreateOpen(true) }}
@@ -362,7 +322,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                         </DialogHeader>
                         {renderShiftForm(handleCreate, "Create Shift")}
                     </DialogContent>
-                </Dialog>
+                </Dialog>}
             </div>
 
             {/* SHIFT CARDS */}
@@ -402,6 +362,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
+                                        disabled={!canManage}
                                         onClick={() => openEdit(shift)}
                                         className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                                         title="Edit shift"
@@ -409,6 +370,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                                         <Pencil className="w-3.5 h-3.5 text-slate-400" />
                                     </button>
                                     <button
+                                        disabled={!canManage}
                                         onClick={() => handleDelete(shift)}
                                         className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Delete shift"
@@ -438,6 +400,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                                     <span className="font-bold">{shift.staff_count || 0}</span> staff assigned
                                 </div>
                                 <button
+                                    disabled={!canManage}
                                     onClick={() => openAssign(shift)}
                                     className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
                                 >
@@ -500,7 +463,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                                         <td className="px-5 py-3.5 text-slate-500 text-xs">{staff.department || '—'}</td>
                                         {clinicId === 'all' && (
                                             <td className="px-5 py-3.5 text-slate-500 text-xs font-medium">
-                                                {staff.clinics?.name || 'N/A'}
+                                                {staff.clinic_name || 'N/A'}
                                             </td>
                                         )}
                                         <td className="px-5 py-3.5">

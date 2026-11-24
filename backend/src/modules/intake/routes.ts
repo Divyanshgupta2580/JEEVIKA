@@ -657,7 +657,9 @@ encounterStore.set(defaultPoojaEncounter.patient_id, defaultPoojaEncounter);
 encounterStore.set(defaultMohammedEncounter.id, defaultMohammedEncounter);
 encounterStore.set(defaultMohammedEncounter.patient_id, defaultMohammedEncounter);
 
-intakeRouter.post("/encounter", async (c) => {
+export const legacyIntakeFixtureRouter = new Hono<{ Bindings: { DB?: Database } }>();
+
+legacyIntakeFixtureRouter.post("/encounter", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const rawAnswers = (body.answers && typeof body.answers === "object" ? body.answers : {}) as Record<string, "yes" | "no">;
   const answers: Record<string, "yes" | "no"> = { ...rawAnswers };
@@ -847,7 +849,7 @@ intakeRouter.post("/encounter", async (c) => {
   return c.json({ success: true, encounter });
 });
 
-intakeRouter.get("/queue", async (c) => {
+legacyIntakeFixtureRouter.get("/queue", async (c) => {
   const clinicId = c.req.query("clinic_id") || c.req.query("clinicId");
   const statusParam = c.req.query("status");
 
@@ -982,12 +984,12 @@ const handleUpdateEncounter = async (c: any) => {
   return c.json({ success: true, encounter: updated });
 };
 
-intakeRouter.patch("/encounter/:id", handleUpdateEncounter);
-intakeRouter.post("/encounter/:id/status", handleUpdateEncounter);
-intakeRouter.patch("/:id", handleUpdateEncounter);
-intakeRouter.post("/:id/status", handleUpdateEncounter);
+legacyIntakeFixtureRouter.patch("/encounter/:id", handleUpdateEncounter);
+legacyIntakeFixtureRouter.post("/encounter/:id/status", handleUpdateEncounter);
+legacyIntakeFixtureRouter.patch("/:id", handleUpdateEncounter);
+legacyIntakeFixtureRouter.post("/:id/status", handleUpdateEncounter);
 
-intakeRouter.get("/encounter/:id", async (c) => {
+legacyIntakeFixtureRouter.get("/encounter/:id", async (c) => {
   const id = c.req.param("id");
   let encounter = encounterStore.get(id);
   if (!encounter) {
@@ -1002,7 +1004,7 @@ intakeRouter.get("/encounter/:id", async (c) => {
   return c.json({ success: true, encounter });
 });
 
-intakeRouter.get("/:id", async (c) => {
+legacyIntakeFixtureRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
   let encounter = encounterStore.get(id);
   if (!encounter) {

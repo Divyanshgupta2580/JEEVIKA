@@ -6,6 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { z } from "zod";
 
 import { intakeRouter } from "./modules/intake/routes";
+import { protectedIntake, protectedPatients, protectedPrescriptions } from "./modules/clinical_records";
 import { opsRouter } from "./modules/ops/routes";
 import { bridgeRouter } from "./modules/bridge/routes";
 import { homeRouter } from "./modules/home/routes";
@@ -21,6 +22,7 @@ import { pruneRouter } from "./modules/prune";
 import { procurementHandoffs } from "./modules/dispensing/procurement";
 import { clinicalPharmacyRouter, postedLedgerRouter } from "./modules/dispensing";
 import { bedsRouter, outreachRouter, wardRouter } from "./modules/clinical_ops";
+import { commandRouter } from "./modules/clinical_ops/command";
 import { ayushRouter } from "./modules/ayush";
 import { createApp } from "../../apps/api/app";
 
@@ -1130,10 +1132,10 @@ prescriptionStore.set("pat-9811122334", defaultPriyaPrescription);
 prescriptionStore.set("#RX-2026-P5910", defaultPriyaPrescription);
 prescriptionStore.set("RX-2026-P5910", defaultPriyaPrescription);
 
-const prescriptionsRouter = new Hono<{ Bindings: Env }>();
+export const legacyPrescriptionFixtureRouter = new Hono<{ Bindings: Env }>();
 
 // GET /api/v1/prescriptions/patient/:id
-prescriptionsRouter.get("/patient/:id", async (c) => {
+legacyPrescriptionFixtureRouter.get("/patient/:id", async (c) => {
   const patientId = c.req.param("id");
   let rx = prescriptionStore.get(patientId);
   if (!rx) {
@@ -1154,7 +1156,7 @@ prescriptionsRouter.get("/patient/:id", async (c) => {
 });
 
 // GET /api/v1/prescriptions: List signed prescriptions for clinic / POS dispensing queue
-prescriptionsRouter.get("/", async (c) => {
+legacyPrescriptionFixtureRouter.get("/", async (c) => {
   const clinicId = c.req.query("clinic_id") || c.req.query("clinicId");
   const statusParam = c.req.query("status");
   const targetStatus = statusParam ? statusParam.toUpperCase() : "SIGNED";
@@ -1197,7 +1199,7 @@ prescriptionsRouter.get("/", async (c) => {
 });
 
 // GET /api/v1/prescriptions/:id
-prescriptionsRouter.get("/:id", async (c) => {
+legacyPrescriptionFixtureRouter.get("/:id", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
   let rx = prescriptionStore.get(id);
   if (!rx) {
@@ -1218,7 +1220,7 @@ prescriptionsRouter.get("/:id", async (c) => {
 });
 
 // POST /api/v1/prescriptions: Issue new prescription from doctor consultation
-prescriptionsRouter.post("/", async (c) => {
+legacyPrescriptionFixtureRouter.post("/", async (c) => {
   try {
     const raw = (await c.req.json()) as Record<string, unknown>;
     const patientId = String(raw.patientId || raw.patient_id || "pat-048291");
@@ -1332,7 +1334,7 @@ prescriptionsRouter.post("/", async (c) => {
 });
 
 // PUT /api/v1/prescriptions/:id/adherence: Record patient medicine adherence
-prescriptionsRouter.put("/:id/adherence", async (c) => {
+legacyPrescriptionFixtureRouter.put("/:id/adherence", async (c) => {
   try {
     const paramId = decodeURIComponent(c.req.param("id"));
     const raw = (await c.req.json()) as Record<string, unknown>;
@@ -1457,10 +1459,10 @@ const updatePatientSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const patientsRouter = new Hono<{ Bindings: Env }>();
+export const legacyPatientFixtureRouter = new Hono<{ Bindings: Env }>();
 
 // POST /api/v1/patients
-patientsRouter.post("/", async (c) => {
+legacyPatientFixtureRouter.post("/", async (c) => {
   try {
     const raw = await c.req.json();
     const input = createPatientSchema.parse(raw);
@@ -1539,7 +1541,7 @@ patientsRouter.post("/", async (c) => {
 });
 
 // GET /api/v1/patients
-patientsRouter.get("/", async (c) => {
+legacyPatientFixtureRouter.get("/", async (c) => {
   const phoneQuery = c.req.query("phone")?.replace(/\s+/g, "").toLowerCase();
   const abhaQuery = c.req.query("abha")?.replace(/[-\s]/g, "").toLowerCase();
   const nameQuery = c.req.query("name")?.toLowerCase();
@@ -1626,7 +1628,7 @@ patientsRouter.get("/", async (c) => {
 });
 
 // GET /api/v1/patients/:id
-patientsRouter.get("/:id", async (c) => {
+legacyPatientFixtureRouter.get("/:id", async (c) => {
   const rawId = decodeURIComponent(c.req.param("id")).trim();
   let patient =
     patientStore.get(rawId) ||
@@ -1704,7 +1706,7 @@ patientsRouter.get("/:id", async (c) => {
 });
 
 // PUT /api/v1/patients/:id
-patientsRouter.put("/:id", async (c) => {
+legacyPatientFixtureRouter.put("/:id", async (c) => {
   try {
     const rawId = decodeURIComponent(c.req.param("id")).trim();
     let existing =
@@ -1992,6 +1994,7 @@ ipdRouter.post("/distress/:id/acknowledge", async (c) => {
   return c.json({ success: true, event });
 });
 
+v1.route("/clinical/command", commandRouter);
 v1.route("/clinical/ipd", wardRouter);
 v1.route("/clinical/casualty", bedsRouter);
 v1.route("/clinical/pharmacy", clinicalPharmacyRouter);
@@ -2000,6 +2003,7 @@ v1.route("/clinical/procurement", procurementHandoffs);
 v1.route("/clinical/nurse-calls", outreachRouter);
 v1.route("/ipd", ipdRouter);
 v1.route("/intake", intakeRouter);
+v1.route("/intake", protectedIntake);
 for (const path of ["/ops/pos/sale", "/ops/inventory/radar", "/ops/ledger/summary"]) {
   v1.use(path, async (c, next) => {
     if (c.env?.DB) return c.json({ error: "Use the authenticated operations workspace" }, 410);
@@ -2013,8 +2017,8 @@ v1.route("/platform", platformRouter);
 v1.route("/abdm", abdmRouter);
 v1.route("/insurance", insuranceRouter);
 v1.route("/documents", documentsRouter);
-v1.route("/prescriptions", prescriptionsRouter);
-v1.route("/patients", patientsRouter);
+v1.route("/prescriptions", protectedPrescriptions);
+v1.route("/patients", protectedPatients);
 v1.route("/her", herRouter);
 v1.route("/vitalis", vitalisRouter);
 v1.route("/auth/patient", patientAuthRouter);

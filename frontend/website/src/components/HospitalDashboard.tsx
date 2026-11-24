@@ -14,16 +14,12 @@ import {
     Shield,
     ShieldCheck,
     CheckCircle2,
-    RefreshCw,
     ArrowRightLeft,
     Search,
     MapPin,
     Bed,
     Activity,
     Database,
-    Copy,
-    Check,
-    Lock,
     Zap,
     Sparkles,
     Send,
@@ -70,66 +66,6 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
         refreshData,
         updateInventoryItem
     } = useHospital()
-
-    // ---------------------------------------------------------
-    // 1. PLATFORM INTEGRITY HUD & AUDIT CHAIN
-    // ---------------------------------------------------------
-    const [auditData, setAuditData] = useState<{
-        chainLength: number;
-        isValid: boolean;
-        latestHash: string;
-        verifiedAt: string;
-        isVerifying: boolean;
-    }>({
-        chainLength: 142,
-        isValid: true,
-        latestHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        verifiedAt: "Synchronized",
-        isVerifying: false
-    });
-    const [copiedHash, setCopiedHash] = useState(false);
-    const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
-
-    const verifyAuditChain = async () => {
-        setAuditData(prev => ({ ...prev, isVerifying: true }));
-        try {
-            const res = await fetch(`${API_BASE}/platform/audit/verify`);
-            if (res.ok) {
-                const data = await res.json();
-                setAuditData({
-                    chainLength: data.chainLength || 142,
-                    isValid: data.isValid !== false,
-                    latestHash: data.latestHash || "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                    verifiedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                    isVerifying: false
-                });
-                toast({
-                    title: "Cryptographic Audit Chain Verified",
-                    description: `Consensus intact: ${data.chainLength || 142} immutable SHA-256 blocks validated on Cloudflare D1.`,
-                    className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
-                });
-                return;
-            }
-        } catch {
-            // graceful fallback
-        }
-        setAuditData({
-            chainLength: 142,
-            isValid: true,
-            latestHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            verifiedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            isVerifying: false
-        });
-        toast({
-            title: "Cryptographic Ledger Verified",
-            description: "D1 cryptographic chain verified. Zero block discrepancies detected.",
-            className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
-        });
-    };
-
-    useEffect(() => {
-        verifyAuditChain();
-    }, []);
 
     // Live Backend HQ Group Ledger & Central Inventory Radar
     const [hqLedger, setHqLedger] = useState<{
@@ -192,13 +128,6 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
     useEffect(() => {
         fetchHqTelemetry();
     }, []);
-
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        setCopiedHash(true);
-        setTimeout(() => setCopiedHash(false), 2000);
-        toast({ title: "Copied to Clipboard", description: "SHA-256 block hash copied." });
-    };
 
     // ---------------------------------------------------------
     // 2. INVENTORY CALCULATIONS & DERIVED DATA
@@ -824,124 +753,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             {/* --------------------------------------------------------- */}
             {/* PLATFORM INTEGRITY HUD: Cryptographic Audit & D1 Tenant */}
             {/* --------------------------------------------------------- */}
-            <div className="ayu-audit-strip rounded-2xl p-4 bg-emerald-50 border border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400 animate-pulse" />
-                        <span className="text-xs font-bold text-emerald-300 tracking-wider uppercase">
-                            Cryptographic Audit Chain: Verified
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl font-mono text-xs text-slate-300">
-                        <span className="text-slate-500">Block Height:</span>
-                        <span className="text-white font-bold">{auditData.chainLength} SHA-256 Blocks</span>
-                    </div>
-
-                    <div className="hidden lg:flex items-center gap-2 bg-slate-800/50 border border-slate-700/40 px-3 py-1.5 rounded-xl text-xs text-slate-400">
-                        <Database className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Cloudflare D1 Multi-Tenant: <strong className="text-indigo-200">org_{profile?.hospital_id?.slice(0, 8) || 'jeevika'}</strong></span>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800">
-                        <Lock className="w-3 h-3 text-slate-500" />
-                        <span className="truncate max-w-[140px]">{auditData.latestHash.slice(0, 16)}...</span>
-                        <button
-                            onClick={() => copyToClipboard(auditData.latestHash)}
-                            className="text-slate-400 hover:text-white transition-colors ml-1"
-                            title="Copy Latest Hash"
-                        >
-                            {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                    </div>
-
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={verifyAuditChain}
-                        disabled={auditData.isVerifying}
-                        className="text-xs text-indigo-300 hover:text-white hover:bg-white/10 h-8 px-3 rounded-lg border border-indigo-500/30 transition-all"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${auditData.isVerifying ? 'animate-spin' : ''}`} />
-                        {auditData.isVerifying ? 'Verifying...' : 'Re-Verify Ledger'}
-                    </Button>
-
-                    <Dialog open={isAuditModalOpen} onOpenChange={setIsAuditModalOpen}>
-                        <DialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs bg-slate-800/60 border-slate-700 text-slate-200 hover:bg-slate-700 h-8 px-3 rounded-lg"
-                            >
-                                Inspector
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[550px] bg-slate-950 border-slate-800 text-slate-50">
-                            <DialogHeader>
-                                <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-                                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                                    Cryptographic Platform Integrity HUD
-                                </DialogTitle>
-                                <DialogDescription className="text-slate-400 text-xs">
-                                    Zero-trust audit ledger backed by Cloudflare D1 & Worker durable execution.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4 text-xs font-mono">
-                                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
-                                    <p className="text-slate-400 font-sans font-bold uppercase tracking-wider text-[10px]">Consensus State</p>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-300 font-sans">Tamper Evidence Check:</span>
-                                        <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                            <CheckCircle2 className="w-4 h-4" /> PASSED (Zero Discrepancies)
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-400 font-sans">Chain Height:</span>
-                                        <span className="text-white font-bold">{auditData.chainLength} Verified Blocks</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-400 font-sans">Tenant Isolation:</span>
-                                        <span className="text-indigo-400 font-bold">Cloudflare D1 (org_id scoped)</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-400 font-sans">Last Verification:</span>
-                                        <span className="text-slate-300">{auditData.verifiedAt}</span>
-                                    </div>
-                                </div>
-
-                                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 space-y-1.5">
-                                    <p className="text-slate-400 font-sans font-bold uppercase tracking-wider text-[10px]">Latest Merkle Root Hash</p>
-                                    <p className="text-emerald-300 break-all text-[11px] bg-slate-950 p-2 rounded-lg border border-slate-800">
-                                        {auditData.latestHash}
-                                    </p>
-                                </div>
-
-                                <div className="p-3 bg-indigo-950/40 rounded-xl border border-indigo-900/50 space-y-1 text-slate-300 font-sans">
-                                    <p className="font-bold text-indigo-300 text-xs flex items-center gap-1.5">
-                                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                                        Deterministic Architecture Invariants
-                                    </p>
-                                    <p className="text-[11px] text-slate-400">
-                                        • Rule engines decide medical triage & Rx allocation; LLMs strictly translate text.<br />
-                                        • Money is stored strictly in integer Paise (zero floating-point math drift).<br />
-                                        • Zero PHI leaks redaction gate verified on edge execution.
-                                    </p>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button
-                                    onClick={() => setIsAuditModalOpen(false)}
-                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white"
-                                >
-                                    Close Inspector
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
+            <a href="#/app/ca/audit" className="inline-flex min-h-11 items-center rounded-lg border bg-white px-4 text-sm font-semibold">
+                View audit status
+            </a>
 
             {/* --------------------------------------------------------- */}
             {/* EXECUTIVE MULTI-CLINIC COMMAND CENTER HEADER */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { dataService as db } from '@/lib/dataService';
-import { useHospital } from '@/context/HospitalContext';
+import { staffApi, useStaffData } from '@/lib/staffApi';
+import { paiseToRupeesString, rupeesToPaise } from '@/lib/utils';
 import { 
     Loader2, 
     TrendingDown, 
@@ -10,8 +10,7 @@ import {
     Calendar,
     Receipt,
     Trash2,
-    AlertCircle,
-    FileText
+    AlertCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/basic';
 import { Button } from '@/components/ui/basic';
@@ -22,21 +21,20 @@ type ExpenseType = 'ONE_TIME' | 'RECURRING';
 
 interface Expense {
     id: string;
-    hospital_id: string;
     clinic_id: string | null;
     category: string;
-    amount: number;
+    amount_paise: number;
     description: string;
     expense_type: ExpenseType;
     expense_date: string;
-    tax_percentage?: number;
-    tax_amount?: number;
-    receipt_url?: string | null;
+    tax_bps: number;
+    tax_paise: number;
     created_at: string;
 }
 
 export function ExpensesDashboard() {
-    const { hospital, clinics } = useHospital();
+    const { data: directory } = useStaffData<{ clinics: { id: string; name: string }[] }>('/clinical/command/clinics');
+    const clinics = directory?.clinics ?? [];
     const { toast } = useToast();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,17 +45,13 @@ export function ExpensesDashboard() {
 
     useEffect(() => {
         fetchExpenses();
-    }, [hospital?.id]);
+    }, []);
 
     const fetchExpenses = async () => {
-        if (!hospital?.id) return;
         setLoading(true);
         try {
-            const data = await db.list('other_expenses', {
-                filters: [{ field: 'hospital_id', operator: '==', value: hospital.id }],
-                sort: { column: 'expense_date', ascending: false }
-            });
-            setExpenses(data || []);
+            const { items } = await staffApi<{ items: Expense[] }>('/clinical/command/expenses');
+            setExpenses(items);
         } catch (error: any) {
             console.error('Error fetching expenses:', error);
             toast({ title: 'Error', description: 'Failed to load expenses', variant: 'destructive' });
@@ -68,36 +62,22 @@ export function ExpensesDashboard() {
 
     const handleAddExpense = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!hospital?.id) return;
 
         setIsSubmitting(true);
         const formData = new FormData(e.currentTarget);
         
-        const baseAmount = parseFloat(formData.get('amount') as string);
-        const taxPercentage = parseFloat(formData.get('tax_percentage') as string) || 0;
-        const taxAmount = (baseAmount * taxPercentage) / 100;
-        
-        let receiptUrl = '';
-        const receiptFile = formData.get('receipt') as File;
-        if (receiptFile && receiptFile.size > 0) {
-            receiptUrl = URL.createObjectURL(receiptFile);
-        }
-        
         const payload = {
-            hospital_id: hospital.id,
             clinic_id: formData.get('clinic_id') || null,
-            category: formData.get('category') as string,
-            amount: baseAmount + taxAmount, // Total amount
-            tax_percentage: taxPercentage,
-            tax_amount: taxAmount,
-            receipt_url: receiptUrl || null,
-            description: formData.get('description') as string,
-            expense_type: formData.get('expense_type') as ExpenseType,
-            expense_date: formData.get('expense_date') as string,
+            category: formData.get('category'),
+            amount_paise: rupeesToPaise(String(formData.get('amount'))),
+            tax_bps: rupeesToPaise(String(formData.get('tax_percentage') || '0')),
+            description: formData.get('description') || '',
+            expense_type: formData.get('expense_type'),
+            expense_date: formData.get('expense_date'),
         };
 
         try {
-            await db.create('other_expenses', payload);
+            await staffApi('/clinical/command/expenses', { method: 'POST', body: JSON.stringify(payload) });
             
             toast({ title: 'Success', description: 'Expense recorded successfully' });
             setIsAddModalOpen(false);
@@ -113,7 +93,7 @@ export function ExpensesDashboard() {
         if (!confirm('Are you sure you want to delete this expense record?')) return;
 
         try {
-            await db.remove('other_expenses', id);
+            await staffApi(`/clinical/command/expenses/${id}`, { method: 'DELETE' });
             toast({ title: 'Success', description: 'Expense record deleted' });
             setExpenses(expenses.filter(e => e.id !== id));
         } catch (error: any) {
@@ -132,9 +112,9 @@ export function ExpensesDashboard() {
 
     const totalStats = useMemo(() => {
         return filteredExpenses.reduce((acc, curr) => {
-            if (curr.expense_type === 'ONE_TIME') acc.oneTime += curr.amount;
-            else acc.recurring += curr.amount;
-            acc.total += curr.amount;
+            if (curr.expense_type === 'ONE_TIME') acc.oneTime += curr.amount_paise;
+            else acc.recurring += curr.amount_paise;
+            acc.total += curr.amount_paise;
             return acc;
         }, { oneTime: 0, recurring: 0, total: 0 });
     }, [filteredExpenses]);
@@ -194,15 +174,7 @@ export function ExpensesDashboard() {
                                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Receipt/Bill (Optional)</label>
-                                        <input 
-                                            name="receipt" 
-                                            type="file" 
-                                            accept="image/*,.pdf"
-                                            className="w-full px-3 py-1.5 border rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
-                                        />
-                                    </div>
+
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -266,7 +238,7 @@ export function ExpensesDashboard() {
                             <TrendingDown className="w-5 h-5 text-red-500 bg-red-50 p-1 rounded-md" />
                         </div>
                         <div className="text-4xl font-bold text-slate-900 group-hover:scale-105 transition-transform origin-left">
-                            ₹{totalStats.total.toLocaleString()}
+                            ₹{paiseToRupeesString(totalStats.total)}
                         </div>
                         <p className="text-xs text-slate-400 mt-2 font-medium">Aggregate of all categories</p>
                     </CardContent>
@@ -279,7 +251,7 @@ export function ExpensesDashboard() {
                             <Calendar className="w-5 h-5 text-blue-500 bg-blue-50 p-1 rounded-md" />
                         </div>
                         <div className="text-4xl font-bold text-slate-900 text-blue-600 group-hover:scale-105 transition-transform origin-left">
-                            ₹{totalStats.recurring.toLocaleString()}
+                            ₹{paiseToRupeesString(totalStats.recurring)}
                         </div>
                         <p className="text-xs text-blue-600/70 mt-2 font-medium">Maintenance & Utilities</p>
                     </CardContent>
@@ -292,7 +264,7 @@ export function ExpensesDashboard() {
                             <Receipt className="w-5 h-5 text-purple-500 bg-purple-50 p-1 rounded-md" />
                         </div>
                         <div className="text-4xl font-bold text-slate-900 text-purple-600 group-hover:scale-105 transition-transform origin-left">
-                            ₹{totalStats.oneTime.toLocaleString()}
+                            ₹{paiseToRupeesString(totalStats.oneTime)}
                         </div>
                         <p className="text-xs text-purple-600/70 mt-2 font-medium">Asset purchases & repairs</p>
                     </CardContent>
@@ -340,7 +312,6 @@ export function ExpensesDashboard() {
                                 <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Clinic</th>
                                 <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Amount</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Receipt</th>
                                 <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
@@ -382,18 +353,11 @@ export function ExpensesDashboard() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-mono font-bold text-slate-900 text-lg">
-                                            ₹{expense.amount.toLocaleString()}
-                                            {(expense.tax_amount || 0) > 0 && (
+                                            ₹{paiseToRupeesString(expense.amount_paise)}
+                                            {expense.tax_paise > 0 && (
                                                 <div className="text-xs font-normal text-slate-500 mt-1">
-                                                    incl. ₹{expense.tax_amount?.toLocaleString()} ({expense.tax_percentage}%) tax
+                                                    incl. ₹{paiseToRupeesString(expense.tax_paise)} ({paiseToRupeesString(expense.tax_bps)}%) tax
                                                 </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {expense.receipt_url && (
-                                                <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 text-xs font-semibold bg-blue-50 px-2 py-1.5 rounded-md border border-blue-100 w-fit hover:bg-blue-100 transition-colors">
-                                                    <FileText size={14} /> View
-                                                </a>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">

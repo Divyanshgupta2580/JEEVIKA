@@ -257,6 +257,25 @@ export function CareBoard({
               </form>
             </details>
           )}
+          {kind === "casualty" && role === "DOCTOR" && (
+            <Card>
+              <CardContent className="space-y-2 p-4">
+                <h2 className="font-semibold">Referred emergency encounters</h2>
+                {data.encounters.length === 0 ? (
+                  <p>No emergency referrals assigned to you.</p>
+                ) : (
+                  <ul className="list-disc pl-5">
+                    {data.encounters.map((item) => (
+                      <li key={item.id}>
+                        {item.tokenNumber ? `${item.tokenNumber} · ` : ""}
+                        {item.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          )}
           {canWrite && (
             <Card>
               <CardContent className="space-y-3 p-4">
@@ -270,15 +289,29 @@ export function CareBoard({
                 )}
                 <form
                   className="grid gap-3 sm:grid-cols-2"
-                  onSubmit={(event) =>
+                  onSubmit={(event) => {
+                    const submitter = (event.nativeEvent as SubmitEvent)
+                      .submitter;
+                    if (
+                      submitter instanceof HTMLButtonElement &&
+                      submitter.value === "refer"
+                    ) {
+                      event.preventDefault();
+                      const fields = new FormData(event.currentTarget);
+                      void run("/referrals", "Emergency encounter referred.", {
+                        encounterId: fields.get("encounterId") ?? "",
+                        doctorId: fields.get("doctorId") ?? "",
+                      });
+                      return;
+                    }
                     form(
                       event,
                       "/admissions",
                       kind === "ipd"
                         ? "Admission recorded."
                         : "Emergency bay assigned.",
-                    )
-                  }
+                    );
+                  }}
                 >
                   <label>
                     Encounter
@@ -352,6 +385,17 @@ export function CareBoard({
                   >
                     Confirm assignment
                   </Button>
+                  {kind === "casualty" && (
+                    <Button
+                      type="submit"
+                      value="refer"
+                      formNoValidate
+                      variant="outline"
+                      disabled={busy || !data.encounters.length}
+                    >
+                      Refer to doctor
+                    </Button>
+                  )}
                 </form>
               </CardContent>
             </Card>

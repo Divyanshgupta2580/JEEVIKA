@@ -52,6 +52,8 @@ function makeCareRouter(kind: CareKind) {
     const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
     const administrative =
       p.role === "HOSPITAL_ADMIN" || p.role === "CLINIC_ADMIN";
+    const casualtyDoctor =
+      kind === "bay" && p.role === "DOCTOR" ? p.userId : null;
     const [locations, admissions, encounters, doctors] = await Promise.all([
       db
         .statement(
@@ -68,9 +70,12 @@ function makeCareRouter(kind: CareKind) {
             .statement(
               `${occupiedSql}
         AND EXISTS (SELECT 1 FROM care_locations l WHERE l.org_id=a.org_id AND l.clinic_id=a.clinic_id AND l.id=a.location_id AND l.kind=?)
+        AND (? IS NULL OR a.doctor_id=?)
         ORDER BY a.admitted_at`,
               p.clinicId,
               kind,
+              casualtyDoctor,
+              casualtyDoctor,
             )
             .all(),
       administrative
@@ -82,14 +87,17 @@ function makeCareRouter(kind: CareKind) {
         JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care'
         WHERE e.org_id=:org AND e.clinic_id=? AND
           ((?='bed' AND c.revoked_at IS NULL) OR (?='bay' AND e.status='emergency' AND (c.revoked_at IS NULL OR ${anonymousEmergency})))
-          AND NOT EXISTS(SELECT 1 FROM care_admissions a WHERE a.org_id=e.org_id AND a.encounter_id=e.id AND a.discharged_at IS NULL)
+          AND NOT EXISTS(SELECT 1 FROM care_admissions a WHERE a.org_id=e.org_id AND a.clinic_id=e.clinic_id AND a.encounter_id=e.id AND a.discharged_at IS NULL)
+          AND (? IS NULL OR EXISTS (SELECT 1 FROM casualty_referrals r WHERE r.org_id=e.org_id AND r.clinic_id=e.clinic_id AND r.encounter_id=e.id AND r.doctor_id=?))
         ORDER BY e.created_at DESC LIMIT 50`,
               p.clinicId,
               kind,
               kind,
+              casualtyDoctor,
+              casualtyDoctor,
             )
             .all(),
-      administrative
+      administrative || casualtyDoctor
         ? Promise.resolve({ results: [] })
         : db
             .statement(
@@ -235,6 +243,38 @@ function makeCareRouter(kind: CareKind) {
 
 wardRouter.route("/", makeCareRouter("bed"));
 bedsRouter.route("/", makeCareRouter("bay"));
+
+bedsRouter.post("/referrals", bayWriters, async (c) => {
+  const p = c.get("principal");
+  const input = await staffBody(
+    c.req.raw,
+    dataForAdmission.pick({ encounterId: true, doctorId: true }),
+  );
+  const referral = await tenantDb({ db: c.env.DB, orgId: p.orgId })
+    .statement(
+      `INSERT INTO casualty_referrals (org_id,clinic_id,encounter_id,doctor_id,referred_by,referred_at)
+      SELECT e.org_id,e.clinic_id,e.id,u.id,?,? FROM encounters e
+      JOIN consents c ON c.org_id=e.org_id AND c.patient_id=e.patient_id AND c.encounter_id=e.id AND c.purpose='care'
+      JOIN users u ON u.org_id=e.org_id AND u.clinic_id=e.clinic_id AND u.role='DOCTOR' AND u.id=?
+      WHERE e.org_id=:org AND e.clinic_id=? AND e.id=? AND e.status='emergency'
+      AND (c.revoked_at IS NULL OR ${anonymousEmergency})
+      AND NOT EXISTS (SELECT 1 FROM care_admissions a WHERE a.org_id=e.org_id AND a.clinic_id=e.clinic_id AND a.encounter_id=e.id AND a.discharged_at IS NULL)
+      ON CONFLICT(org_id,clinic_id,encounter_id) DO UPDATE SET doctor_id=excluded.doctor_id,
+        referred_by=excluded.referred_by,referred_at=excluded.referred_at
+      RETURNING encounter_id AS encounterId,doctor_id AS doctorId`,
+      p.userId,
+      now(),
+      input.doctorId,
+      p.clinicId,
+      input.encounterId,
+    )
+    .first();
+  if (!referral)
+    throw new HTTPException(404, {
+      message: "Emergency encounter or clinician unavailable",
+    });
+  return c.json(referral, 201);
+});
 
 wardRouter.post("/beds/:bedId/distress", staffAccess("NURSE"), async (c) => {
   const p = c.get("principal");

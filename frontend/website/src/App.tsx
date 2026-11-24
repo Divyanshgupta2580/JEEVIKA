@@ -23,7 +23,6 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
     });
 }
 
-const StaffPortal = lazyWithRetry(() => import("@/components/StaffPortal").then(module => ({ default: module.StaffPortal })));
 const PurchaseOrders = lazyWithRetry(() => import("@/components/ProcurementHandoffs").then(module => ({ default: module.PurchaseOrders })));
 const GoodsReceipt = lazyWithRetry(() => import("@/components/ProcurementHandoffs").then(module => ({ default: module.GoodsReceipt })));
 const MedicineMigration = lazyWithRetry(() => import("@/components/MedicineMigration").then(module => ({ default: module.MedicineMigration })));
@@ -42,7 +41,6 @@ const ExpensesDashboard = lazyWithRetry(() => import("./components/ExpensesDashb
 const EquipmentsDashboard = lazyWithRetry(() => import("./components/EquipmentsDashboard").then(module => ({ default: module.EquipmentsDashboard })));
 const HospitalDetails = lazyWithRetry(() => import("@/components/HospitalDetails").then(module => ({ default: module.HospitalDetails })));
 const AuditLogs = lazyWithRetry(() => import("@/components/AuditLogs").then(module => ({ default: module.AuditLogs })));
-const ClinicAttendance = lazyWithRetry(() => import("@/components/ClinicAttendance").then(module => ({ default: module.ClinicAttendance })));
 const ShiftManagement = lazyWithRetry(() => import("@/components/ShiftManagement").then(module => ({ default: module.ShiftManagement })));
 const HospitalShiftManagement = lazyWithRetry(() => import("@/components/HospitalShiftManagement").then(module => ({ default: module.HospitalShiftManagement })));
 const EarningsDashboard = lazyWithRetry(() => import("@/components/EarningsDashboard").then(module => ({ default: module.EarningsDashboard })));
@@ -53,7 +51,6 @@ const ClinicStock = lazyWithRetry(() => import("@/components/ClinicalPharmacy").
 const PostedFinance = lazyWithRetry(() => import("@/components/ClinicalPharmacy").then(module => ({ default: module.PostedFinance })));
 const CareBoard = lazyWithRetry(() => import("@/components/CareBoard").then(module => ({ default: module.CareBoard })));
 const AyushDashboard = lazyWithRetry(() => import("@/components/AyushDashboard").then(module => ({ default: module.AyushDashboard })));
-const PatientKiosk = lazyWithRetry(() => import("@/components/PatientKiosk").then(module => ({ default: module.PatientKiosk })));
 const MaritimeAgentMesh = lazyWithRetry(() => import("@/components/MaritimeAgentMesh").then(module => ({ default: module.MaritimeAgentMesh })));
 const PruneGatewayDashboard = lazyWithRetry(() => import("@/components/PruneGatewayDashboard").then(module => ({ default: module.PruneGatewayDashboard })));
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -74,12 +71,12 @@ import { logPageView } from '@/lib/analytics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants } from '@/lib/transitions';
 
-import { Shield, RefreshCw, AlertTriangle } from 'lucide-react'
+import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button, WorkspaceSkeleton, DashboardSkeleton } from '@/components/ui/basic'
 import { Toaster } from '@/components/ui/toaster'
 import { authService } from '@/lib/authService'
 import { dataService } from '@/lib/dataService'
-import { landingRoute, routeAccess } from '@/lib/rbac'
+import { landingRoute, routeAccess, staffRouteForView, staffViewForRoute } from '@/lib/rbac'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { KioskLayout } from '@/components/layout/KioskLayout'
 import { PatientSignIn } from '@/components/PatientSignIn'
@@ -88,9 +85,6 @@ import { PublicOverview } from '@/components/PublicOverview'
 import { PatientApiError, patientRequest, patientToken, setPatientToken, type PatientSession } from '@/lib/patientApi'
 const KioskIntake = lazy(() => import('@/features/patient/KioskIntake').then(({ KioskIntake }) => ({ default: KioskIntake })));
 import { NurseCallQueue } from '@/components/NurseCallQueue'
-
-// View types
-type View = 'selection' | 'staff' | 'admin' | 'inventory-dashboard' | 'setup' | 'hospitals' | 'audit_logs' | 'pos' | 'attendance' | 'earnings' | 'settings' | 'billing' | 'shift-management' | 'procurement' | 'procurement-grn' | 'medicine-migration' | 'expenses' | 'equipments' | 'ca-suite' | 'ipd' | 'doctor-consultation' | 'emergency-triage' | 'ayush-center' | 'patient-kiosk' | 'clinic-admin' | 'maritime-agents' | 'prune-gateway' | 'nurse-calls'
 
 type SeoConfig = {
     title: string
@@ -183,196 +177,34 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => (
     </motion.div>
 );
 
-const phase4Views = {
-    'maritime-agents': '/app/swarm',
-    'prune-gateway': '/app/prune',
-    'ayush-center': '/app/ayush',
-} as const;
-const pruneRoutes = ['/app/prune', '/app/prune/cache', '/app/prune/waf', '/app/prune/redaction'] as const;
-const connectedStaffRoutes = {
-    'doctor-consultation': '/app/doctor',
-    'emergency-triage': '/app/casualty',
-    ipd: '/app/ipd',
-    pos: '/app/pos',
-    'inventory-dashboard': '/app/inventory',
-    'procurement-grn': '/app/procurement/grn',
-    procurement: '/app/procurement',
-    'ca-suite': '/app/ca',
-    'nurse-calls': '/app/nurse-calls',
-    admin: '/app/command',
-} as const;
-function staffViewForPath(path: string) {
-    const entry = Object.entries(connectedStaffRoutes).find(([, route]) => path === route || path.startsWith(`${route}/`));
-    return entry?.[0] as keyof typeof connectedStaffRoutes | undefined;
-}
-
-
 function AppContent() {
-    const { session, profile, loading, clinics } = useHospital();
+    const { session, profile, clinics } = useHospital();
     const verifiedRole = typeof session?.role === 'string' ? session.role : null;
-    const isHospitalAdmin = profile?.role === 'HOSPITAL_ADMIN' || profile?.role === 'ADMIN';
     const location = useLocation();
     const navigate = useNavigate();
     const currentPath = location.pathname.replace(/\/$/, '');
-    const pruneRoute = pruneRoutes.find((path) => path === currentPath);
-    const phase4Path = pruneRoute || Object.values(phase4Views).find((path) => path === currentPath);
-    const phase4View = pruneRoute ? 'prune-gateway' : phase4Path === '/app/swarm' ? 'maritime-agents' : phase4Path === '/app/ayush' ? 'ayush-center' : null;
+    const requestedView = new URLSearchParams(location.search).get('view');
+    const pathView = staffViewForRoute(currentPath, verifiedRole);
+    const legacyRoute = requestedView === null ? null : staffRouteForView(requestedView, verifiedRole);
+    const view = legacyRoute ? staffViewForRoute(legacyRoute, verifiedRole) : pathView;
+    const activeRoute = legacyRoute ?? currentPath;
+    const access = routeAccess(activeRoute, verifiedRole);
+    const pruneRoute = (['/app/prune/cache', '/app/prune/waf', '/app/prune/redaction'] as const)
+        .find((path) => path === activeRoute) ?? '/app/prune';
 
-    // Check query parameter e.g. /app?view=doctor-consultation
-    const queryParams = new URLSearchParams(location.search);
-    const pathView = staffViewForPath(currentPath);
-    const viewParam = phase4View || (queryParams.get('view') as View | null) || pathView;
-
-    const [view, setView] = useState<View>(() => {
-        if (viewParam) return viewParam;
-        const savedView = localStorage.getItem('lastActiveView') as View
-        return savedView || 'admin'
-    });
-
-    // 3-Tier State: Hospital Admin 'Drill Down' Clinic ID
-    const [selectedClinicId, setSelectedClinicId] = useState<string | null>(() => {
-        if (viewParam === 'clinic-admin' && clinics.length > 0) {
-            return clinics[0].id;
-        }
-        return null;
-    });
-
-    // Sync query parameter when changed
-    useEffect(() => {
-        if (viewParam && viewParam !== view) {
-            setView(viewParam);
-            if (viewParam === 'admin') {
-                setSelectedClinicId(null);
-            } else if (viewParam === 'clinic-admin' && clinics.length > 0) {
-                setSelectedClinicId(clinics[0].id);
-            }
-        }
-    }, [viewParam, clinics]);
-
-    useEffect(() => {
-        if (view) {
-            localStorage.setItem('lastActiveView', view)
-        }
-    }, [view])
-
-    useEffect(() => {
-        if (!loading && profile) {
-            if (phase4Path) return;
-            const requiredRoute = connectedStaffRoutes[view as keyof typeof connectedStaffRoutes];
-            if (requiredRoute && routeAccess(requiredRoute, profile.role) === 'None') {
-                setView(profile.role === 'DOCTOR' ? 'doctor-consultation'
-                    : profile.role === 'NURSE' ? 'ipd'
-                    : profile.role === 'STAT_NURSE' ? 'emergency-triage'
-                    : profile.role === 'CASHIER' ? 'pos'
-                    : profile.role === 'PATIENT' ? 'admin'
-                    : 'admin');
-                return;
-            }
-            // Router logic processing
-            // Each role has a set of valid views (matching their sidebar menu).
-            // Only redirect to the default if the current view is NOT in their allowed set.
-            // This prevents losing the user's position when the component remounts
-            // (e.g. tab switch, minimize, auth state re-trigger).
-
-            const clinicalViews: View[] = ['doctor-consultation', 'emergency-triage', 'ayush-center', 'patient-kiosk', 'clinic-admin', 'maritime-agents', 'prune-gateway'];
-
-            // 1. CRITICAL: Clinic Admin Bypass (Gatekeeper Fix)
-            // Allow entry even if clinic_id is null (The Dashboard will handle the "No Clinic" state)
-            if (profile.role === 'CLINIC_ADMIN') {
-                const clinicAdminViews: View[] = ['admin', 'pos', 'staff', 'attendance', 'shift-management', 'inventory-dashboard', 'ipd', 'settings', 'procurement', 'procurement-grn'];
-                if (!clinicAdminViews.includes(view)) {
-                    setView('admin');
-                }
-                return;
-            }
-
-            // 1b. CRITICAL: Clinic Staff & Clinic-Linked Doctors Bypass
-            if ((profile.role === 'CLINIC_STAFF' || profile.role === 'DOCTOR') && profile.clinic_id && !profile.hospital_id) {
-                const clinicStaffViews: View[] = profile.role === 'DOCTOR'
-                    ? ['doctor-consultation', 'ipd', 'emergency-triage', 'ayush-center']
-                    : ['pos', 'staff', 'inventory-dashboard', 'ipd'];
-                if (!clinicStaffViews.includes(view)) {
-                    setView(profile.role === 'DOCTOR' ? 'doctor-consultation' : 'pos');
-                }
-                return;
-            }
-
-            // 1c. Hospital-Linked Doctors
-            if (profile.role === 'DOCTOR' && profile.hospital_id) {
-                const doctorViews: View[] = ['doctor-consultation', 'ipd', 'emergency-triage', 'ayush-center'];
-                if (!doctorViews.includes(view)) {
-                    setView('doctor-consultation');
-                }
-                return;
-            }
-
-            // 2. Setup Redirect for Orphaned Hospital Admins ONLY
-            if ((profile.role === 'ADMIN' || profile.role === 'HOSPITAL_ADMIN') && !profile.hospital_id) {
-                if (view !== 'setup') setView('setup');
-            }
-
-            // 2b. Hospital Admin — allow all their sidebar views
-            else if (['ADMIN', 'HOSPITAL_ADMIN'].includes(profile.role)) {
-                const hospitalAdminViews: View[] = ['admin', 'inventory-dashboard', 'staff', 'shift-management', 'earnings', 'billing', 'procurement', 'procurement-grn', 'expenses', 'equipments', 'ipd', 'ca-suite', 'settings', 'setup', 'pos', 'attendance', 'medicine-migration', ...clinicalViews];
-                
-                // Force 'admin' if starting (selection) OR in POS without a clinic context
-                if (view === 'selection' || (view === 'pos' && !selectedClinicId)) {
-                    setView('admin');
-                } else if (!hospitalAdminViews.includes(view)) {
-                    setView('admin');
-                }
-            }
-
-            // 2c. Super Admin — allow all their sidebar views
-            else if (['SUPER_ADMIN', 'OWNER'].includes(profile.role)) {
-                const superAdminViews: View[] = ['admin', 'hospitals', 'audit_logs', 'billing', 'settings', 'procurement', 'procurement-grn', 'ca-suite', ...clinicalViews];
-                if (!superAdminViews.includes(view)) {
-                    setView('admin');
-                }
-            }
-
-            // 3. Default Routing (Only if view is generic 'selection' or 'setup' but shouldn't be)
-            else if (view === 'selection' || (view === 'setup' && profile.hospital_id)) {
-                if (['ADMIN', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'CLINIC_ADMIN'].includes(profile.role)) {
-                    setView('admin');
-                } else if (profile.role === 'CLINIC_STAFF' || (profile.role === 'DOCTOR' && profile.clinic_id)) {
-                    setView('pos');
-                } else if (profile.role === 'DOCTOR' && profile.hospital_id) {
-                    setView('admin');
-                }
-            }
-        } else if (!loading && !session) {
-            setView('selection');
-        }
-    }, [loading, profile, session]); // Removed 'view' dependency to prevent redirect loops.
-
-    // Used for Super Admin "Hospital X-Ray"
+    const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
     const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
-
-    const navigateToHospital = (id: string) => {
-        setSelectedHospitalId(id)
-        setView('hospitals')
-    }
-
-    const handleBackFromDetails = () => {
-        setSelectedHospitalId(null);
-    };
-
     const [careEncounterId, setCareEncounterId] = useState<string>();
 
-    const guardedSetView = (nextView: View) => {
-        if (nextView !== view && !confirmCbcNavigation()) return;
-        const destination = phase4Views[nextView as keyof typeof phase4Views] ?? connectedStaffRoutes[nextView as keyof typeof connectedStaffRoutes];
-        if (destination) {
-            if (routeAccess(destination, verifiedRole) !== 'None') navigate(destination);
-            return;
-        }
-        if (phase4Path || pathView) {
-            navigate(`${landingRoute(profile?.role)}?view=${encodeURIComponent(nextView)}`);
-            return;
-        }
-        setView(nextView);
+    const setView = (nextView: string) => {
+        const destination = staffRouteForView(nextView, verifiedRole);
+        if (destination && confirmCbcNavigation()) navigate(destination);
     };
+    const navigateToHospital = (id: string) => {
+        setSelectedHospitalId(id);
+        setView('hospitals');
+    };
+    const handleBackFromDetails = () => setSelectedHospitalId(null);
 
     const handleLogout = async () => {
         if (!confirmCbcNavigation()) return;
@@ -395,24 +227,15 @@ function AppContent() {
         }
     }
 
-    const requestedStaffRoute = currentPath === '/app/casualty/register' ? '/app/casualty/register'
-        : pathView ? connectedStaffRoutes[pathView] : null;
-    if (requestedStaffRoute && routeAccess(requestedStaffRoute, verifiedRole) === 'None') {
+    if (!pathView || !view || (requestedView !== null && !legacyRoute)) {
         return <Navigate to={landingRoute(verifiedRole)} replace />;
     }
-    const requestedPhase4Route = phase4Path || phase4Views[view as keyof typeof phase4Views];
-    const phase4Access = requestedPhase4Route ? routeAccess(requestedPhase4Route, verifiedRole) : 'None';
-    if (requestedPhase4Route && phase4Access === 'None') {
-        return <Navigate to={landingRoute(profile?.role)} replace />;
-    }
-    if (/^\/app\/(swarm|prune|ayush)(?:\/|$)/.test(currentPath) && !phase4Path) {
-        return <Navigate to={landingRoute(profile?.role)} replace />;
-    }
+
     return (
         <AppLayout
             onLogout={handleLogout}
             view={view}
-            setView={(nextView) => guardedSetView(nextView as View)}
+            setView={setView}
             lockNavigation={view === 'setup'}
             selectedClinicId={selectedClinicId}
             onSelectClinicId={setSelectedClinicId}
@@ -420,23 +243,6 @@ function AppContent() {
             <Suspense fallback={<DashboardSkeleton />}>
                 <AnimatePresence mode="wait">
                     <PageWrapper key={view}>
-                    {/* ERROR STATE: Locked out if no Role */}
-                    {view === 'selection' && !loading && profile && !['ADMIN', 'CLINIC_STAFF', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'CLINIC_ADMIN', 'DOCTOR'].includes(profile?.role || '') && (
-                        <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                            <Shield className="w-20 h-20 text-slate-200 mb-6" />
-                            <h1 className="text-3xl font-bold text-slate-900">Access Restricted</h1>
-                            <p className="text-slate-500 max-w-md mt-2">
-                                Your account ({profile.email}) is active but has no assigned role.
-                                <br />Current Role: <code className="bg-slate-100 px-2 py-1 rounded text-sm">{profile.role || 'NULL'}</code>
-                            </p>
-                        </div>
-                    )}
-
-                    {/* STAFF PORTAL VIEW (HR) */}
-                    {view === 'staff' && (
-                        <StaffPortal />
-                    )}
-
                     {view === 'nurse-calls' && routeAccess('/app/nurse-calls', verifiedRole) === 'Full' && (
                         <NurseCallQueue />
                     )}
@@ -451,18 +257,10 @@ function AppContent() {
 
                     {/* PROCUREMENT DASHBOARD */}
                     {view === 'procurement' && routeAccess('/app/procurement', verifiedRole) !== 'None' && (
-                        <PurchaseOrders canWrite={routeAccess('/app/procurement', verifiedRole) === 'Full'} goToReceipts={() => guardedSetView('procurement-grn')} />
+                        <PurchaseOrders canWrite={routeAccess('/app/procurement', verifiedRole) === 'Full'} goToReceipts={() => setView('procurement-grn')} />
                     )}
                     {view === 'procurement-grn' && routeAccess('/app/procurement/grn', verifiedRole) !== 'None' && <GoodsReceipt canWrite={routeAccess('/app/procurement/grn', verifiedRole) === 'Full'} />}
 
-
-                    {/* ATTENDANCE DASHBOARD */}
-                    {view === 'attendance' && selectedClinicId && (
-                        <ClinicAttendance clinicId={selectedClinicId} onNavigate={(v: string) => setView(v as View)} />
-                    )}
-                    {view === 'attendance' && profile?.role === 'CLINIC_ADMIN' && profile.clinic_id && (
-                        <ClinicAttendance clinicId={profile.clinic_id} onNavigate={(v: string) => setView(v as View)} />
-                    )}
 
                     {/* SHIFT MANAGEMENT */}
                     {view === 'shift-management' && (
@@ -540,7 +338,7 @@ function AppContent() {
                     )}
 
                     {/* Inventory Dashboard */}
-                    {view === 'inventory-dashboard' && routeAccess('/app/inventory', verifiedRole) !== 'None' && <ClinicStock canManageCatalog={verifiedRole === "HOSPITAL_ADMIN"} />}
+                    {(view === 'inventory-dashboard' || (view === 'medicine-migration' && verifiedRole === 'CLINIC_ADMIN')) && routeAccess('/app/inventory', verifiedRole) !== 'None' && <ClinicStock canManageCatalog={verifiedRole === "HOSPITAL_ADMIN"} />}
 
                     {/* HOSPITALS REGISTRY & DETAILS */}
                     {view === 'hospitals' && (
@@ -557,10 +355,10 @@ function AppContent() {
                     )}
 
                     {view === 'audit_logs' && (
-                        <AuditLogs />
+                        <AuditLogs readOnly={access === "Read-only"} />
                     )}
 
-                {view === 'medicine-migration' && isHospitalAdmin && (
+                {view === 'medicine-migration' && verifiedRole === 'HOSPITAL_ADMIN' && (
                     <MedicineMigration onBack={() => setView('inventory-dashboard')} />
                 )}
 
@@ -599,8 +397,8 @@ function AppContent() {
 
                     {view === 'doctor-consultation' && verifiedRole === 'DOCTOR' && (
                         <DoctorConsultation 
-                            onAdmitToIpd={(id: string) => { setCareEncounterId(id); guardedSetView('ipd'); }}
-                            onAssignBay={(id: string) => { setCareEncounterId(id); guardedSetView('emergency-triage'); }}
+                            onAdmitToIpd={(id: string) => { setCareEncounterId(id); setView('ipd'); }}
+                            onAssignBay={(id: string) => { setCareEncounterId(id); setView('emergency-triage'); }}
                         />
                     )}
 
@@ -608,16 +406,10 @@ function AppContent() {
                         <CareBoard kind="casualty" role={verifiedRole ?? ''} encounterId={careEncounterId} />
                     )}
 
-                    {view === 'ayush-center' && phase4Access === 'Full' && <AyushDashboard />}
-                    {view === 'maritime-agents' && phase4Access !== 'None' && <MaritimeAgentMesh canManage={phase4Access === 'Full'} />}
-                    {view === 'prune-gateway' && phase4Access !== 'None' && (
-                        <PruneGatewayDashboard route={pruneRoute ?? '/app/prune'} canManage={phase4Access === 'Full'} />
-                    )}
-
-                    {view === 'patient-kiosk' && (
-                        <PatientKiosk 
-                            onNavigate={(targetView: any) => setView(targetView)}
-                        />
+                    {view === 'ayush-center' && access === 'Full' && <AyushDashboard />}
+                    {view === 'maritime-agents' && access !== 'None' && <MaritimeAgentMesh canManage={access === 'Full'} />}
+                    {view === 'prune-gateway' && access !== 'None' && (
+                        <PruneGatewayDashboard route={pruneRoute ?? '/app/prune'} canManage={access === 'Full'} />
                     )}
 
                     {view === 'settings' && (
@@ -761,10 +553,14 @@ function PublicAuthRoute({ children }: { children: ReactNode }) {
 }
 
 function AppLandingRedirect() {
-    const { session, profile, loading } = useHospital();
+    const { session, loading } = useHospital();
+    const location = useLocation();
     if (loading) return <WorkspaceSkeleton />;
-    if (!session || !profile) return <Navigate to="/login" replace />;
-    return <Navigate to={landingRoute(profile.role)} replace />;
+    if (!session) return <Navigate to="/login" replace />;
+    const role = typeof session.role === 'string' ? session.role : null;
+    const legacyView = new URLSearchParams(location.search).get('view');
+    const destination = legacyView ? staffRouteForView(legacyView, role) : null;
+    return <Navigate to={destination ?? landingRoute(role)} replace />;
 }
 
 function PatientAppRoute({ children }: { children: ReactNode }) {

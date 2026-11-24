@@ -12,36 +12,7 @@ export type JeevikaRole =
   | "CLINIC_STAFF"
   | "PATIENT";
 
-export type AppRoute =
-  | "/app"
-  | "/app/command"
-  | "/app/command/network"
-  | "/app/command/census"
-  | "/app/command/optimizer"
-  | "/app/command/expenses"
-  | "/app/command/equipment"
-  | "/app/command/roster"
-  | "/app/doctor"
-  | "/app/ipd"
-  | "/app/casualty"
-  | "/app/casualty/triage"
-  | "/app/casualty/bays"
-  | "/app/casualty/register"
-  | "/app/nurse-calls"
-  | "/app/pos"
-  | "/app/inventory"
-  | "/app/procurement"
-  | "/app/procurement/grn"
-  | "/app/ca"
-  | "/app/swarm"
-  | "/app/prune"
-  | "/app/prune/cache"
-  | "/app/prune/waf"
-  | "/app/prune/redaction"
-  | "/app/ayush"
-  | "/app/home";
-
-const routePermissions: Partial<Record<AppRoute, Partial<Record<JeevikaRole, AccessLevel>>>> = {
+const routePermissions = {
   "/app/command": { SUPER_ADMIN: "Full", OWNER: "Full", HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Full" },
   "/app/command/network": { SUPER_ADMIN: "Full", OWNER: "Full", HOSPITAL_ADMIN: "Full", ADMIN: "Full" },
   "/app/command/census": { SUPER_ADMIN: "Full", OWNER: "Full", HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Read-only" },
@@ -68,7 +39,40 @@ const routePermissions: Partial<Record<AppRoute, Partial<Record<JeevikaRole, Acc
   "/app/prune/redaction": { SUPER_ADMIN: "Full" },
   "/app/ayush": { DOCTOR: "Full" },
   "/app/home": { PATIENT: "Full" },
-};
+  "/app/doctor/soap": { DOCTOR: "Full" },
+  "/app/doctor/coding": { DOCTOR: "Full" },
+  "/app/doctor/rx": { DOCTOR: "Full" },
+  "/app/doctor/cbc": { DOCTOR: "Full" },
+  "/app/doctor/disposition": { DOCTOR: "Full" },
+  "/app/inventory/expiry": { HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full", CASHIER: "Read-only" },
+  "/app/inventory/transfers": { HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full", CASHIER: "Read-only" },
+  "/app/inventory/import": { HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+  "/app/procurement/suppliers": { SUPER_ADMIN: "Read-only", HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+  "/app/procurement/orders": { SUPER_ADMIN: "Read-only", HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+  "/app/ca/ledger": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
+  "/app/ca/pnl": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
+  "/app/ca/balance-sheet": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
+  "/app/ca/brs": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
+  "/app/ca/audit": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
+  "/app/home/thread": { PATIENT: "Full" },
+  "/app/home/check-in": { PATIENT: "Full" },
+  "/app/home/drift": { PATIENT: "Full" },
+  "/app/home/refill": { PATIENT: "Full" },
+  "/app/home/prescriptions": { PATIENT: "Full" },
+  "/app/home/her": { PATIENT: "Full" },
+  "/app/home/vitalis": { PATIENT: "Full" },
+  "/app/home/yoga": { PATIENT: "Full" },
+  "/app/home/prakriti": { PATIENT: "Full" },
+  "/app/command/setup": { HOSPITAL_ADMIN: "Full" },
+  "/app/command/earnings": { HOSPITAL_ADMIN: "Full" },
+  "/app/command/clinics": { HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+  "/app/command/hospitals": { SUPER_ADMIN: "Full" },
+  "/app/command/settings": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+  "/app/command/billing": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Full", CLINIC_ADMIN: "Full" },
+} satisfies Record<string, Partial<Record<JeevikaRole, AccessLevel>>>;
+
+export type AppRoute = keyof typeof routePermissions;
+const permissionsByRoute = new Map<string, Partial<Record<JeevikaRole, AccessLevel>>>(Object.entries(routePermissions));
 
 export function normalizeJeevikaRole(role: string | null | undefined): JeevikaRole | null {
   if (!role) return null;
@@ -81,10 +85,10 @@ export function normalizeJeevikaRole(role: string | null | undefined): JeevikaRo
   return null;
 }
 
-export function routeAccess(route: AppRoute, role: string | null | undefined): AccessLevel {
+export function routeAccess(route: string, role: string | null | undefined): AccessLevel {
   const normalized = normalizeJeevikaRole(role);
   if (!normalized) return "None";
-  return routePermissions[route]?.[normalized] ?? "None";
+  return permissionsByRoute.get(route)?.[normalized] ?? "None";
 }
 
 export function landingRoute(role: string | null | undefined): string {
@@ -109,6 +113,78 @@ export function landingRoute(role: string | null | undefined): string {
     default:
       return "/login";
   }
+}
+
+const staffViewRoutes = {
+  admin: "/app/command",
+  expenses: "/app/command/expenses",
+  equipments: "/app/command/equipment",
+  "shift-management": "/app/command/roster",
+  setup: "/app/command/setup",
+  hospitals: "/app/command/hospitals",
+  "clinic-admin": "/app/command/clinics",
+  earnings: "/app/command/earnings",
+  billing: "/app/command/billing",
+  settings: "/app/command/settings",
+  "doctor-consultation": "/app/doctor",
+  "emergency-triage": "/app/casualty",
+  ipd: "/app/ipd",
+  pos: "/app/pos",
+  "inventory-dashboard": "/app/inventory",
+  "medicine-migration": "/app/inventory/import",
+  "procurement-grn": "/app/procurement/grn",
+  procurement: "/app/procurement",
+  "ca-suite": "/app/ca",
+  audit_logs: "/app/ca/audit",
+  "nurse-calls": "/app/nurse-calls",
+  "maritime-agents": "/app/swarm",
+  "prune-gateway": "/app/prune",
+  "ayush-center": "/app/ayush",
+} as const satisfies Record<string, AppRoute>;
+
+export type StaffView = keyof typeof staffViewRoutes;
+const legacyRosterViews = new Set(["staff", "attendance"]);
+const pathViews = {
+  "/app/command/network": "admin",
+  "/app/command/census": "admin",
+  "/app/command/optimizer": "admin",
+  "/app/doctor/soap": "doctor-consultation",
+  "/app/doctor/coding": "doctor-consultation",
+  "/app/doctor/rx": "doctor-consultation",
+  "/app/doctor/cbc": "doctor-consultation",
+  "/app/doctor/disposition": "doctor-consultation",
+  "/app/casualty/triage": "emergency-triage",
+  "/app/casualty/bays": "emergency-triage",
+  "/app/casualty/register": "emergency-triage",
+  "/app/inventory/expiry": "inventory-dashboard",
+  "/app/inventory/transfers": "inventory-dashboard",
+  "/app/procurement/suppliers": "procurement",
+  "/app/procurement/orders": "procurement",
+  "/app/ca/ledger": "ca-suite",
+  "/app/ca/pnl": "ca-suite",
+  "/app/ca/balance-sheet": "ca-suite",
+  "/app/ca/brs": "ca-suite",
+  "/app/prune/cache": "prune-gateway",
+  "/app/prune/waf": "prune-gateway",
+  "/app/prune/redaction": "prune-gateway",
+} satisfies Partial<Record<AppRoute, StaffView>>;
+
+const routeByView = new Map<string, AppRoute>(Object.entries(staffViewRoutes));
+const viewByRoute = new Map<string, StaffView>(
+  (Object.keys(staffViewRoutes) as StaffView[]).map((view) => [staffViewRoutes[view], view]),
+);
+for (const [path, view] of Object.entries(pathViews)) viewByRoute.set(path, view);
+
+export function staffRouteForView(name: string, role: string | null): AppRoute | null {
+  const key = legacyRosterViews.has(name) ? "shift-management" : name;
+  const route = routeByView.get(key);
+  if (!route) return null;
+  return routeAccess(route, role) === "None" ? null : route;
+}
+
+export function staffViewForRoute(path: string, role: string | null): StaffView | null {
+  if (routeAccess(path, role) === "None") return null;
+  return viewByRoute.get(path) ?? null;
 }
 
 export type StaffNavItem = {
@@ -139,12 +215,16 @@ export function staffNavItems(role: string | null | undefined): StaffNavItem[] {
         { id: "inventory", icon: "inventory", label: "Inventory", view: "inventory-dashboard", route: "/app/inventory" },
         { id: "procurement", icon: "shopping_cart_checkout", label: "Procurement", view: "procurement", route: "/app/procurement" },
         { id: "ca", icon: "account_balance", label: "CA — Read-only", view: "ca-suite", route: "/app/ca" },
+        { id: "expenses", icon: "receipt_long", label: "Expenses", view: "expenses", route: "/app/command/expenses" },
+        { id: "equipment", icon: "construction", label: "Equipment", view: "equipments", route: "/app/command/equipment" },
+        { id: "roster", icon: "calendar_today", label: "Roster", view: "shift-management", route: "/app/command/roster" },
         { id: "swarm", icon: "hub", label: "Swarm — Read-only", view: "maritime-agents", route: "/app/swarm" },
         { id: "prune", icon: "shield", label: "Prune — Read-only", view: "prune-gateway", route: "/app/prune" },
       ];
     case "CLINIC_ADMIN":
       return [
         { id: "command", icon: "domain", label: "Clinic Operations", view: "admin", route: "/app/command" },
+        { id: "roster", icon: "calendar_today", label: "Roster", view: "shift-management", route: "/app/command/roster" },
         { id: "ipd", icon: "hotel", label: "IPD", view: "ipd", route: "/app/ipd" },
         { id: "pos", icon: "point_of_sale", label: "POS", view: "pos", route: "/app/pos" },
         { id: "inventory", icon: "inventory", label: "Inventory", view: "inventory-dashboard", route: "/app/inventory" },

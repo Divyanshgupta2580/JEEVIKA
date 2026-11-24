@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
-import { dataService as db } from '@/lib/dataService';
+import { staffApi, useStaffData } from '@/lib/staffApi';
+import { paiseToRupeesString, rupeesToPaise } from '@/lib/utils';
 import { useHospital } from '@/context/HospitalContext';
 import { 
     Loader2, 
@@ -23,13 +24,12 @@ import { useToast } from '@/components/ui/use-toast';
 
 interface Equipment {
     id: string;
-    hospital_id: string;
     clinic_id: string | null;
     name: string;
     category: string;
     quantity: number;
     purchase_date: string;
-    purchase_cost: number;
+    purchase_cost_paise: number;
     status: 'FUNCTIONAL' | 'MAINTENANCE' | 'RETIRED';
     created_at: string;
 }
@@ -44,7 +44,9 @@ const CATEGORIES = [
 ];
 
 export function EquipmentsDashboard() {
-    const { hospital, clinics } = useHospital();
+    const { hospital } = useHospital();
+    const { data: directory } = useStaffData<{ clinics: { id: string; name: string }[] }>('/clinical/command/clinics');
+    const clinics = directory?.clinics ?? [];
     const { toast } = useToast();
     const [equipments, setEquipments] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,17 +57,13 @@ export function EquipmentsDashboard() {
 
     useEffect(() => {
         fetchEquipments();
-    }, [hospital?.id]);
+    }, []);
 
     const fetchEquipments = async () => {
-        if (!hospital?.id) return;
         setLoading(true);
         try {
-            const data = await db.list('hospital_equipments', {
-                filters: [{ field: 'hospital_id', operator: '==', value: hospital.id }],
-                sort: { column: 'purchase_date', ascending: false }
-            });
-            setEquipments(data || []);
+            const { items } = await staffApi<{ items: Equipment[] }>('/clinical/command/equipment');
+            setEquipments(items);
         } catch (error: any) {
             console.error('Error fetching equipments:', error);
             toast({ title: 'Error', description: 'Failed to load equipments', variant: 'destructive' });
@@ -76,24 +74,21 @@ export function EquipmentsDashboard() {
 
     const handleAddEquipment = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!hospital?.id) return;
 
         setIsSubmitting(true);
         const formData = new FormData(e.currentTarget);
         
         const payload = {
-            hospital_id: hospital.id,
             clinic_id: formData.get('clinic_id') || null,
             name: formData.get('name') as string,
             category: formData.get('category') as string,
-            quantity: parseInt(formData.get('quantity') as string),
-            purchase_cost: parseFloat(formData.get('purchase_cost') as string),
+            quantity: Number(formData.get('quantity')),
+            purchase_cost_paise: rupeesToPaise(String(formData.get('purchase_cost'))),
             purchase_date: formData.get('purchase_date') as string,
-            status: 'FUNCTIONAL'
         };
 
         try {
-            await db.create('hospital_equipments', payload);
+            await staffApi('/clinical/command/equipment', { method: 'POST', body: JSON.stringify(payload) });
             
             toast({ title: 'Success', description: 'Equipment added to inventory successfully' });
             setIsAddModalOpen(false);
@@ -109,7 +104,7 @@ export function EquipmentsDashboard() {
         if (!confirm('Are you sure you want to remove this equipment record?')) return;
 
         try {
-            await db.remove('hospital_equipments', id);
+            await staffApi(`/clinical/command/equipment/${id}`, { method: 'DELETE' });
             toast({ title: 'Success', description: 'Equipment record removed' });
             setEquipments(equipments.filter(e => e.id !== id));
         } catch (error: any) {
@@ -129,7 +124,7 @@ export function EquipmentsDashboard() {
     const stats = useMemo(() => {
         return {
             totalItems: sortedAndFiltered.reduce((sum, e) => sum + e.quantity, 0),
-            totalValue: sortedAndFiltered.reduce((sum, e) => sum + (e.purchase_cost * e.quantity), 0),
+            totalValue: sortedAndFiltered.reduce((sum, e) => sum + (e.purchase_cost_paise * e.quantity), 0),
             functional: sortedAndFiltered.filter(e => e.status === 'FUNCTIONAL').length
         };
     }, [sortedAndFiltered]);
@@ -202,8 +197,8 @@ export function EquipmentsDashboard() {
             doc.text(item.name.substring(0, 25), col1, y);
             doc.text(categoryLabel, col2, y);
             doc.text(item.quantity.toString(), col3, y);
-            doc.text(`Rs. ${item.purchase_cost.toLocaleString()}`, col4, y);
-            doc.text(`Rs. ${(item.purchase_cost * item.quantity).toLocaleString()}`, col5, y);
+            doc.text(`Rs. ${paiseToRupeesString(item.purchase_cost_paise)}`, col4, y);
+            doc.text(`Rs. ${paiseToRupeesString(item.purchase_cost_paise * item.quantity)}`, col5, y);
             
             y += rowHeight;
         });
@@ -225,7 +220,7 @@ export function EquipmentsDashboard() {
         doc.text(`Total Registered Assets: ${stats.totalItems}`, 20, y);
         y += 8;
         doc.setTextColor(21, 128, 61); // emerald-700
-        doc.text(`Total Asset Valuation: Rs. ${stats.totalValue.toLocaleString()}`, 20, y);
+        doc.text(`Total Asset Valuation: Rs. ${paiseToRupeesString(stats.totalValue)}`, 20, y);
 
         doc.save(`Asset_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         toast({ title: 'Success', description: 'Asset report generated and downloaded' });
@@ -339,7 +334,7 @@ export function EquipmentsDashboard() {
                 </Card>
                 <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden p-6">
                     <div className="text-sm font-medium text-slate-500 mb-1">Total Valuation</div>
-                    <div className="text-3xl font-bold text-emerald-600">₹{stats.totalValue.toLocaleString()}</div>
+                    <div className="text-3xl font-bold text-emerald-600">₹{paiseToRupeesString(stats.totalValue)}</div>
                     <div className="text-xs text-emerald-600/70 mt-1">Acquisition cost</div>
                 </Card>
                 <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden p-6">
@@ -461,8 +456,8 @@ export function EquipmentsDashboard() {
                                                     {item.quantity}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="font-mono font-bold text-slate-900">₹{item.purchase_cost.toLocaleString()}</div>
-                                                    <div className="text-[10px] text-slate-400">Total: ₹{(item.purchase_cost * item.quantity).toLocaleString()}</div>
+                                                    <div className="font-mono font-bold text-slate-900">₹{paiseToRupeesString(item.purchase_cost_paise)}</div>
+                                                    <div className="text-[10px] text-slate-400">Total: ₹{paiseToRupeesString(item.purchase_cost_paise * item.quantity)}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${

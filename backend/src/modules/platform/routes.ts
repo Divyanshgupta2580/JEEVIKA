@@ -1,6 +1,8 @@
 import { Hono } from "hono";
+import type { IntegrationContext } from "../../context";
+import { staffAccess } from "../../staff-access";
 
-export const platformRouter = new Hono();
+export const platformRouter = new Hono<IntegrationContext>();
 
 platformRouter.post("/auth/login", async (c) => {
   return c.json({
@@ -14,10 +16,6 @@ platformRouter.post("/auth/login", async (c) => {
   });
 });
 
-platformRouter.get("/audit/verify", async (c) => {
-  return c.json({
-    chainLength: 142,
-    isValid: true,
-    latestHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  });
-});
+platformRouter.get("/audit/verify", staffAccess("SUPER_ADMIN"), (c) =>
+  c.json({ error: "Cryptographic audit verification is unavailable" }, 501),
+);

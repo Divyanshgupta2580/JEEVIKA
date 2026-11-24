@@ -1,7 +1,18 @@
+import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
 import { createApp } from "../apps/api/app";
-import backendApp from "../backend/src/index";
+import backendApp, {
+  legacyPatientFixtureRouter,
+  legacyPrescriptionFixtureRouter,
+} from "../backend/src/index";
+import { legacyIntakeFixtureRouter } from "../backend/src/modules/intake/routes";
+
 import { demoPlan } from "../packages/shared/demo";
+
+const clinicalFixtureApp = new Hono()
+  .route("/api/v1/patients", legacyPatientFixtureRouter)
+  .route("/api/v1/prescriptions", legacyPrescriptionFixtureRouter)
+  .route("/api/v1/intake", legacyIntakeFixtureRouter);
 
 const app = createApp();
 async function session() {
@@ -501,7 +512,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       allergies: ["Dust", "Aspirin"],
     };
 
-    const res = await backendApp.request("/api/v1/patients", {
+    const res = await clinicalFixtureApp.request("/api/v1/patients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -525,7 +536,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
 
   it("fetches patient by ID via GET /api/v1/patients/:id", async () => {
     // 1. Fetch newly created patient
-    const res = await backendApp.request(
+    const res = await clinicalFixtureApp.request(
       `/api/v1/patients/${createdPatientId}`,
     );
     expect(res.status).toBe(200);
@@ -536,7 +547,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     expect(body.patient.allergies).toEqual(["Dust", "Aspirin"]);
 
     // 2. Fetch non-existent patient ID pat-non-existent-999
-    const notFoundRes = await backendApp.request(
+    const notFoundRes = await clinicalFixtureApp.request(
       "/api/v1/patients/pat-non-existent-999",
     );
     expect(notFoundRes.status).toBe(404);
@@ -545,7 +556,9 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     expect(notFoundBody.error).toBeDefined();
 
     // 3. Fetch seeded patient pat-048291 (Ramesh Chandra) and check linked prescriptions
-    const seededRes = await backendApp.request("/api/v1/patients/pat-048291");
+    const seededRes = await clinicalFixtureApp.request(
+      "/api/v1/patients/pat-048291",
+    );
     expect(seededRes.status).toBe(200);
     const seededBody = (await seededRes.json()) as any;
     expect(seededBody.success).toBe(true);
@@ -558,7 +571,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
 
   it("lists and filters patients via GET /api/v1/patients", async () => {
     // 1. List patients: Expect success: true, count > 0, array contains seeded and newly created
-    const listRes = await backendApp.request("/api/v1/patients");
+    const listRes = await clinicalFixtureApp.request("/api/v1/patients");
     expect(listRes.status).toBe(200);
     const listBody = (await listRes.json()) as any;
     expect(listBody.success).toBe(true);
@@ -569,7 +582,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     expect(names).toContain("Sunita Devi");
 
     // 2. Query filter by phone ?phone=9988776655
-    const phoneRes = await backendApp.request(
+    const phoneRes = await clinicalFixtureApp.request(
       "/api/v1/patients?phone=9988776655",
     );
     expect(phoneRes.status).toBe(200);
@@ -580,7 +593,9 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     );
 
     // 3. Query filter by name ?name=Sunita
-    const nameRes = await backendApp.request("/api/v1/patients?name=Sunita");
+    const nameRes = await clinicalFixtureApp.request(
+      "/api/v1/patients?name=Sunita",
+    );
     expect(nameRes.status).toBe(200);
     const nameBody = (await nameRes.json()) as any;
     expect(nameBody.success).toBe(true);
@@ -595,7 +610,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       bloodGroup: "B+",
     };
 
-    const res = await backendApp.request(
+    const res = await clinicalFixtureApp.request(
       `/api/v1/patients/${createdPatientId}`,
       {
         method: "PUT",
@@ -613,16 +628,19 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
   });
 
   it("automatically creates a patient from Encounter registration", async () => {
-    const encounterRes = await backendApp.request("/api/v1/intake/encounter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        patient_name: "Rajesh Kumar",
-        name: "Rajesh Kumar",
-        phone: "+91 9123456789",
-        chief_complaint: "Fever and headache",
-      }),
-    });
+    const encounterRes = await clinicalFixtureApp.request(
+      "/api/v1/intake/encounter",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_name: "Rajesh Kumar",
+          name: "Rajesh Kumar",
+          phone: "+91 9123456789",
+          chief_complaint: "Fever and headache",
+        }),
+      },
+    );
 
     expect(encounterRes.status).toBe(200);
     const encBody = (await encounterRes.json()) as any;
@@ -630,7 +648,9 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     expect(encBody.encounter).toBeDefined();
 
     // Verify patient is automatically accessible via /api/v1/patients or /api/v1/patients/:id
-    const searchRes = await backendApp.request("/api/v1/patients?name=Rajesh");
+    const searchRes = await clinicalFixtureApp.request(
+      "/api/v1/patients?name=Rajesh",
+    );
     expect(searchRes.status).toBe(200);
     const searchBody = (await searchRes.json()) as any;
     expect(searchBody.success).toBe(true);
@@ -639,7 +659,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     ).toBe(true);
 
     if (encBody.encounter.patient_id) {
-      const patRes = await backendApp.request(
+      const patRes = await clinicalFixtureApp.request(
         `/api/v1/patients/${encBody.encounter.patient_id}`,
       );
       expect(patRes.status).toBe(200);
@@ -652,7 +672,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
   describe("JEEVIKA Backend Bridge Operations & Clinical Integration", () => {
     it("intakeRouter.get('/queue') returns active encounters filtered by status and clinic_id", async () => {
       // 1. All queue items
-      const resAll = await backendApp.request("/api/v1/intake/queue");
+      const resAll = await clinicalFixtureApp.request("/api/v1/intake/queue");
       expect(resAll.status).toBe(200);
       const dataAll = (await resAll.json()) as any;
       expect(dataAll.success).toBe(true);
@@ -660,7 +680,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       expect(dataAll.queue.length).toBeGreaterThanOrEqual(2);
 
       // 2. Filter by status=STAT_ALERT for Emergency Triage
-      const resStat = await backendApp.request(
+      const resStat = await clinicalFixtureApp.request(
         "/api/v1/intake/queue?status=STAT_ALERT",
       );
       expect(resStat.status).toBe(200);
@@ -673,7 +693,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       ).toBe(true);
 
       // 3. Filter by status=WAITING for Doctor Consultation
-      const resWaiting = await backendApp.request(
+      const resWaiting = await clinicalFixtureApp.request(
         "/api/v1/intake/queue?status=WAITING",
       );
       expect(resWaiting.status).toBe(200);
@@ -683,7 +703,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       );
 
       // 4. Filter by clinic_id
-      const resClinic = await backendApp.request(
+      const resClinic = await clinicalFixtureApp.request(
         "/api/v1/intake/queue?clinic_id=clinic-delhi-01",
       );
       expect(resClinic.status).toBe(200);
@@ -695,7 +715,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
 
     it("intakeRouter.patch('/encounter/:id') updates bay, assigned doctor, and consultation status", async () => {
       // 1. Patch encounter to IN_CONSULT with bay assignment
-      const patchRes = await backendApp.request(
+      const patchRes = await clinicalFixtureApp.request(
         "/api/v1/intake/encounter/enc_ramesh_01",
         {
           method: "PATCH",
@@ -715,7 +735,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       expect(patchData.encounter.assigned_doctor).toBe("Dr. Ananya Sharma");
 
       // 2. Transition status via POST /encounter/:id/status
-      const statusRes = await backendApp.request(
+      const statusRes = await clinicalFixtureApp.request(
         "/api/v1/intake/encounter/enc_ramesh_01/status",
         {
           method: "POST",
@@ -730,11 +750,17 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       expect(statusData.encounter.status).toBe("DISPENSED");
 
       // 3. Reset back to STAT_ALERT
-      await backendApp.request("/api/v1/intake/encounter/enc_ramesh_01", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "STAT_ALERT", bay: "Emergency Bay 1" }),
-      });
+      await clinicalFixtureApp.request(
+        "/api/v1/intake/encounter/enc_ramesh_01",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "STAT_ALERT",
+            bay: "Emergency Bay 1",
+          }),
+        },
+      );
     });
 
     it("opsRouter.post('/pos/sale') updates inventory stock and records balanced double-entry ledger with clinic and prescription linkage", async () => {
@@ -818,7 +844,7 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
     });
 
     it("prescriptionsRouter.get('/') lists signed prescriptions for clinic dispensing queue", async () => {
-      const rxRes = await backendApp.request(
+      const rxRes = await clinicalFixtureApp.request(
         "/api/v1/prescriptions?clinic_id=clinic-delhi-01&status=SIGNED",
       );
       expect(rxRes.status).toBe(200);
@@ -834,21 +860,24 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
 
     it("triggers, lists, and acknowledges Inpatient Bedside Code Blue Distress events", async () => {
       // 1. Trigger Bed Distress
-      const triggerRes = await backendApp.request("/api/v1/ipd/beds/GW-101/distress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bedNumber: "Bed 1",
-          roomId: "Room 105",
-          patientName: "Priya Sharma",
-          patientAge: 34,
-          assignedDoctorName: "Dr. Malhotra",
-          reporterType: "NURSE_STAT_REPORT",
-          reporterName: "Nurse Triage Lead",
-          reason: "Acute Desaturation",
-          acuity: "CODE_BLUE_CRITICAL"
-        })
-      });
+      const triggerRes = await backendApp.request(
+        "/api/v1/ipd/beds/GW-101/distress",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bedNumber: "Bed 1",
+            roomId: "Room 105",
+            patientName: "Priya Sharma",
+            patientAge: 34,
+            assignedDoctorName: "Dr. Malhotra",
+            reporterType: "NURSE_STAT_REPORT",
+            reporterName: "Nurse Triage Lead",
+            reason: "Acute Desaturation",
+            acuity: "CODE_BLUE_CRITICAL",
+          }),
+        },
+      );
       expect(triggerRes.status).toBe(200);
       const triggerData = (await triggerRes.json()) as any;
       expect(triggerData.success).toBe(true);
@@ -866,15 +895,18 @@ describe("Backend Patient CRUD API (/api/v1/patients)", () => {
       expect(activeData.events.some((e: any) => e.id === eventId)).toBe(true);
 
       // 3. Doctor Acknowledges and En Route
-      const ackRes = await backendApp.request(`/api/v1/ipd/distress/${eventId}/acknowledge`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          doctorId: "doc_malhotra",
-          doctorName: "Dr. Malhotra",
-          responseLatencyMs: 142
-        })
-      });
+      const ackRes = await backendApp.request(
+        `/api/v1/ipd/distress/${eventId}/acknowledge`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            doctorId: "doc_malhotra",
+            doctorName: "Dr. Malhotra",
+            responseLatencyMs: 142,
+          }),
+        },
+      );
       expect(ackRes.status).toBe(200);
       const ackData = (await ackRes.json()) as any;
       expect(ackData.success).toBe(true);

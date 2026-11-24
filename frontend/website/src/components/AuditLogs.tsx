@@ -1,12 +1,16 @@
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import { useEffect, useState, useMemo } from 'react'
-import { dataService as db } from '@/lib/dataService'
+import { staffApi } from '@/lib/staffApi'
 import { useToast } from '@/components/ui/use-toast'
 import { Skeleton } from '@/components/ui/basic'
 
-export function AuditLogs() {
+type AuditRecord = { id: string; action: string; status: string; created_at: string; details?: string; performed_by?: string };
+
+export function AuditLogs({ readOnly }: { readOnly: boolean }) {
     const { toast } = useToast()
-    const [logs, setLogs] = useState<any[]>([])
+    const [logs, setLogs] = useState<AuditRecord[]>([])
+    const [lockedThrough, setLockedThrough] = useState<string | null>(null)
+    const [failure, setFailure] = useState("")
     const [loading, setLoading] = useState(true)
 
     // Filters State
@@ -22,13 +26,12 @@ export function AuditLogs() {
     const fetchLogs = async () => {
         try {
             setLoading(true)
-            const data = await db.list('audit_logs', {
-                sort: { column: 'created_at', ascending: false },
-                limit: 100
-            })
-            setLogs(data || [])
+            setFailure("")
+            const data = await staffApi<{ logs: AuditRecord[]; lockedThrough: string | null }>('/clinical/command/audit')
+            setLogs(data.logs)
+            setLockedThrough(data.lockedThrough)
         } catch (error) {
-            console.error("Error fetching logs:", error)
+            setFailure(error instanceof Error ? error.message : "Audit information unavailable.")
             toast({ title: 'Error', description: 'Failed to load audit logs', variant: 'destructive' })
         } finally {
             setLoading(false)
@@ -55,6 +58,15 @@ export function AuditLogs() {
             return true;
         });
     }, [logs, showInfo, showWarning, showError, searchQuery]);
+
+    if (readOnly) return (
+        <section className="space-y-3 rounded-lg border bg-white p-5">
+            <h1 className="text-xl font-semibold">Audit status</h1>
+            {loading ? <p role="status">Loading audit status…</p>
+                : failure ? <p role="alert">{failure}</p>
+                : <p>{lockedThrough ? `Accounting periods locked through ${lockedThrough}.` : "No accounting period is locked."}</p>}
+        </section>
+    )
 
     const getStatusUI = (status: string) => {
         switch (status) {
@@ -107,7 +119,7 @@ export function AuditLogs() {
                 <div className="flex items-center gap-4">
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-tight">Live View</span>
+                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-tight">Recorded Activity</span>
                     </div>
                     <button onClick={fetchLogs} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-50 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-300">
                         <SymbolIcon className={`material-symbols-outlined text-lg ${loading ? 'animate-spin' : ''}`}>sync</SymbolIcon>
