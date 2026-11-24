@@ -77,6 +77,7 @@ export function KioskIntake() {
   const language = patientLanguages[locale][1];
   const copy = kioskPrompts[locale];
   const localized = kioskClinicalCopy[locale];
+  const allConsentGiven = consentOptions.every((key) => Boolean(consent[key]));
   const firstStemi = interceptorQuestions.find((field) => !interceptor[field]);
   const question = sentinel({ answers })
     .nextQuestion as SentinelQuestion | null;
@@ -308,12 +309,21 @@ export function KioskIntake() {
                   );
                 })}
               </fieldset>
-              <Button
-                lang={language}
-                onClick={() => setStep(consent.care ? 2 : 3)}
-              >
-                {copy[8]}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button
+                  lang={language}
+                  disabled={!allConsentGiven}
+                  aria-disabled={!allConsentGiven}
+                  onClick={() => setStep(consent.care ? 2 : 3)}
+                >
+                  {copy[8]}
+                </Button>
+                {!allConsentGiven && (
+                  <p className="text-xs text-muted-foreground">
+                    All consent choices are required to continue.
+                  </p>
+                )}
+              </div>
             </>
           )}
           {step === 2 && (

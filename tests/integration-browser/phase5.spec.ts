@@ -79,9 +79,9 @@ test("public overview and the sessionless kiosk support local Indic fonts and me
   ).toHaveAttribute("lang", "mr-IN");
   await page.getByRole("button", { name: "English" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page
-    .getByLabel("Use my information for direct care and examination")
-    .check();
+  for (const checkbox of await page.getByRole("checkbox").all()) {
+    await checkbox.check();
+  }
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Scan ABHA QR" }).click();
   await expect(
@@ -214,9 +214,9 @@ test("a routine kiosk visit can read an image locally, review its text and print
     "BUTTON",
   );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page
-    .getByLabel("Use my information for direct care and examination")
-    .check();
+  for (const checkbox of await page.getByRole("checkbox").all()) {
+    await checkbox.check();
+  }
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByRole("button", { name: "Continue without verification" })
