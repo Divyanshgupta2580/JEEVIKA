@@ -73,10 +73,6 @@ export function landingMarkup(d: LandingDestinations): string {
   return `<div class="ds-site"><a class="ds-skip" href="#ds-content">Skip to content</a>
   <header class="ds-nav"><a href="${d.home}" aria-label="Jeevika home">${brandMarkup}</a><nav aria-label="Website"><a href="#ds-platform">Platform</a><a href="#ds-journey">Our approach</a><a href="#ds-safety">Trust & care</a></nav><a class="ds-button ds-button-small" href="#ds-workspaces">Enter workspace ${designIcon("arrow")}</a></header>
   <main id="ds-content"><section class="ds-hero">
-    <div class="ds-hero-bg" aria-hidden="true">
-      <img src="/assets/design/care-continuum.jpg" alt="An Indian doctor sharing a reassuring moment with a child and her mother" width="1400" height="933" fetchpriority="high">
-      <div class="ds-hero-scrim"></div>
-    </div>
     <div class="ds-hero-inner">
       <div class="ds-hero-copy">
         <span class="ds-eyebrow"><span class="ds-status-dot"></span> A more connected kind of care</span>
@@ -88,15 +84,7 @@ export function landingMarkup(d: LandingDestinations): string {
         </div>
         <div class="ds-hero-note">${designIcon("shield")} Built around people. Guided by clinical oversight.</div>
       </div>
-      <div class="ds-hero-art">
-        <div class="ds-care-node ds-node-one">${designIcon("heart")} Prevention</div>
-        <div class="ds-care-node ds-node-two">${designIcon("clinical")} Consultation</div>
-        <div class="ds-care-node ds-node-three">${designIcon("home")} Care continues</div>
-        <div class="ds-art-caption-card">
-          <span class="ds-caption-tag">${designIcon("heart")} Shared Mission</span>
-          <span class="ds-art-caption">A healthier tomorrow,<br><em>together.</em></span>
-        </div>
-      </div>
+      <img class="ds-hero-art" src="/assets/design/care-continuum.jpg" alt="A doctor sharing a reassuring moment with a child and her mother" width="1400" height="933" fetchpriority="high">
     </div>
   </section>
   <div class="ds-foundation"><div><strong>5</strong><span>Connected workspaces</span></div><div><strong>4</strong><span>Deterministic core engines</span></div><div><strong>5</strong><span>Intake language options</span></div><div><strong>One</strong><span>Continuous care journey</span></div></div>

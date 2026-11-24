@@ -83,67 +83,17 @@
   background: var(--ayu-mint);
 }
 .ds-hero {
-  position: relative;
   width: 100%;
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
   background: var(--ayu-ivory);
-  isolation: isolate;
-}
-.ds-hero-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  overflow: hidden;
-}
-.ds-hero-bg > img {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0;
-  object-fit: cover;
-  object-position: 72% 35%;
-  filter: saturate(1.04) contrast(1.02);
-}
-.ds-hero-scrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(248, 250, 245, 0.98) 0%,
-    rgba(248, 250, 245, 0.94) 38%,
-    rgba(248, 250, 245, 0.68) 58%,
-    rgba(248, 250, 245, 0.32) 80%,
-    rgba(248, 250, 245, 0.14) 100%
-  );
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
-}
-.dark .ds-hero-scrim {
-  background: linear-gradient(
-    90deg,
-    rgba(18, 37, 30, 0.98) 0%,
-    rgba(18, 37, 30, 0.93) 38%,
-    rgba(18, 37, 30, 0.65) 58%,
-    rgba(18, 37, 30, 0.32) 80%,
-    rgba(18, 37, 30, 0.16) 100%
-  );
 }
 .ds-hero-inner {
-  position: relative;
-  z-index: 1;
-  max-width: 1440px;
+  max-width: 1600px;
   width: 100%;
   margin: 0 auto;
-  padding: 64px 5%;
+  padding: 56px 4%;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 48px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 5fr);
+  gap: 40px;
   align-items: center;
 }
 .ds-hero-copy {
@@ -218,122 +168,18 @@
   height: 16px;
 }
 .ds-hero-art {
-  height: 100%;
-  min-height: 480px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ds-care-node {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  font-weight: 650;
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--ayu-border);
   border-radius: 14px;
-  padding: 13px 19px;
-  box-shadow: 0 10px 32px rgba(8, 127, 114, 0.08);
-  background: rgba(255, 253, 245, 0.94);
-  color: #2b493c;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  z-index: 2;
-  white-space: nowrap;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
 }
-.ds-care-node:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 14px 40px rgba(8, 127, 114, 0.16);
-}
-.ds-care-node svg {
-  color: #087f72;
-  width: 18px;
-  height: 18px;
-}
-.ds-node-one {
-  top: 14%;
-  left: 12%;
-}
-.ds-node-two {
-  top: 48%;
-  right: 6%;
-}
-.ds-node-three {
-  bottom: 22%;
-  left: 8%;
-}
-.ds-art-caption-card {
-  position: absolute;
-  bottom: 4%;
-  right: 4%;
-  background: rgba(255, 253, 245, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(210, 228, 218, 0.9);
-  border-radius: 18px;
-  padding: 16px 22px;
-  box-shadow: 0 16px 42px rgba(8, 127, 114, 0.13);
-  display: inline-flex;
-  flex-direction: column;
-  gap: 5px;
-  max-width: 320px;
-  z-index: 3;
-  transition: transform 0.25s ease;
-}
-.ds-art-caption-card:hover {
-  transform: translateY(-2px);
-}
-.ds-caption-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10.5px;
-  font-weight: 750;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #087466;
-}
-.ds-caption-tag svg {
-  width: 14px;
-  height: 14px;
-  color: #087466;
-}
-.ds-art-caption {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  line-height: 1.3;
-  color: #1a382b;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-}
-.ds-art-caption em {
-  font-style: italic;
-  color: #087466;
-  font-weight: 700;
-}
-.dark .ds-care-node,
-.dark .ds-art-caption-card {
-  background: rgba(25, 45, 38, 0.92);
-  border-color: rgba(54, 80, 69, 0.85);
-  color: #e4efe8;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
-}
-.dark .ds-art-caption {
-  color: #e4efe8;
-}
-.dark .ds-art-caption em {
-  color: #91d6ba;
-}
-.dark .ds-caption-tag {
-  color: #91d6ba;
-}
-.dark .ds-caption-tag svg {
-  color: #91d6ba;
+@media (max-width: 639px) {
+  .ds-hero-art {
+    aspect-ratio: 11 / 10;
+    object-fit: cover;
+    object-position: right center;
+  }
 }
 .ds-foundation {
   max-width: 1220px;
@@ -718,117 +564,25 @@
   width: 100%;
   font-size: 10px;
 }
-@media (min-width: 1441px) {
-  .ds-hero {
-    min-height: 100dvh;
-  }
-  .ds-hero-inner {
-    padding: 72px 5%;
-  }
-}
 @media (max-width: 1200px) {
-  .ds-hero {
-    min-height: calc(100vh - 64px);
-  }
   .ds-hero-inner {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     gap: 32px;
     padding: 48px 4%;
   }
-  .ds-hero-copy {
-    max-width: 540px;
-  }
-  .ds-hero-art {
-    min-height: 420px;
-  }
-  .ds-node-one {
-    top: 10%;
-    left: 8%;
-  }
-  .ds-node-two {
-    top: 45%;
-    right: 4%;
-  }
-  .ds-node-three {
-    bottom: 22%;
-    left: 6%;
-  }
-  .ds-art-caption-card {
-    right: 2%;
-    bottom: 2%;
-    padding: 13px 18px;
-    max-width: 290px;
-  }
-  .ds-art-caption {
-    font-size: 18px;
-  }
 }
-@media (max-width: 1050px) {
-  .ds-hero {
-    min-height: auto;
-    padding: 40px 0;
-  }
-  .ds-hero-bg > img {
-    object-position: 72% 30%;
-  }
-  .ds-hero-scrim {
-    background: linear-gradient(
-      120deg,
-      rgba(248, 250, 245, 0.98) 0%,
-      rgba(248, 250, 245, 0.93) 48%,
-      rgba(248, 250, 245, 0.7) 75%,
-      rgba(248, 250, 245, 0.4) 100%
-    );
-  }
-  .dark .ds-hero-scrim {
-    background: linear-gradient(
-      120deg,
-      rgba(18, 37, 30, 0.98) 0%,
-      rgba(18, 37, 30, 0.93) 48%,
-      rgba(18, 37, 30, 0.72) 75%,
-      rgba(18, 37, 30, 0.45) 100%
-    );
-  }
+@media (max-width: 1023px) {
   .ds-hero-inner {
-    grid-template-columns: 1fr;
-    gap: 36px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
     padding: 36px 5%;
   }
   .ds-hero-copy {
     max-width: 100%;
     padding: 0;
   }
-  .ds-hero-art {
-    min-height: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: flex-start;
-    align-items: center;
-  }
-  .ds-care-node {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    font-size: 12px;
-    padding: 11px 16px;
-  }
-  .ds-art-caption-card {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    max-width: 100%;
-    margin-top: 8px;
-    padding: 14px 18px;
-  }
-  .ds-art-caption {
-    font-size: 18px;
-  }
+}
+@media (max-width: 1050px) {
   .ds-hero h1 {
     letter-spacing: -1.5px !important;
   }
@@ -870,31 +624,6 @@
     font-size: 11px;
     min-height: 36px;
   }
-  .ds-hero {
-    min-height: auto;
-    padding: 0;
-  }
-  .ds-hero-bg > img {
-    object-position: 68% 25%;
-  }
-  .ds-hero-scrim {
-    background: linear-gradient(
-      180deg,
-      rgba(248, 250, 245, 0.98) 0%,
-      rgba(248, 250, 245, 0.93) 45%,
-      rgba(248, 250, 245, 0.78) 72%,
-      rgba(248, 250, 245, 0.96) 100%
-    );
-  }
-  .dark .ds-hero-scrim {
-    background: linear-gradient(
-      180deg,
-      rgba(18, 37, 30, 0.98) 0%,
-      rgba(18, 37, 30, 0.93) 45%,
-      rgba(18, 37, 30, 0.8) 72%,
-      rgba(18, 37, 30, 0.96) 100%
-    );
-  }
   .ds-hero-inner {
     padding: 32px 18px;
     gap: 24px;
@@ -923,39 +652,6 @@
   .ds-hero-note {
     font-size: 10.5px;
     margin-top: 14px;
-  }
-  .ds-hero-art {
-    min-height: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-  .ds-care-node {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    justify-content: flex-start;
-    padding: 11px 16px;
-    font-size: 12px;
-  }
-  .ds-art-caption-card {
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    max-width: 100%;
-    margin-top: 4px;
-    padding: 14px 16px;
-    border-radius: 14px;
-  }
-  .ds-art-caption {
-    font-size: 17px;
   }
   .ds-foundation {
     grid-template-columns: 1fr 1fr;
@@ -1070,9 +766,6 @@
     font-size: 11.5px;
     padding: 8px 12px;
     min-height: 44px;
-  }
-  .ds-art-caption {
-    font-size: 15px;
   }
   .ds-foundation {
     margin: 0 8px;

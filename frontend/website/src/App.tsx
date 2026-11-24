@@ -728,12 +728,6 @@ function WorkspaceChrome() {
         /^\/(?:home|app\/home)(?:\/|$)/.test(pathname);
     if (patientOrPublic) return null;
     return <>
-        {pathname.startsWith('/app') && (
-            <div className="ayu-demo-ribbon flex items-center justify-center gap-3 py-2 px-4 shadow-sm">
-                <img src="/assets/logo-jeevika.png" alt="Jeevika" className="h-7 md:h-8 w-auto object-contain shrink-0" />
-                <span className="font-semibold text-xs md:text-sm tracking-wide">Jeevika Enterprise Workspace · Unified Continuity of Care · Cloudflare D1 &amp; Edge Engine</span>
-            </div>
-        )}
         <WebsiteLanguageSelect />
         <ProductTour />
     </>;

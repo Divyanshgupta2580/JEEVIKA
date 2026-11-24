@@ -1,13 +1,13 @@
 import { confirmCbcNavigation } from "../../features/cbc/navigation";
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useHospital } from '@/context/HospitalContext'
 import { NotificationsPanel } from '@/components/ui/NotificationsPanel'
 import { requestNotificationPermission } from '@/lib/notifications'
 import { useTour } from '@/context/TourContext'
 import { workspaceTour } from '@/tourSteps'
-import { Play } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Play } from 'lucide-react'
 import { routeAccess, staffNavItems } from '@/lib/rbac'
 import { ShellEmergency } from '@/components/ShellEmergency'
 
@@ -36,10 +36,10 @@ export function AppLayout({
     const role = userProfile?.role
     const verifiedRole = typeof session?.role === "string" ? session.role : null
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
     const isFullBleedPortal = view === 'patient-kiosk';
-    const isClinicalPortal = ['doctor-consultation','emergency-triage','ayush-center'].includes(view);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const CLINIC_VIEWS = ['clinic-admin', 'pos', 'attendance', 'shift-management', 'inventory-dashboard', 'staff', 'staff-management', 'earnings'];
     const isClinicPortal = CLINIC_VIEWS.includes(view) || (selectedClinicId !== null && view !== 'admin');
@@ -131,8 +131,11 @@ export function AppLayout({
     };
     const NavItem = ({ icon, label, active, onClick, disabled, id }: NavItemProps) => (
         <button
+            type="button"
             id={id}
             title={label}
+            aria-label={label}
+            aria-current={active ? 'page' : undefined}
             onClick={() => {
                 if (!disabled) {
                     onClick()
@@ -140,7 +143,7 @@ export function AppLayout({
                 }
             }}
             disabled={disabled}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all group
+            className={`ayu-workspace-nav-item w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl transition-colors group
                 ${disabled ? 'opacity-50 cursor-not-allowed text-slate-400' :
                     active
                         ? 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
@@ -149,7 +152,7 @@ export function AppLayout({
         >
             <SymbolIcon className={`material-symbols-outlined text-[20px] ${active ? 'text-teal-700' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
             <span className={`ayu-nav-label text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
-            {disabled && !isCollapsed && <SymbolIcon className="material-symbols-outlined text-[16px] ml-auto opacity-50">lock</SymbolIcon>}
+            {disabled && <SymbolIcon className="ayu-nav-label material-symbols-outlined text-[16px] ml-auto opacity-50">lock</SymbolIcon>}
         </button>
     )
 
@@ -196,128 +199,104 @@ export function AppLayout({
     }
 
     return (
-        <div className="text-slate-900 h-screen w-screen flex overflow-hidden bg-white font-sans">
-
-            {/* SIDEBAR - HIDDEN FOR FULL-BLEED CLINICAL PORTALS (DOCTOR, NURSE, KIOSK) */}
+        <div
+            className="ayu-workspace-shell flex h-screen w-full overflow-hidden bg-white font-sans text-slate-900"
+            data-mobile-menu-open={isMobileMenuOpen}
+        >
             {!isFullBleedPortal && (
-            <aside id="workspace-navigation" aria-label="Workspace navigation" className={`
-                ${isMobileMenuOpen 
-                    ? 'fixed inset-0 w-full h-full z-[100] bg-white flex flex-col overflow-y-auto p-4 sm:p-6' 
-                    : 'hidden lg:flex flex-col shrink-0 h-screen border-r border-slate-200 bg-sidebar ' + (isCollapsed ? 'lg:w-20' : 'lg:w-60')}
-                ayu-global-sidebar transition-all duration-300 ease-in-out
-            `}>
-                <div className={`p-4 border-b border-slate-200 flex justify-between items-center ${isCollapsed ? 'lg:justify-center' : ''}`}>
-                    <div className="flex items-center gap-2.5 min-w-0">
+                <aside
+                    aria-label="Workspace navigation"
+                    className="ayu-global-sidebar"
+                    data-collapsed={isCollapsed}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape' && isMobileMenuOpen) {
+                            setIsMobileMenuOpen(false);
+                            mobileMenuButton.current?.focus();
+                        }
+                    }}
+                >
+                    <div className="ayu-workspace-sidebar-top">
                         <img
                             src="/assets/logo-jeevika.png"
                             alt="Jeevika"
                             title={getBrandName()}
-                            className={`${isCollapsed ? 'h-7' : 'h-8'} w-auto object-contain shrink-0`}
+                            width={108}
+                            height={36}
+                            className="ayu-workspace-brand"
                         />
-                        {(!isCollapsed || isMobileMenuOpen) && (
-                            <div className="flex flex-col min-w-0 ayu-sidebar-brand">
-                                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold truncate">
-                                    {isClinicalPortal ? 'Clinical workspace' : isClinicPortal ? 'Clinic operations' : 'Headquarters'}
-                                </span>
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            className="ayu-workspace-menu ayu-workspace-menu-desktop"
+                            aria-controls="workspace-menu"
+                            aria-expanded={!isCollapsed}
+                            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                            onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+                        >
+                            {isCollapsed
+                                ? <PanelLeftOpen size={18} aria-hidden="true" />
+                                : <PanelLeftClose size={18} aria-hidden="true" />}
+                            <span>Menu</span>
+                        </button>
+                        <button
+                            ref={mobileMenuButton}
+                            type="button"
+                            className="ayu-workspace-menu ayu-workspace-menu-mobile"
+                            aria-controls="workspace-menu"
+                            aria-expanded={isMobileMenuOpen}
+                            aria-label={isMobileMenuOpen ? 'Close workspace menu' : 'Open workspace menu'}
+                            onClick={() => setIsMobileMenuOpen((open) => !open)}
+                        >
+                            <SymbolIcon className="material-symbols-outlined">{isMobileMenuOpen ? 'close' : 'menu'}</SymbolIcon>
+                            <span>{isMobileMenuOpen ? 'Close' : 'Menu'}</span>
+                        </button>
                     </div>
-                    <button 
-                        type="button" 
-                        aria-label="Close workspace menu" 
-                        className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                        <SymbolIcon className="material-symbols-outlined text-[18px]">close</SymbolIcon>
-                        <span>Close</span>
-                    </button>
-                </div>
 
-                <button
-                    type="button"
-                    className={`ayu-sidebar-collapse hidden lg:flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4 gap-2.5'} py-2 text-[11px] font-medium text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100`}
-                    aria-label={isCollapsed ? "Expand sidebar (comes out)" : "Collapse sidebar (goes inside)"}
-                    title={isCollapsed ? "Expand sidebar (comes out)" : "Collapse sidebar (goes inside)"}
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                >
-                    <SymbolIcon className="material-symbols-outlined text-[18px]">
-                        {isCollapsed ? "chevron_right" : "chevron_left"}
-                    </SymbolIcon>
-                    {!isCollapsed && <span className="ayu-nav-label">Collapse navigation</span>}
-                </button>
-                <div className="flex-1 overflow-y-auto no-scrollbar py-4 px-2 space-y-1">
-                    {staffNavItems(verifiedRole)
-                        .filter(({ route }) => routeAccess(route, verifiedRole) !== 'None')
-                        .map((item) => (
-                        <NavItem
-                            key={item.id}
-                            id={`tour-${item.id}`}
-                            icon={item.icon}
-                            label={item.label}
-                            active={view === item.view}
-                            onClick={() => {
-                                if (item.view === 'admin') onSelectClinicId?.(null);
-                                setView(item.view);
-                            }}
-                        />
-                    ))}
+                    <nav id="workspace-menu" aria-label="Staff workspaces" className="ayu-workspace-nav">
+                        {staffNavItems(verifiedRole)
+                            .filter(({ route }) => routeAccess(route, verifiedRole) !== 'None')
+                            .map((item) => (
+                                <NavItem
+                                    key={item.id}
+                                    id={`tour-${item.id}`}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    active={view === item.view}
+                                    onClick={() => {
+                                        if (item.view === 'admin') onSelectClinicId?.(null);
+                                        setView(item.view);
+                                    }}
+                                />
+                            ))}
+                    </nav>
 
-                </div>
-
-                <div className={`p-3 border-t border-slate-200 mt-auto shrink-0 bg-white ${isCollapsed ? 'space-y-2' : 'space-y-1'}`}>
-
-                    {isCollapsed ? (
-                        <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-100">
-                            <div
-                                title={`${userProfile?.full_name || 'Doctor'} (${getBrandSubtitle()})`}
-                                className="w-9 h-9 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-teal-50 shadow-sm cursor-default"
-                            >
-                                {userProfile?.full_name?.[0] || 'D'}
+                    <div className="ayu-workspace-sidebar-footer">
+                        <div className="ayu-workspace-identity flex min-w-0 items-center gap-2.5">
+                            <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
+                                {userProfile?.full_name?.[0] || 'C'}
+                            </span>
+                            <div className="min-w-0">
+                                <p className="truncate text-xs font-bold text-slate-800">{userProfile?.full_name || 'Staff account'}</p>
+                                <p className="text-xs text-slate-500">{getBrandSubtitle()}</p>
                             </div>
-                            <button
-                                onClick={onLogout}
-                                title="Sign Out"
-                                className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all active:scale-95"
-                            >
-                                <SymbolIcon className="material-symbols-outlined text-[18px] text-rose-500">logout</SymbolIcon>
-                            </button>
                         </div>
-                    ) : (
-                        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60 mt-1">
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs shrink-0 ring-2 ring-white shadow-sm">
-                                    {userProfile?.full_name?.[0] || 'C'}
-                                </div>
-                                <div className="overflow-hidden min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-slate-800 truncate">{userProfile?.full_name || 'Chief Medical Officer, MD, DM'}</p>
-                                    <p className="text-[10px] text-slate-400 font-mono truncate">{getBrandSubtitle()}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={onLogout}
-                                title="Sign Out"
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
-                            >
-                                <SymbolIcon className="material-symbols-outlined text-lg text-rose-500">logout</SymbolIcon>
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </aside>
+                        <button type="button" onClick={onLogout} className="ayu-workspace-sign-out">
+                            <SymbolIcon className="material-symbols-outlined">logout</SymbolIcon>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </aside>
             )}
 
-            {/* MAIN CONTENT AREA */}
-            <main className="flex-1 min-w-0 overflow-y-auto bg-white flex flex-col relative w-full">
-
+            <main
+                aria-label="Workspace content"
+                tabIndex={0}
+                className="ayu-workspace-scroll relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-white"
+            >
                 {/* HEADER */}
                 {view !== 'patient-kiosk' && (
                 <header className="ayu-workspace-header h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
                     <div className="ayu-workspace-heading flex items-center gap-4">
-                        {!isFullBleedPortal && (
-                            <button type="button" aria-label="Open workspace menu" aria-controls="workspace-navigation" aria-expanded={isMobileMenuOpen} className="lg:hidden shrink-0 p-2.5 -ml-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all flex items-center justify-center" onClick={() => setIsMobileMenuOpen(true)}>
-                                <SymbolIcon className="material-symbols-outlined text-[24px]">menu</SymbolIcon>
-                            </button>
-                        )}
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-1">
                                 <span className={`text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${portalMeta.badgeClass}`}>
@@ -395,28 +374,6 @@ export function AppLayout({
                             onClose={() => setIsNotificationsOpen(false)}
                             onNavigate={setView}
                         />
-                        {/* HEADER USER PROFILE BADGE & LOGOUT */}
-                        <div className="ayu-workspace-account flex items-center gap-2 pl-3 border-l border-slate-200">
-                            <div
-                                title={`${userProfile?.full_name || 'Chief Medical Officer, MD, DM'} (${getBrandSubtitle()})`}
-                                className="ayu-workspace-avatar w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm shrink-0"
-                            >
-                                {userProfile?.full_name?.[0] || 'C'}
-                            </div>
-                            <div className="hidden xl:flex flex-col text-left">
-                                <span className="text-xs font-bold text-slate-800 leading-none truncate max-w-[130px]">{userProfile?.full_name || 'Chief Medical Officer, MD, DM'}</span>
-                                <span className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{getBrandSubtitle()}</span>
-                            </div>
-                            <button
-                                onClick={onLogout}
-                                title="Sign Out"
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
-                            >
-                                <SymbolIcon className="material-symbols-outlined text-[18px]">logout</SymbolIcon>
-                            </button>
-                        </div>
-                        {/* We leave the top right action area primarily to the child components, 
-                        but we can provide a container for them if needed later. */}
                     </div>
                 </header>
                 )}

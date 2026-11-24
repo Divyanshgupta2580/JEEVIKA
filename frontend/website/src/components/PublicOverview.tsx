@@ -4,7 +4,6 @@ import {
   ShieldCheck,
   Heart,
   Stethoscope,
-  Home as HomeIcon,
   UserCheck,
   Activity,
   Package,
@@ -18,15 +17,12 @@ import {
 export function PublicOverview() {
   return (
     <main id="public-main" tabIndex={-1} className="w-full pb-20 focus:outline-none">
-      {/* ───────────────────────────────────────────────────────────
-          1. HERO SECTION (Exact Reference Visuals & Styling)
-         ─────────────────────────────────────────────────────────── */}
-      <section className="relative w-full overflow-hidden bg-[#FAF8F5] pt-8 pb-16 lg:py-20 border-b border-[#EAE6DF]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <section className="w-full border-b border-[#EAE6DF] bg-[#FAF8F5] pb-16 pt-8 lg:py-14">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:grid-cols-[minmax(0,3fr)_minmax(0,5fr)] xl:gap-10">
             
             {/* Left Column: Copy & Actions */}
-            <div className="lg:col-span-6 space-y-6 max-w-2xl">
+            <div className="max-w-2xl space-y-6">
               {/* Eyebrow Pill */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F3ECD9]/90 border border-[#EEE6D2] text-xs font-semibold text-[#485C50] shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-[#087F72] animate-pulse" />
@@ -68,53 +64,14 @@ export function PublicOverview() {
               </div>
             </div>
 
-            {/* Right Column: Reference Hero Artwork with Floating Badges */}
-            <div className="lg:col-span-6 relative">
-              <div className="relative mx-auto max-w-lg lg:max-w-none rounded-3xl overflow-hidden shadow-2xl border-4 border-white/80 bg-white">
-                {/* Master Reference Image */}
-                <img
-                  src="/assets/design/care-continuum.jpg"
-                  alt="An Indian female doctor sharing a warm reassuring moment with a smiling child in a yellow dress and her mother"
-                  width="1400"
-                  height="933"
-                  className="w-full h-auto object-cover object-center transform hover:scale-[1.01] transition-transform duration-500"
-                  fetchPriority="high"
-                />
-
-                {/* Soft gradient bottom vignette */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-
-                {/* Floating Badge 1: Prevention (Top Left) */}
-                <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-white/90 text-[#2B493C] text-xs sm:text-sm font-bold shadow-lg transform -rotate-1 hover:rotate-0 transition-transform">
-                  <Heart className="w-4 h-4 text-[#087F72] fill-[#087F72]/20" />
-                  <span>Prevention</span>
-                </div>
-
-                {/* Floating Badge 2: Consultation (Middle Right) */}
-                <div className="absolute top-1/2 -translate-y-1/2 right-4 sm:right-6 flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-white/90 text-[#2B493C] text-xs sm:text-sm font-bold shadow-lg transform rotate-1 hover:rotate-0 transition-transform">
-                  <Stethoscope className="w-4 h-4 text-[#087F72]" />
-                  <span>Consultation</span>
-                </div>
-
-                {/* Floating Badge 3: Care Continues (Bottom Left) */}
-                <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-white/90 text-[#2B493C] text-xs sm:text-sm font-bold shadow-lg">
-                  <HomeIcon className="w-4 h-4 text-[#087F72]" />
-                  <span>Care continues</span>
-                </div>
-
-                {/* Floating Mission Card (Bottom Right) */}
-                <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 hidden sm:flex flex-col gap-0.5 p-3 rounded-2xl bg-white/95 backdrop-blur-md border border-[#D2E4DA] text-left shadow-xl max-w-[200px]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#087F72] flex items-center gap-1">
-                    <Heart className="w-3 h-3 fill-[#087F72]" />
-                    Shared Mission
-                  </span>
-                  <span className="font-serif italic text-sm text-[#1A382B] font-semibold leading-tight">
-                    Healthier tomorrow, together.
-                  </span>
-                </div>
-              </div>
-            </div>
-
+            <img
+              src="/assets/design/care-continuum.jpg"
+              alt="A doctor sharing a reassuring moment with a child and her mother"
+              width={1400}
+              height={933}
+              className="ds-hero-art"
+              fetchPriority="high"
+            />
           </div>
         </div>
       </section>
