@@ -1634,7 +1634,11 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </div>
                         </div>
                         <div className="text-[10px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
-                            <span>Margin: {((hqLedger?.revenuePaise || 1) > 0 ? (((hqLedger?.netProfitPaise ?? (totalRevenue * 100)) / (hqLedger?.revenuePaise ?? (totalRevenue * 100 || 1))) * 100).toFixed(1) : '100')}%</span>
+                            <span>{(() => {
+                                const revPaise = hqLedger?.revenuePaise ?? totalRevenue * 100;
+                                const profitPaise = hqLedger?.netProfitPaise ?? totalRevenue * 100;
+                                return `Margin: ${revPaise > 0 ? ((profitPaise / revPaise) * 100).toFixed(1) : '0.0'}%`;
+                            })()}</span>
                             <span className="font-semibold text-slate-600">OPEX Factored</span>
                         </div>
                     </Card>
