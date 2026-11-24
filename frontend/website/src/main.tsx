@@ -772,7 +772,7 @@ function App() {
   }, []);
   const api = useMemo(() => integrationClient(token, fetch, token
     ? async (path, method, body, key) => {
-      const response = await socketRequest(token, path, method, body, lifetime.signal, key, undefined, "/api/v1");
+      const response = await socketRequest(token, path, method, body, lifetime.signal, key);
       if (response.status === 401) expire(token);
       return response;
     }
