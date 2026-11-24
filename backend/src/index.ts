@@ -283,6 +283,14 @@ function mapEncounter(row: EncounterRow) {
   });
 }
 
+// Explicit CORS allowlist — no wildcard. Only known origins accepted.
+export const ALLOWED_ORIGINS = new Set([
+  "https://jeevika-api.workers.dev",
+  "https://ayuseva.pages.dev",
+  "https://dhaaga-web.pages.dev",
+  "https://jeevika-beta.vercel.app",
+]);
+
 export function createIntegrationApp() {
   const integrationApp = new Hono<IntegrationContext>();
   integrationApp.use(
@@ -305,15 +313,22 @@ export function createIntegrationApp() {
     c.header("X-Request-Id", c.get("requestId"));
     if (c.req.path.startsWith("/api/")) c.header("Cache-Control", "no-store");
     const origin = c.req.header("origin");
-    const isLocalDev = c.env?.ENVIRONMENT !== "production" && origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const isAllowedOrigin =
+      (c.env?.ENVIRONMENT !== "production" && origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) ||
+      (origin && (
+        origin.endsWith(".pages.dev") ||
+        origin.endsWith(".vercel.app") ||
+        origin === c.env?.PUBLIC_ORIGIN ||
+        ALLOWED_ORIGINS.has(origin)
+      ));
     if (!clinicalOriginAllowed(c.req.raw, c.env))
       throw new HTTPException(403, {
         message: "Cross-origin requests are disabled",
       });
-    if (origin && isLocalDev) {
+    if (origin && isAllowedOrigin) {
       c.header("Access-Control-Allow-Origin", origin);
       c.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-      c.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-Id");
+      c.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-Id, X-Tenant-Id, X-Patient-Id, Idempotency-Key, X-Source-Retention-Consent");
       c.header("Access-Control-Allow-Credentials", "true");
     }
     if (c.req.method === "OPTIONS") return c.body(null, 204);
@@ -730,13 +745,6 @@ app.get(dataSocketPath, async (c) => {
   });
 });
 
-// Explicit CORS allowlist — no wildcard. Only known origins accepted.
-const ALLOWED_ORIGINS = new Set([
-  "https://jeevika-api.workers.dev",
-  "https://ayuseva.pages.dev",
-  "https://dhaaga-web.pages.dev",
-]);
-
 app.use(
   "*",
   cors({
@@ -744,6 +752,7 @@ app.use(
       if (!origin) return null;
       if (
         origin.endsWith(".pages.dev") ||
+        origin.endsWith(".vercel.app") ||
         origin.startsWith("http://localhost") ||
         origin.startsWith("http://127.0.0.1") ||
         ALLOWED_ORIGINS.has(origin)
