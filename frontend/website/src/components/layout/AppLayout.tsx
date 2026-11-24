@@ -198,20 +198,13 @@ export function AppLayout({
     return (
         <div className="text-slate-900 h-screen w-screen flex overflow-hidden bg-white font-sans">
 
-            {/* MOBILE OVERLAY */}
-            {isMobileMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                />
-            )}
-
             {/* SIDEBAR - HIDDEN FOR FULL-BLEED CLINICAL PORTALS (DOCTOR, NURSE, KIOSK) */}
             {!isFullBleedPortal && (
             <aside id="workspace-navigation" aria-label="Workspace navigation" className={`
-                ${isCollapsed ? 'w-20' : 'w-60'} ayu-global-sidebar bg-sidebar border-r border-slate-200 flex flex-col shrink-0 h-screen fixed lg:static z-50
-                transform transition-transform duration-300 ease-in-out
-                ${isMobileMenuOpen ? 'translate-x-0' : 'invisible -translate-x-full lg:visible lg:translate-x-0'}
+                ${isMobileMenuOpen 
+                    ? 'fixed inset-0 w-full h-full z-[100] bg-white flex flex-col overflow-y-auto p-4 sm:p-6' 
+                    : 'hidden lg:flex flex-col shrink-0 h-screen border-r border-slate-200 bg-sidebar ' + (isCollapsed ? 'lg:w-20' : 'lg:w-60')}
+                ayu-global-sidebar transition-all duration-300 ease-in-out
             `}>
                 <div className={`p-4 border-b border-slate-200 flex justify-between items-center ${isCollapsed ? 'lg:justify-center' : ''}`}>
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -221,7 +214,7 @@ export function AppLayout({
                             title={getBrandName()}
                             className={`${isCollapsed ? 'h-7' : 'h-8'} w-auto object-contain shrink-0`}
                         />
-                        {!isCollapsed && (
+                        {(!isCollapsed || isMobileMenuOpen) && (
                             <div className="flex flex-col min-w-0 ayu-sidebar-brand">
                                 <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold truncate">
                                     {isClinicalPortal ? 'Clinical workspace' : isClinicPortal ? 'Clinic operations' : 'Headquarters'}
@@ -229,16 +222,22 @@ export function AppLayout({
                             </div>
                         )}
                     </div>
-                    <button type="button" aria-label="Close workspace menu" className="lg:hidden p-2 text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>
-                        <SymbolIcon className="material-symbols-outlined">close</SymbolIcon>
+                    <button 
+                        type="button" 
+                        aria-label="Close workspace menu" 
+                        className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        <SymbolIcon className="material-symbols-outlined text-[18px]">close</SymbolIcon>
+                        <span>Close</span>
                     </button>
                 </div>
 
                 <button
                     type="button"
                     className={`ayu-sidebar-collapse hidden lg:flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4 gap-2.5'} py-2 text-[11px] font-medium text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100`}
-                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    aria-label={isCollapsed ? "Expand sidebar (comes out)" : "Collapse sidebar (goes inside)"}
+                    title={isCollapsed ? "Expand sidebar (comes out)" : "Collapse sidebar (goes inside)"}
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     <SymbolIcon className="material-symbols-outlined text-[18px]">
