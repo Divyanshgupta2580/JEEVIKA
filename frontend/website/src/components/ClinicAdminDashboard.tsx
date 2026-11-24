@@ -386,10 +386,10 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
 
             // 5. Connect to live inventory radar & ops double-entry ledger summary
             try {
-                const targetClinic = clinicId || 'clinic-delhi-01';
+                const targetClinic = clinicId || 'north';
                 const [radarData, ledgerData] = await Promise.all([
-                    db.getInventoryRadar ? db.getInventoryRadar({ clinicId: targetClinic }) : fetch(`${CLOUDFLARE_API_BASE}/ops/inventory/radar?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                    db.getOpsLedgerSummary ? db.getOpsLedgerSummary({ clinicId: targetClinic }) : fetch(`${CLOUDFLARE_API_BASE}/ops/ledger/summary?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                    db.getInventoryRadar ? db.getInventoryRadar({ clinicId: targetClinic }) : Promise.resolve(null),
+                    db.getOpsLedgerSummary ? db.getOpsLedgerSummary({ clinicId: targetClinic }) : Promise.resolve(null)
                 ]);
                 if (radarData) setOpsRadar(radarData);
                 if (ledgerData) setLedgerSummary(ledgerData);

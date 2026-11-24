@@ -117,8 +117,8 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
     const fetchHqTelemetry = async () => {
         try {
             const [ledgerRes, radarRes] = await Promise.all([
-                db.getOpsLedgerSummary ? db.getOpsLedgerSummary() : fetch(`${API_BASE}/ops/ledger/summary`).then(r => r.ok ? r.json() : null).catch(() => null),
-                db.getInventoryRadar ? db.getInventoryRadar() : fetch(`${API_BASE}/ops/inventory/radar`).then(r => r.ok ? r.json() : null).catch(() => null)
+                db.getOpsLedgerSummary ? db.getOpsLedgerSummary() : Promise.resolve(null),
+                db.getInventoryRadar ? db.getInventoryRadar() : Promise.resolve(null)
             ]);
             if (ledgerRes) setHqLedger(ledgerRes);
             if (radarRes) setHqRadar(radarRes);

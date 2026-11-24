@@ -61,7 +61,10 @@ export function SubscriptionDashboard() {
     // Fetch existing extension request
     useEffect(() => {
         const fetchRequest = async () => {
-            if (!hospital?.id) return;
+            if (!hospital?.id) {
+                setLoadingRequest(false);
+                return;
+            }
             const data = await db.list('trial_extension_requests', {
                 filters: [{ column: 'hospital_id', operator: 'eq', value: hospital.id }],
                 limit: 1

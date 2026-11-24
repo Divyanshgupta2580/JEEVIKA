@@ -1,4 +1,6 @@
 import { CLOUDFLARE_API_BASE } from './api';
+import { authService } from './authService';
+import { staffApi } from './staffApi';
 
 export interface DataService {
     get: (table: string, id: string) => Promise<any>;
@@ -507,37 +509,89 @@ class CloudflareDataService implements DataService {
         return serverResult || localSale;
     }
 
-    async getInventoryRadar(options?: { clinicId?: string; stock?: number }): Promise<any> {
-        const clinicId = options?.clinicId || 'clinic-delhi-01';
+    async getInventoryRadar(_options?: { clinicId?: string; stock?: number }): Promise<any> {
         try {
-            const params = new URLSearchParams();
-            params.set('clinic_id', clinicId);
-            if (typeof options?.stock === 'number') params.set('stock', String(options.stock));
-            const res = await fetch(`${CLOUDFLARE_API_BASE}/ops/inventory/radar?${params.toString()}`);
-            if (res.ok) {
-                return await res.json();
+            const session = await authService.getSession();
+            if (!session?.user || !['HOSPITAL_ADMIN', 'CLINIC_ADMIN', 'CASHIER'].includes(session.user.role)) {
+                return null;
             }
+            const data = await staffApi<{
+                batches?: Array<{
+                    salt: string;
+                    brand: string;
+                    strengthMg: number;
+                    quantity: number;
+                    available: number;
+                    expiry: string;
+                }>;
+            }>('/clinical/pharmacy/inventory');
+            const batches = data?.batches ?? [];
+            const cutoff = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+            const expiringBatches = batches.filter((b) => b.expiry <= cutoff);
+            const hqGroupStockUnits = batches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
+            const inventoryRadar = batches.map((b) => {
+                const available = Number(b.available ?? b.quantity ?? 0);
+                return {
+                    salt: b.salt,
+                    brand: b.brand,
+                    strengthMg: b.strengthMg,
+                    clinicStock: available,
+                    hqGroupStock: Number(b.quantity || 0),
+                    reorderLevel: 20,
+                    isLowStock: available < 20,
+                    status: available < 20 ? 'LOW' : 'OK',
+                };
+            });
+            return {
+                hqGroupStockUnits,
+                expiringBatches,
+                lowStockItems: inventoryRadar.filter((item) => item.isLowStock).map((item) => item.brand),
+                totalSkus: batches.length,
+                inventoryRadar,
+            };
         } catch (e) {
             console.warn('Backend inventory radar notice:', e);
+            return null;
         }
-        return null;
     }
 
-    async getOpsLedgerSummary(options?: { clinicId?: string }): Promise<any> {
+    async getOpsLedgerSummary(_options?: { clinicId?: string }): Promise<any> {
         try {
-            const params = new URLSearchParams();
-            if (options?.clinicId && options.clinicId !== 'all') {
-                params.set('clinic_id', options.clinicId);
+            const session = await authService.getSession();
+            if (!session?.user || !['HOSPITAL_ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+                return null;
             }
-            const queryStr = params.toString() ? `?${params.toString()}` : '';
-            const res = await fetch(`${CLOUDFLARE_API_BASE}/ops/ledger/summary${queryStr}`);
-            if (res.ok) {
-                return await res.json();
+            const data = await staffApi<{
+                accounts?: Array<{ account: string; debitPaise: number; creditPaise: number }>;
+                entries?: Array<unknown>;
+            }>('/clinical/ledger');
+            const accounts = data?.accounts ?? [];
+            const entries = data?.entries ?? [];
+            let debitPaise = 0;
+            let creditPaise = 0;
+            let revenuePaise = 0;
+            let cogsPaise = 0;
+            for (const row of accounts) {
+                const d = Number(row.debitPaise || 0);
+                const c = Number(row.creditPaise || 0);
+                debitPaise += d;
+                creditPaise += c;
+                if (row.account === 'revenue') revenuePaise += c - d;
+                if (row.account === 'cogs') cogsPaise += d - c;
             }
+            return {
+                revenuePaise,
+                cogsPaise,
+                netProfitPaise: revenuePaise - cogsPaise,
+                debitPaise,
+                creditPaise,
+                isBalanced: debitPaise === creditPaise,
+                journalsCount: entries.length,
+            };
         } catch (e) {
             console.warn('Backend ops ledger summary notice:', e);
+            return null;
         }
-        return null;
     }
 }
 
