@@ -106,16 +106,14 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             <Link
               to="/"
               onClick={handleLinkClick}
-              className="inline-flex items-center gap-2.5"
+              aria-label="Jeevika Home"
+              className="inline-flex items-center"
             >
               <img
                 src="/assets/logo-jeevika.png"
-                alt="Jeevika Logo"
+                alt="Jeevika"
                 className="h-9 w-auto object-contain"
               />
-              <span className="font-serif text-2xl font-bold tracking-tight text-[#087F72]">
-                JEEVIKA
-              </span>
             </Link>
             <button
               type="button"
@@ -238,7 +236,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
          ─────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E6E9DF] transition-all">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 h-16">
-          {/* Left: Mobile Hamburger & Desktop Side Panel Toggle + Brand */}
+          {/* Left: Mobile Hamburger & Brand Icon */}
           <div className="flex items-center gap-3">
             {/* Mobile Hamburger Button (☰) */}
             <button
@@ -251,45 +249,17 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               <Menu className="w-5 h-5 text-[#087F72]" />
             </button>
 
-            {/* Desktop Side Panel Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-              aria-label={isDesktopCollapsed ? "Open side panel" : "Collapse side panel"}
-              title={isDesktopCollapsed ? "Open side panel (comes out)" : "Collapse side panel (goes inside)"}
-              className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#182724] bg-[#FAF8F5] hover:bg-[#F1F5F2] border border-[#E3EAE6] transition-all"
-            >
-              {isDesktopCollapsed ? (
-                <>
-                  <ChevronRight className="w-4 h-4 text-[#087F72]" />
-                  <span>Open side panel</span>
-                </>
-              ) : (
-                <>
-                  <ChevronLeft className="w-4 h-4 text-[#087F72]" />
-                  <span>Collapse panel</span>
-                </>
-              )}
-            </button>
-
-            {/* Brand Logo */}
+            {/* Brand Logo - Icon Only */}
             <Link
               to="/"
-              className="inline-flex items-center gap-2.5 group"
+              aria-label="Jeevika Home"
+              className="inline-flex items-center group"
             >
               <img
                 src="/assets/logo-jeevika.png"
-                alt="Jeevika Logo"
+                alt="Jeevika"
                 className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
               />
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#087F72]">
-                  Ayu<span className="text-[#D98558]">सेतु</span>
-                </span>
-                <span className="text-xs font-bold font-mono tracking-wider text-[#61716B] uppercase hidden sm:inline">
-                  JEEVIKA
-                </span>
-              </div>
             </Link>
           </div>
 

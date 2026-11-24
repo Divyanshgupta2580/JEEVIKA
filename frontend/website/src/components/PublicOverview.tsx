@@ -555,7 +555,7 @@ export function PublicOverview() {
             alt="Jeevika"
             className="h-6 w-auto object-contain"
           />
-          <span className="font-bold text-[#182724]">JEEVIKA · AyuSetu</span>
+          <span className="font-bold text-[#182724]">JEEVIKA</span>
           <span>— One thread from first symptom to recovery.</span>
         </div>
         <div className="flex items-center gap-4">

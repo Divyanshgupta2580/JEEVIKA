@@ -26,7 +26,7 @@ const icons = {
 export function designIcon(name: keyof typeof icons, className = "") {
   return `<svg class="ds-icon ${className}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
 }
-export const brandMarkup = `<span class="ds-brand-container" style="display:inline-flex;align-items:center;"><img src="/assets/logo-jeevika.png" alt="Jeevika Healthcare" class="ds-brand-logo" style="height:36px;width:auto;object-fit:contain;display:inline-block;" /><span class="ds-wordmark" style="display:none;">Ayu<span lang="hi">सेतु</span></span></span>`;
+export const brandMarkup = `<span class="ds-brand-container" style="display:inline-flex;align-items:center;"><img src="/assets/logo-jeevika.png" alt="Jeevika Healthcare" class="ds-brand-logo" style="height:36px;width:auto;object-fit:contain;display:inline-block;" /></span>`;
 export function landingMarkup(d: LandingDestinations): string {
   const workspaces = [
     [

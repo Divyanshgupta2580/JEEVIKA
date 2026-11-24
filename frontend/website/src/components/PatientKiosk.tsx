@@ -1858,7 +1858,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
               onError={() => setLogoError(true)}
             />
           ) : (
-            <span className="font-extrabold text-2xl text-[#223D79]">Ayu<span lang="hi" className="text-[#FFA530]">सेतु</span></span>
+            <span className="font-extrabold text-2xl text-[#087F72]">JEEVIKA</span>
           )}
         </a>
         <nav className="ayu-stepper" aria-label="Intake progress">
