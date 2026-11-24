@@ -23,6 +23,7 @@ import {
     Radio
 } from 'lucide-react'
 import { dataService as db } from '@/lib/dataService'
+import { CLOUDFLARE_API_BASE } from '@/lib/api'
 import { getStartOfTodayIST } from '@/lib/utils'
 import { useHospital } from '@/context/HospitalContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -387,8 +388,8 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
             try {
                 const targetClinic = clinicId || 'clinic-delhi-01';
                 const [radarData, ledgerData] = await Promise.all([
-                    db.getInventoryRadar ? db.getInventoryRadar({ clinicId: targetClinic }) : fetch(`/api/v1/ops/inventory/radar?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                    db.getOpsLedgerSummary ? db.getOpsLedgerSummary({ clinicId: targetClinic }) : fetch(`/api/v1/ops/ledger/summary?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                    db.getInventoryRadar ? db.getInventoryRadar({ clinicId: targetClinic }) : fetch(`${CLOUDFLARE_API_BASE}/ops/inventory/radar?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null),
+                    db.getOpsLedgerSummary ? db.getOpsLedgerSummary({ clinicId: targetClinic }) : fetch(`${CLOUDFLARE_API_BASE}/ops/ledger/summary?clinic_id=${targetClinic}`).then(r => r.ok ? r.json() : null).catch(() => null)
                 ]);
                 if (radarData) setOpsRadar(radarData);
                 if (ledgerData) setLedgerSummary(ledgerData);

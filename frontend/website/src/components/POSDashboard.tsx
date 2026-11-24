@@ -6,6 +6,7 @@ import { Loader2, Volume2 } from 'lucide-react'
 import { useToast } from "@/components/ui/use-toast"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { dataService as db } from '@/lib/dataService'
+import { CLOUDFLARE_API_BASE } from '@/lib/api'
 import { useHospital } from '@/context/HospitalContext'
 import { ReceiptModal } from '@/components/ui/ReceiptModal'
 import { paiseDiscount, paiseToRupeesString, rupeesToPaise } from '@/lib/utils'
@@ -160,7 +161,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
             if (db.getPrescriptions) {
                 rxList = await db.getPrescriptions({ status: 'SIGNED', clinicId: clinic });
             } else {
-                const res = await fetch(`/api/v1/prescriptions?status=SIGNED&clinic_id=${clinic}`);
+                const res = await fetch(`${CLOUDFLARE_API_BASE}/prescriptions?status=SIGNED&clinic_id=${clinic}`);
                 if (res.ok) {
                     const json = await res.json();
                     rxList = json.prescriptions || json.items || [];

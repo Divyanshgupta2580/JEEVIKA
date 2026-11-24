@@ -1,11 +1,12 @@
 // Cloudflare Native API client used by the JEEVIKA web ERP.
-const isPagesDev =
+const isLocalhost =
   typeof window !== "undefined" &&
-  window.location.hostname.endsWith("pages.dev");
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
 
-const defaultApiUrl = isPagesDev
-  ? "https://jeevika-api.jeevika-health.workers.dev/api/v1"
-  : "/api/v1";
+const defaultApiUrl = isLocalhost
+  ? "/api/v1"
+  : "https://jeevika-api.jeevika-health.workers.dev/api/v1";
 
 export const CLOUDFLARE_API_BASE = (
   import.meta.env.VITE_API_URL || defaultApiUrl

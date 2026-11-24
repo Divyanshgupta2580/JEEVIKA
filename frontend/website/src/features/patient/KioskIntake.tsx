@@ -126,7 +126,8 @@ export function KioskIntake() {
       });
       setToken(response);
       setUrgent(response.triage === "emergency");
-    } catch {
+    } catch (err) {
+      console.error("Kiosk intake error:", err);
       setError("A token could not be issued. Ask the reception desk for help.");
     } finally {
       working.current = false;
