@@ -3,9 +3,10 @@ import App from "./App";
 import "./index.css";
 import "./design-system/tokens.css";
 import "./design-system/erp.css";
+import "./design-system/landing-public.css";
 
 const { hash, pathname, search } = window.location;
-if (!hash && /^\/(?:kiosk\/?|home\/(?:sign-in|register|reset-password)\/?|app(?:\/.*)?|login\/?|register\/?|reset-password\/?)$/.test(pathname)) {
+if (!hash && /^\/(?:overview\/?|kiosk\/?|home\/(?:sign-in|register|reset-password)\/?|app(?:\/.*)?|login\/?|register\/?|reset-password\/?)$/.test(pathname)) {
   window.history.replaceState(window.history.state, "", `/#${pathname.replace(/\/$/, "")}${search}`);
 }
 

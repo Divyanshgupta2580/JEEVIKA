@@ -54,7 +54,6 @@ const AyushDashboard = lazyWithRetry(() => import("@/components/AyushDashboard")
 const MaritimeAgentMesh = lazyWithRetry(() => import("@/components/MaritimeAgentMesh").then(module => ({ default: module.MaritimeAgentMesh })));
 const PruneGatewayDashboard = lazyWithRetry(() => import("@/components/PruneGatewayDashboard").then(module => ({ default: module.PruneGatewayDashboard })));
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from '@/pages/LandingPage';
 import { BillingOverview, SubscriptionDashboard } from '@/components/billing';
 const AboutPage = lazyWithRetry(() => import("@/pages/AboutPage"));
 const NewsPage = lazyWithRetry(() => import("@/pages/NewsPage"));
@@ -634,7 +633,7 @@ function AppRouter() {
             <AnimatePresence mode="wait">
                 <Routes location={location}>
                     {/* Public routes */}
-                    <Route path="/" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/" element={<PublicLayout><PublicOverview /></PublicLayout>} />
                     <Route path="/login" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
                     <Route path="/overview" element={<PublicLayout><PublicOverview /></PublicLayout>} />
                     <Route path="/register" element={<PublicAuthRoute><PageWrapper><RegisterPage /></PageWrapper></PublicAuthRoute>} />
@@ -650,7 +649,7 @@ function AppRouter() {
                     <Route path="/kiosk" element={<KioskLayout><Suspense fallback={<p role="status">Loading kiosk…</p>}><KioskIntake /></Suspense></KioskLayout>} />
 
                     {/* Informational Pages */}
-                    <Route path="/landing" element={<PageWrapper><LandingPage /></PageWrapper>} />
+                    <Route path="/landing" element={<PublicLayout><PublicOverview /></PublicLayout>} />
                     <Route path="/about" element={<PageWrapper><AboutPage /></PageWrapper>} />
                     <Route path="/news" element={<PageWrapper><NewsPage /></PageWrapper>} />
                     <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />

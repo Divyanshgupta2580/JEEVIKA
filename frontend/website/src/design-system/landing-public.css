@@ -1,0 +1,166 @@
+/* Public landing page styles matching the three approved JEEVIKA phases */
+
+:root {
+  --jvk-ivory: #fefbf6;
+  --jvk-ivory-phase2: #faf7f0;
+  --jvk-card: #fcfbf6;
+  --jvk-card-raised: #fffdf8;
+  --jvk-ink: #0e2420;
+  --jvk-muted: #4b5d57;
+  --jvk-teal: #047c61;
+  --jvk-teal-dark: #026e5e;
+  --jvk-teal-hover: #036450;
+  --jvk-mint-soft: #e7f2e8;
+  --jvk-mint-pill: #eef8f3;
+  --jvk-cream-pill: #f6efe0;
+  --jvk-border: #eae6dc;
+  --jvk-gold: #e5a736;
+  --jvk-serif: Georgia, "Times New Roman", serif;
+}
+
+/* Soft proximity-based vertical scroll snapping for multi-phase desktop viewports */
+@media (min-width: 1024px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
+  html.jeevika-landing-snap {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 4rem;
+  }
+
+  .jeevika-phase-snap {
+    scroll-snap-align: start;
+  }
+
+  .jeevika-footer-snap {
+    scroll-snap-align: end;
+  }
+}
+
+.jeevika-landing {
+  color-scheme: light;
+  background-color: var(--jvk-ivory);
+  color: var(--jvk-ink);
+}
+
+.jeevika-serif-italic {
+  font-family: var(--jvk-serif);
+  font-style: italic;
+  font-weight: 500;
+  color: #087f72;
+}
+
+/* Seamless watercolor left/right/bottom mask matching #FEFBF6 canvas with no box frame */
+.jeevika-hero-artwork {
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.72) 12%, #000 24%, #000 90%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.72) 12%, #000 24%, #000 90%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 84%, transparent 100%);
+  mask-composite: intersect;
+}
+
+@media (max-width: 1023px) {
+  .jeevika-hero-artwork {
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
+      linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
+      linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+    mask-composite: intersect;
+  }
+}
+
+/* Native top-layer <dialog> navigation drawer with reduced-motion-safe slide transition */
+.jeevika-menu-dialog {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  inset: 0 auto 0 0;
+  inline-size: min(26rem, 100dvw);
+  max-inline-size: 100dvw;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  background: var(--jvk-ivory);
+  color: var(--jvk-ink);
+  box-shadow: 16px 0 48px rgba(14, 36, 32, 0.16);
+}
+
+.jeevika-menu-dialog::backdrop {
+  background: rgba(14, 36, 32, 0.36);
+  backdrop-filter: blur(2px);
+}
+
+.jeevika-menu-dialog {
+  opacity: 0;
+  translate: -1.5rem 0;
+  transition:
+    opacity 0.2s ease,
+    translate 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    overlay 0.22s,
+    display 0.22s;
+  transition-behavior: allow-discrete;
+}
+
+.jeevika-menu-dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@starting-style {
+  .jeevika-menu-dialog[open] {
+    opacity: 0;
+    translate: -1.5rem 0;
+  }
+}
+
+/* Native popover dropdown positioning & graceful fallback */
+.jeevika-platform-popover:is(:popover-open, .\:popover-open) {
+  display: block;
+  opacity: 1;
+  translate: 0 0;
+}
+
+.jeevika-platform-popover {
+  opacity: 0;
+  translate: 0 -0.25rem;
+  transition:
+    opacity 0.16s ease,
+    translate 0.16s ease,
+    overlay 0.16s,
+    display 0.16s;
+  transition-behavior: allow-discrete;
+}
+
+@starting-style {
+  .jeevika-platform-popover:is(:popover-open, .\:popover-open) {
+    opacity: 0;
+    translate: 0 -0.25rem;
+  }
+}
+
+@supports not selector(:popover-open) {
+  .jeevika-platform-popover:not(.\:popover-open) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jeevika-menu-dialog,
+  .jeevika-platform-popover {
+    transition: none;
+    translate: 0 0;
+  }
+}
+
+/* High contrast accessible focus outlines */
+.jeevika-landing :where(a, button, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--jvk-teal);
+  outline-offset: 2px;
+}
+
+.jeevika-cta-surface :where(a, button):focus-visible {
+  outline: 3px solid #fefbf6;
+  outline-offset: 3px;
+}

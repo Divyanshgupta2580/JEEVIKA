@@ -28,7 +28,7 @@ test("public overview and the sessionless kiosk support local Indic fonts and me
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/erp.html");
   const nav = page.getByRole("navigation", { name: "Public navigation" });
-  await expect(nav.getByRole("link", { name: "Staff login" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Enter workspace" })).toBeVisible();
   await expect(
     nav.getByRole("link", { name: "Patient sign-in" }),
   ).toBeVisible();

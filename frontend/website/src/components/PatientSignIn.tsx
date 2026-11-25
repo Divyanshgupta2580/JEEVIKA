@@ -190,10 +190,14 @@ export function PatientSignIn({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const requestedRoute = (location.state as { from?: string } | null)?.from;
-  const next = requestedRoute?.startsWith("/app/home/")
-    ? requestedRoute
-    : "/app/home/thread";
+  const rawFrom = (
+    location.state as { from?: string | { pathname?: string } } | null
+  )?.from;
+  const requestedRoute = typeof rawFrom === "string" ? rawFrom : rawFrom?.pathname;
+  const next =
+    typeof requestedRoute === "string" && requestedRoute.startsWith("/app/home/")
+      ? requestedRoute
+      : "/app/home/thread";
   const [passwordMode, setPasswordMode] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);

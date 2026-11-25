@@ -81,7 +81,7 @@ export function LoginPage() {
                 </div>
 
                 <a
-                    href="#/landing"
+                    href="#/"
                     className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white/90 backdrop-blur px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs hover:shadow-sm transition-all"
                 >
                     <span>Public Overview</span>
