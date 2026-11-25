@@ -634,8 +634,9 @@ function AppRouter() {
             <AnimatePresence mode="wait">
                 <Routes location={location}>
                     {/* Public routes */}
-                    <Route path="/" element={<PublicLayout><PublicOverview /></PublicLayout>} />
+                    <Route path="/" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
                     <Route path="/login" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/overview" element={<PublicLayout><PublicOverview /></PublicLayout>} />
                     <Route path="/register" element={<PublicAuthRoute><PageWrapper><RegisterPage /></PageWrapper></PublicAuthRoute>} />
                     <Route path="/reset-password" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
                     <Route path="/home/sign-in" element={<PublicLayout><PatientSignIn /></PublicLayout>} />
@@ -724,7 +725,7 @@ class WorkspaceErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundary
 
 function WorkspaceChrome() {
     const { pathname } = useLocation();
-    const patientOrPublic = pathname === '/' || pathname === '/kiosk' ||
+    const patientOrPublic = pathname === '/' || pathname === '/login' || pathname === '/kiosk' ||
         /^\/(?:home|app\/home)(?:\/|$)/.test(pathname);
     if (patientOrPublic) return null;
     return <>

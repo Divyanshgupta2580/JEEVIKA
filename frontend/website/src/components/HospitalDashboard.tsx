@@ -45,9 +45,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-import { CLOUDFLARE_API_BASE } from '@/lib/api';
 
-const API_BASE = CLOUDFLARE_API_BASE;
 
 interface HospitalDashboardProps {
     onSelectClinic: (id: string) => void;
