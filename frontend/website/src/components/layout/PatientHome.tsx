@@ -6,7 +6,6 @@ import {
   type ReactNode,
 } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { checkInSchema } from "../../../../../packages/shared/patient-experience";
 import { Button, Card, CardContent, Input } from "@/components/ui/basic";
 import {
   EmptyState,
@@ -19,8 +18,15 @@ import {
   setPatientToken,
   usePatientData,
 } from "@/lib/patientApi";
-import { DocumentReview, VoiceControls } from "@/features/patient/capture";
 import { MobileShell } from "./MobileShell";
+import { PatientPortalShell } from "@/components/patient-portal/PatientPortalShell";
+import {
+  CheckInView,
+  DriftView,
+  HerView,
+  MedicinesView,
+  ThreadView,
+} from "@/components/patient-portal/PatientPortalViews";
 
 const titles = {
   thread: "Health Thread",
@@ -41,10 +47,6 @@ const dateFmt = new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata",
 });
 const date = (value: string) => dateFmt.format(new Date(value));
-const today = () =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
-    new Date(),
-  );
 const questionLabelStyle =
   "flex flex-col gap-1.5 text-sm font-semibold text-[#183029]";
 const selectStyle =
@@ -83,6 +85,75 @@ export function PatientHome() {
     }
   }
 
+  const isRedesignedPage =
+    active === "thread" ||
+    active === "check-in" ||
+    active === "drift" ||
+    active === "refill" ||
+    active === "prescriptions" ||
+    active === "her";
+
+  if (isRedesignedPage) {
+    const heroMeta = {
+      thread: {
+        prefix: "Health",
+        italic: "Thread",
+        subtitle:
+          "Your ongoing care journey—check-ins, intakes, and other key health interactions in one place.",
+      },
+      "check-in": {
+        prefix: "Daily",
+        italic: "Check-In",
+        subtitle:
+          "A quick and complete check-in to keep your care team updated and support your health.",
+      },
+      drift: {
+        prefix: "Drift",
+        italic: "Radar",
+        subtitle:
+          "Recovery trend and baseline monitoring that helps us spot meaningful changes over time.",
+      },
+      refill: {
+        prefix: "Medicines",
+        italic: undefined,
+        subtitle:
+          "Manage your prescriptions and view your linked dispensing history.",
+      },
+      prescriptions: {
+        prefix: "Medicines",
+        italic: undefined,
+        subtitle:
+          "Manage your prescriptions and view your linked dispensing history.",
+      },
+      her: {
+        prefix: "HER",
+        italic: "Wellness",
+        subtitle:
+          "A supportive space to track your menstrual health, cycle symptoms, and overall wellness.",
+      },
+    }[active];
+
+    return (
+      <PatientPortalShell
+        signout={signout}
+        onLogout={() => void logout()}
+        headingRef={heading}
+        titlePrefix={heroMeta.prefix}
+        titleItalic={heroMeta.italic}
+        subtitle={heroMeta.subtitle}
+      >
+        {signoutError && <InlineBanner tone="critical" title={signoutError} />}
+        {active === "thread" && <ThreadView />}
+        {active === "check-in" && <CheckInView />}
+        {active === "drift" && <DriftView />}
+        {(active === "refill" || active === "prescriptions") && (
+          <MedicinesView view={active} />
+        )}
+        {active === "her" && <HerView />}
+      </PatientPortalShell>
+    );
+  }
+
   return (
     <MobileShell>
       <section className="space-y-5 px-4 py-5 sm:px-6">
@@ -100,12 +171,6 @@ export function PatientHome() {
           </Button>
         </header>
         {signoutError && <InlineBanner tone="critical" title={signoutError} />}
-        {(active === "refill" || active === "prescriptions") && (
-          <nav className="flex flex-wrap gap-2" aria-label="Medicines">
-            <SectionLink route="refill" current={active} />
-            <SectionLink route="prescriptions" current={active} />
-          </nav>
-        )}
         {(active === "more" ||
           moreSections.some((path) => path === active)) && (
           <nav
@@ -117,13 +182,6 @@ export function PatientHome() {
             ))}
           </nav>
         )}
-        {active === "thread" && <Thread />}
-        {active === "check-in" && <CheckIn />}
-        {active === "drift" && <Drift />}
-        {(active === "refill" || active === "prescriptions") && (
-          <Medicines view={active} />
-        )}
-        {active === "her" && <Her />}
         {active === "vitalis" && <Vitalis />}
         {active === "yoga" && <Yoga />}
         {active === "prakriti" && <Prakriti />}
@@ -168,56 +226,6 @@ function Loaded<T>({
   return <>{children(result.data)}</>;
 }
 
-function Thread() {
-  const result = usePatientData<{
-    events: Array<{
-      id: string;
-      title: string;
-      source: string;
-      occurredAt: string;
-    }>;
-    nextAction: "check-in" | null;
-  }>(`${endpoint}/thread`);
-  return (
-    <Loaded result={result}>
-      {({ events, nextAction }) => (
-        <>
-          {nextAction && (
-            <Card>
-              <CardContent className="space-y-3 p-4">
-                <h2 className="font-semibold">Next action</h2>
-                <Button asChild>
-                  <Link to="/app/home/check-in">Complete today’s check-in</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          {events.length ? (
-            <ol className="divide-y rounded-lg border bg-card">
-              {events.map((event) => (
-                <li className="space-y-2 p-4" key={event.id}>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="font-semibold">{event.title}</h2>
-                    <StatusChip>{event.source}</StatusChip>
-                  </div>
-                  <time className="text-sm" dateTime={event.occurredAt}>
-                    {date(event.occurredAt)}
-                  </time>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <EmptyState
-              title="No health events yet"
-              description="Clinic visits, signed prescriptions and completed check-ins appear here."
-            />
-          )}
-        </>
-      )}
-    </Loaded>
-  );
-}
-
 function usePatientAction() {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -251,502 +259,6 @@ function Feedback({ action }: { action: ReturnType<typeof usePatientAction> }) {
     <>
       {action.error && <InlineBanner tone="critical" title={action.error} />}
       {action.message && <InlineBanner tone="success" title={action.message} />}
-    </>
-  );
-}
-
-function CheckIn() {
-  const [urgent, setUrgent] = useState(false);
-  const [note, setNote] = useState("");
-  const [imageText, setImageText] = useState("");
-  const [bp, setBp] = useState({ systolic: "", diastolic: "" });
-  const action = usePatientAction();
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const values = new FormData(event.currentTarget);
-    const number = (key: string) =>
-      values.get(key) ? Number(values.get(key)) : undefined;
-    const body = checkInSchema.safeParse({
-      recovery: values.get("recovery"),
-      medication: values.get("medication"),
-      distress: values.get("distress") === "yes",
-      systolic: number("systolic"),
-      diastolic: number("diastolic"),
-      pulse: number("pulse"),
-      spo2: number("spo2"),
-      glucose: number("glucose"),
-      note: note.trim() || undefined,
-    });
-    setUrgent(
-      values.get("distress") === "yes" ||
-        (number("systolic") ?? 0) >= 180 ||
-        (number("spo2") ?? 100) <= 90,
-    );
-    void action.run(async () => {
-      if (!body.success)
-        throw new Error("Review your readings and the required answers.");
-      const result = await patientRequest<{ urgent: boolean }>(
-        `${endpoint}/check-in`,
-        { method: "POST", body: body.data, token: patientToken() },
-      );
-      setUrgent(result.urgent);
-      return "Check-in saved.";
-    });
-  }
-  const detectedBp = imageText.match(/\b(\d{2,3})\s*[/|]\s*(\d{2,3})\b/);
-  return (
-    <form className="space-y-4 pb-8" onSubmit={save}>
-      {urgent && (
-        <InlineBanner tone="critical" title="Get urgent help">
-          Seek immediate in-person care. This check-in does not dispatch an
-          emergency response.
-        </InlineBanner>
-      )}
-      <Feedback action={action} />
-      <label className={questionLabelStyle}>
-        How are you feeling today?
-        <select
-          className={selectStyle}
-          required
-          name="recovery"
-          defaultValue=""
-        >
-          <option value="" disabled hidden>Select an answer</option>
-          <option value="better">Better</option>
-          <option value="same">About the same</option>
-          <option value="worse">Worse</option>
-        </select>
-      </label>
-      <label className={questionLabelStyle}>
-        Did you take your scheduled medicines?
-        <select
-          className={selectStyle}
-          required
-          name="medication"
-          defaultValue=""
-        >
-          <option value="" disabled hidden>Select an answer</option>
-          <option value="taken">Yes</option>
-          <option value="missed">Missed a dose</option>
-          <option value="not-applicable">No medicines scheduled</option>
-        </select>
-      </label>
-      <label className={questionLabelStyle}>
-        Do you need urgent help right now?
-        <select
-          className={selectStyle}
-          required
-          name="distress"
-          defaultValue=""
-          onChange={(event) => setUrgent(event.target.value === "yes")}
-        >
-          <option value="" disabled hidden>Select an answer</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </label>
-      <details className="rounded-lg border p-3">
-        <summary className="min-h-10 cursor-pointer">
-          Add a reading or photo
-        </summary>
-        <div className="grid grid-cols-2 gap-3 py-3">
-          {(
-            [
-              ["systolic", "Systolic (mmHg)"],
-              ["diastolic", "Diastolic (mmHg)"],
-            ] as const
-          ).map(([field, label]) => (
-            <label key={field} htmlFor={`check-in-${field}`}>
-              {label}
-              <Input
-                id={`check-in-${field}`}
-                min={field === "systolic" ? 50 : 25}
-                max={field === "systolic" ? 300 : 230}
-                type="number"
-                name={field}
-                value={bp[field]}
-                onChange={(event) =>
-                  setBp({ ...bp, [field]: event.target.value })
-                }
-              />
-            </label>
-          ))}
-          {(
-            [
-              ["pulse", "Pulse (bpm)", 25, 250],
-              ["spo2", "SpO₂ (%)", 40, 100],
-              ["glucose", "Glucose (mg/dL)", 20, 700],
-            ] as const
-          ).map(([field, label, min, max]) => (
-            <label key={field} htmlFor={`check-in-${field}`}>
-              {label}
-              <Input
-                id={`check-in-${field}`}
-                type="number"
-                name={field}
-                min={min}
-                max={max}
-              />
-            </label>
-          ))}
-        </div>
-        <DocumentReview
-          value={imageText}
-          label="Review extracted device text"
-          onChange={setImageText}
-        />
-        {detectedBp && (
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-3"
-            onClick={() =>
-              setBp({
-                systolic: detectedBp[1] ?? "",
-                diastolic: detectedBp[2] ?? "",
-              })
-            }
-          >
-            Use reviewed blood pressure values
-          </Button>
-        )}
-      </details>
-      <details className="rounded-lg border p-3">
-        <summary className="min-h-10 cursor-pointer">Add a note</summary>
-        <VoiceControls
-          locale="en-IN"
-          caption="Tell us how you are feeling today."
-          onTranscript={(text) => setNote(text.slice(0, 1000))}
-        />
-        <label className="block" htmlFor="vitalis-value">
-          Check-in note
-          <textarea
-            className="block w-full rounded-lg border bg-background p-3"
-            rows={3}
-            maxLength={1000}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </label>
-      </details>
-      <Button type="submit" className="min-h-12" disabled={action.pending}>
-        {action.pending ? "Saving…" : "Save check-in"}
-      </Button>
-    </form>
-  );
-}
-
-function Drift() {
-  const result = usePatientData<{
-    readings: Array<{ day: string; systolic?: number; spo2?: number }>;
-    baseline: number | null;
-    alert: boolean;
-    urgent: boolean;
-  }>(`${endpoint}/drift`);
-  return (
-    <Loaded result={result}>
-      {({ readings, baseline, alert, urgent }) => (
-        <>
-          {urgent ? (
-            <InlineBanner tone="critical" title="Urgent reading">
-              Seek immediate in-person care.
-            </InlineBanner>
-          ) : alert ? (
-            <InlineBanner tone="warning" title="A change was detected">
-              Discuss recent readings with your care team.
-            </InlineBanner>
-          ) : (
-            <InlineBanner
-              title={
-                baseline === null
-                  ? "Learning your baseline"
-                  : "Baseline available"
-              }
-            >
-              {baseline === null
-                ? "Log seven systolic readings on different days to establish a baseline."
-                : `Systolic baseline ${baseline} mmHg.`}
-            </InlineBanner>
-          )}
-          {readings.length ? (
-            <ul className="divide-y rounded-lg border bg-card">
-              {[...readings].reverse().map((reading) => (
-                <li className="p-3" key={reading.day}>
-                  <time dateTime={reading.day}>{date(reading.day)}</time>
-                  <p>
-                    {[
-                      reading.systolic === undefined
-                        ? ""
-                        : `Systolic ${reading.systolic} mmHg`,
-                      reading.spo2 === undefined ? "" : `SpO₂ ${reading.spo2}%`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "No drift reading recorded"}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState
-              title="No readings yet"
-              description="Your confirmed check-in readings will appear here."
-            />
-          )}
-        </>
-      )}
-    </Loaded>
-  );
-}
-
-type Prescription = {
-  id: string;
-  medicine: string;
-  units: number;
-  directions: string;
-  course_end: string;
-  signed_at: string;
-  dispensed: number;
-};
-function Medicines({ view }: { view: "refill" | "prescriptions" }) {
-  const result = usePatientData<{ prescriptions: Prescription[] }>(
-    `${endpoint}/prescriptions`,
-  );
-  return (
-    <Loaded result={result}>
-      {({ prescriptions }) => {
-        const rows =
-          view === "refill"
-            ? prescriptions.filter(({ dispensed }) => Boolean(dispensed))
-            : prescriptions;
-        return (
-          <>
-            {view === "refill" && (
-              <InlineBanner title="Contact your pharmacy for refills">
-                Online stock reservations and refill predictions are
-                unavailable.
-              </InlineBanner>
-            )}
-            {rows.length ? (
-              <ul className="divide-y rounded-lg border bg-card">
-                {rows.map((rx) => (
-                  <li key={`${rx.id}-${rx.medicine}`} className="space-y-2 p-4">
-                    <div className="flex flex-wrap justify-between gap-2">
-                      <h2 className="font-semibold">{rx.medicine}</h2>
-                      <StatusChip>
-                        {rx.dispensed ? "Dispensed" : "Signed"}
-                      </StatusChip>
-                    </div>
-                    <p>
-                      {rx.units} units · Course through {date(rx.course_end)}
-                    </p>
-                    {rx.directions && <p>{rx.directions}</p>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState
-                title={
-                  view === "refill"
-                    ? "No dispensing history"
-                    : "No signed prescriptions"
-                }
-                description="Your linked pharmacy records will appear here as they become available."
-              />
-            )}
-          </>
-        );
-      }}
-    </Loaded>
-  );
-}
-
-function Her() {
-  const [revision, setRevision] = useState(0);
-  const [urgent, setUrgent] = useState(false);
-  const result = usePatientData<{
-    consent: boolean;
-    records: Array<{
-      id: string;
-      log_date: string;
-      pelvic_pain: number;
-      mood: string;
-      tags: string[];
-    }>;
-    cycle: {
-      lastStart: string | null;
-      phase: string | null;
-      status: string;
-      irregular: boolean;
-    } | null;
-  }>(`${endpoint}/her`, revision);
-  const action = usePatientAction();
-  function setConsent(granted: boolean) {
-    void action.run(async () => {
-      await patientRequest(`${endpoint}/her/consent`, {
-        method: "POST",
-        body: { granted },
-        token: patientToken(),
-      });
-      setRevision((value) => value + 1);
-      return granted
-        ? "Symptom tracking enabled."
-        : "Symptom tracking consent withdrawn.";
-    });
-  }
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    void action.run(async () => {
-      const response = await patientRequest<{ urgent: boolean }>(
-        `${endpoint}/her`,
-        {
-          method: "POST",
-          body: {
-            date: form.get("date"),
-            flow: form.get("flow"),
-            pain: Number(form.get("pain")),
-            mood: form.get("mood"),
-            periodStarted: form.has("periodStarted"),
-            periodLength: form.get("periodLength")
-              ? Number(form.get("periodLength"))
-              : undefined,
-          },
-          token: patientToken(),
-        },
-      );
-      setUrgent(response.urgent);
-      setRevision((value) => value + 1);
-      return "Symptom entry saved.";
-    });
-  }
-  return (
-    <>
-      <Feedback action={action} />
-      {urgent && (
-        <InlineBanner tone="critical" title="Seek urgent clinical care" />
-      )}
-      <Loaded result={result}>
-        {({ consent, records, cycle }) =>
-          consent ? (
-            <>
-              {cycle?.lastStart && (
-                <Card>
-                  <CardContent className="space-y-2 p-4">
-                    <h2 className="font-semibold">Cycle history</h2>
-                    <p>Last logged start {date(cycle.lastStart)}.</p>
-                    <p>
-                      {cycle.phase
-                        ? `Estimated phase: ${cycle.phase}`
-                        : "More cycle history is needed for a phase estimate."}
-                    </p>
-                    {cycle.irregular && (
-                      <InlineBanner
-                        tone="warning"
-                        title="Cycle pattern changed"
-                      />
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-              <form className="space-y-4" onSubmit={save}>
-                <label className="block" htmlFor="her-date">
-                  Entry date
-                  <Input
-                    id="her-date"
-                    type="date"
-                    name="date"
-                    max={today()}
-                    defaultValue={today()}
-                    required
-                  />
-                </label>
-                <label className={questionLabelStyle}>
-                  Flow
-                  <select name="flow" className={selectStyle}>
-                    <option value="none">None</option>
-                    <option value="light">Light</option>
-                    <option value="medium">Medium</option>
-                    <option value="heavy">Heavy</option>
-                  </select>
-                </label>
-                <label className="block" htmlFor="her-pain">
-                  Pelvic pain (0–10)
-                  <Input
-                    id="her-pain"
-                    type="number"
-                    min={0}
-                    max={10}
-                    name="pain"
-                    required
-                  />
-                </label>
-                <label className="block" htmlFor="her-mood">
-                  Mood
-                  <Input id="her-mood" name="mood" maxLength={60} />
-                </label>
-                <label className="flex min-h-12 items-center gap-2">
-                  <input type="checkbox" name="periodStarted" />A period started
-                  on this date
-                </label>
-                <label className="block" htmlFor="her-length">
-                  Period length in days, if known
-                  <Input
-                    id="her-length"
-                    type="number"
-                    name="periodLength"
-                    min={2}
-                    max={10}
-                  />
-                </label>
-                <Button type="submit" disabled={action.pending}>
-                  Save symptom entry
-                </Button>
-              </form>
-              {records.length ? (
-                <ul className="divide-y rounded-lg border bg-card">
-                  {records.map((record) => (
-                    <li className="p-3" key={record.id}>
-                      <time dateTime={record.log_date}>
-                        {date(record.log_date)}
-                      </time>
-                      <p>
-                        Flow: {record.tags[0] ?? "Unspecified"} · Pelvic pain{" "}
-                        {record.pelvic_pain}/10
-                        {record.mood ? ` · ${record.mood}` : ""}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState
-                  title="No symptom entries"
-                  description="Entries you save will appear here."
-                />
-              )}
-              <Button
-                variant="outline"
-                disabled={action.pending}
-                onClick={() => setConsent(false)}
-              >
-                Withdraw tracking consent
-              </Button>
-            </>
-          ) : (
-            <EmptyState
-              title="Enable symptom tracking"
-              description="Choose whether to store flow, mood and pain entries in your patient account."
-              action={
-                <Button
-                  disabled={action.pending}
-                  onClick={() => setConsent(true)}
-                >
-                  Allow symptom tracking
-                </Button>
-              }
-            />
-          )
-        }
-      </Loaded>
     </>
   );
 }
