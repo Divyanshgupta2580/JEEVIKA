@@ -605,8 +605,28 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    if (!ready) return <p role="status" className="p-5">Verifying patient session…</p>;
-    if (error) return <main className="p-5"><p role="alert">{error}</p></main>;
+    if (!ready) return (
+        <div className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
+            <p role="status" className="rounded-2xl border border-[#EAE6DC] bg-[#FFFEFB] px-6 py-4 text-sm font-medium text-[#182E29] shadow-xs">
+                Verifying patient session…
+            </p>
+        </div>
+    );
+    if (error) return (
+        <main className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
+            <div className="max-w-md w-full rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] p-6 text-center shadow-[0_18px_48px_rgba(14,36,32,0.08)] space-y-4">
+                <p role="alert" className="text-sm font-semibold text-[#991B1B]">{error}</p>
+                <div className="flex flex-wrap justify-center gap-3">
+                    <Button type="button" onClick={() => window.location.reload()} className="bg-[#047C61] hover:bg-[#036450] text-white rounded-xl">
+                        Reload
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => { window.location.hash = "#/home/sign-in"; }} className="rounded-xl border-[#D8D3C6]">
+                        Patient Sign-In
+                    </Button>
+                </div>
+            </div>
+        </main>
+    );
     if (!patient) return <Navigate to="/home/sign-in" state={{ from: location.pathname }} replace />;
     return <>{children}</>;
 }
@@ -724,7 +744,8 @@ class WorkspaceErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundary
 
 function WorkspaceChrome() {
     const { pathname } = useLocation();
-    const patientOrPublic = pathname === '/' || pathname === '/login' || pathname === '/kiosk' ||
+    const patientOrPublic = pathname === '/' || pathname === '/login' || pathname === '/register' ||
+        pathname === '/reset-password' || pathname === '/kiosk' ||
         /^\/(?:home|app\/home)(?:\/|$)/.test(pathname);
     if (patientOrPublic) return null;
     return <>
