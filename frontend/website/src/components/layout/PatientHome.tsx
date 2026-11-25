@@ -20,10 +20,10 @@ import {
 } from "@/lib/patientApi";
 import { MobileShell } from "./MobileShell";
 import { PatientPortalShell } from "@/components/patient-portal/PatientPortalShell";
+import { HerWellnessPage } from "@/components/patient-portal/HerWellnessPage";
 import {
   CheckInView,
   DriftView,
-  HerView,
   MedicinesView,
   ThreadView,
 } from "@/components/patient-portal/PatientPortalViews";
@@ -85,13 +85,23 @@ export function PatientHome() {
     }
   }
 
+  if (active === "her") {
+    return (
+      <HerWellnessPage
+        headingRef={heading}
+        signout={signout}
+        signoutError={signoutError}
+        onLogout={() => void logout()}
+      />
+    );
+  }
+
   const isRedesignedPage =
     active === "thread" ||
     active === "check-in" ||
     active === "drift" ||
     active === "refill" ||
-    active === "prescriptions" ||
-    active === "her";
+    active === "prescriptions";
 
   if (isRedesignedPage) {
     const heroMeta = {
@@ -125,12 +135,6 @@ export function PatientHome() {
         subtitle:
           "Manage your prescriptions and view your linked dispensing history.",
       },
-      her: {
-        prefix: "HER",
-        italic: "Wellness",
-        subtitle:
-          "A supportive space to track your menstrual health, cycle symptoms, and overall wellness.",
-      },
     }[active];
 
     return (
@@ -149,7 +153,6 @@ export function PatientHome() {
         {(active === "refill" || active === "prescriptions") && (
           <MedicinesView view={active} />
         )}
-        {active === "her" && <HerView />}
       </PatientPortalShell>
     );
   }
