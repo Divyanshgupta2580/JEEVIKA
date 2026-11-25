@@ -1,0 +1,260 @@
+/* Product-wide customizable select and list UX styling across JEEVIKA */
+
+:root {
+  --jvk-select-bg: #ffffff;
+  --jvk-select-border: #cedad3;
+  --jvk-select-border-hover: #9fbcae;
+  --jvk-select-focus: #047c61;
+  --jvk-select-ink: #0e2420;
+  --jvk-select-muted: #5d726b;
+  --jvk-select-picker-bg: #ffffff;
+  --jvk-select-picker-border: #d5e2da;
+  --jvk-select-option-hover: #eff7f2;
+  --jvk-select-option-selected: #e6f4ec;
+  --jvk-select-option-selected-ink: #035e4a;
+  interpolate-size: allow-keywords;
+}
+
+@position-try --jvk-above-question {
+  position-area: block-start span-inline-end;
+  margin-block-start: 0;
+  margin-block-end: 3rem;
+}
+
+@position-try --jvk-inline-end-flip {
+  position-area: block-end span-inline-start;
+  margin-block-start: 0.45rem;
+  margin-block-end: 0;
+}
+
+@position-try --jvk-above-end-flip {
+  position-area: block-start span-inline-start;
+  margin-block-start: 0;
+  margin-block-end: 3rem;
+}
+
+/* Base non-intrusive visual harmony & Question-to-control breathing room */
+:where(select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale])) {
+  border-color: var(--jvk-select-border);
+  background-color: var(--jvk-select-bg);
+  color: var(--jvk-select-ink);
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+:where(select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not(:disabled)):hover {
+  border-color: var(--jvk-select-border-hover);
+}
+
+/* Keep the question label separated from its control across stacked labels */
+:where(label:not(.flex):not(.inline-flex) > select:not([data-website-locale])) {
+  margin-block-start: 0.4rem;
+}
+
+/* Scroll margin ensures focusing a select keeps its question visible above */
+:where(label:has(> select), div:has(> label + select), div:has(> label + div select)) {
+  scroll-margin-block: 5rem;
+}
+
+/* Fallback for browsers without customizable <select> (appearance: base-select) */
+@supports not (appearance: base-select) {
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not(.appearance-none) {
+    appearance: none;
+    padding-inline-start: 0.9rem;
+    padding-inline-end: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23047C61' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.95rem center;
+    background-size: 1rem 1rem;
+  }
+
+  /* Restore a well-spaced chevron when .appearance-none has NO sibling right icon */
+  .relative:not(:has(> .material-symbols-outlined[class*="right-"])) > select.appearance-none:not([multiple]):not([size]):not([data-website-locale]),
+  select.appearance-none:not([multiple]):not([size]):not([data-website-locale]):only-child {
+    padding-inline-end: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23047C61' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.95rem center;
+    background-size: 1rem 1rem;
+  }
+}
+
+/* Modern Customizable <select> (Chrome 135+, Edge 135+, Safari 27+) */
+@supports (appearance: base-select) {
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden),
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden)::picker(select) {
+    appearance: base-select;
+  }
+
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-inline-size: 0;
+  }
+
+  /* Prevent .block / .w-full from stacking chevron on a second line */
+  select.block:not([multiple]):not([size]):not([hidden]):not(.hidden),
+  select.w-full:not([multiple]):not([size]):not([hidden]):not(.hidden) {
+    display: flex;
+    inline-size: 100%;
+  }
+
+  /* Guarantee comfortable left & right inset distance for options text & arrow */
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not(.appearance-none) {
+    padding-inline-end: 1.15rem;
+  }
+
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not([class*="pl-"]) {
+    padding-inline-start: 0.9rem;
+  }
+
+  /* Keep .appearance-none controls with left icon nicely padded on the right */
+  select.appearance-none:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not([class*="pr-10"]) {
+    padding-inline-end: 2.35rem;
+  }
+
+  /* Compact locale pill keeps tight horizontal footprint while adding arrow margin */
+  select[data-website-locale] {
+    gap: 0.45rem;
+    padding-inline-start: 0.35rem;
+    padding-inline-end: 0.35rem;
+  }
+
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden)::picker-icon {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23047C61' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    display: inline-block;
+    inline-size: 1rem;
+    block-size: 1rem;
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    margin-inline-end: 0.1rem;
+    transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  select:not([multiple]):not([size]):not([hidden]):not(.hidden):open::picker-icon {
+    transform: rotate(180deg);
+  }
+
+  /* Avoid double arrows when an explicit right-side sibling icon already exists inside .relative */
+  .relative:has(> select + .material-symbols-outlined[class*="right-"], > select + .material-symbols-outlined + .material-symbols-outlined[class*="right-"]) > select:not([multiple]):not([size])::picker-icon {
+    display: none;
+  }
+
+  /* Highlight active trigger & its question label when list is open */
+  select:not([multiple]):not([size]):not([data-website-locale]):open {
+    border-color: var(--jvk-select-focus);
+    box-shadow: 0 0 0 3px rgba(4, 124, 97, 0.14);
+  }
+
+  label:has(select:open),
+  div:has(> label + select:open) > label,
+  div:has(> label + div select:open) > label {
+    color: #036450;
+  }
+
+  /* Dropdown card opened cleanly BELOW trigger so question above stays visible */
+  select:not([multiple]):not([size])::picker(select) {
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: --jvk-above-question, --jvk-inline-end-flip, --jvk-above-end-flip;
+    inset: auto;
+    margin: 0;
+    margin-block-start: 0.45rem;
+    min-inline-size: max(anchor-size(width), 10.5rem);
+    max-inline-size: min(36rem, 94dvw);
+    max-block-size: min(21rem, 46dvh);
+    overflow: auto;
+    scrollbar-width: thin;
+    background-color: var(--jvk-select-picker-bg);
+    color: var(--jvk-select-ink);
+    border: 1px solid var(--jvk-select-picker-border);
+    border-radius: 0.875rem;
+    padding: 0.4rem;
+    box-shadow:
+      0 18px 40px -10px rgba(14, 36, 32, 0.16),
+      0 4px 12px -2px rgba(14, 36, 32, 0.06);
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.985);
+    transition:
+      display 0.18s,
+      overlay 0.18s,
+      opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-behavior: allow-discrete;
+  }
+
+  /* Fixed bottom-right locale selector opens cleanly upward left-aligned */
+  select[data-website-locale]::picker(select) {
+    position-area: block-start span-inline-start;
+    margin-block-start: 0;
+    margin-block-end: 0.55rem;
+    min-inline-size: 11rem;
+  }
+
+  select:not([multiple]):not([size]):open::picker(select) {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  /* Styled option rows inside picker */
+  select:not([multiple]):not([size]) option {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-block-size: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.625rem;
+    font-size: 0.925rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: #162e29;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+
+  select:not([multiple]):not([size]) option:not(:last-child) {
+    margin-block-end: 0.125rem;
+  }
+
+  select:not([multiple]):not([size]) option:hover,
+  select:not([multiple]):not([size]) option:focus-visible {
+    background-color: var(--jvk-select-option-hover);
+    color: var(--jvk-select-focus);
+  }
+
+  select:not([multiple]):not([size]) option[value=""]:not(:checked),
+  select:not([multiple]):not([size]) option:disabled {
+    color: var(--jvk-select-muted);
+    font-weight: 450;
+  }
+
+  select:not([multiple]):not([size]) option:checked {
+    background-color: var(--jvk-select-option-selected);
+    color: var(--jvk-select-option-selected-ink);
+    font-weight: 650;
+  }
+
+  select:not([multiple]):not([size]) option::checkmark {
+    order: 2;
+    margin-inline-start: auto;
+    color: var(--jvk-select-focus);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    select:not([multiple]):not([size])::picker(select),
+    select:not([multiple]):not([size])::picker-icon,
+    select:not([multiple]):not([size]) option {
+      transition: none;
+    }
+  }
+}
+
+@starting-style {
+  select:not([multiple]):not([size]):open::picker(select) {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.985);
+  }
+}

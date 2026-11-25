@@ -4,6 +4,7 @@ import "./index.css";
 import "./design-system/tokens.css";
 import "./design-system/erp.css";
 import "./design-system/landing-public.css";
+import "./design-system/selects.css";
 
 const { hash, pathname, search } = window.location;
 if (!hash && /^\/(?:overview\/?|kiosk\/?|home\/(?:sign-in|register|reset-password)\/?|app(?:\/.*)?|login\/?|register\/?|reset-password\/?)$/.test(pathname)) {

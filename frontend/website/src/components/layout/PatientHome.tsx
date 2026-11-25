@@ -45,7 +45,10 @@ const today = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
     new Date(),
   );
-const selectStyle = "block min-h-12 w-full rounded-lg border bg-background p-2";
+const questionLabelStyle =
+  "flex flex-col gap-1.5 text-sm font-semibold text-[#183029]";
+const selectStyle =
+  "min-h-12 w-full rounded-xl border border-[#CEDAD3] bg-white pl-3.5 pr-4 py-2.5 text-[15px] font-medium text-[#0E2420] shadow-xs";
 
 export function PatientHome() {
   const navigate = useNavigate();
@@ -292,7 +295,7 @@ function CheckIn() {
   }
   const detectedBp = imageText.match(/\b(\d{2,3})\s*[/|]\s*(\d{2,3})\b/);
   return (
-    <form className="space-y-4" onSubmit={save}>
+    <form className="space-y-4 pb-8" onSubmit={save}>
       {urgent && (
         <InlineBanner tone="critical" title="Get urgent help">
           Seek immediate in-person care. This check-in does not dispatch an
@@ -300,7 +303,7 @@ function CheckIn() {
         </InlineBanner>
       )}
       <Feedback action={action} />
-      <label className="block">
+      <label className={questionLabelStyle}>
         How are you feeling today?
         <select
           className={selectStyle}
@@ -314,7 +317,7 @@ function CheckIn() {
           <option value="worse">Worse</option>
         </select>
       </label>
-      <label className="block">
+      <label className={questionLabelStyle}>
         Did you take your scheduled medicines?
         <select
           className={selectStyle}
@@ -328,7 +331,7 @@ function CheckIn() {
           <option value="not-applicable">No medicines scheduled</option>
         </select>
       </label>
-      <label className="block">
+      <label className={questionLabelStyle}>
         Do you need urgent help right now?
         <select
           className={selectStyle}
@@ -657,7 +660,7 @@ function Her() {
                     required
                   />
                 </label>
-                <label className="block">
+                <label className={questionLabelStyle}>
                   Flow
                   <select name="flow" className={selectStyle}>
                     <option value="none">None</option>
@@ -802,7 +805,7 @@ function Vitalis() {
                   : `Index ${index.score}. Verified coverage ${Math.round(index.coverage * 100)}%.`}
               </InlineBanner>
               <form className="space-y-3" onSubmit={save}>
-                <label className="block">
+                <label className={questionLabelStyle}>
                   Observation
                   <select className={selectStyle} name="metric" required>
                     <option value="resting_heart_rate">
@@ -969,7 +972,7 @@ function Yoga() {
           spineRestriction: "A current spinal disc problem?",
           acuteSymptoms: "Acute symptoms or advice to avoid exercise?",
         }).map(([field, label]) => (
-          <label className="block" key={field}>
+          <label className={questionLabelStyle} key={field}>
             {label}
             <select
               name={field}

@@ -9,7 +9,8 @@ import { staffApi, useStaffData } from "@/lib/staffApi";
 import { rupeesToPaise } from "@/lib/utils";
 
 const procurement = "/clinical/procurement";
-const selectStyle = "min-h-11 w-full rounded-md border bg-background p-2";
+const selectStyle =
+  "min-h-11 w-full rounded-lg border border-[#CEDAD3] bg-white pl-3.5 pr-4 py-2 text-sm font-medium text-[#0E2420]";
 type Line = {
   orderId: string;
   lineId: string;
