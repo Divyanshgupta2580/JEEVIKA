@@ -1158,7 +1158,7 @@ export function IPDDashboard() {
                                 className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white shadow-sm outline-none font-medium"
                                 onChange={(e) => setIsNewPatient(e.target.value === 'new')}
                             >
-                                <option value="">-- Choose Patient --</option>
+                                <option value="" disabled hidden>-- Choose Patient --</option>
                                 <option value="new" className="font-bold text-emerald-600">+ Register New Patient</option>
                                 {patients.map(p => (
                                     <option key={p.id} value={p.id}>{p.full_name} ({p.contact_number})</option>
@@ -1194,7 +1194,7 @@ export function IPDDashboard() {
                                     onChange={(e) => setSelectedWardId(e.target.value)}
                                     required
                                 >
-                                    <option value="">-- Select Ward --</option>
+                                    <option value="" disabled hidden>-- Select Ward --</option>
                                     {wards.map(w => (
                                         <option key={w.id} value={w.id}>{w.name}</option>
                                     ))}
@@ -1203,7 +1203,7 @@ export function IPDDashboard() {
                             <div className="space-y-2">
                                 <Label>Bed Number</Label>
                                 <select name="bed_id" required className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white shadow-sm outline-none font-medium">
-                                    <option value="">-- Choose Bed --</option>
+                                    <option value="" disabled hidden>-- Choose Bed --</option>
                                     {beds.filter(b => b.ward_id === selectedWardId && b.status === 'available').map(b => (
                                         <option key={b.id} value={b.id}>Bed {b.bed_number}</option>
                                     ))}
@@ -1214,7 +1214,7 @@ export function IPDDashboard() {
                         <div className="space-y-2">
                             <Label>Admitting Doctor</Label>
                             <select name="doctor_id" required className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white shadow-sm outline-none font-medium">
-                                <option value="">-- Select Doctor --</option>
+                                <option value="" disabled hidden>-- Select Doctor --</option>
                                 {doctors.map(d => (
                                     <option key={d.id} value={d.id}>{d.full_name}</option>
                                 ))}

@@ -1033,7 +1033,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                                     onChange={e => handleSupplierChange(e.target.value)}
                                                     required
                                                 >
-                                                    <option value="">Choose a supplier...</option>
+                                                    <option value="" disabled hidden>Choose a supplier...</option>
                                                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                                 </select>
                                             </div>
@@ -1045,7 +1045,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                                     onChange={e => setNewPO({ ...newPO, clinic_id: e.target.value })}
                                                     required
                                                 >
-                                                    <option value="">Select clinic...</option>
+                                                    <option value="" disabled hidden>Select clinic...</option>
                                                     {clinics.filter(c => c.status !== 'paused').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                                 </select>
                                             </div>
@@ -1068,7 +1068,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                                     onChange={e => handleStateChoice(e.target.value)}
                                                     required
                                                 >
-                                                    <option value="">State...</option>
+                                                    <option value="" disabled hidden>State...</option>
                                                     {INDIAN_STATES.map(s => <option key={s.code} value={s.name}>{s.name}</option>)}
                                                 </select>
                                             </div>
@@ -1331,7 +1331,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                                         onChange={e => handleSupplierStateChoice(e.target.value)}
                                                         required
                                                     >
-                                                        <option value="">Select State...</option>
+                                                        <option value="" disabled hidden>Select State...</option>
                                                         {INDIAN_STATES.map(s => <option key={s.code} value={s.name}>{s.name}</option>)}
                                                     </select>
                                                 </div>
@@ -1695,7 +1695,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                 onChange={e => setNewPayment({ ...newPayment, supplier_id: e.target.value })}
                                 required
                             >
-                                <option value="">Select a supplier...</option>
+                                <option value="" disabled hidden>Select a supplier...</option>
                                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
@@ -1789,7 +1789,7 @@ export default function ProcurementDashboard({ grnOnly = false }: { grnOnly?: bo
                                         });
                                     }}
                                 >
-                                    <option value="">Select State</option>
+                                    <option value="" disabled hidden>Select State</option>
                                     {INDIAN_STATES.map(state => (
                                         <option key={state.code} value={state.name}>
                                             {state.name} ({state.code})

@@ -198,7 +198,7 @@ export function PurchaseOrders({
                         required
                         defaultValue=""
                       >
-                        <option value="">Select item</option>
+                        <option value="" disabled hidden>Select item</option>
                         {data.catalog.map((entry) => (
                           <option key={entry.id} value={entry.id}>
                             {entry.brand}
@@ -336,7 +336,7 @@ export function GoodsReceipt({ canWrite }: { canWrite: boolean }) {
                   value={line ? lineId : ""}
                   onChange={(event) => setLineId(event.target.value)}
                 >
-                  <option value="">Choose line</option>
+                  <option value="" disabled hidden>Choose line</option>
                   {data.lines.map((item) => (
                     <option key={item.lineId} value={item.lineId}>
                       {item.brand} · {item.outstanding} open units ·{" "}

@@ -2,15 +2,18 @@
 
 :root {
   --jvk-select-bg: #ffffff;
+  --jvk-select-hover-bg: #f5fbf8;
   --jvk-select-border: #cedad3;
-  --jvk-select-border-hover: #9fbcae;
+  --jvk-select-border-hover: #4a9d84;
   --jvk-select-focus: #047c61;
   --jvk-select-ink: #0e2420;
   --jvk-select-muted: #5d726b;
   --jvk-select-picker-bg: #ffffff;
   --jvk-select-picker-border: #d5e2da;
-  --jvk-select-option-hover: #eff7f2;
+  --jvk-select-option-hover: #d8efe2;
+  --jvk-select-option-hover-ink: #035442;
   --jvk-select-option-selected: #e6f4ec;
+  --jvk-select-option-selected-hover: #cbead9;
   --jvk-select-option-selected-ink: #035e4a;
   interpolate-size: allow-keywords;
 }
@@ -44,6 +47,20 @@
 
 :where(select:not([multiple]):not([size]):not([hidden]):not(.hidden):not([data-website-locale]):not(:disabled)):hover {
   border-color: var(--jvk-select-border-hover);
+  background-color: var(--jvk-select-hover-bg);
+  box-shadow: 0 2px 10px -2px rgba(4, 124, 97, 0.12);
+}
+
+/* Soft muted tone while a disabled placeholder option is currently shown */
+:where(select:not([multiple]):not([size]):not([data-website-locale])):has(> option[value=""][disabled]:checked) {
+  color: var(--jvk-select-muted);
+  font-weight: 450;
+}
+
+/* Remove disabled/hidden placeholder options from dropdown choices across all browsers */
+select option[hidden],
+select[required] option[value=""][disabled] {
+  display: none !important;
 }
 
 /* Keep the question label separated from its control across stacked labels */
@@ -210,29 +227,46 @@
     line-height: 1.35;
     color: #162e29;
     cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease,
+      box-shadow 0.14s ease,
+      padding-inline-start 0.14s ease;
+  }
+
+  select:not([multiple]):not([size]) option[hidden],
+  select:not([multiple]):not([size]) option[value=""][disabled] {
+    display: none !important;
   }
 
   select:not([multiple]):not([size]) option:not(:last-child) {
     margin-block-end: 0.125rem;
   }
 
-  select:not([multiple]):not([size]) option:hover,
-  select:not([multiple]):not([size]) option:focus-visible {
+  select:not([multiple]):not([size]) option:not(:disabled):not([hidden]):hover,
+  select:not([multiple]):not([size]) option:not(:disabled):not([hidden]):focus-visible {
     background-color: var(--jvk-select-option-hover);
-    color: var(--jvk-select-focus);
+    color: var(--jvk-select-option-hover-ink);
+    box-shadow: inset 3px 0 0 var(--jvk-select-focus);
+    padding-inline-start: 0.9rem;
   }
 
-  select:not([multiple]):not([size]) option[value=""]:not(:checked),
   select:not([multiple]):not([size]) option:disabled {
     color: var(--jvk-select-muted);
     font-weight: 450;
+    cursor: not-allowed;
   }
 
   select:not([multiple]):not([size]) option:checked {
     background-color: var(--jvk-select-option-selected);
     color: var(--jvk-select-option-selected-ink);
     font-weight: 650;
+  }
+
+  select:not([multiple]):not([size]) option:checked:not(:disabled):hover {
+    background-color: var(--jvk-select-option-selected-hover);
+    color: var(--jvk-select-option-hover-ink);
+    box-shadow: inset 3px 0 0 var(--jvk-select-focus);
   }
 
   select:not([multiple]):not([size]) option::checkmark {

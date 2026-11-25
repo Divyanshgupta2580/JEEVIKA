@@ -1065,7 +1065,7 @@ export function InventoryDashboard({ clinicIdOverride, onNavigate }: InventoryDa
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Target Clinic Location*</label>
                                             <div className="relative">
                                                 <select name="clinic_id" className="w-full bg-slate-50 border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm appearance-none" required>
-                                                    <option value="">Select Clinic</option>
+                                                    <option value="" disabled hidden>Select Clinic</option>
                                                     {clinics.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                                 </select>
                                                 <SymbolIcon className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">domain</SymbolIcon>

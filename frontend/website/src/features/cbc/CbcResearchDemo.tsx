@@ -77,7 +77,7 @@ export default function CbcResearchDemo() {
                   setValues({ ...(preset === "risk" ? sample : belowCutoffSample) });
                   setResult(null); setError("");
                 }}>
-                  <option value="" disabled>Choose an example</option>
+                  <option value="" disabled hidden>Choose an example</option>
                   <option value="risk">Risk signal · experimental</option>
                   <option value="no-signal">No risk signal · experimental</option>
                 </select>

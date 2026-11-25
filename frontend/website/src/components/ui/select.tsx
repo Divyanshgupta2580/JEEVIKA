@@ -11,7 +11,7 @@ const SelectTrigger = React.forwardRef<React.ElementRef<typeof SelectPrimitive.T
     <SelectPrimitive.Trigger
         ref={ref}
         className={cn(
-            "group flex min-h-10 w-full items-center justify-between gap-2.5 rounded-xl border border-[#CEDAD3] bg-white px-3.5 py-2 text-left text-sm font-medium text-[#0E2420] ring-offset-background transition-colors placeholder:text-[#5D726B] hover:border-[#9FBCAE] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 focus:border-[#047C61] data-[state=open]:border-[#047C61] data-[state=open]:ring-2 data-[state=open]:ring-[#047C61]/15 disabled:cursor-not-allowed disabled:opacity-50",
+            "group flex min-h-10 w-full cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-[#CEDAD3] bg-white px-3.5 py-2 text-left text-sm font-medium text-[#0E2420] ring-offset-background transition-all placeholder:text-[#5D726B] hover:border-[#4A9D84] hover:bg-[#F5FBF8] hover:shadow-[0_2px_10px_-2px_rgba(4,124,97,0.12)] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 focus:border-[#047C61] data-[state=open]:border-[#047C61] data-[state=open]:ring-2 data-[state=open]:ring-[#047C61]/15 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
             className,
         )}
         {...props}
@@ -46,7 +46,7 @@ SelectContent.displayName = SelectPrimitive.Content.displayName
 const SelectItem = React.forwardRef<React.ElementRef<typeof SelectPrimitive.Item>, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>>(({ className, children, ...props }, ref) => (
     <SelectPrimitive.Item
         ref={ref}
-        className={cn("relative flex w-full cursor-pointer select-none items-center rounded-[10px] py-2 pl-3.5 pr-9 text-[14.5px] font-medium text-[#162E29] outline-none transition-colors focus:bg-[#EFF7F2] focus:text-[#047C61] data-[state=checked]:bg-[#E6F4EC] data-[state=checked]:font-semibold data-[state=checked]:text-[#035E4A] data-[disabled]:pointer-events-none data-[disabled]:opacity-50", className)}
+        className={cn("relative flex w-full cursor-pointer select-none items-center rounded-[10px] py-2 pl-3.5 pr-9 text-[14.5px] font-medium text-[#162E29] outline-none transition-all duration-150 hover:bg-[#D8EFE2] hover:pl-4 hover:text-[#035442] hover:shadow-[inset_3px_0_0_#047C61] focus:bg-[#D8EFE2] focus:pl-4 focus:text-[#035442] focus:shadow-[inset_3px_0_0_#047C61] data-[state=checked]:bg-[#E6F4EC] data-[state=checked]:font-semibold data-[state=checked]:text-[#035E4A] data-[state=checked]:hover:bg-[#CBEAD9] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 motion-reduce:transition-none", className)}
         {...props}
     >
         <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

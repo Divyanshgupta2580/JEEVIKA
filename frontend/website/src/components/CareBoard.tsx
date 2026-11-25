@@ -326,7 +326,7 @@ export function CareBoard({
                           : ""
                       }
                     >
-                      <option value="">Select encounter</option>
+                      <option value="" disabled hidden>Select encounter</option>
                       {data.encounters.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.tokenNumber ?? item.id.slice(0, 8)} ·{" "}
@@ -343,7 +343,7 @@ export function CareBoard({
                       required
                       defaultValue=""
                     >
-                      <option value="">Select location</option>
+                      <option value="" disabled hidden>Select location</option>
                       {data.locations
                         .filter(
                           (item) =>
@@ -364,7 +364,7 @@ export function CareBoard({
                       required
                       defaultValue=""
                     >
-                      <option value="">Select doctor</option>
+                      <option value="" disabled hidden>Select doctor</option>
                       {data.doctors.map(({ id }) => (
                         <option key={id} value={id}>
                           {id}

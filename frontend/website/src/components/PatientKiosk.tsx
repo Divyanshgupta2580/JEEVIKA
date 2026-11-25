@@ -2324,7 +2324,7 @@ export function PatientKiosk({ onTokenGenerated, onNavigate: _onNavigate }: Pati
                         <div>
                           <label className="font-bold text-slate-700 block mb-1">Gender:</label>
                           <select value={regGender} onChange={e => setRegGender(e.target.value)} className="w-full border border-slate-300 rounded-xl px-2 py-2 text-slate-900 font-semibold">
-                            <option value="">Select</option>
+                            <option value="" disabled hidden>Select</option>
                             <option value="Female">Female</option>
                             <option value="Male">Male</option>
                             <option value="Other">Other</option>

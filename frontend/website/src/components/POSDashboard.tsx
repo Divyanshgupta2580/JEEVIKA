@@ -1089,7 +1089,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                                         value={doctorName}
                                                         onChange={e => setDoctorName(e.target.value)}
                                                     >
-                                                        <option value="">Select Consulting Doctor*</option>
+                                                        <option value="" disabled hidden>Select Consulting Doctor*</option>
                                                         {doctors.map((d: any) => (
                                                             <option key={d.id} value={d.full_name}>{d.full_name}</option>
                                                         ))}
@@ -1187,7 +1187,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                                             onChange={e => setSelectedDoctorId(e.target.value)}
                                                             className="w-full flex h-10 sm:h-11 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent pl-10 appearance-none"
                                                         >
-                                                            <option value="">{doctors.length > 0 ? 'Select Doctor*' : 'No doctors found'}</option>
+                                                            <option value="" disabled hidden>{doctors.length > 0 ? 'Select Doctor*' : 'No doctors found'}</option>
                                                             {doctors.map(d => (
                                                                 <option key={d.id} value={d.id}>{d.full_name}</option>
                                                             ))}
@@ -1204,7 +1204,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                                             }}
                                                             className="w-full h-10 sm:h-11 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent pl-10 appearance-none transition-all"
                                                         >
-                                                            <option value="">{wards.length > 0 ? 'Select Ward*' : 'No wards found'}</option>
+                                                            <option value="" disabled hidden>{wards.length > 0 ? 'Select Ward*' : 'No wards found'}</option>
                                                             {wards.map(w => (
                                                                 <option key={w.id} value={w.id}>{w.name}</option>
                                                             ))}
@@ -1233,7 +1233,7 @@ export function POSDashboard({ onNavigate, currentClinicId }: { onNavigate?: (vi
                                                                 onChange={e => setSelectedBedId(e.target.value)}
                                                                 className={`w-full h-10 sm:h-11 rounded-md border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent pl-10 appearance-none transition-all ${!selectedWardId ? 'bg-slate-100 cursor-not-allowed opacity-50' : 'bg-slate-50'}`}
                                                             >
-                                                                <option value="">
+                                                                <option value="" disabled hidden>
                                                                     {!selectedWardId ? 'Choose Ward First' : beds.filter(b => b.ward_id === selectedWardId).length > 0 ? 'Select Bed*' : 'No Available Beds'}
                                                                 </option>
                                                                 {beds.filter(b => b.ward_id === selectedWardId).map(b => (

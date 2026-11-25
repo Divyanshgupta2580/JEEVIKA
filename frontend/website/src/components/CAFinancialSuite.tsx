@@ -981,7 +981,7 @@ export function CAFinancialSuite() {
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Debit Account (Dr)</label>
                                                     <select name="debit_account" required className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
-                                                        <option value="">Select Account...</option>
+                                                        <option value="" disabled hidden>Select Account...</option>
                                                         {CHART_OF_ACCOUNTS.map(group => (
                                                             <optgroup key={group.group} label={group.group}>
                                                                 {group.accounts.map(acc => (
@@ -994,7 +994,7 @@ export function CAFinancialSuite() {
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Credit Account (Cr)</label>
                                                     <select name="credit_account" required className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-sm font-medium">
-                                                        <option value="">Select Account...</option>
+                                                        <option value="" disabled hidden>Select Account...</option>
                                                         {CHART_OF_ACCOUNTS.map(group => (
                                                             <optgroup key={`cr-${group.group}`} label={group.group}>
                                                                 {group.accounts.map(acc => (

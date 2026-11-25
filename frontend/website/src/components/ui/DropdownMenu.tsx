@@ -25,7 +25,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     <DropdownMenuPrimitive.SubTrigger
         ref={ref}
         className={cn(
-            "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-slate-100 data-[state=open]:bg-slate-100",
+            "flex cursor-pointer select-none items-center rounded-lg px-2.5 py-2 text-sm font-medium text-[#162E29] outline-none transition-all hover:bg-[#D8EFE2] hover:pl-3 hover:text-[#035442] focus:bg-[#D8EFE2] focus:text-[#035442] data-[state=open]:bg-[#E6F4EC] data-[state=open]:text-[#035E4A] motion-reduce:transition-none",
             inset && "pl-8",
             className
         )}
@@ -63,7 +63,7 @@ const DropdownMenuContent = React.forwardRef<
             ref={ref}
             sideOffset={sideOffset}
             className={cn(
-                "z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white p-1 text-slate-950 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+                "z-50 min-w-[10rem] overflow-hidden rounded-[14px] border border-[#D5E2DA] bg-white p-1.5 text-[#0E2420] shadow-[0_18px_40px_-10px_rgba(14,36,32,0.16),0_4px_12px_-2px_rgba(14,36,32,0.06)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
                 className
             )}
             {...props}
@@ -81,7 +81,7 @@ const DropdownMenuItem = React.forwardRef<
     <DropdownMenuPrimitive.Item
         ref={ref}
         className={cn(
-            "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            "relative flex cursor-pointer select-none items-center rounded-lg px-2.5 py-2 text-sm font-medium text-[#162E29] outline-none transition-all hover:bg-[#D8EFE2] hover:pl-3 hover:text-[#035442] hover:shadow-[inset_3px_0_0_#047C61] focus:bg-[#D8EFE2] focus:text-[#035442] focus:shadow-[inset_3px_0_0_#047C61] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 motion-reduce:transition-none",
             inset && "pl-8",
             className
         )}

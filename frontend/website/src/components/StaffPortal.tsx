@@ -724,7 +724,7 @@ export function StaffPortal({ clinicIdOverride }: { clinicIdOverride?: string })
                             <div className="space-y-2">
                                 <Label>Department*</Label>
                                 <select className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50" value={newStaff.department} onChange={e => setNewStaff({ ...newStaff, department: e.target.value })}>
-                                    <option value="">Select Dept</option>
+                                    <option value="" disabled hidden>Select Dept</option>
                                     <option value="Medical">Medical</option>
                                     <option value="Nursing">Nursing</option>
                                     <option value="Administration">Administration</option>
@@ -786,7 +786,7 @@ export function StaffPortal({ clinicIdOverride }: { clinicIdOverride?: string })
                                 <div className="space-y-2">
                                     <Label className="text-amber-900">Department*</Label>
                                     <select className="flex h-10 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500" value={editStaffData.department} onChange={e => setEditStaffData({ ...editStaffData, department: e.target.value })}>
-                                        <option value="">Select Dept</option>
+                                        <option value="" disabled hidden>Select Dept</option>
                                         <option value="Medical">Medical</option>
                                         <option value="Nursing">Nursing</option>
                                         <option value="Administration">Administration</option>

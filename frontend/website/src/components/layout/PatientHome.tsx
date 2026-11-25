@@ -311,7 +311,7 @@ function CheckIn() {
           name="recovery"
           defaultValue=""
         >
-          <option value="">Select an answer</option>
+          <option value="" disabled hidden>Select an answer</option>
           <option value="better">Better</option>
           <option value="same">About the same</option>
           <option value="worse">Worse</option>
@@ -325,7 +325,7 @@ function CheckIn() {
           name="medication"
           defaultValue=""
         >
-          <option value="">Select an answer</option>
+          <option value="" disabled hidden>Select an answer</option>
           <option value="taken">Yes</option>
           <option value="missed">Missed a dose</option>
           <option value="not-applicable">No medicines scheduled</option>
@@ -340,7 +340,7 @@ function CheckIn() {
           defaultValue=""
           onChange={(event) => setUrgent(event.target.value === "yes")}
         >
-          <option value="">Select an answer</option>
+          <option value="" disabled hidden>Select an answer</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
         </select>
@@ -980,7 +980,7 @@ function Yoga() {
               defaultValue=""
               className={selectStyle}
             >
-              <option value="">Select</option>
+              <option value="" disabled hidden>Select</option>
               <option value="yes">Yes or unsure</option>
               <option value="no">No</option>
             </select>

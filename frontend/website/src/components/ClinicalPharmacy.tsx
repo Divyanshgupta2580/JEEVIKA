@@ -125,7 +125,7 @@ export function SignPrescription({
                   required
                   defaultValue=""
                 >
-                  <option value="">Choose medicine</option>
+                  <option value="" disabled hidden>Choose medicine</option>
                   {data.items.map(({ id, brand, strengthMg, form }) => (
                     <option key={id} value={id}>
                       {brand} · {strengthMg} mg {form}
@@ -374,7 +374,7 @@ function Checkout({
                 required
                 defaultValue=""
               >
-                <option value="">Select</option>
+                <option value="" disabled hidden>Select</option>
                 <option value="intra">Intra-state</option>
                 <option value="inter">Inter-state</option>
               </select>
@@ -558,7 +558,7 @@ function CatalogEntry() {
         <label>
           Form
           <select name="form" className={selectStyle} required defaultValue="">
-            <option value="">Choose a form</option>
+            <option value="" disabled hidden>Choose a form</option>
             <option value="tablet">Tablet</option>
             <option value="capsule">Capsule</option>
           </select>

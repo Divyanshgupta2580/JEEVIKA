@@ -342,7 +342,7 @@ function CaseForm({
                   update("agni", event.target.value as AyushNote["agni"])
                 }
               >
-                <option value="">Select assessed category</option>
+                <option value="" disabled hidden>Select assessed category</option>
                 {["Samagni", "Vishamagni", "Tikshnagni", "Mandagni"].map(
                   (entry) => (
                     <option key={entry}>{entry}</option>

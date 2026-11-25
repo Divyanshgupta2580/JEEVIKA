@@ -629,7 +629,7 @@ export default function CbcConsultationPanel(props: Props) {
                         }
                       }}
                     >
-                      <option value="">Choose reviewed unit</option>
+                      <option value="" disabled hidden>Choose reviewed unit</option>
                       {cbcUnits.map((unit) => (
                         <option key={unit}>{unit}</option>
                       ))}

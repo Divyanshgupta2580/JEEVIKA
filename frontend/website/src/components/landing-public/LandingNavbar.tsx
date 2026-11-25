@@ -346,7 +346,7 @@ export function LandingNavbar() {
                   <button
                     type="button"
                     onClick={() => jumpToSection("workspaces")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#0E2420] hover:bg-[#EFF7F2] hover:text-[#047C61] cursor-pointer"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#0E2420] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
                   >
                     <span>Five connected workspaces</span>
                     <ArrowRight aria-hidden="true" className="size-3.5" />
@@ -354,14 +354,14 @@ export function LandingNavbar() {
                   <button
                     type="button"
                     onClick={() => jumpToSection("journey")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] hover:bg-[#EFF7F2] hover:text-[#047C61] cursor-pointer"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
                   >
                     <span>Connected patient journey</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => jumpToSection("engines")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] hover:bg-[#EFF7F2] hover:text-[#047C61] cursor-pointer"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
                   >
                     <span>Four intelligence engines</span>
                   </button>
