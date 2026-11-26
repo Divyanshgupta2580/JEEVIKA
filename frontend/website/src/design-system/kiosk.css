@@ -61,6 +61,22 @@
   min-height: 44px;
 }
 
+/* Standardized JEEVIKA header brand logo across all kiosk stages and states */
+.jvk-kiosk-shell .kiosk-brand-logo {
+  display: block;
+  width: 140px;
+  height: auto;
+  aspect-ratio: 2172 / 724;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .jvk-kiosk-shell .kiosk-brand-logo {
+    width: 120px;
+  }
+}
+
 .jvk-kiosk-shell .kiosk-intake button.jvk-kiosk-icon-btn {
   min-height: 36px;
   min-width: 36px;

@@ -342,14 +342,14 @@ export function KioskIntake() {
         <Link
           to="/"
           aria-label="JEEVIKA home"
-          className="jvk-kiosk-header-logo inline-flex items-center rounded-xl py-1 transition-transform hover:scale-[1.01]"
+          className="jvk-kiosk-header-logo inline-flex shrink-0 items-center rounded-xl py-1 transition-transform hover:scale-[1.01]"
         >
           <img
             src="/assets/logo-jeevika.png"
             alt="JEEVIKA"
-            width={132}
-            height={44}
-            className="h-9 w-auto object-contain sm:h-10"
+            width={140}
+            height={47}
+            className="kiosk-brand-logo"
           />
         </Link>
         {step < 7 && (
