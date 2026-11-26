@@ -69,11 +69,8 @@ export function IpdBoardView({
     <div className="jvk-ca-page relative min-h-[calc(100dvh-112px)] flex flex-col justify-between gap-6">
       <div className="space-y-5">
         {/* Hero Header */}
-        <section className="relative overflow-hidden rounded-[22px] pt-1 pb-2 sm:pb-3">
+        <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[140px] lg:min-h-[158px] md:flex md:items-center">
           <div className="relative z-10 w-full md:max-w-[61%] lg:max-w-[63%] xl:max-w-[65%] space-y-2.5">
-            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-[#C6E1EB] bg-[#E3F3F7] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#145869]">
-              PORTAL 4 · HQ GROUP COMMAND
-            </span>
             <h1 className="jvk-ca-serif text-[26px] sm:text-3xl lg:text-[34px] xl:text-[38px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
               Headquarters Command{" "}
               <span className="relative inline-block pr-1">

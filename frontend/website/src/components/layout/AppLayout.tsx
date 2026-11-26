@@ -159,75 +159,27 @@ export function AppLayout({
 
     const getPortalMeta = () => {
         if (view === 'patient-kiosk') {
-            return {
-                number: '01',
-                name: 'Patient Intake System & Kiosk',
-                badge: 'PORTAL 1 · PATIENT INTAKE SYSTEM',
-                badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
-                dotClass: 'bg-amber-500'
-            };
+            return { name: 'Patient Intake System & Kiosk' };
         }
         if (view === 'maritime-agents') {
-            return {
-                number: '05',
-                name: 'Swarm Mesh',
-                badge: 'PLATFORM ADMINISTRATION',
-                badgeClass: 'bg-blue-50 text-blue-800 border-blue-300',
-                dotClass: 'bg-blue-600'
-            };
+            return { name: 'Swarm Mesh' };
         }
         if (view === 'prune-gateway') {
-            return {
-                number: '06',
-                name: 'Prune AI Gateway',
-                badge: 'PLATFORM ADMINISTRATION',
-                badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
-                dotClass: 'bg-emerald-600'
-            };
+            return { name: 'Prune AI Gateway' };
         }
         if (view === 'doctor-alerts') {
-            return {
-                number: '02',
-                name: 'Clinical & Operational Alerts',
-                badge: 'PORTAL 2 · CLINICIAN ALERTS',
-                badgeClass: 'bg-[#E1F0E7] text-[#175B4B] border-[#C6E0D1]',
-                dotClass: 'bg-rose-500'
-            };
+            return { name: 'Clinical & Operational Alerts' };
         }
         if (view === 'doctor-consultation') {
-            return {
-                number: '02',
-                name: 'Doctor Consultation (OPD)',
-                badge: 'PORTAL 2 · CLINICIAN OPD COCKPIT',
-                badgeClass: 'bg-teal-50 text-teal-800 border-teal-200',
-                dotClass: 'bg-teal-500'
-            };
+            return { name: 'Doctor Consultation (OPD)' };
         }
         if (view === 'emergency-triage') {
-            return {
-                number: '03',
-                name: 'Emergency Triage (STAT)',
-                badge: 'PORTAL 3 · EMERGENCY DEPARTMENT',
-                badgeClass: 'bg-rose-50 text-rose-800 border-rose-200',
-                dotClass: 'bg-rose-500 animate-ping'
-            };
+            return { name: 'Emergency Triage (STAT)' };
         }
         if (isClinicPortal) {
-            return {
-                number: '05',
-                name: 'Clinic Operations & POS',
-                badge: 'PORTAL 5 · CLINIC OPERATIONS',
-                badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
-                dotClass: 'bg-blue-500'
-            };
+            return { name: 'Clinic Operations & POS' };
         }
-        return {
-            number: '04',
-            name: 'Headquarters Command Center',
-            badge: 'PORTAL 4 · HQ GROUP COMMAND',
-            badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-            dotClass: 'bg-indigo-500'
-        };
+        return { name: 'Headquarters Command Center' };
     };
 
     const portalMeta = getPortalMeta();
@@ -602,16 +554,9 @@ export function AppLayout({
                 ) : (
                 <header className="ayu-workspace-header h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
                     <div className="ayu-workspace-heading flex items-center gap-4">
-                        <div className="flex flex-col">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${portalMeta.badgeClass}`}>
-                                    {portalMeta.badge}
-                                </span>
-                            </div>
-                            <h1 className="text-xl font-bold text-slate-900 tracking-tight capitalize leading-none">
-                                {portalMeta.name}
-                            </h1>
-                        </div>
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight capitalize leading-none">
+                            {portalMeta.name}
+                        </h1>
                     </div>
 
                     {/* DEDICATED EXIT TO PORTALS BUTTON - STITCH MINIMAL TASTE */}

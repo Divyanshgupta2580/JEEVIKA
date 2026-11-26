@@ -61,11 +61,8 @@ export function CasualtyBoardView({
     <div className="jvk-ca-page relative min-h-[calc(100dvh-112px)] flex flex-col justify-between gap-6">
       <div className="space-y-5">
         {/* Hero Header */}
-        <section className="relative overflow-hidden rounded-[22px] pt-1 pb-2 sm:pb-3">
+        <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[144px] lg:min-h-[164px] md:flex md:items-center">
           <div className="relative z-10 w-full md:max-w-[56%] lg:max-w-[58%] space-y-2.5">
-            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-[#F0C2BC] bg-[#FADCD8] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#B33327]">
-              PORTAL 3 · EMERGENCY DEPARTMENT
-            </span>
             <h1 className="jvk-ca-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
               Emergency Triage{" "}
               <span className="relative inline-block jvk-ca-italic pr-1">

@@ -114,9 +114,6 @@ export function ClinicianAlertsPage() {
       {/* Header matching approved OPD palette */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <span className="inline-flex items-center rounded-full border border-[#C6E0D1] bg-[#E1F0E7] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#175B4B]">
-            PORTAL 2 · CENTRALIZED ALERTS
-          </span>
           <h1 className="jvk-opd-serif text-2xl sm:text-3xl font-semibold tracking-tight text-[#0E2420]">
             Clinical & Operational{" "}
             <span className="relative inline-block jvk-opd-italic">

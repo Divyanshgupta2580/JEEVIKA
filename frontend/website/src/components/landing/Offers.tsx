@@ -11,8 +11,7 @@ import ReactGA from '@/lib/analytics-client';
 interface DashboardOffering {
   id: string;
   viewKey: string;
-  badge: string;
-  badgeColor: string;
+  roleColor: string;
   persona: string;
   roleTitle: string;
   title: string;
@@ -47,8 +46,7 @@ const Offers: React.FC = () => {
     {
       id: 'patient-kiosk',
       viewKey: 'patient-kiosk',
-      badge: 'PORTAL 1 · MULTILINGUAL PATIENT KIOSK',
-      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      roleColor: 'bg-amber-50 text-amber-700 border-amber-200',
       persona: 'Walk-in Patient & Family Caregiver',
       roleTitle: 'Patient Self-Service',
       title: 'Patient Multilingual Kiosk Check-In',
@@ -79,8 +77,7 @@ const Offers: React.FC = () => {
     {
       id: 'doctor-opd',
       viewKey: 'doctor-consultation',
-      badge: 'PORTAL 2 · CLINICAL OPD COCKPIT',
-      badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
+      roleColor: 'bg-teal-50 text-teal-700 border-teal-200',
       persona: 'Consulting Physician & Surgeon',
       roleTitle: 'Doctor Clinical Workspace',
       title: 'Doctor OPD Cockpit & AI SOAP',
@@ -111,8 +108,7 @@ const Offers: React.FC = () => {
     {
       id: 'nurse-stat',
       viewKey: 'emergency-triage',
-      badge: 'PORTAL 3 · LIFE-CRITICAL EMERGENCY',
-      badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      roleColor: 'bg-rose-50 text-rose-700 border-rose-200',
       persona: 'ER Charge Nurse & Trauma Specialist',
       roleTitle: 'Emergency Department',
       title: 'Nurse STAT Emergency Triage',
@@ -143,8 +139,7 @@ const Offers: React.FC = () => {
     {
       id: 'hq-command',
       viewKey: 'admin',
-      badge: 'PORTAL 4 · MULTI-CLINIC HQ COMMAND',
-      badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      roleColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
       persona: 'Hospital Group Executive & Director',
       roleTitle: 'Headquarters Leadership',
       title: 'HQ Multi-Clinic Command Center',
@@ -175,8 +170,7 @@ const Offers: React.FC = () => {
     {
       id: 'clinic-hub',
       viewKey: 'clinic-admin',
-      badge: 'PORTAL 5 · CLINIC OPERATIONS & POS',
-      badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      roleColor: 'bg-blue-50 text-blue-700 border-blue-200',
       persona: 'Clinic Branch Manager & Pharmacist Lead',
       roleTitle: 'Single Clinic Operations',
       title: 'Clinic Hub & Point-of-Sale (POS)',
@@ -293,13 +287,10 @@ const Offers: React.FC = () => {
                 {/* Card Content & Features */}
                 <div className="p-6 sm:p-8 flex flex-col flex-1 justify-between bg-white">
                   <div>
-                    {/* Badge & Role Pill */}
+                    {/* Role Pill */}
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full border ${dash.badgeColor}`}>
-                        {dash.badge}
-                      </span>
-                      <span className="text-xs font-bold text-slate-500">
-                        · {dash.roleTitle}
+                      <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full border ${dash.roleColor}`}>
+                        {dash.roleTitle}
                       </span>
                     </div>
 
