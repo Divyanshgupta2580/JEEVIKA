@@ -373,7 +373,7 @@ export function SuperAdminDashboard({ onView }: SuperAdminDashboardProps) {
                             {/* Left: Recently Onboarded Hospitals */}
                             <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col shadow-sm">
                                 <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                    <div>
+                                    <div data-jvk-reveal="">
                                         <h2 className="font-bold text-gray-900 text-lg">Recently Onboarded Hospitals</h2>
                                         <p className="text-xs text-gray-500 mt-1">Showing latest 10 hospital entries across all regions</p>
                                     </div>

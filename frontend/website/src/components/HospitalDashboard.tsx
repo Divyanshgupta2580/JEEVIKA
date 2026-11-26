@@ -1537,7 +1537,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             {/* --------------------------------------------------------- */}
             <div className="space-y-4">
                 <div id="tour-analytics-hub" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 p-4 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
-                    <div>
+                    <div data-jvk-reveal="">
                         <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <Activity className="w-5 h-5 text-indigo-600" />
                             Group Financial & Operational Analytics

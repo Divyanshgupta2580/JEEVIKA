@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useRouteEntrance } from "@/lib/transitions";
+import { useScrollReveal } from "@/lib/useScrollReveal";
 import { Link, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -71,6 +72,7 @@ export function PatientPortalShell({
   const { pathname } = useLocation();
   const section = pathname.split("/").filter(Boolean).at(-1) ?? "thread";
   const entranceRef = useRouteEntrance(pathname);
+  useScrollReveal(entranceRef, pathname);
 
   return (
     <div className="jvk-patient-portal relative min-h-dvh flex flex-col justify-between overflow-x-clip bg-[#FEFBF6] text-[#0E2420] pb-20 md:pb-0">

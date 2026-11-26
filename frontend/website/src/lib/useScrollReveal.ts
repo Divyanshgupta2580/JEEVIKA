@@ -2,13 +2,16 @@ import { useEffect, type RefObject } from "react";
 
 const revealClass = "jvk-motion-revealing";
 
-export function useScrollReveal(scopeRef: RefObject<HTMLElement>, root: Element | null = null) {
+export function useScrollReveal(scopeRef: RefObject<HTMLElement>, route?: string) {
   useEffect(() => {
     const scope = scopeRef.current;
     if (!scope || typeof IntersectionObserver === "undefined") return;
 
     const targets = scope.querySelectorAll<HTMLElement>("[data-jvk-reveal]");
+    if (!targets.length) return;
+    const root = scope.closest(".ayu-workspace-scroll");
     const armed = new Set<Element>();
+    const sampled = new Set<Element>();
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const visibleFraction = 0.15;
 
@@ -24,6 +27,10 @@ export function useScrollReveal(scopeRef: RefObject<HTMLElement>, root: Element 
 
     const enter = new IntersectionObserver((entries) => {
       for (const entry of entries) {
+        if (!sampled.has(entry.target)) {
+          sampled.add(entry.target);
+          if (entry.intersectionRatio < visibleFraction) armed.add(entry.target);
+        }
         if (entry.intersectionRatio < visibleFraction || !armed.delete(entry.target)) continue;
         if (!preference.matches && !entry.target.matches(":focus-within")) {
           entry.target.classList.add(revealClass);
@@ -47,15 +54,15 @@ export function useScrollReveal(scopeRef: RefObject<HTMLElement>, root: Element 
       if (event.animationName === "jvk-reveal-in") clearReveal(event);
     }
     scope.addEventListener("animationend", onAnimationEnd);
-    preference.addEventListener("change", clearAll);
+    preference.addEventListener?.("change", clearAll);
 
     return () => {
       exit.disconnect();
       enter.disconnect();
       scope.removeEventListener("focusin", clearReveal);
       scope.removeEventListener("animationend", onAnimationEnd);
-      preference.removeEventListener("change", clearAll);
+      preference.removeEventListener?.("change", clearAll);
       clearAll();
     };
-  }, [scopeRef, root]);
+  }, [scopeRef, route]);
 }

@@ -70,9 +70,11 @@ const RegisterPage = lazyWithRetry(() => import("@/components/RegisterPage").the
 import { useLocation, useNavigate } from 'react-router-dom';
 import { logPageView } from '@/lib/analytics';
 import { useRouteEntrance } from '@/lib/transitions';
+import { useScrollReveal } from '@/lib/useScrollReveal';
+import { JeevikaLoading } from '@/components/JeevikaLoading';
 
 import { RefreshCw, AlertTriangle } from 'lucide-react'
-import { Button, WorkspaceSkeleton, DashboardSkeleton } from '@/components/ui/basic'
+import { Button } from '@/components/ui/basic'
 import { Toaster } from '@/components/ui/toaster'
 import { authService } from '@/lib/authService'
 import { dataService } from '@/lib/dataService'
@@ -167,7 +169,9 @@ const SEO_ROUTES: Record<string, SeoConfig> = {
 
 function PageWrapper({ children, route }: { children: React.ReactNode; route?: string }) {
     const location = useLocation();
-    const entranceRef = useRouteEntrance<HTMLDivElement>(route ?? location.pathname);
+    const activeRoute = route ?? location.pathname;
+    const entranceRef = useRouteEntrance<HTMLDivElement>(activeRoute);
+    useScrollReveal(entranceRef, activeRoute);
     return <div ref={entranceRef} className="w-full h-full">{children}</div>;
 }
 
@@ -234,7 +238,7 @@ function AppContent() {
             selectedClinicId={selectedClinicId}
             onSelectClinicId={setSelectedClinicId}
         >
-            <Suspense fallback={<DashboardSkeleton />}>
+            <Suspense fallback={<JeevikaLoading embedded />}>
                 <PageWrapper route={activeRoute}>
                     {view === 'nurse-calls' && routeAccess('/app/nurse-calls', verifiedRole) === 'Full' && (
                         <NurseCallQueue />
@@ -520,7 +524,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     const location = useLocation();
 
     if (loading) {
-        return <WorkspaceSkeleton />;
+        return <JeevikaLoading />;
     }
 
     if (!session || !profile) {
@@ -535,7 +539,7 @@ function PublicAuthRoute({ children }: { children: ReactNode }) {
     const location = useLocation();
 
     if (loading) {
-        return <WorkspaceSkeleton />;
+        return <JeevikaLoading />;
     }
 
     if (session && profile) {
@@ -552,7 +556,7 @@ function PublicAuthRoute({ children }: { children: ReactNode }) {
 function AppLandingRedirect() {
     const { session, loading } = useHospital();
     const location = useLocation();
-    if (loading) return <WorkspaceSkeleton />;
+    if (loading) return <JeevikaLoading />;
     if (!session) return <Navigate to="/login" replace />;
     const role = typeof session.role === 'string' ? session.role : null;
     const legacyView = new URLSearchParams(location.search).get('view');
@@ -603,13 +607,7 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    if (!ready) return (
-        <div className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
-            <p role="status" className="rounded-2xl border border-[#EAE6DC] bg-[#FFFEFB] px-6 py-4 text-sm font-medium text-[#182E29] shadow-xs">
-                Verifying patient session…
-            </p>
-        </div>
-    );
+    if (!ready) return <JeevikaLoading label="Verifying patient session…" />;
     if (error) return (
         <main className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
             <div className="max-w-md w-full rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] p-6 text-center shadow-[0_18px_48px_rgba(14,36,32,0.08)] space-y-4">
@@ -663,7 +661,7 @@ function AppRouter() {
                     <Route path="/app" element={patientToken() ? <Navigate to="/app/home/thread" replace /> : <ProtectedRoute><AppLandingRedirect /></ProtectedRoute>} />
                     <Route path="/app/home/*" element={<PatientAppRoute><PatientHome /></PatientAppRoute>} />
                     <Route path="/app/*" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
-                    <Route path="/kiosk" element={<KioskLayout><Suspense fallback={<p role="status">Loading kiosk…</p>}><KioskIntake /></Suspense></KioskLayout>} />
+                    <Route path="/kiosk" element={<KioskLayout><Suspense fallback={<JeevikaLoading embedded label="Loading kiosk…" />}><KioskIntake /></Suspense></KioskLayout>} />
 
                     {/* Informational Pages */}
                     <Route path="/landing" element={<PublicLayout><PublicOverview /></PublicLayout>} />
@@ -757,7 +755,7 @@ function Main() {
             <TourProvider>
                 <WorkspaceChrome />
                 <WorkspaceErrorBoundary>
-                    <Suspense fallback={<WorkspaceSkeleton />}>
+                    <Suspense fallback={<JeevikaLoading />}>
                         <AppRouter />
                     </Suspense>
                 </WorkspaceErrorBoundary>

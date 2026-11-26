@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { landingArtwork } from "@/components/JeevikaLoading";
 import { PatientAccessNotice } from "./PatientAccessNotice";
 import { PlatformStatistics } from "./PlatformStatistics";
 import {
@@ -27,7 +28,7 @@ export function HeroSection() {
           className="pointer-events-none hidden lg:block lg:absolute lg:inset-y-0 lg:right-[-2%] lg:w-[62%] xl:right-[-3%] xl:w-[62%]"
         >
           <img
-            src="/assets/design/care-continuum.jpg"
+            src={landingArtwork}
             alt=""
             width={1400}
             height={933}
@@ -43,7 +44,7 @@ export function HeroSection() {
           {/* Left Hero Column */}
           <div className="space-y-4 sm:space-y-5 lg:col-span-6 xl:col-span-6">
             {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#EBE1CC] bg-[#F5EFE2] px-3.5 py-1.5 text-xs font-semibold text-[#233731]">
+            <div data-jvk-entrance="left" className="inline-flex items-center gap-2 rounded-full border border-[#EBE1CC] bg-[#F5EFE2] px-3.5 py-1.5 text-xs font-semibold text-[#233731]">
               <span aria-hidden="true" className="size-2 rounded-full bg-[#047C61]" />
               <span>A more connected kind of care</span>
             </div>
@@ -65,7 +66,7 @@ export function HeroSection() {
             </h1>
 
             {/* Supporting Copy */}
-            <p className="max-w-md text-[15px] leading-relaxed text-[#435650] sm:text-base">
+            <p data-jvk-entrance="left" className="max-w-md text-[15px] leading-relaxed text-[#435650] sm:text-base">
               One continuous journey from first symptom to recovery. Built for
               patients, care teams, and everyone in between.
             </p>
@@ -103,7 +104,7 @@ export function HeroSection() {
           {/* Mobile/Tablet Hero Illustration */}
           <div data-jvk-entrance="right" className="lg:hidden">
             <img
-              src="/assets/design/care-continuum.jpg"
+              src={landingArtwork}
               alt="Doctor sharing a reassuring consultation moment with a smiling child and her mother"
               width={1400}
               height={933}

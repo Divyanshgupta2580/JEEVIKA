@@ -185,11 +185,12 @@ export function MoreView() {
         aria-label="More patient services"
         className="grid grid-cols-1 sm:grid-cols-2 gap-4"
       >
-        {WELLNESS_SERVICES.map(({ route, label, description, icon, tone }) => (
+        {WELLNESS_SERVICES.map(({ route, label, description, icon, tone }, index) => (
           <Link
             key={route}
             to={`/app/home/${route}`}
             aria-label={label}
+            data-jvk-reveal={index}
             className={`jvk-motion-card jvk-motion-card-shadow group flex items-start gap-4 p-5 sm:p-6 ${
               tone === "mint" ? "jvk-her-field-sage" : "jvk-her-field-gold"
             }`}

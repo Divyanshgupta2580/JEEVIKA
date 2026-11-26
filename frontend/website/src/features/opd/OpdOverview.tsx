@@ -266,6 +266,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/doctor/cbc")}
+          data-jvk-reveal="0"
           className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">
@@ -283,6 +284,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/doctor/rx")}
+          data-jvk-reveal="1"
           className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">
@@ -304,6 +306,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/ayush")}
+          data-jvk-reveal="2"
           className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">

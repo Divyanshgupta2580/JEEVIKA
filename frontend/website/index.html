@@ -3,12 +3,19 @@
   <head>
     <link rel="stylesheet" href="/fonts.css" /><meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/logo-jeevika.png" />
+    <link rel="stylesheet" href="/src/design-system/loading.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Jeevika connected clinical and hospital operations workspaces" />
     <title>Jeevika | Connected care</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="jvk-loading-screen" role="status">
+        <img class="jvk-loading-logo" src="/assets/logo-jeevika.png" alt="" width="168" />
+        <p>Loading JEEVIKA…</p>
+        <span class="jvk-loading-track" aria-hidden="true"><span></span></span>
+      </div>
+    </div>
     <script type="module" src="/src/erp.tsx"></script>
   </body>
 </html>

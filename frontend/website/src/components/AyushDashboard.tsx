@@ -324,6 +324,7 @@ export function AyushDashboard() {
           <button
             type="button"
             onClick={() => scrollToSection("ayush-formulations")}
+            data-jvk-reveal="0"
             className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">
@@ -347,6 +348,7 @@ export function AyushDashboard() {
           <button
             type="button"
             onClick={() => scrollToSection("ayush-prakriti")}
+            data-jvk-reveal="1"
             className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">
@@ -372,6 +374,7 @@ export function AyushDashboard() {
             onClick={() =>
               selected ? scrollToSection("ayush-treatment") : navigate("/app/doctor")
             }
+            data-jvk-reveal="2"
             className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">

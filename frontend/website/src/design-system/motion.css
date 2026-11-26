@@ -3,8 +3,10 @@
   --jvk-motion-standard: 200ms;
   --jvk-motion-component: 260ms;
   --jvk-motion-route: 540ms;
-  --jvk-motion-reveal: 460ms;
-  --jvk-motion-stagger: 60ms;
+  --jvk-motion-reveal: 640ms;
+  --jvk-motion-stagger: 75ms;
+  --jvk-motion-zoom: 460ms;
+  --jvk-motion-zoom-ease: cubic-bezier(.37, .07, .27, 1);
   --jvk-motion-out: cubic-bezier(.22, 1, .36, 1);
 }
 
@@ -16,7 +18,7 @@
     color var(--jvk-motion-standard) var(--jvk-motion-out),
     box-shadow var(--jvk-motion-standard) var(--jvk-motion-out),
     translate var(--jvk-motion-fast) var(--jvk-motion-out),
-    scale var(--jvk-motion-standard) var(--jvk-motion-out);
+    scale var(--jvk-motion-zoom) var(--jvk-motion-zoom-ease);
 }
 
 .jvk-motion-field,
@@ -41,8 +43,8 @@
 
 @media (prefers-reduced-motion: no-preference) {
   @keyframes jvk-reveal-in {
-    from { opacity: .84; transform: translateY(10px); }
-    to { opacity: 1; transform: none; }
+    from { opacity: .55; translate: 0 clamp(28px, 4vw, 46px); }
+    to { opacity: 1; translate: none; }
   }
 
   @keyframes jvk-chrome-in {
@@ -85,13 +87,12 @@
 
   :is(.jvk-motion-action, .jvk-motion-card):active:not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
     translate: 0 1px;
-    scale: .98;
   }
 }
 
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  :is(.jvk-motion-action, .jvk-motion-card):hover:not(:active, :disabled, [aria-disabled="true"], [aria-busy="true"]) {
-    scale: 1.05;
+  :is(.jvk-motion-action, .jvk-motion-card):hover:not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+    scale: 1.035;
   }
 
   :is(button.jvk-motion-card, .jvk-motion-card.jvk-motion-card-shadow):hover:not(:disabled, [aria-disabled="true"]) {
