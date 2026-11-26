@@ -1,12 +1,15 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  CreditCard,
   FolderPlus,
   HeartPulse,
+  Info,
   Lock,
   Mail,
   Pill,
+  Smartphone,
   User,
   UserPlus,
 } from "lucide-react";
@@ -55,10 +58,12 @@ export function IdentityVerification({
   purpose,
   onVerified,
   initialAbha = "",
+  secondaryActions,
 }: {
   purpose: "home" | "kiosk";
   onVerified: (result: { token?: string; verifiedIdentityId?: string }) => void;
   initialAbha?: string;
+  secondaryActions?: ReactNode;
 }) {
   const { data, error: providerError } = usePatientData<{ demoOtp: boolean }>(
     "/auth/patient/otp/capabilities",
@@ -122,15 +127,34 @@ export function IdentityVerification({
       </InlineBanner>
     );
 
+  const isKiosk = purpose === "kiosk";
+
   return (
     <form
       className="space-y-4"
       onSubmit={(event) => void submit(event)}
       aria-label="Patient identity verification"
     >
-      <InlineBanner title="Simulated verification">
-        Use only the synthetic identifier shown below. No message will be sent.
-      </InlineBanner>
+      {isKiosk ? (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-xl border border-[#C6DDF5] bg-[#EAF3FD] px-4 py-3 text-[#184878]"
+        >
+          <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#2367AA]" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold leading-snug text-[#164270]">
+              Simulated verification
+            </p>
+            <p className="jvk-kiosk-meta-text mt-0.5 text-[#225689]">
+              Use only the synthetic identifier shown below. No message will be sent.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <InlineBanner title="Simulated verification">
+          Use only the synthetic identifier shown below. No message will be sent.
+        </InlineBanner>
+      )}
 
       <fieldset disabled={pending || Boolean(challenge)} className="space-y-3">
         <legend className="text-xs font-semibold uppercase tracking-wide text-[#4B5D57]">
@@ -142,10 +166,10 @@ export function IdentityVerification({
             return (
               <label
                 key={choice}
-                className={`flex min-h-11 items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                className={`flex min-h-12 items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer ${
                   active
-                    ? "border-[#047C61] bg-[#E7F2E8]/70 text-[#0E2420]"
-                    : "border-[#D8D3C6] bg-[#FAF8F2] text-[#3B4E48] hover:bg-[#F2EFE6]"
+                    ? "border-[#047C61] bg-[#EDF7F1] text-[#0E2420]"
+                    : "border-[#DFE5DC] bg-white text-[#2F453E] hover:border-[#8DC5B1] hover:bg-[#F5FAF7]"
                 }`}
               >
                 <input
@@ -157,7 +181,7 @@ export function IdentityVerification({
                     setValue("");
                     setError("");
                   }}
-                  className="accent-[#047C61]"
+                  className="size-4 accent-[#047C61]"
                 />
                 <span>{choice === "abha" ? "14-digit ABHA" : "Mobile number"}</span>
               </label>
@@ -174,8 +198,19 @@ export function IdentityVerification({
           </Label>
           <AuthInput
             id={`patient-identity-${purpose}`}
+            icon={
+              isKiosk
+                ? method === "abha"
+                  ? CreditCard
+                  : Smartphone
+                : undefined
+            }
             inputMode="numeric"
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            enterKeyHint="next"
             placeholder={
               method === "abha"
                 ? "Enter 14-digit ABHA number"
@@ -193,7 +228,11 @@ export function IdentityVerification({
           type="button"
           variant="outline"
           onClick={() => setValue(demoPatientIdentity[method])}
-          className="h-9 rounded-xl border-[#C6D5CE] bg-[#FAF8F2] text-xs font-semibold text-[#047C61] hover:bg-[#E7F2E8]"
+          className={
+            isKiosk
+              ? "jvk-kiosk-compact-btn h-10 rounded-xl border-[#DCE6D9] bg-[#EDF3EB] px-4 text-[13.5px] font-semibold text-[#056851] hover:bg-[#E1EDE0]"
+              : "h-9 rounded-xl border-[#C6D5CE] bg-[#FAF8F2] text-xs font-semibold text-[#047C61] hover:bg-[#E7F2E8]"
+          }
         >
           Use synthetic identifier
         </Button>
@@ -215,6 +254,10 @@ export function IdentityVerification({
             id={`patient-otp-${purpose}`}
             inputMode="numeric"
             autoComplete="one-time-code"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            enterKeyHint="done"
             placeholder="Enter 6-digit code"
             minLength={6}
             maxLength={6}
@@ -228,26 +271,29 @@ export function IdentityVerification({
 
       {error && <InlineBanner tone="critical" title={error} />}
 
-      <div className="flex flex-wrap gap-2.5">
-        <AuthSubmitButton loading={pending} loadingText="Please wait…">
-          <span>{challenge ? "Verify code" : "Request demo code"}</span>
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </AuthSubmitButton>
-        {challenge && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pending}
-            onClick={() => {
-              setChallenge(undefined);
-              setCode("");
-              setError("");
-            }}
-            className="h-10 w-full rounded-xl border-[#D8D3C6] bg-[#FAF8F2] text-[#182E29] hover:bg-[#EFECE3]"
-          >
-            Start again
-          </Button>
-        )}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap gap-2.5">
+          <AuthSubmitButton loading={pending} loadingText="Please wait…">
+            <span>{challenge ? "Verify code" : "Request demo code"}</span>
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </AuthSubmitButton>
+          {challenge && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => {
+                setChallenge(undefined);
+                setCode("");
+                setError("");
+              }}
+              className="h-10 w-full rounded-xl border-[#D8D3C6] bg-[#FAF8F2] text-[#182E29] hover:bg-[#EFECE3]"
+            >
+              Start again
+            </Button>
+          )}
+        </div>
+        {secondaryActions}
       </div>
     </form>
   );

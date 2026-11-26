@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Mic, QrCode, Square, Upload, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/basic";
 import { InlineBanner } from "@/components/ui/design-primitives";
 
@@ -48,18 +49,22 @@ export function VoiceControls({
   caption,
   locale,
   onTranscript,
+  uiVariant = "default",
 }: {
   caption: string;
   locale: string;
   onTranscript?: (text: string) => void;
+  uiVariant?: "default" | "kiosk";
 }) {
   const [status, setStatus] = useState("Voice idle");
+  const [listening, setListening] = useState(false);
   const recognition = useRef<LocalRecognizer | null>(null);
   const attempt = useRef(0);
   useEffect(
     () => () => {
       attempt.current++;
       recognition.current?.abort();
+      setListening(false);
       window.speechSynthesis?.cancel();
     },
     [caption, locale],
@@ -92,6 +97,7 @@ export function VoiceControls({
   async function listen() {
     const current = ++attempt.current;
     recognition.current?.abort();
+    setListening(false);
     const browser = window as Window & {
       SpeechRecognition?: RecognizerType;
       webkitSpeechRecognition?: RecognizerType;
@@ -118,6 +124,7 @@ export function VoiceControls({
       let failed = false;
       recognizer.onerror = () => {
         failed = true;
+        setListening(false);
         setStatus("Microphone unavailable or permission denied. Type instead.");
       };
       recognizer.onresult = (event) => {
@@ -125,25 +132,97 @@ export function VoiceControls({
         onTranscript?.(event.results[0]?.[0]?.transcript ?? "");
       };
       recognizer.onend = () => {
+        setListening(false);
         if (!failed) setStatus("Voice idle");
       };
       recognizer.start();
+      setListening(true);
       setStatus("Listening…");
     } catch (error) {
-      if (current === attempt.current)
+      if (current === attempt.current) {
+        setListening(false);
         setStatus(
           error instanceof Error
             ? error.message
             : "Microphone unavailable. Type instead.",
         );
+      }
     }
   }
 
   function stop() {
     attempt.current++;
     recognition.current?.abort();
+    setListening(false);
     window.speechSynthesis?.cancel();
     setStatus("Voice idle");
+  }
+
+  if (uiVariant === "kiosk") {
+    return (
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={speak}
+            className="jvk-kiosk-compact-btn inline-flex items-center gap-2 rounded-xl border border-[#DCE3DA] bg-white px-3.5 py-2 text-[13.5px] font-semibold text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#78B9A3] hover:bg-[#F3F9F5] cursor-pointer"
+          >
+            <Volume2 aria-hidden="true" className="size-4 shrink-0 text-[#057C61]" />
+            <span>Read aloud</span>
+          </button>
+          {onTranscript && (
+            <button
+              type="button"
+              onClick={() => void listen()}
+              aria-pressed={listening}
+              className={`jvk-kiosk-compact-btn inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[13.5px] font-semibold shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors cursor-pointer ${
+                listening
+                  ? "border-[#047C61] bg-[#E5F4EC] text-[#045E4A]"
+                  : "border-[#DCE3DA] bg-white text-[#132924] hover:border-[#78B9A3] hover:bg-[#F3F9F5]"
+              }`}
+            >
+              <Mic aria-hidden="true" className="size-4 shrink-0 text-[#057C61]" />
+              <span>Use microphone</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={stop}
+            className="jvk-kiosk-compact-btn inline-flex items-center gap-2 rounded-xl border border-[#DCE3DA] bg-white px-3.5 py-2 text-[13.5px] font-semibold text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#78B9A3] hover:bg-[#F3F9F5] cursor-pointer"
+          >
+            <Square
+              aria-hidden="true"
+              className="size-3.5 shrink-0 fill-[#057C61] text-[#057C61]"
+            />
+            <span>Stop voice</span>
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-[#E2EAE1] bg-[#EFF4EE] px-3.5 py-2">
+          <span
+            aria-hidden="true"
+            className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${
+              listening
+                ? "bg-[#047C61] text-white ring-4 ring-[#047C61]/20"
+                : "bg-[#DCECE1] text-[#05735C]"
+            }`}
+          >
+            <Mic className="size-3.5" />
+          </span>
+          <span
+            role="status"
+            className="jvk-kiosk-meta-text font-semibold text-[#163029]"
+          >
+            {status}
+          </span>
+          <span
+            className="jvk-kiosk-meta-text min-w-0 flex-1 text-[#4A5E57]"
+            lang={locale}
+          >
+            <span key={`${locale}-${caption}`}>{caption}</span>
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -202,8 +281,10 @@ function abhaNumber(scanned: string) {
 
 export function AbhaQrScanner({
   onFound,
+  uiVariant = "default",
 }: {
   onFound: (number: string) => void;
+  uiVariant?: "default" | "kiosk";
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
@@ -323,6 +404,61 @@ export function AbhaQrScanner({
     }
   }
 
+  if (uiVariant === "kiosk") {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(175px,0.8fr)_minmax(275px,1.2fr)] gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen((value) => !value);
+              setError("");
+            }}
+            aria-pressed={open}
+            className="flex min-h-[58px] items-center gap-2.5 rounded-xl border border-[#DFE5DC] bg-white px-3.5 py-2.5 text-left text-[15px] font-semibold text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#78B9A3] hover:bg-[#F3F9F5] cursor-pointer"
+          >
+            <span
+              aria-hidden="true"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#D4E6DB] bg-[#ECF6F0] text-[#05735C]"
+            >
+              <QrCode className="size-5" />
+            </span>
+            <span className="whitespace-nowrap">{open ? "Close camera" : "Scan ABHA QR"}</span>
+          </button>
+
+          <label className="flex min-h-[58px] items-center gap-2.5 rounded-xl border border-[#DFE5DC] bg-white px-3.5 py-2 text-sm text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)]">
+            <Upload aria-hidden="true" className="size-5 shrink-0 text-[#05735C]" />
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <span className="block text-[13px] font-semibold text-[#132924]">
+                Upload QR image
+              </span>
+              <input
+                className="jvk-kiosk-file-input block w-full max-w-full"
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void upload(file);
+                  event.target.value = "";
+                }}
+              />
+            </div>
+          </label>
+        </div>
+        {open && (
+          <video
+            ref={camera}
+            muted
+            playsInline
+            aria-label="ABHA QR camera preview"
+            className="max-h-64 max-w-full rounded-xl border border-[#DFE5DC]"
+          />
+        )}
+        {error && <InlineBanner tone="warning" title={error} />}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
@@ -368,10 +504,12 @@ export function DocumentReview({
   value,
   onChange,
   label = "Confirmed document text",
+  uiVariant = "default",
 }: {
   value: string;
   onChange: (text: string) => void;
   label?: string;
+  uiVariant?: "default" | "kiosk";
 }) {
   const [status, setStatus] = useState("");
   const [reading, setReading] = useState(false);
@@ -423,6 +561,51 @@ export function DocumentReview({
       if (request === active.current) setReading(false);
     }
   }
+  if (uiVariant === "kiosk") {
+    return (
+      <div className="space-y-3.5">
+        <label className="flex items-start gap-3 rounded-xl border border-[#DFE5DC] bg-white px-4 py-3 text-sm font-semibold text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)]">
+          <Upload aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#05735C]" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <span className="block text-sm font-semibold text-[#132924]">
+              Take or upload a JPG or PNG
+            </span>
+            <input
+              className="jvk-kiosk-file-input block w-full max-w-full"
+              type="file"
+              accept="image/jpeg,image/png"
+              capture="environment"
+              disabled={reading}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void read(file);
+                event.target.value = "";
+              }}
+            />
+          </div>
+        </label>
+        {status && (
+          <p
+            role="status"
+            className="jvk-kiosk-meta-text rounded-xl border border-[#DCE8E0] bg-[#EFF6F1] px-3.5 py-2 font-medium text-[#164236]"
+          >
+            {status}
+          </p>
+        )}
+        <label className="block space-y-1.5">
+          <span className="block text-sm font-semibold text-[#132924]">{label}</span>
+          <textarea
+            className="block w-full rounded-xl border border-[#D8DED7] bg-[#FAFBF8] p-3.5 text-sm text-[#0E2420] placeholder:text-[#788781] focus:bg-white focus:border-[#047C61] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20"
+            rows={4}
+            maxLength={4000}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </label>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <label className="block rounded-lg border p-3">

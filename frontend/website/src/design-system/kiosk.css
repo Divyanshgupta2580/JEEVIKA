@@ -1,0 +1,349 @@
+/* Isolated stylesheet for the redesigned JEEVIKA Patient Kiosk (#/kiosk) */
+
+.jvk-kiosk-shell {
+  color-scheme: light;
+  background:
+    radial-gradient(ellipse 68% 44% at 8% 0%, rgba(232, 241, 229, 0.55) 0%, transparent 72%),
+    radial-gradient(ellipse 62% 46% at 96% 100%, rgba(246, 236, 210, 0.55) 0%, transparent 70%),
+    #faf7f1;
+  color: #0e2420;
+  font-family:
+    "Noto Sans",
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.jvk-kiosk-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid #e4e1d7;
+  background: linear-gradient(180deg, #fffefb 0%, #fcfaf4 100%);
+  box-shadow:
+    0 14px 40px rgba(14, 36, 32, 0.06),
+    0 2px 8px rgba(14, 36, 32, 0.03);
+}
+
+.jvk-kiosk-heading {
+  color: #0e2420;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.22;
+  text-wrap: balance;
+}
+
+.jvk-kiosk-body-text {
+  text-wrap: pretty;
+}
+
+/* Override low-specificity base .kiosk-intake typography rules where compact chrome or labels apply */
+.jvk-kiosk-shell .kiosk-intake {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.jvk-kiosk-shell .kiosk-intake :lang(hi),
+.jvk-kiosk-shell .kiosk-intake :lang(mr),
+.jvk-kiosk-shell .kiosk-intake :lang(pa),
+.jvk-kiosk-shell .kiosk-intake :lang(ta),
+.jvk-kiosk-shell .kiosk-intake :lang(bn),
+.jvk-kiosk-shell .kiosk-intake :lang(te),
+.jvk-kiosk-shell .kiosk-intake :lang(gu),
+.jvk-kiosk-shell .kiosk-intake :lang(kn) {
+  line-height: 1.72;
+}
+
+.jvk-kiosk-shell .kiosk-intake button.jvk-kiosk-compact-btn,
+.jvk-kiosk-shell .kiosk-intake a.jvk-kiosk-header-logo {
+  min-height: 44px;
+}
+
+.jvk-kiosk-shell .kiosk-intake button.jvk-kiosk-icon-btn {
+  min-height: 36px;
+  min-width: 36px;
+  padding-block: 0.25rem;
+}
+
+.jvk-kiosk-shell .kiosk-intake .jvk-kiosk-subcopy {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.jvk-kiosk-shell .kiosk-intake .jvk-kiosk-meta-text {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* Seamless edge blend for watercolor illustrations inside warm ivory cards */
+.jvk-kiosk-artwork {
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Accessible touch-friendly interactive cards (no sticky hover on touch devices) */
+.jvk-kiosk-choice-card {
+  min-height: 52px;
+  border-radius: 12px;
+  border: 1px solid #dfe5dc;
+  background-color: #ffffff;
+  color: #132924;
+  transition:
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.jvk-kiosk-choice-card[data-selected="true"] {
+  border-color: #036953;
+  background: linear-gradient(135deg, #067a61 0%, #035f4c 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(4, 124, 97, 0.2);
+}
+
+.jvk-kiosk-symptom-card {
+  min-height: 52px;
+  border-radius: 12px;
+  border: 1px solid #dfe5dc;
+  background-color: #fcfcf9;
+  color: #132924;
+  transition:
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.jvk-kiosk-symptom-card[data-selected="true"] {
+  border-color: #047c61;
+  background-color: #e9f5ee;
+  box-shadow: 0 2px 8px rgba(4, 124, 97, 0.12);
+}
+
+.jvk-kiosk-answer-btn {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1.5px solid #d7ded7;
+  background-color: #fcfcf9;
+  color: #0e2420;
+  font-weight: 600;
+  transition:
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .jvk-kiosk-choice-card[data-selected="false"]:hover,
+  .jvk-kiosk-symptom-card[data-selected="false"]:hover,
+  .jvk-kiosk-answer-btn:hover {
+    border-color: #6bb29c;
+    background-color: #f3f9f5;
+    box-shadow: 0 3px 10px rgba(4, 124, 97, 0.08);
+  }
+
+  .jvk-kiosk-choice-card[data-selected="true"]:hover {
+    filter: brightness(1.04);
+  }
+
+  .jvk-kiosk-symptom-card[data-selected="true"]:hover {
+    background-color: #dff0e6;
+  }
+
+  .jvk-kiosk-consent-row:hover {
+    border-color: #93c4b0;
+    background-color: #f5faf6;
+  }
+}
+
+.jvk-kiosk-consent-row {
+  min-height: 50px;
+  border-radius: 12px;
+  border: 1px solid #dfe5dc;
+  background-color: #fafbf8;
+  transition:
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.jvk-kiosk-consent-row[data-checked="true"] {
+  border-color: #9acbb6;
+  background-color: #eff8f3;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jvk-kiosk-choice-card:active,
+  .jvk-kiosk-symptom-card:active,
+  .jvk-kiosk-answer-btn:active,
+  .jvk-kiosk-primary-btn:active {
+    transform: scale(0.985);
+  }
+
+  .jvk-kiosk-stage-forward {
+    animation: jvk-kiosk-enter-forward 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .jvk-kiosk-stage-backward {
+    animation: jvk-kiosk-enter-backward 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes jvk-kiosk-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes jvk-kiosk-enter-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Styled native checkbox inside kiosk with clean accent-color + @supports not fallback */
+.jvk-kiosk-checkbox {
+  accent-color: #047c61;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 5px;
+  border: 1.5px solid #96a8a0;
+  cursor: pointer;
+}
+
+@supports not (accent-color: #047c61) {
+  .jvk-kiosk-checkbox {
+    appearance: none;
+    background-color: #ffffff;
+    display: inline-grid;
+    place-content: center;
+  }
+
+  .jvk-kiosk-checkbox:checked {
+    background-color: #047c61;
+    border-color: #047c61;
+  }
+
+  .jvk-kiosk-checkbox:checked::after {
+    content: "✓";
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+.jvk-kiosk-shell :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #047c61;
+  outline-offset: 2px;
+}
+
+.jvk-kiosk-shell .jvk-kiosk-urgent-btn:focus-visible {
+  outline: 3px solid #991b1b;
+  outline-offset: 3px;
+}
+
+/* Native file input polish matching JEEVIKA soft ivory kiosk identity upload */
+.jvk-kiosk-file-input {
+  font-size: 0.875rem;
+  color: #465b54;
+  min-height: 36px !important;
+}
+
+.jvk-kiosk-file-input::file-selector-button {
+  margin-inline-end: 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #cbd3cd;
+  background-color: #f3f5f3;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #162b26;
+  cursor: pointer;
+  min-height: 34px;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .jvk-kiosk-file-input::file-selector-button:hover {
+    background-color: #e6eee8;
+    border-color: #9abcae;
+  }
+}
+
+/* QR frame corner brackets on Token screen */
+.jvk-qr-frame {
+  position: relative;
+  display: inline-flex;
+  padding: 10px;
+  border-radius: 14px;
+  background-color: #ffffff;
+  border: 1px solid #e3ebe5;
+}
+
+.jvk-qr-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: #058368;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.jvk-qr-corner-tl {
+  top: -1px;
+  left: -1px;
+  border-width: 2.5px 0 0 2.5px;
+  border-top-left-radius: 10px;
+}
+
+.jvk-qr-corner-tr {
+  top: -1px;
+  right: -1px;
+  border-width: 2.5px 2.5px 0 0;
+  border-top-right-radius: 10px;
+}
+
+.jvk-qr-corner-bl {
+  bottom: -1px;
+  left: -1px;
+  border-width: 0 0 2.5px 2.5px;
+  border-bottom-left-radius: 10px;
+}
+
+.jvk-qr-corner-br {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2.5px 2.5px 0;
+  border-bottom-right-radius: 10px;
+}
+
+@media print {
+  .jvk-kiosk-shell {
+    background: #ffffff !important;
+  }
+
+  .jvk-kiosk-card {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .jvk-kiosk-decor {
+    display: none !important;
+  }
+}
