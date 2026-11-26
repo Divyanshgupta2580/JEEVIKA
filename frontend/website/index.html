@@ -10,13 +10,20 @@
   </head>
   <body>
     <div id="root">
-      <div class="jvk-loading-screen" role="status">
-        <img class="jvk-loading-logo" src="/assets/logo-jeevika.png" alt="" width="168" />
-        <p>Loading JEEVIKA…</p>
-        <span class="jvk-loading-track" aria-hidden="true"><span></span></span>
+      <div class="jvk-loading-screen jvk-splash-overlay" data-jvk-splash="preboot">
+        <div aria-hidden="true" class="jvk-splash-waves-wrap">
+          <svg class="jvk-splash-waves-svg" viewBox="0 0 1440 200" preserveAspectRatio="none">
+            <path d="M -60 112 C 180 42, 420 68, 660 116 C 920 166, 1180 62, 1500 94 L 1500 210 L -60 210 Z" fill="rgba(18, 122, 97, 0.48)" />
+            <path d="M -60 142 C 210 156, 470 76, 740 120 C 1010 164, 1245 78, 1500 116 L 1500 210 L -60 210 Z" fill="rgba(224, 178, 86, 0.45)" />
+          </svg>
+        </div>
+        <div class="jvk-splash-center">
+          <img class="jvk-splash-logo" src="/assets/logo-jeevika.png" alt="JEEVIKA" width="420" height="140" />
+          <p id="jvk-preboot-message" class="jvk-loading-message">Preparing connected care...</p>
+          <progress aria-labelledby="jvk-preboot-message" class="jvk-splash-progress"></progress>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/erp.tsx"></script>
   </body>
 </html>
-

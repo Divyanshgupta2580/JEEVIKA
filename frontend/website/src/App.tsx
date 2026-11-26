@@ -71,7 +71,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { logPageView } from '@/lib/analytics';
 import { useRouteEntrance } from '@/lib/transitions';
 import { useScrollReveal } from '@/lib/useScrollReveal';
-import { JeevikaLoading } from '@/components/JeevikaLoading';
+import { JeevikaLoading, notifyPatientBoot, StartupBoot, useStartupActive } from '@/components/JeevikaLoading';
 
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/basic'
@@ -521,10 +521,11 @@ function SeoManager() {
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
     const { session, profile, loading } = useHospital();
+    const startupActive = useStartupActive();
     const location = useLocation();
 
     if (loading) {
-        return <JeevikaLoading />;
+        return startupActive ? null : <JeevikaLoading embedded />;
     }
 
     if (!session || !profile) {
@@ -536,10 +537,11 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 function PublicAuthRoute({ children }: { children: ReactNode }) {
     const { session, profile, loading } = useHospital();
+    const startupActive = useStartupActive();
     const location = useLocation();
 
     if (loading) {
-        return <JeevikaLoading />;
+        return startupActive ? null : <JeevikaLoading embedded />;
     }
 
     if (session && profile) {
@@ -555,8 +557,9 @@ function PublicAuthRoute({ children }: { children: ReactNode }) {
 
 function AppLandingRedirect() {
     const { session, loading } = useHospital();
+    const startupActive = useStartupActive();
     const location = useLocation();
-    if (loading) return <JeevikaLoading />;
+    if (loading) return startupActive ? null : <JeevikaLoading embedded />;
     if (!session) return <Navigate to="/login" replace />;
     const role = typeof session.role === 'string' ? session.role : null;
     const legacyView = new URLSearchParams(location.search).get('view');
@@ -565,6 +568,7 @@ function AppLandingRedirect() {
 }
 
 function PatientAppRoute({ children }: { children: ReactNode }) {
+    const startupActive = useStartupActive();
     const location = useLocation();
     const [patient, setPatient] = useState<PatientSession | null>(null);
     const [ready, setReady] = useState(false);
@@ -574,10 +578,13 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
         const token = patientToken();
         const controller = new AbortController();
         let timer: ReturnType<typeof setTimeout> | undefined;
+        let routeError: string | undefined;
         const end = () => { setPatient(null); setPatientToken(null); setReady(true); };
         window.addEventListener("jeevika-patient-session-ended", end);
-        if (!token) end();
-        else {
+        if (!token) {
+            end();
+            notifyPatientBoot({ ready: true });
+        } else {
             patientRequest<PatientSession>("/auth/patient/me", { token, signal: controller.signal })
                 .then((record) => {
                     if (controller.signal.aborted) return;
@@ -596,9 +603,19 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
                 .catch((failure: unknown) => {
                     if (controller.signal.aborted) return;
                     if (failure instanceof PatientApiError && failure.status === 401) end();
-                    else setError("Could not verify your patient session. Reload to try again.");
+                    else {
+                        routeError = "Could not verify your patient session. Reload to try again.";
+                        setError(routeError);
+                    }
                 })
-                .finally(() => { if (!controller.signal.aborted) setReady(true); });
+                .finally(() => {
+                    if (!controller.signal.aborted) {
+                        setReady(true);
+                        notifyPatientBoot(
+                            routeError ? { ready: true, error: routeError } : { ready: true },
+                        );
+                    }
+                });
         }
         return () => {
             controller.abort();
@@ -607,7 +624,7 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    if (!ready) return <JeevikaLoading label="Verifying patient session…" />;
+    if (!ready) return startupActive ? null : <JeevikaLoading embedded label="Verifying patient session…" />;
     if (error) return (
         <main className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
             <div className="max-w-md w-full rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] p-6 text-center shadow-[0_18px_48px_rgba(14,36,32,0.08)] space-y-4">
@@ -748,18 +765,39 @@ function WorkspaceChrome() {
     </>;
 }
 
+function StartupShell() {
+    const { loading } = useHospital();
+    const location = useLocation();
+
+    return (
+        <StartupBoot
+            entryPathname={location.pathname}
+            hospitalLoading={loading}
+            hasPatientToken={Boolean(patientToken())}
+        >
+            {({ startupActive, mountRoutes }) =>
+                mountRoutes ? (
+                    <>
+                        <WebsiteLocalizationRuntime />
+                        <TourProvider>
+                            <WorkspaceChrome />
+                            <WorkspaceErrorBoundary>
+                                <Suspense fallback={startupActive ? null : <JeevikaLoading embedded />}>
+                                    <AppRouter />
+                                </Suspense>
+                            </WorkspaceErrorBoundary>
+                        </TourProvider>
+                    </>
+                ) : null
+            }
+        </StartupBoot>
+    );
+}
+
 function Main() {
     return (
         <Router>
-            <WebsiteLocalizationRuntime />
-            <TourProvider>
-                <WorkspaceChrome />
-                <WorkspaceErrorBoundary>
-                    <Suspense fallback={<JeevikaLoading />}>
-                        <AppRouter />
-                    </Suspense>
-                </WorkspaceErrorBoundary>
-            </TourProvider>
+            <StartupShell />
         </Router>
     );
 }
