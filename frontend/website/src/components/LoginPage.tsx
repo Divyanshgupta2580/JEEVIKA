@@ -53,7 +53,6 @@ const DEMO_STAFF_ACCOUNTS: readonly DemoStaffAccount[] = [
 ];
 
 export function LoginPage() {
-  const [isForgotMode, setIsForgotMode] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [filledDemoAccount, setFilledDemoAccount] =
@@ -65,7 +64,6 @@ export function LoginPage() {
 
   const fillDemoCredentials = (account: DemoStaffAccount) => {
     setError(null);
-    setIsForgotMode(false);
     setEmail(account.email);
     setPassword(DEMO_EVALUATOR_CREDENTIAL);
     setFilledDemoAccount(account);
@@ -77,27 +75,17 @@ export function LoginPage() {
     setError(null);
 
     try {
-      if (isForgotMode) {
-        await auth.resetPassword(email);
-        toast({
-          title: "Recovery Link Sent",
-          description: "Check your email for the password reset link.",
-          className: "bg-green-50 border-green-200 text-green-900",
-        });
-        setIsForgotMode(false);
-      } else {
-        const user = await auth.signIn(email.trim(), password);
-        const from = location.state?.from;
-        const target = /^\/app(?:\/|$)/.test(from?.pathname ?? "")
-          ? from.pathname + (from.search ?? "") + (from.hash ?? "")
-          : landingRoute(user.role);
-        toast({
-          title: "Authentication Successful",
-          description: `Signed in as ${email}. Entering workspace...`,
-          className: "bg-emerald-50 border-emerald-200 text-emerald-900",
-        });
-        window.location.hash = `#${target}`;
-      }
+      const user = await auth.signIn(email.trim(), password);
+      const from = location.state?.from;
+      const target = /^\/app(?:\/|$)/.test(from?.pathname ?? "")
+        ? from.pathname + (from.search ?? "") + (from.hash ?? "")
+        : landingRoute(user.role);
+      toast({
+        title: "Authentication Successful",
+        description: `Signed in as ${email}. Entering workspace...`,
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      });
+      window.location.hash = `#${target}`;
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred";
@@ -185,12 +173,10 @@ export function LoginPage() {
                     <Lock aria-hidden="true" className="size-5" />
                   </div>
                   <h2 className="text-base font-bold text-[#0E2420]">
-                    {isForgotMode ? "Reset Password" : "Staff Credential Sign-In"}
+                    Staff Credential Sign-In
                   </h2>
                   <p className="text-xs text-[#556761]">
-                    {isForgotMode
-                      ? "Enter registered email to receive password reset link"
-                      : "Enter authorized email and password to access hospital workspace"}
+                    Enter authorized email and password to access hospital workspace
                   </p>
                 </div>
 
@@ -217,123 +203,86 @@ export function LoginPage() {
                     />
                   </div>
 
-                  {!isForgotMode && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <Label
-                          htmlFor="staff-password"
-                          className="text-xs font-semibold text-[#182E29]"
-                        >
-                          Password
-                        </Label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setError(null);
-                            setIsForgotMode(true);
-                          }}
-                          className="text-xs font-semibold text-[#047C61] hover:text-[#035442] hover:underline cursor-pointer"
-                        >
-                          Forgot Password?
-                        </button>
-                      </div>
-                      <AuthPasswordInput
-                        id="staff-password"
-                        icon={Lock}
-                        autoComplete="current-password"
-                        placeholder="Enter security password"
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          setFilledDemoAccount(null);
-                        }}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="staff-password"
+                      className="text-xs font-semibold text-[#182E29]"
+                    >
+                      Password
+                    </Label>
+                    <AuthPasswordInput
+                      id="staff-password"
+                      icon={Lock}
+                      autoComplete="current-password"
+                      placeholder="Enter security password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setFilledDemoAccount(null);
+                      }}
+                      required
+                      minLength={6}
+                    />
+                  </div>
 
                   <AuthSubmitButton
                     loading={manualLoading}
-                    loadingText={
-                      isForgotMode
-                        ? "Sending Recovery Link..."
-                        : "Authenticating..."
-                    }
+                    loadingText="Authenticating..."
                   >
-                    <span>
-                      {isForgotMode
-                        ? "Send Recovery Link"
-                        : "Sign In with Credentials"}
-                    </span>
+                    <span>Sign In with Credentials</span>
                     <ArrowRight aria-hidden="true" className="size-4" />
                   </AuthSubmitButton>
 
-                  {!isForgotMode && (
-                    <div className="pt-2 space-y-2.5 border-t border-[#E6E0D3]">
-                      <button
-                        type="button"
-                        onClick={() => fillDemoCredentials(DEMO_STAFF_ACCOUNTS[0])}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#BBD8CC] bg-[#FFFDF9] px-4 text-xs font-semibold text-[#047C61] transition-colors hover:bg-[#EEF8F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#047C61]/40 cursor-pointer"
-                      >
-                        <Sparkles aria-hidden="true" className="size-3.5 shrink-0" />
-                        <span>Fill Dummy Evaluator ID (Doctor)</span>
-                      </button>
-
-                      <div className="rounded-xl border border-[#EAE5D8] bg-white/80 p-3 space-y-2">
-                        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#556761]">
-                          <span className="font-semibold text-[#233A34]">
-                            Evaluator Demo Roles
-                          </span>
-                          <span className="font-mono text-[10px] text-[#647871]">
-                            org: demo
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {DEMO_STAFF_ACCOUNTS.map((account) => {
-                            const selected = filledDemoAccount?.id === account.id;
-                            return (
-                              <button
-                                key={account.id}
-                                type="button"
-                                onClick={() => fillDemoCredentials(account)}
-                                className={`inline-flex min-h-7 items-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
-                                  selected
-                                    ? "border-[#047C61] bg-[#E7F2E8] text-[#035442]"
-                                    : "border-[#E1DBD0] bg-[#FAF8F2] text-[#324942] hover:border-[#047C61]/60 hover:bg-[#F1F7F4]"
-                                }`}
-                              >
-                                {account.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {filledDemoAccount && (
-                          <p
-                            aria-live="polite"
-                            className="text-[11px] leading-snug text-[#047C61] font-medium"
-                          >
-                            Filled {filledDemoAccount.label} (
-                            <span className="font-mono">{filledDemoAccount.email}</span>
-                            ). Click &ldquo;Sign In with Credentials&rdquo; above to enter.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {isForgotMode && (
+                  <div className="pt-2 space-y-2.5 border-t border-[#E6E0D3]">
                     <button
                       type="button"
-                      onClick={() => {
-                        setError(null);
-                        setIsForgotMode(false);
-                      }}
-                      className="w-full pt-1 text-center text-xs font-semibold text-[#53655F] hover:text-[#0E2420] cursor-pointer"
+                      onClick={() => fillDemoCredentials(DEMO_STAFF_ACCOUNTS[0])}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#BBD8CC] bg-[#FFFDF9] px-4 text-xs font-semibold text-[#047C61] transition-colors hover:bg-[#EEF8F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#047C61]/40 cursor-pointer"
                     >
-                      Return to Sign In
+                      <Sparkles aria-hidden="true" className="size-3.5 shrink-0" />
+                      <span>Fill Dummy Evaluator ID (Doctor)</span>
                     </button>
-                  )}
+
+                    <div className="rounded-xl border border-[#EAE5D8] bg-white/80 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#556761]">
+                        <span className="font-semibold text-[#233A34]">
+                          Evaluator Demo Roles
+                        </span>
+                        <span className="font-mono text-[10px] text-[#647871]">
+                          org: demo
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {DEMO_STAFF_ACCOUNTS.map((account) => {
+                          const selected = filledDemoAccount?.id === account.id;
+                          return (
+                            <button
+                              key={account.id}
+                              type="button"
+                              onClick={() => fillDemoCredentials(account)}
+                              className={`inline-flex min-h-7 items-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                                selected
+                                  ? "border-[#047C61] bg-[#E7F2E8] text-[#035442]"
+                                  : "border-[#E1DBD0] bg-[#FAF8F2] text-[#324942] hover:border-[#047C61]/60 hover:bg-[#F1F7F4]"
+                              }`}
+                            >
+                              {account.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {filledDemoAccount && (
+                        <p
+                          aria-live="polite"
+                          className="text-[11px] leading-snug text-[#047C61] font-medium"
+                        >
+                          Filled {filledDemoAccount.label} (
+                          <span className="font-mono">{filledDemoAccount.email}</span>
+                          ). Click &ldquo;Sign In with Credentials&rdquo; above to enter.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </form>
               </div>
             </AuthFormCard>
