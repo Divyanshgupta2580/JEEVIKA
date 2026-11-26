@@ -108,8 +108,8 @@ export function LoginPage() {
     >
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-10">
-          {/* Left Column on Desktop: Staff Watercolor Illustration + Tagline + Benefits */}
-          <div className="order-2 lg:order-1 lg:col-span-7 space-y-5">
+          {/* Left Column: Staff Watercolor Illustration + Tagline + Benefits (First on Mobile & Left on Desktop) */}
+          <div className="lg:col-span-7 space-y-5">
             <AuthIllustrationPanel
               src="/assets/auth/staff-consultation.png"
               alt="Clinician consulting an elderly patient and family member in a sunlit clinic"
@@ -134,8 +134,8 @@ export function LoginPage() {
             <AuthBenefitsStrip items={STAFF_BENEFITS} />
           </div>
 
-          {/* Right Column on Desktop (First on Mobile): Protected Staff Sign-In Card */}
-          <div className="order-1 lg:order-2 lg:col-span-5">
+          {/* Right Column: Protected Staff Sign-In Card (Second on Mobile & Right on Desktop) */}
+          <div className="lg:col-span-5">
             <AuthFormCard className="p-6 sm:p-8">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#CBE2D4] bg-[#E7F2E8] px-3 py-1 text-[11px] font-bold tracking-[0.06em] uppercase text-[#047C61]">
