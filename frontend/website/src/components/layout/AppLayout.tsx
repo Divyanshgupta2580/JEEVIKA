@@ -47,6 +47,8 @@ export function AppLayout({
     const verifiedRole = typeof session?.role === "string" ? session.role : null
     const isDoctorRole = verifiedRole === 'DOCTOR'
     const isClinicianOpdTheme = isDoctorRole && (view === 'doctor-consultation' || view === 'doctor-alerts')
+    const isCareOrAyushTheme = view === 'ipd' || view === 'emergency-triage' || view === 'ayush-center'
+    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -169,15 +171,15 @@ export function AppLayout({
             className={`ayu-workspace-nav-item w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl transition-colors group
                 ${disabled ? 'opacity-50 cursor-not-allowed text-slate-400' :
                     active
-                        ? isClinicianOpdTheme
+                        ? isIvoryShellTheme
                             ? 'bg-[#E5F3EB] text-[#0E2420] font-bold border border-[#C6E1D1] shadow-xs'
                             : 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
-                        : isClinicianOpdTheme
+                        : isIvoryShellTheme
                             ? 'text-[#314A42] hover:bg-[#EEF6F1] hover:text-[#0E2420]'
                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
                 `}
         >
-            <SymbolIcon className={`material-symbols-outlined text-[20px] ${active ? 'text-[#047C61]' : isClinicianOpdTheme ? 'text-[#3F5E54] group-hover:text-[#0E2420]' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
+            <SymbolIcon className={`material-symbols-outlined text-[20px] ${active ? 'text-[#047C61]' : isIvoryShellTheme ? 'text-[#3F5E54] group-hover:text-[#0E2420]' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
             <span className={`ayu-nav-label text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
             {typeof badgeCount === 'number' && badgeCount > 0 && (
                 <span className={`ayu-nav-label ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
@@ -245,7 +247,7 @@ export function AppLayout({
     return (
         <div
             className={`ayu-workspace-shell flex h-screen w-full overflow-hidden font-sans ${
-                isClinicianOpdTheme
+                isIvoryShellTheme
                     ? 'jvk-opd-shell bg-[#FEFBF6] text-[#0E2420]'
                     : 'bg-white text-slate-900'
             }`}
@@ -254,7 +256,7 @@ export function AppLayout({
             {!isFullBleedPortal && (
                 <aside
                     aria-label="Workspace navigation"
-                    className={`ayu-global-sidebar relative overflow-hidden ${isClinicianOpdTheme ? 'jvk-opd-sidebar' : ''}`}
+                    className={`ayu-global-sidebar relative overflow-hidden ${isIvoryShellTheme ? 'jvk-opd-sidebar' : ''}`}
                     data-collapsed={isCollapsed}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape' && isMobileMenuOpen) {
@@ -275,7 +277,7 @@ export function AppLayout({
                         <button
                             type="button"
                             className={`ayu-workspace-menu ayu-workspace-menu-desktop ${
-                                isClinicianOpdTheme
+                                isIvoryShellTheme
                                     ? '!border-[#E3DCCA] !bg-transparent !text-[#2C453D] hover:!bg-[#EEF6F0]'
                                     : ''
                             }`}
@@ -285,7 +287,7 @@ export function AppLayout({
                             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                             onClick={() => setIsCollapsed((collapsed) => !collapsed)}
                         >
-                            {isClinicianOpdTheme ? (
+                            {isIvoryShellTheme ? (
                                 <LayoutGrid size={18} aria-hidden="true" className="text-[#4B665D]" />
                             ) : isCollapsed ? (
                                 <PanelLeftOpen size={18} aria-hidden="true" />
@@ -328,7 +330,7 @@ export function AppLayout({
                             ))}
                     </nav>
 
-                    {isClinicianOpdTheme && !isCollapsed && (
+                    {isIvoryShellTheme && !isCollapsed && (
                         <img
                             src="/assets/opd/opd-sidebar-leaves.png"
                             alt=""
@@ -337,12 +339,12 @@ export function AppLayout({
                         />
                     )}
 
-                    <div className={`ayu-workspace-sidebar-footer relative z-10 ${isClinicianOpdTheme ? '!border-[#ECE5D5] bg-[#FFFDF9]/85 backdrop-blur-xs' : ''}`}>
+                    <div className={`ayu-workspace-sidebar-footer relative z-10 ${isIvoryShellTheme ? '!border-[#ECE5D5] bg-[#FFFDF9]/85 backdrop-blur-xs' : ''}`}>
                         <div className="ayu-workspace-identity flex min-w-0 items-center gap-2.5">
                             <span
                                 aria-hidden="true"
                                 className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${
-                                    isClinicianOpdTheme ? 'bg-[#E3F1E8] text-[#175B4B]' : 'bg-teal-100 text-teal-800'
+                                    isIvoryShellTheme ? 'bg-[#E3F1E8] text-[#175B4B]' : 'bg-teal-100 text-teal-800'
                                 }`}
                             >
                                 {(sidebarDisplayName[0] || 'C').toUpperCase()}
@@ -356,7 +358,7 @@ export function AppLayout({
                             type="button"
                             onClick={onLogout}
                             className={`ayu-workspace-sign-out ${
-                                isClinicianOpdTheme ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start' : ''
+                                isIvoryShellTheme ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start' : ''
                             }`}
                         >
                             <SymbolIcon className="material-symbols-outlined">logout</SymbolIcon>
@@ -371,12 +373,12 @@ export function AppLayout({
                 aria-label="Workspace content"
                 tabIndex={0}
                 className={`ayu-workspace-scroll relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto ${
-                    isClinicianOpdTheme ? 'jvk-opd-main' : 'bg-white'
+                    isIvoryShellTheme ? 'jvk-opd-main' : 'bg-white'
                 }`}
             >
                 {/* HEADER */}
                 {view !== 'patient-kiosk' && (
-                    isClinicianOpdTheme ? (
+                    isIvoryShellTheme ? (
                         <header className="sticky top-0 z-30 shrink-0 bg-[#FEFBF6]/90 backdrop-blur-md border-b border-[#EDE6D8]/70 px-4 sm:px-6 lg:px-10 py-3 flex flex-wrap items-center justify-end gap-2.5 sm:gap-4">
                             <div className="flex-1 hidden sm:block" aria-hidden="true" />
                             <div className="flex items-center gap-2">
@@ -538,7 +540,7 @@ export function AppLayout({
                     className={
                         view === 'patient-kiosk'
                             ? "flex-1 w-full"
-                            : isClinicianOpdTheme
+                            : isIvoryShellTheme
                               ? "flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 pb-20"
                               : "flex-1 p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"
                     }

@@ -1,57 +1,31 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, CardContent, Input } from "@/components/ui/basic";
-import {
-  EmptyState,
-  InlineBanner,
-  StatusChip,
-} from "@/components/ui/design-primitives";
 import { distressChanged } from "@/components/ShellEmergency";
+import { CasualtyBoardView } from "@/features/care/CasualtyBoardView";
+import { IpdBoardView } from "@/features/care/IpdBoardView";
+import {
+  computeCasualtyMetrics,
+  computeIpdMetrics,
+  type CareBoardData,
+  type CareDistressItem,
+} from "@/features/care/careMetrics";
+import { useOptionalOpdWorkspace } from "@/features/opd/opdContext";
 import { staffApi, useStaffData } from "@/lib/staffApi";
+import "@/design-system/care-ayush.css";
 
-type Board = {
-  locations: Array<{
-    id: string;
-    room: string;
-    label: string;
-    state: "available" | "cleaning" | "maintenance";
-    occupied: 0 | 1;
-  }>;
-  admissions: Array<{
-    id: string;
-    encounter_id: string;
-    location_id: string;
-    name: string;
-    tokenNumber: string | null;
-    reason: string;
-    doctor_id: string;
-  }>;
-  encounters: Array<{
-    id: string;
-    name: string;
-    status: string;
-    tokenNumber: string | null;
-  }>;
-  doctors: Array<{ id: string }>;
-};
-const selectStyle =
-  "min-h-11 w-full rounded-lg border border-[#CEDAD3] bg-white pl-3.5 pr-4 py-2 text-sm font-medium text-[#0E2420]";
-
-export function CareBoard({
-  kind,
-  role,
-  encounterId,
-}: {
+interface CareBoardProps {
   kind: "ipd" | "casualty";
   role: string;
   encounterId?: string;
-}) {
+}
+
+function useCareBoardActions(kind: "ipd" | "casualty", role: string) {
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failure, setFailure] = useState("");
   const [distressLocation, setDistressLocation] = useState("");
   const endpoint = `/clinical/${kind}`;
-  const { data, error } = useStaffData<Board>(`${endpoint}/board`, revision);
+  const { data, error } = useStaffData<CareBoardData>(`${endpoint}/board`, revision);
   const canWrite =
     role === "NURSE" ||
     (kind === "ipd" ? role === "DOCTOR" : role === "STAT_NURSE");
@@ -73,13 +47,12 @@ export function CareBoard({
       setMessage(success);
       setDistressLocation("");
       setRevision((value) => value + 1);
-      if (path.includes("/distress"))
+      if (path.includes("/distress")) {
         window.dispatchEvent(new Event(distressChanged));
-    } catch (error) {
+      }
+    } catch (err) {
       setFailure(
-        error instanceof Error
-          ? error.message
-          : "The operation could not be confirmed.",
+        err instanceof Error ? err.message : "The operation could not be confirmed.",
       );
     } finally {
       setBusy(false);
@@ -99,310 +72,87 @@ export function CareBoard({
     );
   }
 
+  return {
+    revision,
+    data,
+    error,
+    canWrite,
+    busy,
+    message,
+    failure,
+    distressLocation,
+    setDistressLocation,
+    refresh: () => setRevision((value) => value + 1),
+    run,
+    form,
+  };
+}
+
+function IpdCareBoard({ role, encounterId }: { role: string; encounterId?: string }) {
+  const state = useCareBoardActions("ipd", role);
+  const metrics = computeIpdMetrics(state.data, state.error, role);
   return (
-    <section className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">
-          {kind === "ipd" ? "Ward census" : "Emergency bays"}
-        </h1>
-        <Button
-          variant="outline"
-          onClick={() => setRevision((value) => value + 1)}
-        >
-          Refresh
-        </Button>
-      </header>
-      {(error || failure) && (
-        <InlineBanner tone="critical" title={failure || error || ""} />
-      )}
-      {message && <InlineBanner tone="success" title={message} />}
-      {!data && !error && <p role="status">Loading clinic locations…</p>}
-      {data && (
-        <>
-          {data.locations.length === 0 && (
-            <EmptyState
-              title="No clinic locations configured"
-              description="Locations for your authorized clinic appear here."
-            />
-          )}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {data.locations.map((location) => {
-              const admission = data.admissions.find(
-                (item) => item.location_id === location.id,
-              );
-              const state = location.occupied
-                ? "Occupied"
-                : location.state === "cleaning"
-                  ? "Cleaning required"
-                  : location.state === "maintenance"
-                    ? "Maintenance"
-                    : "Available";
-              return (
-                <Card key={location.id}>
-                  <CardContent className="space-y-3 p-4">
-                    <h2 className="font-semibold">
-                      {location.room} · {location.label}
-                    </h2>
-                    <StatusChip>{state}</StatusChip>
-                    {admission && (
-                      <p className="break-words">
-                        {admission.tokenNumber
-                          ? `${admission.tokenNumber} · `
-                          : ""}
-                        {admission.name}
-                        {admission.reason ? ` · ${admission.reason}` : ""}
-                      </p>
-                    )}
-                    {canWrite && (
-                      <div className="flex flex-wrap gap-2">
-                        {admission && (
-                          <Button
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() =>
-                              void run(
-                                `/admissions/${admission.id}/discharge`,
-                                "Location marked for cleaning.",
-                              )
-                            }
-                          >
-                            {kind === "ipd" ? "Discharge" : "Release bay"}
-                          </Button>
-                        )}
-                        {role === "NURSE" && kind === "ipd" && admission && (
-                          <Button
-                            variant="destructive"
-                            disabled={busy}
-                            onClick={() => setDistressLocation(location.id)}
-                          >
-                            Report Code Blue
-                          </Button>
-                        )}
-                        {location.state === "cleaning" && (
-                          <Button
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() =>
-                              void run(
-                                `/locations/${location.id}/ready`,
-                                "Location available.",
-                              )
-                            }
-                          >
-                            Mark ready
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          {distressLocation && (
-            <form
-              className="space-y-3 rounded-lg border bg-card p-4"
-              onSubmit={(event) =>
-                form(
-                  event,
-                  `/beds/${distressLocation}/distress`,
-                  "Code Blue recorded.",
-                )
-              }
-            >
-              <label htmlFor="bedside-reason" className="block">
-                Reason for Code Blue
-              </label>
-              <Input
-                id="bedside-reason"
-                name="reason"
-                required
-                maxLength={500}
-              />
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" variant="destructive" disabled={busy}>
-                  Record Code Blue
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDistressLocation("")}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          )}
-          {canWrite && (
-            <details className="rounded-lg border bg-card p-4">
-              <summary className="min-h-10 cursor-pointer font-semibold">
-                Add a clinic {kind === "ipd" ? "bed" : "bay"}
-              </summary>
-              <form
-                className="grid gap-3 sm:grid-cols-2"
-                onSubmit={(event) =>
-                  form(event, "/locations", "Clinic location added.")
-                }
-              >
-                <div>
-                  <label htmlFor="care-room">Room or unit</label>
-                  <Input id="care-room" name="room" required maxLength={80} />
-                </div>
-                <div>
-                  <label htmlFor="care-label">Location label</label>
-                  <Input id="care-label" name="label" required maxLength={80} />
-                </div>
-                <Button type="submit" disabled={busy}>
-                  Add location
-                </Button>
-              </form>
-            </details>
-          )}
-          {kind === "casualty" && role === "DOCTOR" && (
-            <Card>
-              <CardContent className="space-y-2 p-4">
-                <h2 className="font-semibold">Referred emergency encounters</h2>
-                {data.encounters.length === 0 ? (
-                  <p>No emergency referrals assigned to you.</p>
-                ) : (
-                  <ul className="list-disc pl-5">
-                    {data.encounters.map((item) => (
-                      <li key={item.id}>
-                        {item.tokenNumber ? `${item.tokenNumber} · ` : ""}
-                        {item.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          {canWrite && (
-            <Card>
-              <CardContent className="space-y-3 p-4">
-                <h2 className="font-semibold">
-                  {kind === "ipd"
-                    ? "Admit a clinic encounter"
-                    : "Assign an emergency encounter"}
-                </h2>
-                {data.encounters.length === 0 && (
-                  <p>No eligible encounters in this clinic.</p>
-                )}
-                <form
-                  className="grid gap-3 sm:grid-cols-2"
-                  onSubmit={(event) => {
-                    const submitter = (event.nativeEvent as SubmitEvent)
-                      .submitter;
-                    if (
-                      submitter instanceof HTMLButtonElement &&
-                      submitter.value === "refer"
-                    ) {
-                      event.preventDefault();
-                      const fields = new FormData(event.currentTarget);
-                      void run("/referrals", "Emergency encounter referred.", {
-                        encounterId: fields.get("encounterId") ?? "",
-                        doctorId: fields.get("doctorId") ?? "",
-                      });
-                      return;
-                    }
-                    form(
-                      event,
-                      "/admissions",
-                      kind === "ipd"
-                        ? "Admission recorded."
-                        : "Emergency bay assigned.",
-                    );
-                  }}
-                >
-                  <label>
-                    Encounter
-                    <select
-                      name="encounterId"
-                      className={selectStyle}
-                      required
-                      defaultValue={
-                        data.encounters.some((item) => item.id === encounterId)
-                          ? encounterId
-                          : ""
-                      }
-                    >
-                      <option value="" disabled hidden>Select encounter</option>
-                      {data.encounters.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.tokenNumber ?? item.id.slice(0, 8)} ·{" "}
-                          {item.name} · {item.status}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Location
-                    <select
-                      name="locationId"
-                      className={selectStyle}
-                      required
-                      defaultValue=""
-                    >
-                      <option value="" disabled hidden>Select location</option>
-                      {data.locations
-                        .filter(
-                          (item) =>
-                            !item.occupied && item.state === "available",
-                        )
-                        .map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.room} · {item.label}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-                  <label>
-                    Attending doctor
-                    <select
-                      name="doctorId"
-                      className={selectStyle}
-                      required
-                      defaultValue=""
-                    >
-                      <option value="" disabled hidden>Select doctor</option>
-                      {data.doctors.map(({ id }) => (
-                        <option key={id} value={id}>
-                          {id}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div>
-                    <label htmlFor="admission-reason">Admission reason</label>
-                    <Input
-                      id="admission-reason"
-                      name="reason"
-                      maxLength={1000}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={busy || !data.encounters.length}
-                  >
-                    Confirm assignment
-                  </Button>
-                  {kind === "casualty" && (
-                    <Button
-                      type="submit"
-                      value="refer"
-                      formNoValidate
-                      variant="outline"
-                      disabled={busy || !data.encounters.length}
-                    >
-                      Refer to doctor
-                    </Button>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-    </section>
+    <IpdBoardView
+      role={role}
+      canWrite={state.canWrite}
+      encounterId={encounterId}
+      data={state.data}
+      error={state.error}
+      busy={state.busy}
+      message={state.message}
+      failure={state.failure}
+      metrics={metrics}
+      distressLocation={state.distressLocation}
+      setDistressLocation={state.setDistressLocation}
+      onRefresh={state.refresh}
+      onRun={state.run}
+      onForm={state.form}
+    />
   );
+}
+
+function CasualtyCareBoard({ role, encounterId }: { role: string; encounterId?: string }) {
+  const state = useCareBoardActions("casualty", role);
+  const distressPoll = useStaffData<{ events: CareDistressItem[] }>(
+    "/clinical/ipd/distress/active",
+    state.revision,
+  );
+  const opd = useOptionalOpdWorkspace();
+  const opdEmergencyCount =
+    role === "DOCTOR" && opd && opd.queueRequest === "loaded"
+      ? opd.queue.filter((item) => item.status === "STAT_ALERT").length
+      : null;
+
+  const metrics = computeCasualtyMetrics(
+    state.data,
+    state.error,
+    distressPoll.data?.events,
+    distressPoll.error,
+    role,
+    opdEmergencyCount,
+  );
+
+  return (
+    <CasualtyBoardView
+      role={role}
+      canWrite={state.canWrite}
+      encounterId={encounterId}
+      data={state.data}
+      error={state.error}
+      busy={state.busy}
+      message={state.message}
+      failure={state.failure}
+      metrics={metrics}
+      onRefresh={state.refresh}
+      onRun={state.run}
+      onForm={state.form}
+    />
+  );
+}
+
+export function CareBoard({ kind, role, encounterId }: CareBoardProps) {
+  if (kind === "ipd") {
+    return <IpdCareBoard role={role} encounterId={encounterId} />;
+  }
+  return <CasualtyCareBoard role={role} encounterId={encounterId} />;
 }
