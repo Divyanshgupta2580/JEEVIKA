@@ -53,6 +53,7 @@ export function PatientPortalShell({
   titlePrefix,
   titleItalic,
   titleSuffix,
+  underlinePrefix = false,
   subtitle,
   children,
 }: {
@@ -62,6 +63,7 @@ export function PatientPortalShell({
   titlePrefix: string;
   titleItalic?: string;
   titleSuffix?: string;
+  underlinePrefix?: boolean;
   subtitle: string;
   children: ReactNode;
 }) {
@@ -130,16 +132,23 @@ export function PatientPortalShell({
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-3/4 bg-gradient-to-r from-[#FFFDF9] via-[#FEFBF6]/90 to-transparent sm:w-3/5"
+            className="pointer-events-none absolute inset-y-0 left-0 w-4/5 bg-gradient-to-r from-[#FFFDF9] via-[#FEFBF6]/95 to-transparent sm:w-3/5"
           />
-          <div className="relative z-10 max-w-sm sm:max-w-md lg:max-w-xl space-y-2 pr-14 sm:pr-44 lg:pr-56">
+          <div className="relative z-10 max-w-xs sm:max-w-md lg:max-w-xl space-y-2 pr-14 sm:pr-44 lg:pr-56">
             <h1
               ref={headingRef}
               tabIndex={-1}
               className="font-bold tracking-tight text-[#0E2420] leading-[1.12] focus:outline-none"
               style={{ fontSize: "clamp(1.75rem, 3vw, 2.5rem)" }}
             >
-              {titlePrefix}
+              {underlinePrefix ? (
+                <span className="relative inline-block pr-1">
+                  {titlePrefix}
+                  <PatientGoldUnderline className="absolute -bottom-1 left-0 h-2 w-full" />
+                </span>
+              ) : (
+                titlePrefix
+              )}
               {titleItalic && (
                 <>
                   {" "}
