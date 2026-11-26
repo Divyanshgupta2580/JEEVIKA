@@ -112,7 +112,7 @@ export function HerWellnessPage({
   signoutError,
   onLogout,
 }: {
-  headingRef: React.RefObject<HTMLHeadingElement | null>;
+  headingRef: React.RefObject<HTMLHeadingElement>;
   signout: boolean;
   signoutError: string;
   onLogout: () => void;

@@ -59,7 +59,7 @@ export function PatientPortalShell({
 }: {
   signout: boolean;
   onLogout: () => void;
-  headingRef: React.RefObject<HTMLHeadingElement | null>;
+  headingRef: React.RefObject<HTMLHeadingElement>;
   titlePrefix: string;
   titleItalic?: string;
   titleSuffix?: string;
