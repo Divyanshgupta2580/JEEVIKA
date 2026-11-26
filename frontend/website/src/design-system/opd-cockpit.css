@@ -534,17 +534,6 @@
   }
 }
 
-@keyframes jvk-notif-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes jvk-tooltip-enter {
   from {
     opacity: 0;
@@ -555,10 +544,6 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .jvk-notif-panel {
-    animation: jvk-notif-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
   .jvk-sidebar-tooltip {
     animation: jvk-tooltip-enter 110ms ease-out both;
   }

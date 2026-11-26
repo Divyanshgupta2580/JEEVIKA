@@ -1,0 +1,112 @@
+:root {
+  --jvk-motion-fast: 120ms;
+  --jvk-motion-standard: 200ms;
+  --jvk-motion-component: 260ms;
+  --jvk-motion-reveal: 460ms;
+  --jvk-motion-stagger: 60ms;
+  --jvk-motion-out: cubic-bezier(.22, 1, .36, 1);
+}
+
+.jvk-motion-action,
+.jvk-motion-card,
+.jvk-motion-control {
+  transition: background-color var(--jvk-motion-standard) var(--jvk-motion-out),
+    border-color var(--jvk-motion-standard) var(--jvk-motion-out),
+    color var(--jvk-motion-standard) var(--jvk-motion-out),
+    box-shadow var(--jvk-motion-standard) var(--jvk-motion-out),
+    translate var(--jvk-motion-fast) var(--jvk-motion-out);
+}
+
+.jvk-motion-field,
+:where(.ayu-erp input:not([type="range"], [type="checkbox"], [type="radio"]),
+  .ayu-erp select, .ayu-erp textarea) {
+  transition: background-color var(--jvk-motion-fast) ease-out,
+    border-color var(--jvk-motion-fast) ease-out,
+    box-shadow var(--jvk-motion-fast) ease-out;
+}
+
+:is(.jvk-motion-field, .ayu-erp :is(input, textarea, select))[aria-invalid="true"] {
+  transition: none;
+}
+
+.jvk-motion-arrow {
+  transition: transform var(--jvk-motion-standard) var(--jvk-motion-out);
+}
+
+.jvk-motion-card h3 {
+  transition: color var(--jvk-motion-standard) var(--jvk-motion-out);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes jvk-reveal-in {
+    from { opacity: .84; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes jvk-chrome-in {
+    from { opacity: .94; translate: 0 4px; }
+    to { opacity: 1; translate: none; }
+  }
+
+  @keyframes jvk-panel-in {
+    from { opacity: .94; translate: 0 -3px; }
+    to { opacity: 1; translate: none; }
+  }
+
+  [data-jvk-reveal="1"] { --jvk-reveal-delay: var(--jvk-motion-stagger); }
+  [data-jvk-reveal="2"] { --jvk-reveal-delay: calc(var(--jvk-motion-stagger) * 2); }
+  [data-jvk-reveal="3"] { --jvk-reveal-delay: calc(var(--jvk-motion-stagger) * 3); }
+
+  .jvk-motion-revealing {
+    animation: jvk-reveal-in var(--jvk-motion-reveal) var(--jvk-motion-out)
+      var(--jvk-reveal-delay, 0ms) backwards;
+  }
+
+  .jvk-motion-heading,
+  .jvk-motion-auth :is(h1, .jeevika-auth-artwork),
+  .jvk-motion-info h1,
+  .jvk-motion-details[open] > .jvk-motion-details-body,
+  .jvk-motion-success {
+    animation: jvk-chrome-in var(--jvk-motion-component) var(--jvk-motion-out);
+  }
+
+  .jvk-motion-menu[data-state="open"] {
+    animation: jvk-panel-in var(--jvk-motion-standard) var(--jvk-motion-out);
+  }
+
+  /* The clinician notification popover can contain time-sensitive alerts. */
+  .jvk-motion-notifications:not([data-clinical]) {
+    animation: jvk-panel-in var(--jvk-motion-standard) var(--jvk-motion-out);
+  }
+
+  .jvk-motion-dialog[data-state="open"] {
+    animation: jvk-chrome-in var(--jvk-motion-component) var(--jvk-motion-out);
+  }
+
+  :is(.jvk-motion-action, .jvk-motion-card):active:not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+    translate: 0 1px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .jvk-motion-card:hover:not(:active, :disabled, [aria-disabled="true"]) {
+    translate: 0 -2px;
+  }
+
+  :is(button.jvk-motion-card, .jvk-motion-card.jvk-motion-card-shadow):hover:not(:disabled, [aria-disabled="true"]) {
+    box-shadow: var(--ds-shadow-float);
+  }
+
+  :is(.jvk-motion-action, .jvk-motion-card):hover:not(:disabled, [aria-disabled="true"], [aria-busy="true"]) .jvk-motion-arrow {
+    transform: translateX(var(--jvk-arrow-travel, 3px));
+  }
+
+  .jvk-motion-arrow.lucide-arrow-left { --jvk-arrow-travel: -3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.jvk-motion-action, .jvk-motion-card, .jvk-motion-field, .jvk-motion-control, .jvk-motion-arrow),
+  .jvk-motion-card h3 {
+    transition: none;
+  }
+}

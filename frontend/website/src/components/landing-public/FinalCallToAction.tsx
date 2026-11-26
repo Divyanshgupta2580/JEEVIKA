@@ -73,7 +73,7 @@ export function FinalCallToAction() {
 
       {/* CTA Copy & Authentication Actions */}
       <div className="relative z-10 mx-auto max-w-3xl px-6 pt-6 pb-12 text-center sm:pt-8 sm:pb-14">
-        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-[2.15rem]">
+        <h2 data-jvk-reveal="" className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-[2.15rem]">
           Ready for a more connected kind of care?
         </h2>
         <p className="mt-2.5 text-sm text-[#DCEEE9] sm:text-base">
@@ -84,7 +84,7 @@ export function FinalCallToAction() {
           <Link
             to={destinations.patientSignIn.to}
             state={destinations.patientSignIn.state}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#FAF8F4] px-5 py-2.5 text-sm font-semibold text-[#0E2420] shadow-md transition-colors hover:bg-white"
+            className="jvk-motion-action inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#FAF8F4] px-5 py-2.5 text-sm font-semibold text-[#0E2420] shadow-md hover:bg-white"
           >
             <SignInDoorIcon className="size-4 text-[#0E2420]" />
             <span>Patient sign-in</span>
@@ -93,10 +93,10 @@ export function FinalCallToAction() {
           <Link
             to={destinations.enterWorkspace.to}
             state={destinations.enterWorkspace.state}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/65 bg-[#047765]/60 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+            className="jvk-motion-action inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/65 bg-[#047765]/60 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/15"
           >
             <span>Enter workspace</span>
-            <ArrowRight aria-hidden="true" className="size-4" />
+            <ArrowRight aria-hidden="true" className="jvk-motion-arrow size-4" />
           </Link>
         </div>
       </div>

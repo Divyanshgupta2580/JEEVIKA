@@ -72,16 +72,16 @@ export function HeroSection() {
               <button
                 type="button"
                 onClick={() => scrollToSection("phase-02")}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#047C61] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(4,124,97,0.22)] transition-all hover:bg-[#036450] cursor-pointer"
+                className="jvk-motion-action inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#047C61] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(4,124,97,0.22)] hover:bg-[#036450] cursor-pointer"
               >
                 <span>Explore Jeevika</span>
-                <ArrowRight aria-hidden="true" className="size-4" />
+                <ArrowRight aria-hidden="true" className="jvk-motion-arrow size-4" />
               </button>
 
               <button
                 type="button"
                 onClick={() => scrollToSection("workspaces")}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#C6D5CE] bg-[#FEFBF6]/92 px-5 py-2.5 text-sm font-semibold text-[#0E2420] transition-colors hover:bg-[#EFF7F2] cursor-pointer"
+                className="jvk-motion-action inline-flex min-h-11 items-center justify-center rounded-xl border border-[#C6D5CE] bg-[#FEFBF6]/92 px-5 py-2.5 text-sm font-semibold text-[#0E2420] hover:bg-[#EFF7F2] cursor-pointer"
               >
                 View platform
               </button>

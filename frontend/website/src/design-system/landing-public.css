@@ -95,17 +95,13 @@
 .jeevika-menu-dialog {
   opacity: 0;
   translate: -1.5rem 0;
-  transition:
-    opacity 0.2s ease,
-    translate 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
-    overlay 0.22s,
-    display 0.22s;
-  transition-behavior: allow-discrete;
 }
 
 .jeevika-menu-dialog[open] {
   opacity: 1;
   translate: 0 0;
+  transition: opacity var(--jvk-motion-standard) ease-out,
+    translate var(--jvk-motion-component) var(--jvk-motion-out);
 }
 
 @starting-style {
@@ -120,17 +116,13 @@
   display: block;
   opacity: 1;
   translate: 0 0;
+  transition: opacity var(--jvk-motion-fast) ease-out,
+    translate var(--jvk-motion-standard) var(--jvk-motion-out);
 }
 
 .jeevika-platform-popover {
   opacity: 0;
   translate: 0 -0.25rem;
-  transition:
-    opacity 0.16s ease,
-    translate 0.16s ease,
-    overlay 0.16s,
-    display 0.16s;
-  transition-behavior: allow-discrete;
 }
 
 @starting-style {
@@ -147,8 +139,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .jeevika-menu-dialog,
-  .jeevika-platform-popover {
+  .jeevika-menu-dialog[open],
+  .jeevika-platform-popover:is(:popover-open, .\:popover-open) {
     transition: none;
     translate: 0 0;
   }

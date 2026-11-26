@@ -34,10 +34,12 @@ export function InlineBanner({
   tone = "info",
   title,
   children,
+  animateEntrance = false,
 }: {
   tone?: StatusTone;
   title: string;
   children?: ReactNode;
+  animateEntrance?: boolean;
 }) {
   const Icon = tone === "emergency" || tone === "critical"
     ? AlertTriangle
@@ -47,7 +49,7 @@ export function InlineBanner({
         ? ShieldAlert
         : Info;
   return (
-    <div role={tone === "emergency" || tone === "critical" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 ${toneClasses[tone]}`}>
+    <div role={tone === "emergency" || tone === "critical" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 ${toneClasses[tone]}${animateEntrance && tone === "success" ? " jvk-motion-success" : ""}`}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
       <div>
         <p className="text-sm font-bold">{title}</p>

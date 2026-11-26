@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useScrollReveal } from "@/lib/useScrollReveal";
 import { FinalCallToAction } from "./FinalCallToAction";
 import { HeroSection } from "./HeroSection";
 import { IntelligenceEnginesSection } from "./IntelligenceEnginesSection";
@@ -8,6 +9,9 @@ import { TrustAndGovernanceSection } from "./TrustAndGovernanceSection";
 import { WorkspaceShowcase } from "./WorkspaceShowcase";
 
 export function PublicLandingPage() {
+  const mainRef = useRef<HTMLElement>(null);
+  useScrollReveal(mainRef);
+
   useEffect(() => {
     document.documentElement.classList.add("jeevika-landing-snap");
     return () => document.documentElement.classList.remove("jeevika-landing-snap");
@@ -15,7 +19,7 @@ export function PublicLandingPage() {
 
   return (
     <>
-      <main id="public-main" tabIndex={-1} className="w-full focus:outline-none">
+      <main ref={mainRef} id="public-main" tabIndex={-1} className="w-full focus:outline-none">
         {/* Phase 01 — Default Landing Screen */}
         <HeroSection />
 

@@ -107,14 +107,15 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                 role="dialog"
                 aria-label="Notifications"
                 style={{ '--jvk-notif-top': `${panelTopPx}px` } as CSSProperties}
-                className="jvk-notif-panel absolute bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+                className="jvk-notif-panel jvk-motion-notifications absolute bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+                data-clinical={opd ? "" : undefined}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="jvk-notif-header shrink-0 flex items-center justify-between px-3 py-3 sm:p-4 border-b border-slate-100 gap-1.5 sm:gap-2">
                     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                         <SymbolIcon className="material-symbols-outlined shrink-0 text-slate-700">notifications</SymbolIcon>
-                        <h3 className="font-bold text-[15px] sm:text-base text-slate-900 truncate">Notifications</h3>
+                        <h3 className="jvk-motion-heading font-bold text-[15px] sm:text-base text-slate-900 truncate">Notifications</h3>
                         {(notifications.length + (opd?.alerts.length ?? 0)) > 0 && (
                             <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 sm:px-2 py-0.5 rounded-full">
                                 {notifications.length + (opd?.alerts.length ?? 0)}
@@ -226,7 +227,7 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                                         className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors cursor-pointer group"
                                         onClick={() => setSelectedNotification(notif)}
                                     >
-                                        <div className={`w-9 h-9 rounded-xl ${colors.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                                        <div className={`w-9 h-9 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}>
                                             <SymbolIcon className={`material-symbols-outlined text-[18px] ${colors.text}`}>{notif.icon}</SymbolIcon>
                                         </div>
                                         <div className="flex-1 min-w-0">

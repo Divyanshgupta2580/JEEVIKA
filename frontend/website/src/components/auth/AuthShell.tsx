@@ -21,7 +21,7 @@ export function AuthLayout({
   return (
     <div
       className={cn(
-        "jeevika-landing min-h-dvh bg-[#FEFBF6] text-[#0E2420] antialiased flex flex-col justify-between relative overflow-x-clip selection:bg-[#E7F2E8] selection:text-[#047C61]",
+        "jvk-motion-auth jeevika-landing min-h-dvh bg-[#FEFBF6] text-[#0E2420] antialiased flex flex-col justify-between relative overflow-x-clip selection:bg-[#E7F2E8] selection:text-[#047C61]",
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function AuthHeader({ variant = "staff" }: { variant?: "staff" | "compact
           <Link
             to="/"
             aria-label="JEEVIKA home"
-            className="inline-flex min-h-11 items-center rounded-lg px-0.5 transition-transform hover:scale-[1.02]"
+            className="inline-flex min-h-11 items-center rounded-lg px-0.5"
           >
             <img
               src="/assets/logo-jeevika.png"
@@ -120,7 +120,7 @@ export function AuthFormCard({
   return (
     <div
       className={cn(
-        "rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] shadow-[0_20px_50px_rgba(14,36,32,0.08)]",
+        "jvk-motion-auth rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] shadow-[0_20px_50px_rgba(14,36,32,0.08)]",
         className,
       )}
     >
@@ -144,7 +144,7 @@ export const AuthInput = React.forwardRef<
     <input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-xl border border-[#D8D3C6] bg-[#FAF8F2] px-3.5 py-2 text-sm text-[#0E2420] placeholder:text-[#788781] transition-colors focus:bg-white focus:border-[#047C61] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 disabled:cursor-not-allowed disabled:opacity-60",
+        "jvk-motion-field flex h-11 w-full rounded-xl border border-[#D8D3C6] bg-[#FAF8F2] px-3.5 py-2 text-sm text-[#0E2420] placeholder:text-[#788781] focus:bg-white focus:border-[#047C61] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 disabled:cursor-not-allowed disabled:opacity-60",
         Icon && "pl-10",
         className,
       )}
@@ -173,7 +173,7 @@ export const AuthPasswordInput = React.forwardRef<
         ref={ref}
         type={visible ? "text" : "password"}
         className={cn(
-          "flex h-11 w-full rounded-xl border border-[#D8D3C6] bg-[#FAF8F2] px-3.5 py-2 pr-11 text-sm text-[#0E2420] placeholder:text-[#788781] transition-colors focus:bg-white focus:border-[#047C61] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 disabled:cursor-not-allowed disabled:opacity-60",
+          "jvk-motion-field flex h-11 w-full rounded-xl border border-[#D8D3C6] bg-[#FAF8F2] px-3.5 py-2 pr-11 text-sm text-[#0E2420] placeholder:text-[#788781] focus:bg-white focus:border-[#047C61] focus:outline-none focus:ring-2 focus:ring-[#047C61]/20 disabled:cursor-not-allowed disabled:opacity-60",
           Icon && "pl-10",
           className,
         )}
@@ -209,7 +209,7 @@ export function AuthSubmitButton({
       type="submit"
       disabled={disabled || loading}
       className={cn(
-        "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#047C61] to-[#025E4C] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(4,124,97,0.22)] transition-all hover:from-[#036B54] hover:to-[#025142] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer",
+        "jvk-motion-action inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#047C61] to-[#025E4C] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(4,124,97,0.22)] enabled:hover:from-[#036B54] enabled:hover:to-[#025142] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer",
         className,
       )}
       {...props}

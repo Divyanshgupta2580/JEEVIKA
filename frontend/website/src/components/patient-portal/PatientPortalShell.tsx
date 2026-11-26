@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { useRouteEntrance } from "@/lib/transitions";
 import { Link, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -69,6 +70,8 @@ export function PatientPortalShell({
 }) {
   const { pathname } = useLocation();
   const section = pathname.split("/").filter(Boolean).at(-1) ?? "thread";
+  const subtitleRef = useRef<HTMLParagraphElement>(null);
+  useRouteEntrance(subtitleRef, section);
 
   return (
     <div className="jvk-patient-portal relative min-h-dvh flex flex-col justify-between overflow-x-clip bg-[#FEFBF6] text-[#0E2420] pb-20 md:pb-0">
@@ -87,7 +90,7 @@ export function PatientPortalShell({
             <Link
               to="/app/home/thread"
               aria-label="JEEVIKA Health Thread"
-              className="inline-flex min-h-11 items-center rounded-lg px-0.5 transition-transform hover:scale-[1.02]"
+              className="inline-flex min-h-11 items-center rounded-lg px-0.5"
             >
               <img
                 src="/assets/logo-jeevika.png"
@@ -160,7 +163,7 @@ export function PatientPortalShell({
               )}
               {titleSuffix}
             </h1>
-            <p className="text-[13px] sm:text-sm leading-relaxed text-[#465953]">
+            <p ref={subtitleRef} className="text-[13px] sm:text-sm leading-relaxed text-[#465953]">
               {subtitle}
             </p>
           </div>
@@ -212,7 +215,7 @@ export function PatientPortalShell({
               key={label}
               to={`/app/home/${paths[0]}`}
               aria-current={active ? "page" : undefined}
-              className={`relative flex min-h-14 md:min-h-10 min-w-0 flex-col md:flex-row items-center justify-center gap-1 md:gap-1.5 rounded-xl px-1.5 md:px-2.5 lg:px-3.5 py-1.5 text-[11px] md:text-[12.5px] lg:text-[13px] font-semibold transition-colors ${
+              className={`jvk-motion-control relative flex min-h-14 md:min-h-10 min-w-0 flex-col md:flex-row items-center justify-center gap-1 md:gap-1.5 rounded-xl px-1.5 md:px-2.5 lg:px-3.5 py-1.5 text-[11px] md:text-[12.5px] lg:text-[13px] font-semibold ${
                 active
                   ? "bg-[#E5F3EA] text-[#047C61]"
                   : "text-[#4B5D57] hover:bg-[#F3EFE5] hover:text-[#0E2420]"

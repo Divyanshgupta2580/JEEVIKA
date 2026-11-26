@@ -80,7 +80,7 @@ export function WorkspaceShowcase() {
     <div id="workspaces" className="scroll-mt-20 pb-14 lg:pb-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header split row */}
-        <div className="mb-8 flex flex-col justify-between gap-4 lg:mb-10 lg:flex-row lg:items-end">
+        <div data-jvk-reveal="" className="mb-8 flex flex-col justify-between gap-4 lg:mb-10 lg:flex-row lg:items-end">
           <h2 className="text-3xl font-bold tracking-tight text-[#0E2420] sm:text-4xl">
             Five connected{" "}
             <span className="relative inline-block jeevika-serif-italic pr-1">
@@ -96,12 +96,13 @@ export function WorkspaceShowcase() {
 
         {/* 5-Column Workspace Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4 xl:gap-5">
-          {cards.map((card) => (
+          {cards.map((card, index) => (
             <Link
               key={card.id}
               to={card.target.to}
               state={card.target.state}
-              className="group relative flex flex-col rounded-2xl border border-[#EAE6DC] bg-[#FFFDF8] p-4 shadow-[0_6px_22px_rgba(14,36,32,0.04)] transition-all hover:border-[#047C61]/45 hover:shadow-[0_10px_28px_rgba(4,124,97,0.08)] sm:p-5"
+              data-jvk-reveal={Math.min(index, 3)}
+              className="jvk-motion-card group relative flex flex-col rounded-2xl border border-[#EAE6DC] bg-[#FFFDF8] p-4 shadow-[0_6px_22px_rgba(14,36,32,0.04)] hover:border-[#047C61]/45 hover:shadow-[0_10px_28px_rgba(4,124,97,0.08)] sm:p-5"
             >
               <div className="mb-3 flex h-24 w-full items-end justify-center overflow-visible">
                 <img
@@ -110,7 +111,7 @@ export function WorkspaceShowcase() {
                   width={card.imgWidth}
                   height={card.imgHeight}
                   loading="lazy"
-                  className={`max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.03] ${
+                  className={`max-w-full object-contain ${
                     card.isPortrait ? "h-[104px] w-auto -mt-3" : "h-[88px] w-auto"
                   }`}
                 />
@@ -127,7 +128,7 @@ export function WorkspaceShowcase() {
               <div className="mt-3 flex justify-end text-[#047C61]">
                 <ArrowRight
                   aria-hidden="true"
-                  className="size-4 stroke-[2] transition-transform group-hover:translate-x-0.5"
+                  className="jvk-motion-arrow size-4 stroke-[2]"
                 />
               </div>
             </Link>

@@ -212,7 +212,7 @@ export function PharmacyInflow() {
   return (
     <section className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
       <header className="flex flex-wrap justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Pharmacy POS</h1>
+        <h1 className="jvk-motion-heading text-2xl font-semibold">Pharmacy POS</h1>
         <Button
           variant="outline"
           onClick={() => setRevision((value) => value + 1)}
@@ -418,7 +418,7 @@ export function ClinicStock({
   return (
     <section className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
       <header className="flex flex-wrap justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Clinic inventory</h1>
+        <h1 className="jvk-motion-heading text-2xl font-semibold">Clinic inventory</h1>
         <Button
           variant="outline"
           onClick={() => setRevision((value) => value + 1)}

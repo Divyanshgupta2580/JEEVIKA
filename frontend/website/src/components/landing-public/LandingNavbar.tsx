@@ -254,7 +254,7 @@ export function LandingNavbar() {
                     scrollToSection("phase-01");
                   }
                 }}
-                className="inline-flex min-h-11 items-center rounded-lg px-0.5 transition-transform hover:scale-[1.02]"
+                className="inline-flex min-h-11 items-center rounded-lg px-0.5"
               >
                 <img
                   src="/assets/logo-jeevika.png"
@@ -346,7 +346,7 @@ export function LandingNavbar() {
                   <button
                     type="button"
                     onClick={() => jumpToSection("workspaces")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#0E2420] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
+                    className="jvk-motion-control flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#0E2420] hover:bg-[#D8EFE2] hover:text-[#035442] cursor-pointer"
                   >
                     <span>Five connected workspaces</span>
                     <ArrowRight aria-hidden="true" className="size-3.5" />
@@ -354,14 +354,14 @@ export function LandingNavbar() {
                   <button
                     type="button"
                     onClick={() => jumpToSection("journey")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
+                    className="jvk-motion-control flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] hover:bg-[#D8EFE2] hover:text-[#035442] cursor-pointer"
                   >
                     <span>Connected patient journey</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => jumpToSection("engines")}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] transition-all hover:bg-[#D8EFE2] hover:pl-3.5 hover:text-[#035442] cursor-pointer motion-reduce:transition-none"
+                    className="jvk-motion-control flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[#2A3F3A] hover:bg-[#D8EFE2] hover:text-[#035442] cursor-pointer"
                   >
                     <span>Four intelligence engines</span>
                   </button>
@@ -552,7 +552,7 @@ export function LandingNavbar() {
                         to={item.target.to}
                         state={item.target.state}
                         onClick={closeMenu}
-                        className="flex items-start gap-3 rounded-xl border border-[#EAE6DC] bg-[#FFFDF8] p-3 transition-colors hover:border-[#047C61]/45 hover:bg-[#F5FBF8]"
+                        className="jvk-motion-card jvk-motion-card-shadow flex items-start gap-3 rounded-xl border border-[#EAE6DC] bg-[#FFFDF8] p-3 hover:border-[#047C61]/45 hover:bg-[#F5FBF8]"
                       >
                         <div className="mt-0.5 rounded-lg bg-[#E7F2E8] p-2 text-[#047C61]">
                           <Icon aria-hidden="true" className="size-4" />

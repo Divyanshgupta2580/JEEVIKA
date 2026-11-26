@@ -1,48 +1,26 @@
-import { Variants } from 'framer-motion';
+import { useEffect, type RefObject } from "react";
 
-export const pageVariants: Variants = {
-    initial: {
-        opacity: 0,
-        y: 10,
-    },
-    animate: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.4,
-            ease: [0.22, 1, 0.36, 1], // Custom cubic-bezier for a premium feel
-        },
-    },
-    exit: {
-        opacity: 0,
-        y: -10,
-        transition: {
-            duration: 0.3,
-            ease: [0.22, 1, 0.36, 1],
-        },
-    },
-};
+/** Play a brief entrance on existing, noncritical route chrome. */
+export function useRouteEntrance(ref: RefObject<HTMLElement>, route: string) {
+  useEffect(() => {
+    const element = ref.current;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (preference.matches || !element?.animate) return;
 
-export const containerVariants: Variants = {
-    initial: { opacity: 0 },
-    animate: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-            delayChildren: 0.2,
-        },
-    },
-};
+    const tokens = getComputedStyle(element);
+    const duration = Number.parseFloat(tokens.getPropertyValue("--jvk-motion-component"));
+    const easing = tokens.getPropertyValue("--jvk-motion-out").trim();
+    if (!duration || !easing) return;
 
-export const itemVariants: Variants = {
-    initial: { opacity: 0, y: 20 },
-    animate: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            type: 'spring',
-            damping: 25,
-            stiffness: 200,
-        },
-    },
-};
+    const animation = element.animate(
+      [{ translate: "0 4px", opacity: 0.94 }, { translate: "none", opacity: 1 }],
+      { duration, easing },
+    );
+    const cancel = () => animation.cancel();
+    preference.addEventListener("change", cancel);
+    return () => {
+      preference.removeEventListener("change", cancel);
+      cancel();
+    };
+  }, [ref, route]);
+}

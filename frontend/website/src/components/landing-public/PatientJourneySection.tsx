@@ -47,7 +47,7 @@ export function PatientJourneySection() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-6">
           {/* Left Copy */}
-          <div className="lg:col-span-4 space-y-3">
+          <div data-jvk-reveal="" className="lg:col-span-4 space-y-3">
             <h2 className="text-3xl font-bold tracking-tight text-[#0E2420] leading-[1.14] sm:text-4xl">
               Connected
               <br />
@@ -71,7 +71,7 @@ export function PatientJourneySection() {
                   key={title}
                   className="contents"
                 >
-                  <div className="flex flex-col items-center rounded-2xl border border-[#EAE6DC] bg-[#FCFBF6] p-4 text-center shadow-[0_4px_16px_rgba(14,36,32,0.04)] sm:p-5 xl:items-start xl:text-left">
+                  <div data-jvk-reveal={Math.min(idx, 3)} className="flex flex-col items-center rounded-2xl border border-[#EAE6DC] bg-[#FCFBF6] p-4 text-center shadow-[0_4px_16px_rgba(14,36,32,0.04)] sm:p-5 xl:items-start xl:text-left">
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-[#E7F2E8] text-[#047C61] xl:mx-auto">
                       <Icon className="size-6" />
                     </div>

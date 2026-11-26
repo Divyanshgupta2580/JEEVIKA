@@ -69,8 +69,6 @@ const LoginPage = lazyWithRetry(() => import("@/components/LoginPage").then(modu
 const RegisterPage = lazyWithRetry(() => import("@/components/RegisterPage").then(module => ({ default: module.RegisterPage })));
 import { useLocation, useNavigate } from 'react-router-dom';
 import { logPageView } from '@/lib/analytics';
-import { motion, AnimatePresence } from 'framer-motion';
-import { pageVariants } from '@/lib/transitions';
 
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button, WorkspaceSkeleton, DashboardSkeleton } from '@/components/ui/basic'
@@ -167,15 +165,9 @@ const SEO_ROUTES: Record<string, SeoConfig> = {
 }
 
 const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-    <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="w-full h-full"
-    >
+    <div className="jvk-motion-info w-full h-full">
         {children}
-    </motion.div>
+    </div>
 );
 
 function AppContent() {
@@ -242,8 +234,7 @@ function AppContent() {
             onSelectClinicId={setSelectedClinicId}
         >
             <Suspense fallback={<DashboardSkeleton />}>
-                <AnimatePresence mode="wait">
-                    <PageWrapper key={view}>
+                <div className="w-full h-full">
                     {view === 'nurse-calls' && routeAccess('/app/nurse-calls', verifiedRole) === 'Full' && (
                         <NurseCallQueue />
                     )}
@@ -417,8 +408,7 @@ function AppContent() {
                     {view === 'settings' && (
                         <SettingsDashboard />
                     )}
-                </PageWrapper>
-            </AnimatePresence>
+                </div>
             </Suspense>
 
             <Toaster />
@@ -657,7 +647,6 @@ function AppRouter() {
         <>
             <SeoManager />
             <AnalyticsTracker />
-            <AnimatePresence mode="wait">
                 <Routes location={location}>
                     {/* Public routes */}
                     <Route path="/" element={<PublicLayout><PublicOverview /></PublicLayout>} />
@@ -689,7 +678,6 @@ function AppRouter() {
                     {/* Catch-all redirects to /login */}
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
-            </AnimatePresence>
         </>
     )
 }

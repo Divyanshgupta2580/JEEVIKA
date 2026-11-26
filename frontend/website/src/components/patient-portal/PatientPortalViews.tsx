@@ -141,7 +141,7 @@ function ActionFeedback({
   return (
     <>
       {error && <InlineBanner tone="critical" title={error} />}
-      {message && <InlineBanner tone="success" title={message} />}
+      {message && <InlineBanner tone="success" title={message} animateEntrance />}
     </>
   );
 }
@@ -557,7 +557,7 @@ export function CheckInView() {
             </div>
           </details>
 
-          <details className="jvk-card group overflow-hidden">
+          <details className="jvk-motion-details jvk-card group overflow-hidden">
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 sm:px-5 font-bold text-[#0E2420] hover:bg-[#F7F4EB]/70 transition-colors">
               <span className="flex items-center gap-3">
                 <span className="inline-flex size-9 items-center justify-center rounded-xl bg-[#FBF1DA] text-[#17463B]">
@@ -571,7 +571,7 @@ export function CheckInView() {
               />
             </summary>
 
-            <div className="jvk-capture-slot border-t border-[#EAE6DC] px-4 py-4 sm:px-5 space-y-3">
+            <div className="jvk-motion-details-body jvk-capture-slot border-t border-[#EAE6DC] px-4 py-4 sm:px-5 space-y-3">
               <VoiceControls
                 locale="en-IN"
                 caption="Tell us how you are feeling today."

@@ -33,7 +33,7 @@ export function TrustAndGovernanceSection() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-14">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
           {/* Left Heading & Description */}
-          <div className="space-y-3 lg:col-span-5 lg:border-r lg:border-[#E7DFC9] lg:pr-8">
+          <div data-jvk-reveal="" className="space-y-3 lg:col-span-5 lg:border-r lg:border-[#E7DFC9] lg:pr-8">
             <h2 className="text-3xl font-bold tracking-tight text-[#0E2420] leading-[1.15] sm:text-4xl">
               Trust, privacy &amp;
               <br />
@@ -49,7 +49,7 @@ export function TrustAndGovernanceSection() {
           </div>
 
           {/* Center-Right Principles */}
-          <div className="space-y-6 lg:col-span-5 lg:pl-2">
+          <div data-jvk-reveal="" className="space-y-6 lg:col-span-5 lg:pl-2">
             <div className="flex items-start gap-3.5">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F2E8] text-[#047C61]">
                 <ConsentLockIcon className="size-5" />

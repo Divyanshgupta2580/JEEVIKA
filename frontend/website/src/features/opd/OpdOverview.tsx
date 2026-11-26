@@ -38,7 +38,7 @@ export function OpdOverview() {
       {/* Hero section matching approved OPD Cockpit reference */}
       <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[144px] lg:min-h-[168px] md:flex md:items-center">
         <div className="relative z-10 w-full md:max-w-[60%] lg:max-w-[63%] xl:max-w-[66%] space-y-2.5">
-          <h1 className="jvk-opd-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
+          <h1 className="jvk-motion-heading jvk-opd-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
             Doctor Consultation{" "}
             <span className="relative inline-block jvk-opd-italic pr-1">
               (OPD)
@@ -266,7 +266,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/doctor/cbc")}
-          className="jvk-opd-card p-5 text-left hover:border-[#047C61] transition-all flex items-center gap-4 group cursor-pointer"
+          className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">
             <FileText className="w-6 h-6 stroke-[1.75]" aria-hidden="true" />
@@ -283,7 +283,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/doctor/rx")}
-          className="jvk-opd-card p-5 text-left hover:border-[#047C61] transition-all flex items-center gap-4 group cursor-pointer"
+          className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">
             <Pill className="w-6 h-6 stroke-[1.75]" aria-hidden="true" />
@@ -304,7 +304,7 @@ export function OpdOverview() {
         <button
           type="button"
           onClick={() => navigateOpd("/app/ayush")}
-          className="jvk-opd-card p-5 text-left hover:border-[#047C61] transition-all flex items-center gap-4 group cursor-pointer"
+          className="jvk-motion-card jvk-opd-card p-5 text-left hover:border-[#047C61] flex items-center gap-4 group cursor-pointer"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#E5F2EA] text-[#087F72] group-hover:scale-105 transition-transform">
             <Leaf className="w-6 h-6 stroke-[1.75]" aria-hidden="true" />

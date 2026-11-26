@@ -47,9 +47,9 @@ export function OpdSubpageHeader({
             <button
               type="button"
               onClick={() => navigateOpd("/app/doctor")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2DBCB] bg-white px-2.5 py-1 font-semibold text-[#175B4B] hover:border-[#047C61] hover:bg-[#F3F9F5] transition-colors"
+              className="jvk-motion-action inline-flex items-center gap-1.5 rounded-lg border border-[#E2DBCB] bg-white px-2.5 py-1 font-semibold text-[#175B4B] hover:border-[#047C61] hover:bg-[#F3F9F5]"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="jvk-motion-arrow w-3.5 h-3.5" />
               <span>Back to OPD Cockpit</span>
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-[#8A9991]" aria-hidden="true" />
@@ -60,7 +60,7 @@ export function OpdSubpageHeader({
               Doctor Consultation <span className="jvk-opd-italic">(OPD)</span>
             </h1>
             <span className="text-[#8A9991]" aria-hidden="true">·</span>
-            <h2 className="text-lg sm:text-xl font-bold text-[#175B4B]">{sectionTitle}</h2>
+            <h2 className="jvk-motion-heading text-lg sm:text-xl font-bold text-[#175B4B]">{sectionTitle}</h2>
           </div>
           <p className="text-sm text-[#4F635B]">{subtitle}</p>
         </div>
@@ -106,7 +106,7 @@ export function OpdSubpageHeader({
               type="button"
               aria-current={isCurrent ? "page" : undefined}
               onClick={() => navigateOpd(tab.path)}
-              className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+              className={`jvk-motion-control inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold ${
                 isCurrent
                   ? "bg-[#047C61] text-white shadow-xs"
                   : "text-[#354E45] hover:bg-white hover:text-[#0E2420]"

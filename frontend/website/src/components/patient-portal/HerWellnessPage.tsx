@@ -219,7 +219,7 @@ export function HerWellnessPage({
             <Link
               to="/app/home/thread"
               aria-label="JEEVIKA Health Thread"
-              className="inline-flex min-h-11 items-center rounded-lg px-0.5 transition-transform hover:scale-[1.02]"
+              className="inline-flex min-h-11 items-center rounded-lg px-0.5"
             >
               <img
                 src="/assets/logo-jeevika.png"
@@ -303,7 +303,7 @@ export function HerWellnessPage({
                 key={route}
                 to={`/app/home/${route}`}
                 aria-current={active ? "page" : undefined}
-                className={`relative overflow-hidden min-h-12 flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
+                className={`jvk-motion-control relative overflow-hidden min-h-12 flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold ${
                   active
                     ? "border-[#047C61] bg-gradient-to-b from-[#047C61] to-[#025D4B] text-white shadow-[0_6px_16px_rgba(4,124,97,0.22)]"
                     : "border-[#E4DFD3] bg-[#FFFDF9] text-[#182E29] shadow-[0_2px_8px_rgba(14,36,32,0.03)] hover:bg-[#F3EFE5]"
@@ -336,7 +336,7 @@ export function HerWellnessPage({
 
         <div className="space-y-4 mb-4">
           {actionError && <InlineBanner tone="critical" title={actionError} />}
-          {message && <InlineBanner tone="success" title={message} />}
+          {message && <InlineBanner tone="success" title={message} animateEntrance />}
           {urgent && (
             <InlineBanner tone="critical" title="Seek urgent clinical care" />
           )}

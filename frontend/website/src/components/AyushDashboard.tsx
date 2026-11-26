@@ -97,7 +97,7 @@ export function AyushDashboard() {
         {/* Hero Header */}
         <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[144px] lg:min-h-[164px] md:flex md:items-center">
           <div className="relative z-10 w-full md:max-w-[54%] lg:max-w-[55%] space-y-2.5">
-            <h1 className="jvk-ca-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
+            <h1 className="jvk-motion-heading jvk-ca-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
               AYUSH{" "}
               <span className="relative inline-block pr-1">
                 Portal
@@ -324,10 +324,10 @@ export function AyushDashboard() {
           <button
             type="button"
             onClick={() => scrollToSection("ayush-formulations")}
-            className="jvk-ca-card p-5 text-left hover:border-[#047C61] transition-all flex items-center justify-between gap-3 group cursor-pointer"
+            className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72] group-hover:scale-105 transition-transform">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72]">
                 <Sprout className="w-5 h-5 stroke-[1.75]" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -341,16 +341,16 @@ export function AyushDashboard() {
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
+            <ArrowRight className="jvk-motion-arrow w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
           </button>
 
           <button
             type="button"
             onClick={() => scrollToSection("ayush-prakriti")}
-            className="jvk-ca-card p-5 text-left hover:border-[#047C61] transition-all flex items-center justify-between gap-3 group cursor-pointer"
+            className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72] group-hover:scale-105 transition-transform">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72]">
                 <Leaf className="w-5 h-5 stroke-[1.75]" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -364,7 +364,7 @@ export function AyushDashboard() {
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
+            <ArrowRight className="jvk-motion-arrow w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
           </button>
 
           <button
@@ -372,10 +372,10 @@ export function AyushDashboard() {
             onClick={() =>
               selected ? scrollToSection("ayush-treatment") : navigate("/app/doctor")
             }
-            className="jvk-ca-card p-5 text-left hover:border-[#047C61] transition-all flex items-center justify-between gap-3 group cursor-pointer"
+            className="jvk-motion-card jvk-ca-card p-5 text-left hover:border-[#047C61] flex items-center justify-between gap-3 group cursor-pointer"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72] group-hover:scale-105 transition-transform">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E1F1E6] text-[#087F72]">
                 <ClipboardCheck className="w-5 h-5 stroke-[1.75]" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -389,7 +389,7 @@ export function AyushDashboard() {
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
+            <ArrowRight className="jvk-motion-arrow w-4 h-4 shrink-0 text-[#087F72]" aria-hidden="true" />
           </button>
         </section>
       </div>

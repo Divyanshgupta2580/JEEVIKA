@@ -261,7 +261,7 @@ export function KioskIntake() {
                     <li key={key}>
                       <Button
                         variant={key === locale ? "default" : "outline"}
-                        className="w-full"
+                        className="jvk-motion-action w-full"
                         lang={lang}
                         aria-pressed={key === locale}
                         onClick={() => setLocale(key as Intake["locale"])}
