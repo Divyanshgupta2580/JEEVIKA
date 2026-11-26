@@ -1,15 +1,17 @@
 import { confirmCbcNavigation } from "../../features/cbc/navigation";
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useHospital } from '@/context/HospitalContext'
 import { NotificationsPanel } from '@/components/ui/NotificationsPanel'
 import { requestNotificationPermission } from '@/lib/notifications'
 import { useTour } from '@/context/TourContext'
 import { workspaceTour } from '@/tourSteps'
-import { PanelLeftClose, PanelLeftOpen, Play } from 'lucide-react'
+import { LayoutGrid, PanelLeftClose, PanelLeftOpen, Play } from 'lucide-react'
 import { routeAccess, staffNavItems } from '@/lib/rbac'
 import { ShellEmergency } from '@/components/ShellEmergency'
+import { useOptionalOpdWorkspace } from '@/features/opd/opdContext'
+import '@/design-system/opd-cockpit.css'
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -31,10 +33,20 @@ export function AppLayout({
     onSelectClinicId
 }: AppLayoutProps) {
     const navigate = useNavigate();
+    const location = useLocation();
+    const mainScrollRef = useRef<HTMLElement>(null);
+    useEffect(() => {
+        if (mainScrollRef.current && typeof mainScrollRef.current.scrollTo === 'function') {
+            mainScrollRef.current.scrollTo({ top: 0 });
+        }
+    }, [location.pathname, location.search]);
     const { session, profile: userProfile, hospital, clinics, unseenCount } = useHospital()
+    const opd = useOptionalOpdWorkspace()
     const { startTour, scope, isTourActive, endTour } = useTour()
     const role = userProfile?.role
     const verifiedRole = typeof session?.role === "string" ? session.role : null
+    const isDoctorRole = verifiedRole === 'DOCTOR'
+    const isClinicianOpdTheme = isDoctorRole && (view === 'doctor-consultation' || view === 'doctor-alerts')
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -70,6 +82,15 @@ export function AppLayout({
                 badge: 'PLATFORM ADMINISTRATION',
                 badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
                 dotClass: 'bg-emerald-600'
+            };
+        }
+        if (view === 'doctor-alerts') {
+            return {
+                number: '02',
+                name: 'Clinical & Operational Alerts',
+                badge: 'PORTAL 2 · CLINICIAN ALERTS',
+                badgeClass: 'bg-[#E1F0E7] text-[#175B4B] border-[#C6E0D1]',
+                dotClass: 'bg-rose-500'
             };
         }
         if (view === 'doctor-consultation') {
@@ -128,13 +149,15 @@ export function AppLayout({
         onClick: () => void;
         disabled?: boolean;
         id?: string;
+        badgeCount?: number;
+        urgentBadge?: boolean;
     };
-    const NavItem = ({ icon, label, active, onClick, disabled, id }: NavItemProps) => (
+    const NavItem = ({ icon, label, active, onClick, disabled, id, badgeCount, urgentBadge }: NavItemProps) => (
         <button
             type="button"
             id={id}
             title={label}
-            aria-label={label}
+            aria-label={badgeCount && badgeCount > 0 ? `${label} (${badgeCount} active)` : label}
             aria-current={active ? 'page' : undefined}
             onClick={() => {
                 if (!disabled) {
@@ -146,12 +169,23 @@ export function AppLayout({
             className={`ayu-workspace-nav-item w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl transition-colors group
                 ${disabled ? 'opacity-50 cursor-not-allowed text-slate-400' :
                     active
-                        ? 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
+                        ? isClinicianOpdTheme
+                            ? 'bg-[#E5F3EB] text-[#0E2420] font-bold border border-[#C6E1D1] shadow-xs'
+                            : 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
+                        : isClinicianOpdTheme
+                            ? 'text-[#314A42] hover:bg-[#EEF6F1] hover:text-[#0E2420]'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
                 `}
         >
-            <SymbolIcon className={`material-symbols-outlined text-[20px] ${active ? 'text-teal-700' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
+            <SymbolIcon className={`material-symbols-outlined text-[20px] ${active ? 'text-[#047C61]' : isClinicianOpdTheme ? 'text-[#3F5E54] group-hover:text-[#0E2420]' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
             <span className={`ayu-nav-label text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
+            {typeof badgeCount === 'number' && badgeCount > 0 && (
+                <span className={`ayu-nav-label ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                    urgentBadge ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-[#F8EBCD] text-[#7D5710] border border-[#EAD49F]'
+                }`}>
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                </span>
+            )}
             {disabled && <SymbolIcon className="ayu-nav-label material-symbols-outlined text-[16px] ml-auto opacity-50">lock</SymbolIcon>}
         </button>
     )
@@ -198,15 +232,29 @@ export function AppLayout({
         );
     }
 
+    const hasEmergencyAlerts = Boolean(opd?.alerts.some((a) => a.severity === 'EMERGENCY'));
+    const activeAlertCount = opd?.alerts.length ?? 0;
+    const bellBadgeCount = isDoctorRole && opd ? activeAlertCount + unseenCount : unseenCount;
+    const isSyntheticFallbackName = userProfile?.full_name === 'Dr. Senior Consultant, MD';
+    const sidebarDisplayName = isDoctorRole
+        ? (!isSyntheticFallbackName && userProfile?.full_name
+            ? userProfile.full_name
+            : session?.email || session?.id || 'Clinician account')
+        : (userProfile?.full_name || 'Staff account');
+
     return (
         <div
-            className="ayu-workspace-shell flex h-screen w-full overflow-hidden bg-white font-sans text-slate-900"
+            className={`ayu-workspace-shell flex h-screen w-full overflow-hidden font-sans ${
+                isClinicianOpdTheme
+                    ? 'jvk-opd-shell bg-[#FEFBF6] text-[#0E2420]'
+                    : 'bg-white text-slate-900'
+            }`}
             data-mobile-menu-open={isMobileMenuOpen}
         >
             {!isFullBleedPortal && (
                 <aside
                     aria-label="Workspace navigation"
-                    className="ayu-global-sidebar"
+                    className={`ayu-global-sidebar relative overflow-hidden ${isClinicianOpdTheme ? 'jvk-opd-sidebar' : ''}`}
                     data-collapsed={isCollapsed}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape' && isMobileMenuOpen) {
@@ -215,7 +263,7 @@ export function AppLayout({
                         }
                     }}
                 >
-                    <div className="ayu-workspace-sidebar-top">
+                    <div className="ayu-workspace-sidebar-top relative z-10">
                         <img
                             src="/assets/logo-jeevika.png"
                             alt="Jeevika"
@@ -226,16 +274,24 @@ export function AppLayout({
                         />
                         <button
                             type="button"
-                            className="ayu-workspace-menu ayu-workspace-menu-desktop"
+                            className={`ayu-workspace-menu ayu-workspace-menu-desktop ${
+                                isClinicianOpdTheme
+                                    ? '!border-[#E3DCCA] !bg-transparent !text-[#2C453D] hover:!bg-[#EEF6F0]'
+                                    : ''
+                            }`}
                             aria-controls="workspace-menu"
                             aria-expanded={!isCollapsed}
                             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                             onClick={() => setIsCollapsed((collapsed) => !collapsed)}
                         >
-                            {isCollapsed
-                                ? <PanelLeftOpen size={18} aria-hidden="true" />
-                                : <PanelLeftClose size={18} aria-hidden="true" />}
+                            {isClinicianOpdTheme ? (
+                                <LayoutGrid size={18} aria-hidden="true" className="text-[#4B665D]" />
+                            ) : isCollapsed ? (
+                                <PanelLeftOpen size={18} aria-hidden="true" />
+                            ) : (
+                                <PanelLeftClose size={18} aria-hidden="true" />
+                            )}
                             <span>Menu</span>
                         </button>
                         <button
@@ -252,7 +308,7 @@ export function AppLayout({
                         </button>
                     </div>
 
-                    <nav id="workspace-menu" aria-label="Staff workspaces" className="ayu-workspace-nav">
+                    <nav id="workspace-menu" aria-label="Staff workspaces" className="ayu-workspace-nav relative z-10">
                         {staffNavItems(verifiedRole)
                             .filter(({ route }) => routeAccess(route, verifiedRole) !== 'None')
                             .map((item) => (
@@ -262,6 +318,8 @@ export function AppLayout({
                                     icon={item.icon}
                                     label={item.label}
                                     active={view === item.view}
+                                    badgeCount={item.id === 'alerts' && isDoctorRole ? activeAlertCount : undefined}
+                                    urgentBadge={item.id === 'alerts' && hasEmergencyAlerts}
                                     onClick={() => {
                                         if (item.view === 'admin') onSelectClinicId?.(null);
                                         setView(item.view);
@@ -270,17 +328,37 @@ export function AppLayout({
                             ))}
                     </nav>
 
-                    <div className="ayu-workspace-sidebar-footer">
+                    {isClinicianOpdTheme && !isCollapsed && (
+                        <img
+                            src="/assets/opd/opd-sidebar-leaves.png"
+                            alt=""
+                            aria-hidden="true"
+                            className="pointer-events-none select-none absolute bottom-[104px] left-0 w-44 opacity-85 z-0"
+                        />
+                    )}
+
+                    <div className={`ayu-workspace-sidebar-footer relative z-10 ${isClinicianOpdTheme ? '!border-[#ECE5D5] bg-[#FFFDF9]/85 backdrop-blur-xs' : ''}`}>
                         <div className="ayu-workspace-identity flex min-w-0 items-center gap-2.5">
-                            <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
-                                {userProfile?.full_name?.[0] || 'C'}
+                            <span
+                                aria-hidden="true"
+                                className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                                    isClinicianOpdTheme ? 'bg-[#E3F1E8] text-[#175B4B]' : 'bg-teal-100 text-teal-800'
+                                }`}
+                            >
+                                {(sidebarDisplayName[0] || 'C').toUpperCase()}
                             </span>
                             <div className="min-w-0">
-                                <p className="truncate text-xs font-bold text-slate-800">{userProfile?.full_name || 'Staff account'}</p>
-                                <p className="text-xs text-slate-500">{getBrandSubtitle()}</p>
+                                <p className="truncate text-xs font-bold text-[#0E2420]">{sidebarDisplayName}</p>
+                                <p className="text-xs text-[#586C64]">{getBrandSubtitle()}</p>
                             </div>
                         </div>
-                        <button type="button" onClick={onLogout} className="ayu-workspace-sign-out">
+                        <button
+                            type="button"
+                            onClick={onLogout}
+                            className={`ayu-workspace-sign-out ${
+                                isClinicianOpdTheme ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start' : ''
+                            }`}
+                        >
                             <SymbolIcon className="material-symbols-outlined">logout</SymbolIcon>
                             <span>Sign Out</span>
                         </button>
@@ -289,12 +367,82 @@ export function AppLayout({
             )}
 
             <main
+                ref={mainScrollRef}
                 aria-label="Workspace content"
                 tabIndex={0}
-                className="ayu-workspace-scroll relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-white"
+                className={`ayu-workspace-scroll relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto ${
+                    isClinicianOpdTheme ? 'jvk-opd-main' : 'bg-white'
+                }`}
             >
                 {/* HEADER */}
                 {view !== 'patient-kiosk' && (
+                    isClinicianOpdTheme ? (
+                        <header className="sticky top-0 z-30 shrink-0 bg-[#FEFBF6]/90 backdrop-blur-md border-b border-[#EDE6D8]/70 px-4 sm:px-6 lg:px-10 py-3 flex flex-wrap items-center justify-end gap-2.5 sm:gap-4">
+                            <div className="flex-1 hidden sm:block" aria-hidden="true" />
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!confirmCbcNavigation()) return;
+                                        onSelectClinicId?.(null);
+                                        navigate('/');
+                                    }}
+                                    className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[#DFD8C7] bg-white/95 hover:bg-white hover:border-[#C9BEA6] text-[#243B34] text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                    title="Return to Portal Selection (Choose a different dashboard)"
+                                >
+                                    <SymbolIcon className="material-symbols-outlined text-[16px] text-[#586C64] group-hover:-translate-x-0.5 transition-transform">arrow_back</SymbolIcon>
+                                    <span>Exit to Portals</span>
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <button
+                                    type="button"
+                                    aria-label="Show guide"
+                                    onClick={showGuide}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D4E4D3] bg-[#ECF5EC] text-[#175B4B] text-xs font-bold hover:bg-[#DFF0DF] transition-colors"
+                                >
+                                    <Play className="w-3.5 h-3.5" />
+                                    <span>Show guide</span>
+                                </button>
+                                {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const granted = await requestNotificationPermission();
+                                            if (granted) {
+                                                window.location.reload();
+                                            }
+                                        }}
+                                        className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#DCE5DC] bg-white/90 text-[#1F5A45] text-xs font-semibold hover:bg-[#EEF6F1] transition-colors"
+                                        title="Enable Desktop Notifications"
+                                    >
+                                        <SymbolIcon className="material-symbols-outlined text-[16px]">notifications_active</SymbolIcon>
+                                        <span>Enable Desktop Alerts</span>
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    aria-label={bellBadgeCount > 0 ? `Open notifications (${bellBadgeCount} active)` : 'Open notifications'}
+                                    aria-expanded={isNotificationsOpen}
+                                    onClick={() => setIsNotificationsOpen(true)}
+                                    className="relative p-2 text-[#243B34] hover:text-[#047C61] hover:bg-[#EBF4EE] rounded-xl transition-all group"
+                                >
+                                    <SymbolIcon className="material-symbols-outlined text-2xl">notifications</SymbolIcon>
+                                    {bellBadgeCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 bg-rose-600 border-2 border-[#FEFBF6] rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+                                            {bellBadgeCount > 99 ? '99+' : bellBadgeCount}
+                                        </span>
+                                    )}
+                                </button>
+                                <NotificationsPanel
+                                    open={isNotificationsOpen}
+                                    onClose={() => setIsNotificationsOpen(false)}
+                                    onNavigate={setView}
+                                />
+                            </div>
+                        </header>
+                    ) : (
                 <header className="ayu-workspace-header h-20 border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 bg-white/95 backdrop-blur-md z-30 shrink-0">
                     <div className="ayu-workspace-heading flex items-center gap-4">
                         <div className="flex flex-col">
@@ -338,12 +486,11 @@ export function AppLayout({
                         </button>
                         {/* Notifications */}
                         <div className="flex items-center gap-1 sm:gap-2">
-                            {Notification.permission !== 'granted' && (
+                            {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
                                 <button
                                     onClick={async () => {
                                         const granted = await requestNotificationPermission();
                                         if (granted) {
-                                            // Refresh component state or show success
                                             window.location.reload();
                                         }
                                     }}
@@ -362,9 +509,9 @@ export function AppLayout({
                                 className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 group"
                             >
                                 <SymbolIcon className="material-symbols-outlined text-2xl group-hover:rotate-[15deg] transition-transform">notifications</SymbolIcon>
-                                {unseenCount > 0 && (
+                                {bellBadgeCount > 0 && (
                                     <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-[10px] font-bold text-white group-hover:scale-110 transition-transform">
-                                        {unseenCount > 99 ? '99+' : unseenCount}
+                                        {bellBadgeCount > 99 ? '99+' : bellBadgeCount}
                                     </span>
                                 )}
                             </button>
@@ -376,12 +523,26 @@ export function AppLayout({
                         />
                     </div>
                 </header>
+                    )
                 )}
 
-                {!isFullBleedPortal && <ShellEmergency role={verifiedRole ?? undefined} userId={session?.id} view={view} />}
+                {!isFullBleedPortal && (
+                    <div className="shrink-0">
+                        <ShellEmergency role={verifiedRole ?? undefined} userId={session?.id} view={view} />
+                    </div>
+                )}
 
                 {/* SCROLLABLE INNER CONTENT */}
-                <div id="tour-workspace-content" className={view === 'patient-kiosk' ? "flex-1 w-full" : "flex-1 p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"}>
+                <div
+                    id="tour-workspace-content"
+                    className={
+                        view === 'patient-kiosk'
+                            ? "flex-1 w-full"
+                            : isClinicianOpdTheme
+                              ? "flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 pb-20"
+                              : "flex-1 p-4 lg:p-12 lg:pt-6 max-w-[1600px] w-full mx-auto"
+                    }
+                >
                     {showGuideInvitation && !isTourActive && <section className="ayu-guide-invitation" aria-label="Workspace introduction"><div><strong>New to this workspace?</strong><p>Take a short guide without leaving this page.</p></div><button type="button" onClick={showGuide}>Show me around</button><button type="button" onClick={dismissGuideInvitation}>Not now</button></section>}
                     {children}
                 </div>

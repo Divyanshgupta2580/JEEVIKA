@@ -2,11 +2,13 @@ import { SymbolIcon } from "@/components/ui/SymbolIcon";
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useHospital, Notification as ContextNotification } from '@/context/HospitalContext'
-import { X, Stethoscope, AlertTriangle, User, Clock, MapPin, Tablet } from 'lucide-react'
+import { useOptionalOpdWorkspace } from '@/features/opd/opdContext'
+import { X, Stethoscope, AlertTriangle, ArrowRight, User, Clock, MapPin, Tablet } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate?: (view: string) => void }) {
     const { profile, clinics, notifications, setPendingRestockId, markNotificationsAsSeen } = useHospital()
+    const opd = useOptionalOpdWorkspace()
     const [selectedNotification, setSelectedNotification] = useState<ContextNotification | null>(null)
 
     const role = profile?.role
@@ -50,27 +52,106 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 gap-2">
                     <div className="flex items-center gap-2">
                         <SymbolIcon className="material-symbols-outlined text-slate-700">notifications</SymbolIcon>
                         <h3 className="font-bold text-slate-900">Notifications</h3>
-                        {notifications.length > 0 && (
+                        {(notifications.length + (opd?.alerts.length ?? 0)) > 0 && (
                             <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
-                                {notifications.length}
+                                {notifications.length + (opd?.alerts.length ?? 0)}
                             </span>
                         )}
                     </div>
-                    <button type="button" aria-label="Close notifications" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-                        <X className="w-4 h-4 text-slate-400" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                        {opd && onNavigate && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onNavigate('doctor-alerts');
+                                    onClose();
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-[#E6F3EB] px-2.5 py-1 text-[11px] font-bold text-[#047C61] hover:bg-[#D5ECE0] transition-colors"
+                            >
+                                <span>View Alerts</span>
+                                <ArrowRight className="w-3 h-3" />
+                            </button>
+                        )}
+                        <button type="button" aria-label="Close notifications" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                            <X className="w-4 h-4 text-slate-400" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
+                    {opd && (
+                        <div className="border-b border-slate-100 bg-[#FEFBF6] p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-[#586C64]">
+                                    Clinician Alerts ({opd.alerts.length})
+                                </span>
+                                {onNavigate && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onNavigate('doctor-alerts');
+                                            onClose();
+                                        }}
+                                        className="text-[11px] font-semibold text-[#047C61] hover:underline"
+                                    >
+                                        Open centralized Alerts
+                                    </button>
+                                )}
+                            </div>
+                            {opd.alertFeedErrors.length >= 3 ? (
+                                <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs text-rose-800">
+                                    Alert feeds could not be loaded cleanly. Open Alerts to inspect status.
+                                </p>
+                            ) : opd.alerts.length === 0 ? (
+                                <p className="text-xs text-[#586C64]">No active clinician alerts right now.</p>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {opd.alerts.slice(0, 5).map((alert) => {
+                                        const badgeCls =
+                                            alert.severity === 'EMERGENCY'
+                                                ? 'bg-rose-100 text-rose-800 border-rose-200'
+                                                : alert.severity === 'HIGH'
+                                                  ? 'bg-orange-100 text-orange-800 border-orange-200'
+                                                  : alert.severity === 'MEDIUM'
+                                                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                                    : 'bg-sky-100 text-sky-800 border-sky-200';
+                                        return (
+                                            <button
+                                                key={alert.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    opd.navigateFromAlert(alert);
+                                                    onClose();
+                                                }}
+                                                className="w-full text-left rounded-xl border border-[#E6DFD0] bg-white px-3 py-2 hover:border-[#047C61] transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeCls}`}>
+                                                        <AlertTriangle className="w-3 h-3" />
+                                                        {alert.severity}
+                                                    </span>
+                                                    <span className="text-[10px] text-[#586C64] truncate">{alert.sourceModule}</span>
+                                                </div>
+                                                <p className="mt-1 text-xs font-bold text-[#0E2420] truncate">{alert.title}</p>
+                                                <p className="text-[11px] text-[#586C64] truncate">{alert.patientName ? `${alert.patientName} · ` : ''}{alert.description}</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {notifications.length === 0 ? (
+                        !opd && (
                         <div className="text-center py-12 px-4">
                             <SymbolIcon className="material-symbols-outlined text-4xl text-slate-300">notifications_off</SymbolIcon>
                             <p className="text-sm text-slate-400 mt-2 font-medium">No notifications yet today</p>
                         </div>
+                        )
                     ) : (
                         <div className="divide-y divide-slate-50">
                             {notifications.map((notif) => {

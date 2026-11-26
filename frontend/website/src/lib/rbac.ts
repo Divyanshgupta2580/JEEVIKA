@@ -38,7 +38,10 @@ const routePermissions = {
   "/app/prune/waf": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
   "/app/prune/redaction": { SUPER_ADMIN: "Full" },
   "/app/ayush": { DOCTOR: "Full" },
+  "/app/alerts": { DOCTOR: "Full" },
   "/app/home": { PATIENT: "Full" },
+  "/app/doctor/queue": { DOCTOR: "Full" },
+  "/app/doctor/consultation": { DOCTOR: "Full" },
   "/app/doctor/soap": { DOCTOR: "Full" },
   "/app/doctor/coding": { DOCTOR: "Full" },
   "/app/doctor/rx": { DOCTOR: "Full" },
@@ -140,6 +143,7 @@ const staffViewRoutes = {
   "maritime-agents": "/app/swarm",
   "prune-gateway": "/app/prune",
   "ayush-center": "/app/ayush",
+  "doctor-alerts": "/app/alerts",
 } as const satisfies Record<string, AppRoute>;
 
 export type StaffView = keyof typeof staffViewRoutes;
@@ -148,6 +152,8 @@ const pathViews = {
   "/app/command/network": "admin",
   "/app/command/census": "admin",
   "/app/command/optimizer": "admin",
+  "/app/doctor/queue": "doctor-consultation",
+  "/app/doctor/consultation": "doctor-consultation",
   "/app/doctor/soap": "doctor-consultation",
   "/app/doctor/coding": "doctor-consultation",
   "/app/doctor/rx": "doctor-consultation",
@@ -236,6 +242,7 @@ export function staffNavItems(role: string | null | undefined): StaffNavItem[] {
         { id: "ipd", icon: "hotel", label: "IPD", view: "ipd", route: "/app/ipd" },
         { id: "casualty", icon: "emergency", label: "Casualty", view: "emergency-triage", route: "/app/casualty" },
         { id: "ayush", icon: "spa", label: "AYUSH", view: "ayush-center", route: "/app/ayush" },
+        { id: "alerts", icon: "alerts", label: "Alerts", view: "doctor-alerts", route: "/app/alerts" },
       ];
     case "NURSE":
       return [

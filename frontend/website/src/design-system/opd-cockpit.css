@@ -1,0 +1,110 @@
+/* Isolated JEEVIKA Clinician OPD & Alerts visual tokens (scoped to .jvk-opd-shell) */
+
+.jvk-opd-shell {
+  color-scheme: light;
+  background-color: #fefbf6;
+  color: #0e2420;
+  font-family:
+    "Noto Sans",
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.jvk-opd-shell .jvk-opd-main {
+  background: linear-gradient(180deg, #fefbf6 0%, #fcf8ef 100%);
+  position: relative;
+}
+
+.jvk-opd-shell .jvk-opd-sidebar {
+  background: linear-gradient(180deg, #fffdf9 0%, #fdfaf3 100%);
+  border-inline-end: 1px solid #ebe4d5;
+  box-shadow: 4px 0 24px rgba(14, 36, 32, 0.03);
+}
+
+.jvk-opd-shell .jvk-opd-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.jvk-opd-shell .jvk-opd-italic {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #087f72;
+}
+
+.jvk-opd-shell .jvk-opd-card {
+  background: linear-gradient(180deg, #fffdf9 0%, #faf6ec 100%);
+  border: 1px solid #e6dfd0;
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(14, 36, 32, 0.045);
+}
+
+.jvk-opd-shell .jvk-opd-card-sage {
+  background: linear-gradient(135deg, #f3f9f5 0%, #fffdf8 72%, #f1f7f3 100%);
+  border: 1px solid #dce8df;
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(14, 36, 32, 0.045);
+}
+
+.jvk-opd-shell .jvk-opd-card-queue {
+  background:
+    radial-gradient(ellipse at 90% 80%, rgba(229, 167, 54, 0.14) 0%, transparent 56%),
+    linear-gradient(135deg, #fffdf9 0%, #fbf7eb 100%);
+  border: 1px solid #e6dfd0;
+  border-radius: 20px;
+  box-shadow: 0 8px 26px rgba(14, 36, 32, 0.055);
+}
+
+.jvk-opd-shell .jvk-opd-card-priority {
+  background: linear-gradient(135deg, #fdf0ee 0%, #fbe8e5 100%);
+  border: 1px solid #f2d2cf;
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(185, 56, 44, 0.055);
+}
+
+.jvk-opd-shell .jvk-opd-landscape-mask {
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 45%, transparent 98%),
+    linear-gradient(180deg, transparent 0%, #000 12%, #000 90%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 45%, transparent 98%),
+    linear-gradient(180deg, transparent 0%, #000 12%, #000 90%, transparent 100%);
+  mask-composite: intersect;
+}
+
+.jvk-opd-shell .jvk-opd-clipboard-mask {
+  -webkit-mask-image: radial-gradient(ellipse at 54% 54%, #000 62%, transparent 98%);
+  mask-image: radial-gradient(ellipse at 54% 54%, #000 62%, transparent 98%);
+}
+
+.jvk-opd-shell .jvk-opd-primary-btn {
+  background: linear-gradient(180deg, #047c61 0%, #055f4a 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(4, 124, 97, 0.18);
+  transition: transform 120ms ease, filter 140ms ease, box-shadow 140ms ease;
+}
+
+.jvk-opd-shell .jvk-opd-primary-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.jvk-opd-shell .jvk-opd-primary-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.jvk-opd-shell :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #047c61;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jvk-opd-shell * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -46,6 +46,8 @@ const HospitalShiftManagement = lazyWithRetry(() => import("@/components/Hospita
 const EarningsDashboard = lazyWithRetry(() => import("@/components/EarningsDashboard").then(module => ({ default: module.EarningsDashboard })));
 const SettingsDashboard = lazyWithRetry(() => import("@/components/SettingsDashboard").then(module => ({ default: module.SettingsDashboard })));
 const DoctorConsultation = lazyWithRetry(() => import("@/components/DoctorConsultation").then(module => ({ default: module.DoctorConsultation })));
+const ClinicianAlertsPage = lazyWithRetry(() => import("@/features/opd/ClinicianAlertsPage").then(module => ({ default: module.ClinicianAlertsPage })));
+import { OpdWorkspaceProvider } from "@/features/opd/opdContext";
 const PharmacyInflow = lazyWithRetry(() => import("@/components/ClinicalPharmacy").then(module => ({ default: module.PharmacyInflow })));
 const ClinicStock = lazyWithRetry(() => import("@/components/ClinicalPharmacy").then(module => ({ default: module.ClinicStock })));
 const PostedFinance = lazyWithRetry(() => import("@/components/ClinicalPharmacy").then(module => ({ default: module.PostedFinance })));
@@ -230,7 +232,7 @@ function AppContent() {
         return <Navigate to={landingRoute(verifiedRole)} replace />;
     }
 
-    return (
+    const workspaceShell = (
         <AppLayout
             onLogout={handleLogout}
             view={view}
@@ -400,6 +402,7 @@ function AppContent() {
                             onAssignBay={(id: string) => { setCareEncounterId(id); setView('emergency-triage'); }}
                         />
                     )}
+                    {view === 'doctor-alerts' && verifiedRole === 'DOCTOR' && <ClinicianAlertsPage />}
 
                     {view === 'emergency-triage' && routeAccess('/app/casualty', verifiedRole) !== 'None' && (
                         <CareBoard kind="casualty" role={verifiedRole ?? ''} encounterId={careEncounterId} />
@@ -420,8 +423,12 @@ function AppContent() {
 
             <Toaster />
         </AppLayout>
+    );
 
-    )
+    if (verifiedRole === 'DOCTOR') {
+        return <OpdWorkspaceProvider enabled>{workspaceShell}</OpdWorkspaceProvider>;
+    }
+    return workspaceShell;
 }
 
 function AnalyticsTracker() {
