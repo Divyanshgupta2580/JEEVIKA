@@ -1,5 +1,5 @@
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useHospital, Notification as ContextNotification } from '@/context/HospitalContext'
 import { useOptionalOpdWorkspace } from '@/features/opd/opdContext'
@@ -10,6 +10,11 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
     const { profile, clinics, notifications, setPendingRestockId, markNotificationsAsSeen } = useHospital()
     const opd = useOptionalOpdWorkspace()
     const [selectedNotification, setSelectedNotification] = useState<ContextNotification | null>(null)
+    const [panelTopPx, setPanelTopPx] = useState<number>(64)
+    const scrollAreaRef = useRef<HTMLDivElement>(null)
+    const selectedRef = useRef<ContextNotification | null>(null)
+    selectedRef.current = selectedNotification
+    const closingDetailTimestampRef = useRef<number>(0)
 
     const role = profile?.role
     const isHospitalLevel = ['HOSPITAL_ADMIN', 'SUPER_ADMIN', 'OWNER'].includes(role || '')
@@ -19,6 +24,54 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
             markNotificationsAsSeen()
         }
     }, [open])
+
+    useEffect(() => {
+        if (!open || typeof window === 'undefined') return;
+
+        const updatePlacement = () => {
+            if (window.innerWidth >= 1024) {
+                setPanelTopPx(64);
+                return;
+            }
+            const headerEl =
+                Array.from(
+                    document.querySelectorAll<HTMLElement>(
+                        'header.jvk-clinician-header, header.ayu-workspace-header, header',
+                    ),
+                ).find((el) => el.getBoundingClientRect().height > 0) || null;
+            const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+            const minAvailableHeight = 200;
+            const clampedTop = headerBottom > 60
+                ? Math.min(headerBottom + 6, Math.max(64, window.innerHeight - minAvailableHeight))
+                : 64;
+            setPanelTopPx(clampedTop);
+        };
+
+        updatePlacement();
+        if (scrollAreaRef.current) {
+            scrollAreaRef.current.scrollTop = 0;
+        }
+        window.addEventListener('resize', updatePlacement);
+        window.addEventListener('orientationchange', updatePlacement);
+        return () => {
+            window.removeEventListener('resize', updatePlacement);
+            window.removeEventListener('orientationchange', updatePlacement);
+        };
+    }, [open]);
+
+    useEffect(() => {
+        if (!open) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            // Let an open detail modal consume Escape cleanly without tearing down the panel in the same tick.
+            if (selectedRef.current || performance.now() - closingDetailTimestampRef.current < 120) {
+                return;
+            }
+            onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [open, onClose]);
 
     if (!open) return null
 
@@ -42,27 +95,33 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
     }
 
     const panelContent = (
-        <div className="fixed inset-0 z-[60]" onClick={onClose}>
+        <div
+            className={`jvk-notif-backdrop fixed inset-0 ${selectedNotification ? 'z-[40]' : 'z-[105]'}`}
+            onClick={onClose}
+        >
             {/* Transparent backdrop */}
-            <div className="absolute inset-0" />
+            <div className="absolute inset-0" aria-hidden="true" />
 
             {/* Panel */}
             <div
-                className="absolute right-4 top-16 w-96 max-w-[calc(100%-2rem)] max-h-[70dvh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-top-2 duration-200"
+                role="dialog"
+                aria-label="Notifications"
+                style={{ '--jvk-notif-top': `${panelTopPx}px` } as CSSProperties}
+                className="jvk-notif-panel absolute bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-100 gap-2">
-                    <div className="flex items-center gap-2">
-                        <SymbolIcon className="material-symbols-outlined text-slate-700">notifications</SymbolIcon>
-                        <h3 className="font-bold text-slate-900">Notifications</h3>
+                <div className="jvk-notif-header shrink-0 flex items-center justify-between px-3 py-3 sm:p-4 border-b border-slate-100 gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <SymbolIcon className="material-symbols-outlined shrink-0 text-slate-700">notifications</SymbolIcon>
+                        <h3 className="font-bold text-[15px] sm:text-base text-slate-900 truncate">Notifications</h3>
                         {(notifications.length + (opd?.alerts.length ?? 0)) > 0 && (
-                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                            <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 sm:px-2 py-0.5 rounded-full">
                                 {notifications.length + (opd?.alerts.length ?? 0)}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                         {opd && onNavigate && (
                             <button
                                 type="button"
@@ -70,19 +129,24 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                                     onNavigate('doctor-alerts');
                                     onClose();
                                 }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-[#E6F3EB] px-2.5 py-1 text-[11px] font-bold text-[#047C61] hover:bg-[#D5ECE0] transition-colors"
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-lg bg-[#E6F3EB] px-2 sm:px-2.5 py-1.5 text-[11px] font-bold text-[#047C61] hover:bg-[#D5ECE0] transition-colors"
                             >
                                 <span>View Alerts</span>
-                                <ArrowRight className="w-3 h-3" />
+                                <ArrowRight className="w-3 h-3 shrink-0" />
                             </button>
                         )}
-                        <button type="button" aria-label="Close notifications" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                        <button type="button" aria-label="Close notifications" onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                             <X className="w-4 h-4 text-slate-400" />
                         </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div
+                    ref={scrollAreaRef}
+                    tabIndex={0}
+                    aria-label="Notifications list"
+                    className="jvk-notif-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#047C61]"
+                >
                     {opd && (
                         <div className="border-b border-slate-100 bg-[#FEFBF6] p-3 space-y-2">
                             <div className="flex items-center justify-between">
@@ -175,7 +239,7 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
                                                     <span className="text-[10px] text-slate-400 font-medium">{timeAgo(notif.timestamp)}</span>
                                                     {notif.clinicName && (
                                                         <>
-                                                            <span className="text-slate-200">\u2022</span>
+                                                            <span className="text-slate-200">•</span>
                                                             <span className="text-[10px] text-slate-400 font-medium truncate">{notif.clinicName}</span>
                                                         </>
                                                     )}
@@ -206,9 +270,9 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
 
                 {/* Footer */}
                 {notifications.length > 0 && (
-                    <div className="p-3 border-t border-slate-100 bg-slate-50">
+                    <div className="jvk-notif-footer shrink-0 p-3 border-t border-slate-100 bg-slate-50">
                         <p className="text-[10px] text-center text-slate-400 font-medium">
-                            Showing {isHospitalLevel ? 'all clinics' : 'your clinic'} \u2022 Today's activity
+                            Showing {isHospitalLevel ? 'all clinics' : 'your clinic'} • Today&apos;s activity
                         </p>
                     </div>
                 )}
@@ -217,7 +281,15 @@ export function NotificationsPanel({ open, onClose, onNavigate }: { open: boolea
     )
 
     const modalContent = (
-        <Dialog open={!!selectedNotification} onOpenChange={(open) => !open && setSelectedNotification(null)}>
+        <Dialog
+            open={!!selectedNotification}
+            onOpenChange={(nextOpen) => {
+                if (!nextOpen) {
+                    closingDetailTimestampRef.current = performance.now();
+                    setSelectedNotification(null);
+                }
+            }}
+        >
             <DialogContent className="sm:max-w-md bg-white border border-slate-200 shadow-2xl p-0 overflow-hidden rounded-2xl">
                 {selectedNotification && (
                     <div className="animate-in fade-in zoom-in-95 duration-200">

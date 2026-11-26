@@ -26,30 +26,59 @@ function ClinicianTooltip({
     children: React.ReactElement<Record<string, unknown>>;
 }) {
     const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+    const delayTimerRef = useRef<number | null>(null);
 
-    const show = (el: HTMLElement | null) => {
-        if (!enabled || !el) return;
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-        if (position === 'bottom') {
-            setCoords({ top: Math.round(rect.bottom + 8), left: Math.round(Math.max(8, rect.left)) });
-        } else {
-            setCoords({ top: Math.round(rect.top + rect.height / 2), left: Math.round(rect.right + 10) });
+    const clearPending = () => {
+        if (delayTimerRef.current !== null) {
+            window.clearTimeout(delayTimerRef.current);
+            delayTimerRef.current = null;
         }
     };
 
-    const hide = () => setCoords(null);
+    const computeCoords = (el: HTMLElement | null) => {
+        if (!enabled || !el) return null;
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+        if (position === 'bottom') {
+            return { top: Math.round(rect.bottom + 8), left: Math.round(Math.max(8, rect.left)) };
+        }
+        return { top: Math.round(rect.top + rect.height / 2), left: Math.round(rect.right + 10) };
+    };
+
+    const scheduleShow = (el: HTMLElement | null, delayMs: number) => {
+        if (!enabled || !el) return;
+        clearPending();
+        const nextCoords = computeCoords(el);
+        if (!nextCoords) return;
+        if (delayMs <= 0) {
+            setCoords(nextCoords);
+            return;
+        }
+        delayTimerRef.current = window.setTimeout(() => {
+            delayTimerRef.current = null;
+            setCoords(computeCoords(el));
+        }, delayMs);
+    };
+
+    const hide = () => {
+        clearPending();
+        setCoords(null);
+    };
 
     useEffect(() => {
-        if (!enabled) setCoords(null);
+        if (!enabled) {
+            clearPending();
+            setCoords(null);
+        }
+        return () => clearPending();
     }, [enabled]);
 
     useEffect(() => {
         if (!coords) return;
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setCoords(null);
+            if (event.key === 'Escape') hide();
         };
-        const onScrollOrResize = () => setCoords(null);
+        const onScrollOrResize = () => hide();
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('resize', onScrollOrResize);
         window.addEventListener('scroll', onScrollOrResize, true);
@@ -65,23 +94,31 @@ function ClinicianTooltip({
     const existingProps = children.props as {
         onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
         onMouseLeave?: (e: React.MouseEvent<HTMLElement>) => void;
+        onPointerEnter?: (e: React.PointerEvent<HTMLElement>) => void;
+        onPointerDown?: (e: React.PointerEvent<HTMLElement>) => void;
         onFocus?: (e: React.FocusEvent<HTMLElement>) => void;
         onBlur?: (e: React.FocusEvent<HTMLElement>) => void;
     };
 
     const enhanced = cloneElement(children, {
-        onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-            existingProps.onMouseEnter?.(e);
-            show(e.currentTarget);
+        onPointerEnter: (e: React.PointerEvent<HTMLElement>) => {
+            existingProps.onPointerEnter?.(e);
+            if (e.pointerType !== 'touch') {
+                scheduleShow(e.currentTarget, 150);
+            }
         },
         onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
             existingProps.onMouseLeave?.(e);
             hide();
         },
+        onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+            existingProps.onPointerDown?.(e);
+            hide();
+        },
         onFocus: (e: React.FocusEvent<HTMLElement>) => {
             existingProps.onFocus?.(e);
             if (e.currentTarget.matches(':focus-visible')) {
-                show(e.currentTarget);
+                scheduleShow(e.currentTarget, 60);
             }
         },
         onBlur: (e: React.FocusEvent<HTMLElement>) => {
@@ -96,7 +133,7 @@ function ClinicianTooltip({
             {enabled && coords && typeof document !== 'undefined' && createPortal(
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none fixed z-[90] whitespace-nowrap rounded-lg border border-[#24473E] bg-[#0E2420] px-2.5 py-1.5 text-xs font-medium text-[#FEFBF6] shadow-lg"
+                    className="jvk-sidebar-tooltip pointer-events-none fixed z-[90] whitespace-nowrap rounded-lg border border-[#24473E] bg-[#0E2420] px-2.5 py-1 text-xs font-medium text-[#FEFBF6] shadow-md"
                     style={
                         position === 'bottom'
                             ? { top: coords.top, left: coords.left }
@@ -220,18 +257,32 @@ export function AppLayout({
                     }
                 }}
                 disabled={disabled}
-                className={`ayu-workspace-nav-item relative w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl transition-colors group
+                data-active={active ? 'true' : 'false'}
+                className={`ayu-workspace-nav-item relative w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl group
+                    ${isClinicianShell ? 'jvk-clinician-nav-item' : 'transition-colors'}
                     ${disabled ? 'opacity-50 cursor-not-allowed text-slate-400' :
                         active
-                            ? isIvoryShellTheme
-                                ? 'bg-[#E5F3EB] text-[#0E2420] font-bold border border-[#C6E1D1] shadow-xs'
-                                : 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
-                            : isIvoryShellTheme
-                                ? 'text-[#314A42] hover:bg-[#EEF6F1] hover:text-[#0E2420]'
-                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
+                            ? isClinicianShell
+                                ? 'font-bold'
+                                : isIvoryShellTheme
+                                    ? 'bg-[#E5F3EB] text-[#0E2420] font-bold border border-[#C6E1D1] shadow-xs'
+                                    : 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
+                            : isClinicianShell
+                                ? ''
+                                : isIvoryShellTheme
+                                    ? 'text-[#314A42] hover:bg-[#EEF6F1] hover:text-[#0E2420]'
+                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
                     `}
             >
-                <SymbolIcon className={`material-symbols-outlined shrink-0 text-[20px] ${active ? 'text-[#047C61]' : isIvoryShellTheme ? 'text-[#3F5E54] group-hover:text-[#0E2420]' : 'text-slate-500 group-hover:text-slate-800'}`}>{icon}</SymbolIcon>
+                <SymbolIcon className={`jvk-sidebar-icon material-symbols-outlined shrink-0 text-[20px] ${
+                    isClinicianShell
+                        ? ''
+                        : active
+                            ? 'text-[#047C61]'
+                            : isIvoryShellTheme
+                                ? 'text-[#3F5E54] group-hover:text-[#0E2420]'
+                                : 'text-slate-500 group-hover:text-slate-800'
+                }`}>{icon}</SymbolIcon>
                 <span className={`jvk-clinician-rail-label ayu-nav-label text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
                 {typeof badgeCount === 'number' && badgeCount > 0 && (
                     <span className={`jvk-clinician-rail-label ayu-nav-label ml-auto inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
@@ -390,9 +441,11 @@ export function AppLayout({
         <button
             type="button"
             className={`ayu-workspace-menu ayu-workspace-menu-desktop ${
-                isIvoryShellTheme
-                    ? '!border-[#E3DCCA] !bg-transparent !text-[#2C453D] hover:!bg-[#EEF6F0]'
-                    : ''
+                isClinicianShell
+                    ? 'jvk-clinician-menu-btn'
+                    : isIvoryShellTheme
+                        ? '!border-[#E3DCCA] !bg-transparent !text-[#2C453D] hover:!bg-[#EEF6F0]'
+                        : ''
             }`}
             aria-controls="workspace-menu"
             aria-expanded={!isCollapsed}
@@ -401,7 +454,7 @@ export function AppLayout({
             onClick={() => setIsCollapsed((collapsed) => !collapsed)}
         >
             {isIvoryShellTheme ? (
-                <LayoutGrid size={isClinicianShell ? 20 : 18} strokeWidth={1.7} aria-hidden="true" className="shrink-0 text-[#4B665D]" />
+                <LayoutGrid size={isClinicianShell ? 20 : 18} strokeWidth={1.7} aria-hidden="true" className="jvk-sidebar-icon shrink-0 text-[#4B665D]" />
             ) : isCollapsed ? (
                 <PanelLeftOpen size={18} aria-hidden="true" />
             ) : (
@@ -437,10 +490,14 @@ export function AppLayout({
             title={isClinicianShell && isCollapsed ? undefined : 'Sign Out'}
             onClick={onLogout}
             className={`ayu-workspace-sign-out ${
-                isIvoryShellTheme ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start' : ''
+                isClinicianShell
+                    ? 'jvk-clinician-sign-out w-full justify-start'
+                    : isIvoryShellTheme
+                        ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start'
+                        : ''
             }`}
         >
-            <SymbolIcon className="material-symbols-outlined shrink-0">logout</SymbolIcon>
+            <SymbolIcon className="jvk-sidebar-icon material-symbols-outlined shrink-0">logout</SymbolIcon>
             <span className="jvk-clinician-rail-label">Sign Out</span>
         </button>
     );

@@ -201,16 +201,154 @@
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #e3dcca;
-  background: transparent;
+  background-color: transparent;
   color: #2c453d;
   font-size: 13px;
   font-weight: 600;
 }
 
-.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .ayu-workspace-menu-desktop:hover {
-  background: #eef6f0;
-  border-color: #cde0d3;
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item {
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: #314a42;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"] {
+  background-color: #e5f3eb;
   color: #0e2420;
+  border-color: #c6e1d1;
+  box-shadow: 0 1px 2px rgba(4, 124, 97, 0.08);
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item .jvk-sidebar-icon {
+  color: #3f5e54;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"] .jvk-sidebar-icon {
+  color: #047c61;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out {
+  border: 1px solid #ebcbc7;
+  background-color: #fdf5f4;
+  color: #b9382c;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out .jvk-sidebar-icon {
+  color: #b9382c;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out) {
+  transition:
+    background-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 140ms ease;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out) .jvk-sidebar-icon {
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Prevent sticky hover styling from erp.css on coarse-pointer / touch devices */
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn:hover {
+  background-color: transparent;
+  border-color: #e3dcca;
+  color: #2c453d;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="false"]:hover {
+  background-color: transparent;
+  border-color: transparent;
+  color: #314a42;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:hover {
+  background-color: #e5f3eb;
+  border-color: #c6e1d1;
+  color: #0e2420;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:hover {
+  background-color: #fdf5f4;
+  border-color: #ebcbc7;
+  color: #b9382c;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn:hover,
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="false"]:not(:disabled):hover {
+    background-color: #e8f3eb;
+    border-color: #d1e6db;
+    color: #103b32;
+    box-shadow: 0 1px 2px rgba(8, 116, 102, 0.06);
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn:hover .jvk-sidebar-icon,
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="false"]:not(:disabled):hover .jvk-sidebar-icon {
+    color: #087466;
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover {
+    background-color: #daf0e3;
+    border-color: #a8d4bb;
+    color: #09221c;
+    box-shadow: 0 2px 6px rgba(4, 124, 97, 0.12);
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover .jvk-sidebar-icon {
+    color: #03634d;
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:hover {
+    background-color: #fce5e2;
+    border-color: #dda49d;
+    color: #991f16;
+    box-shadow: 0 1px 3px rgba(185, 56, 44, 0.1);
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:hover .jvk-sidebar-icon {
+    color: #991f16;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item[data-active="false"], .jvk-clinician-sign-out):not(:disabled):hover .jvk-sidebar-icon {
+    transform: translateX(1.5px);
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover .jvk-sidebar-icon {
+    transform: translateX(1px);
+  }
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item):not(:disabled):active {
+  background-color: #dceee3;
+  border-color: #b7dac6;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:active {
+  background-color: #f7d7d3;
+  border-color: #d38d84;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out):not(:disabled):active {
+    transform: scale(0.985);
+  }
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item):focus-visible {
+  outline: 2px solid #047c61;
+  outline-offset: 2px;
+}
+
+.ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:focus-visible {
+  outline: 2px solid #b9382c;
+  outline-offset: 2px;
 }
 
 .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar .ayu-workspace-nav {
@@ -280,6 +418,20 @@
     gap: 0;
     border-radius: 11px;
   }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar[data-collapsed="true"] .jvk-clinician-menu-btn:hover {
+    border-color: #d1e6db;
+  }
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar[data-collapsed="true"] :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item[data-active="false"], .jvk-clinician-sign-out):not(:disabled):hover .jvk-sidebar-icon {
+    transform: translateY(-1.5px);
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar[data-collapsed="true"] .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover .jvk-sidebar-icon {
+    transform: translateY(-1px);
+  }
 }
 
 @media (max-width: 1023px) {
@@ -313,8 +465,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar {
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar,
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out),
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out) .jvk-sidebar-icon {
     transition: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out):hover .jvk-sidebar-icon,
+  .ayu-erp .jvk-clinician-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out):active {
+    transform: none;
   }
 }
 
@@ -337,4 +496,70 @@
   mix-blend-mode: multiply;
   pointer-events: none;
   user-select: none;
+}
+
+/* Notification panel responsive scroll containment and mobile header clearance */
+.jvk-notif-backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.jvk-notif-panel {
+  top: var(--jvk-notif-top, 64px);
+  inset-inline: 12px;
+  width: auto;
+  max-height: calc(100vh - var(--jvk-notif-top, 64px) - 12px);
+  max-height: calc(100dvh - var(--jvk-notif-top, 64px) - max(12px, env(safe-area-inset-bottom, 0px)));
+  overscroll-behavior: contain;
+}
+
+.jvk-notif-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 640px) {
+  .jvk-notif-panel {
+    inset-inline-start: auto;
+    inset-inline-end: max(16px, env(safe-area-inset-right, 0px));
+    width: 24rem;
+    max-width: calc(100vw - 2rem);
+    max-height: min(70vh, calc(100vh - var(--jvk-notif-top, 64px) - 16px));
+    max-height: min(70dvh, calc(100dvh - var(--jvk-notif-top, 64px) - max(16px, env(safe-area-inset-bottom, 0px))));
+  }
+}
+
+@keyframes jvk-notif-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes jvk-tooltip-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jvk-notif-panel {
+    animation: jvk-notif-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .jvk-sidebar-tooltip {
+    animation: jvk-tooltip-enter 110ms ease-out both;
+  }
 }
