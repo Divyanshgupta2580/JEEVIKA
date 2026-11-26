@@ -499,12 +499,14 @@ export function AppLayout({
             </nav>
 
             {isIvoryShellTheme && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
-                <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+                <div className="jvk-sidebar-botanical-layer pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
                     <img
-                        src="/assets/opd/opd-sidebar-leaves.png"
+                        src="/assets/opd/sidebar-botanical-watercolor.png"
                         alt=""
                         aria-hidden="true"
-                        className="pointer-events-none select-none absolute bottom-[104px] left-0 w-44 opacity-85"
+                        width={248}
+                        height={240}
+                        className="jvk-sidebar-botanical-img"
                     />
                 </div>
             )}

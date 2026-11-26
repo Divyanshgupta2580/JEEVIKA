@@ -317,3 +317,24 @@
     transition: none;
   }
 }
+
+/* Isolated sidebar bottom-left botanical watercolor artwork */
+.ayu-erp .jvk-sidebar-botanical-layer {
+  isolation: isolate;
+}
+
+.ayu-erp .jvk-sidebar-botanical-img {
+  position: absolute;
+  inset-block-end: 120px;
+  inset-inline-start: 0;
+  display: block;
+  width: 192px;
+  max-width: 80%;
+  height: auto;
+  aspect-ratio: 248 / 240;
+  object-fit: contain;
+  opacity: 0.96;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
