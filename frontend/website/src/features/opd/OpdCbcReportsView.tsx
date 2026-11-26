@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { CbcBoundary } from "@/features/cbc/CbcBoundary";
 import CbcResearchDemo from "@/features/cbc/CbcResearchDemo";
 import { DoctorCbcAccess } from "@/features/cbc/DoctorCbcAccess";
-import { OpdSubpageHeader } from "./OpdChrome";
+import { OpdPatientSummary, OpdSubpageHeader, OpdSubpageWave } from "./OpdChrome";
 import { useOpdWorkspace } from "./opdContext";
 import { opdQueueIdentity } from "./opdMetricsAndAlerts";
 
@@ -20,27 +20,36 @@ export function OpdCbcReportsView() {
   } = useOpdWorkspace();
 
   return (
-    <div id="tour-clinical-overview" className="space-y-6">
+    <div id="tour-clinical-overview" className="jvk-opd-subpage space-y-4">
       <OpdSubpageHeader
         sectionTitle="CBC Reports"
         subtitle="Explore synthetic CBC screening inputs or connect a verified clinical session to review patient CBC reports."
         activeTab="cbc"
       />
 
-      {/* Section 1: Experimental Synthetic Research Demo */}
-      <CbcBoundary>
-        <CbcResearchDemo />
-      </CbcBoundary>
+      {activePatient && (
+        <OpdPatientSummary
+          patient={activePatient}
+          encounterId={activePatient.encounterId ?? activePatient.cbcEncounterId ?? null}
+        />
+      )}
 
-      {/* Section 2: Strict CBC Clinical Authentication Boundary */}
-      <DoctorCbcAccess onConnect={connectCbc} />
+      <div className="jvk-opd-cbc-access">
+        {/* Section 1: Experimental Synthetic Research Demo */}
+        <CbcBoundary>
+          <CbcResearchDemo />
+        </CbcBoundary>
+
+        {/* Section 2: Strict CBC Clinical Authentication Boundary */}
+        <DoctorCbcAccess onConnect={connectCbc} />
+      </div>
 
       {/* Section 3: Explicit Authorized Encounter Selector (never silently binds to arbitrary patient) */}
       {queue.length > 0 && (
         <section aria-label="CBC encounter selector" className="jvk-opd-card p-5 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-bold text-[#0E2420]">
+              <h3 className="jvk-opd-panel-title">
                 Select Consultation Encounter for CBC Review
               </h3>
               <p className="text-xs text-[#586C64]">
@@ -62,6 +71,7 @@ export function OpdCbcReportsView() {
                 <button
                   key={id}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => selectPatient(id, false)}
                   className={`rounded-xl border-2 p-3 text-left transition ${
                     isSelected
@@ -109,6 +119,7 @@ export function OpdCbcReportsView() {
           />
         </Suspense>
       </CbcBoundary>
+      <OpdSubpageWave />
     </div>
   );
 }

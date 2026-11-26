@@ -39,14 +39,14 @@ export default function CbcResearchDemo() {
   }
 
   return (
-    <section aria-label="CBC Research Explorer" className="rounded-2xl border border-teal-200 bg-teal-50/50 p-4 sm:p-5 space-y-4">
+    <section aria-label="CBC Research Explorer" className="jvk-opd-card-sage p-4 sm:p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-100 rounded-full px-2 py-1">Experimental · Synthetic data only</span>
-          <h3 className="mt-2 font-bold text-slate-900">CBC Research Explorer</h3>
+          <h3 className="jvk-opd-panel-title mt-2">CBC Research Explorer</h3>
           <p className="text-sm text-slate-600">Explore a frozen research model using five CBC measurements.</p>
         </div>
-        <button type="button" aria-expanded={open} aria-controls="cbc-research-demo" className="rounded-lg bg-teal-800 text-white px-4 py-2 text-sm font-semibold" onClick={() => {
+        <button type="button" aria-expanded={open} aria-controls="cbc-research-demo" className="jvk-opd-primary-btn min-h-10 px-4 py-2 text-sm font-semibold" onClick={() => {
           if (!open) { setValues({ ...sample }); setDemoPreset("risk"); setResult(null); setError(""); }
           setOpen(!open);
         }}>{open ? "Close demo" : "Try demo"}</button>

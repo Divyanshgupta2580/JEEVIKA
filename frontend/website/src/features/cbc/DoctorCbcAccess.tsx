@@ -194,10 +194,10 @@ export function DoctorCbcAccess({
   }
   return (
     <section
-      className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3"
+      className="jvk-opd-card p-4 sm:p-5 space-y-3"
       aria-label="CBC clinical access"
     >
-      <h2 className="font-bold text-slate-900">
+      <h2 className="jvk-opd-panel-title">
         CBC clinical workspace{" "}
         <span className="text-xs font-normal text-amber-800">
           Synthetic records only
@@ -210,7 +210,7 @@ export function DoctorCbcAccess({
         </p>
       ) : !session ? (
         <form
-          className="flex flex-wrap items-end gap-2"
+          className="jvk-opd-cbc-sign-in"
           onSubmit={(event) => {
             event.preventDefault();
             void connect(event.currentTarget);
@@ -221,7 +221,7 @@ export function DoctorCbcAccess({
             <input
               name="org"
               required
-              className="block border rounded p-2"
+              className="mt-1 block w-full rounded-lg border border-[#CEDAD3] bg-white p-2 text-sm"
               autoComplete="organization"
             />
           </label>
@@ -231,7 +231,7 @@ export function DoctorCbcAccess({
               name="email"
               type="email"
               required
-              className="block border rounded p-2"
+              className="mt-1 block w-full rounded-lg border border-[#CEDAD3] bg-white p-2 text-sm"
               autoComplete="username"
             />
           </label>
@@ -241,18 +241,18 @@ export function DoctorCbcAccess({
               name="password"
               type="password"
               required
-              className="block border rounded p-2"
+              className="mt-1 block w-full rounded-lg border border-[#CEDAD3] bg-white p-2 text-sm"
               autoComplete="current-password"
             />
           </label>
           <button
             type="submit"
             disabled={busy}
-            className="rounded bg-teal-800 text-white p-2 text-sm"
+            className="jvk-opd-primary-btn min-h-10 px-4 py-2 text-sm font-semibold disabled:opacity-50"
           >
             Connect clinical session
           </button>
-          <p className="w-full text-xs text-slate-500">
+          <p className="col-span-full text-xs text-[#4F635B]">
             Use the configured clinical account. The ERP demo login does not
             authorize report access.
           </p>

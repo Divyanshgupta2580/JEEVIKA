@@ -1,4 +1,16 @@
-import { AlertTriangle, ArrowLeft, ChevronRight, ClipboardList, FileText, Pill, Stethoscope } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+  Pill,
+  ShieldCheck,
+  Stethoscope,
+} from "lucide-react";
+import { StatusChip } from "@/components/ui/design-primitives";
+import "@/design-system/opd-subpages.css";
 import { useOpdWorkspace } from "./opdContext";
 import { opdQueueIdentity, type OpdQueueItem } from "./opdMetricsAndAlerts";
 
@@ -21,6 +33,76 @@ export function OpdGoldCurve() {
   );
 }
 
+const subpageArtwork = {
+  queue: "/assets/opd/opd-queue-clipboard.png",
+  consultation: "/assets/ipd/ipd-corner-leaves.png",
+  rx: "/assets/patient/medicines-bottle.png",
+  cbc: "/assets/patient/drift-clipboard.png",
+};
+
+export function OpdPatientInitials({ name, className }: { name: string; className?: string }) {
+  const initials = name.trim().split(/\s+/u).slice(0, 2).map((word) => Array.from(word)[0]).join("");
+  return <span aria-hidden="true" className={className}>{initials || "PT"}</span>;
+}
+
+export function OpdPatientSummary({
+  patient,
+  encounterId,
+  showFacility = false,
+}: {
+  patient: OpdQueueItem;
+  encounterId: string | null;
+  showFacility?: boolean;
+}) {
+  return (
+    <section aria-label="Patient overview" className="jvk-opd-card jvk-opd-patient-summary">
+      <OpdPatientInitials name={patient.name} className="jvk-opd-patient-avatar" />
+      <div className="min-w-0 space-y-1.5">
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <h3 className="text-lg font-bold text-[#0E2420]">{patient.name}</h3>
+          <span className="jvk-opd-patient-ref">Ref {patient.token}</span>
+          {patient.pmjayEligible && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              ₹5L PM-JAY Cashless Eligible
+            </span>
+          )}
+        </div>
+        <dl className="jvk-opd-patient-facts">
+          <div><dt>Age</dt><dd>{patient.age === null ? "Not recorded" : patient.age}</dd></div>
+          <div><dt>Gender</dt><dd>{patient.gender}</dd></div>
+          <div><dt>ABHA ID</dt><dd>{patient.abhaId || "Not recorded"}</dd></div>
+          {patient.abhaId && (
+            <div>
+              <dt className="sr-only">ABHA status</dt>
+              <dd className="inline-flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+                NRCeS Linked
+              </dd>
+            </div>
+          )}
+          <div><dt>Encounter</dt><dd>{encounterId || "Not recorded"}</dd></div>
+          <div><dt>Intake</dt><dd>{patient.checkInTime}</dd></div>
+        </dl>
+      </div>
+      <div className="jvk-opd-patient-status">
+        <span>Status</span>
+        <StatusChip tone={patient.status === "STAT_ALERT" ? "emergency" : "neutral"}>
+          {patient.status === "STAT_ALERT" ? "Emergency triage"
+            : patient.status === "IN_CONSULT" ? "Reviewed"
+              : patient.status === "DISPENSED" ? "Dispensed"
+                : "Awaiting review"}
+        </StatusChip>
+      </div>
+      {showFacility && <div className="jvk-opd-patient-facility" aria-hidden="true" />}
+    </section>
+  );
+}
+
+export function OpdSubpageWave() {
+  return <div className="jvk-opd-subpage-wave" aria-hidden="true" />;
+}
+
 export function OpdSubpageHeader({
   sectionTitle,
   subtitle,
@@ -40,10 +122,18 @@ export function OpdSubpageHeader({
   ];
 
   return (
-    <header className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[#586C64]">
+    <header className="jvk-opd-subpage-header">
+      <div className="jvk-opd-subpage-hero" data-page={activeTab}>
+        <img
+          src={subpageArtwork[activeTab]}
+          alt=""
+          className="jvk-opd-subpage-art"
+          width="280"
+          height="150"
+          decoding="async"
+        />
+        <div className="jvk-opd-subpage-title">
+          <div className="jvk-opd-subpage-breadcrumb">
             <button
               type="button"
               onClick={() => navigateOpd("/app/doctor")}
@@ -55,25 +145,25 @@ export function OpdSubpageHeader({
             <ChevronRight className="w-3.5 h-3.5 text-[#8A9991]" aria-hidden="true" />
             <span className="font-semibold text-[#0E2420]">{sectionTitle}</span>
           </div>
-          <div className="flex flex-wrap items-baseline gap-2.5 pt-1">
-            <h1 data-jvk-entrance="left" className="jvk-opd-serif text-xl sm:text-2xl font-bold text-[#0E2420] tracking-tight">
+          <div className="jvk-opd-subpage-heading">
+            <h1 data-jvk-entrance="left" className="jvk-opd-serif">
               Doctor Consultation <span className="jvk-opd-italic">(OPD)</span>
             </h1>
-            <span className="text-[#8A9991]" aria-hidden="true">·</span>
-            <h2 data-jvk-entrance="right" className="text-lg sm:text-xl font-bold text-[#175B4B]">{sectionTitle}</h2>
+            <span className="jvk-opd-subpage-title-divider" aria-hidden="true">·</span>
+            <h2 data-jvk-entrance="right" className="jvk-opd-serif">{sectionTitle}</h2>
           </div>
-          <p className="text-sm text-[#4F635B]">{subtitle}</p>
+          <p className="jvk-opd-subpage-description">{subtitle}</p>
         </div>
 
         {activePatient && (
           <div
-            className={`rounded-xl border px-3.5 py-2 text-xs shadow-xs ${
+            className={`jvk-opd-subpage-selected ${
               activePatient.status === "STAT_ALERT"
                 ? "border-rose-300 bg-rose-50 text-rose-900"
                 : "border-[#D7E3DC] bg-white text-[#0E2420]"
             }`}
           >
-            <div className="flex items-center gap-2 font-bold">
+            <div className="flex flex-wrap items-center gap-2 font-bold">
               {activePatient.status === "STAT_ALERT" && (
                 <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
               )}
@@ -95,7 +185,7 @@ export function OpdSubpageHeader({
 
       <nav
         aria-label="OPD workflow sections"
-        className="flex flex-wrap gap-2 rounded-2xl border border-[#E6DFD0] bg-[#FAF6EC] p-1.5"
+        className="jvk-opd-subpage-tabs"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -106,11 +196,7 @@ export function OpdSubpageHeader({
               type="button"
               aria-current={isCurrent ? "page" : undefined}
               onClick={() => navigateOpd(tab.path)}
-              className={`jvk-motion-control inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold ${
-                isCurrent
-                  ? "bg-[#047C61] text-white shadow-xs"
-                  : "text-[#354E45] hover:bg-white hover:text-[#0E2420]"
-              }`}
+              className="jvk-opd-subpage-tab"
             >
               <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{tab.label}</span>

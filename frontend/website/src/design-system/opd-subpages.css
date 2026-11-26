@@ -1,0 +1,466 @@
+/* Main content of the four OPD workflow pages. */
+.jvk-opd-subpage {
+  --opd-border: #e4dccd;
+  --opd-muted: #4f635b;
+  --opd-ink: #0e2420;
+  --opd-forest: #103b32;
+  --opd-ivory: #faf7f0;
+  min-inline-size: 0;
+  container: opd-subpage / inline-size;
+}
+
+.jvk-opd-subpage :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 2px;
+}
+
+.jvk-opd-subpage-header {
+  position: relative;
+  isolation: isolate;
+}
+
+.jvk-opd-subpage-hero {
+  position: relative;
+  display: grid;
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-block-size: 105px;
+  padding-block: var(--ds-space-1) var(--ds-space-4);
+}
+
+.jvk-opd-subpage-art {
+  display: none;
+  position: absolute;
+  inset: 0 0 auto auto;
+  z-index: -1;
+  width: min(24%, 250px);
+  height: 145px;
+  object-fit: contain;
+  object-position: right top;
+  pointer-events: none;
+}
+
+.jvk-opd-subpage-hero[data-page="queue"] .jvk-opd-subpage-art {
+  object-fit: cover;
+  object-position: center 44%;
+  mask-image: radial-gradient(ellipse at 54% 49%, #000 53%, transparent 76%);
+}
+
+.jvk-opd-subpage-hero[data-page="consultation"] .jvk-opd-subpage-art {
+  width: 115px;
+  height: 105px;
+  opacity: .85;
+}
+
+.jvk-opd-subpage-title {
+  min-width: 0;
+}
+
+.jvk-opd-subpage-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  font-size: .8125rem;
+  color: var(--opd-muted);
+}
+
+.jvk-opd-subpage-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 .55rem;
+  margin-block-start: .6rem;
+  color: var(--opd-ink);
+  overflow-wrap: anywhere;
+}
+
+.jvk-opd-subpage-heading h1,
+.jvk-opd-subpage-heading h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.12rem + 1.25cqi, 2.2rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.027em;
+}
+
+.jvk-opd-subpage-heading h2 {
+  color: var(--opd-forest);
+}
+
+.jvk-opd-subpage-title-divider {
+  color: #79664d;
+}
+
+.jvk-opd-subpage-description {
+  margin-block-start: .4rem;
+  font-size: .9375rem;
+  color: var(--opd-muted);
+}
+
+.jvk-opd-subpage-selected {
+  width: fit-content;
+  max-width: 100%;
+  padding: .5rem .75rem;
+  border-width: 1px;
+  border-radius: var(--ds-radius-md);
+  overflow-wrap: anywhere;
+  font-size: .75rem;
+}
+
+.jvk-opd-subpage-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--opd-border);
+  border-radius: var(--ds-radius-lg);
+  background: linear-gradient(100deg, #faf7ef, #f4eddf);
+}
+
+.jvk-opd-subpage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-inline-size: 0;
+  min-block-size: var(--ds-touch-staff);
+  padding: .5rem .55rem;
+  text-align: start;
+  font-size: .8125rem;
+  font-weight: 700;
+  color: var(--opd-forest);
+  border-radius: 10px;
+  transition: background-color var(--ds-motion-normal) var(--ds-ease-standard), box-shadow var(--ds-motion-normal) var(--ds-ease-standard);
+}
+
+.jvk-opd-subpage-tab[aria-current="page"] {
+  background: linear-gradient(180deg, #08775f, #055742);
+  box-shadow: 0 3px 9px #05574226;
+  color: white;
+}
+
+@media (hover: hover) {
+  .jvk-opd-subpage-tab:not([aria-current]):hover {
+    background-color: #fffdf8;
+  }
+}
+
+.jvk-opd-subpage :where(.jvk-opd-panel-title) {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.24;
+  color: var(--opd-ink);
+}
+
+.jvk-opd-subpage .jvk-opd-panel-title--accent::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 5px;
+  margin-block-start: 3px;
+  border-top: 2px solid #e5a736;
+  border-radius: 55% 45% 0 0;
+}
+
+.jvk-opd-patient-summary {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .65rem .9rem;
+  align-items: center;
+  padding: .9rem 1rem;
+  overflow-wrap: anywhere;
+}
+
+.jvk-opd-patient-avatar,
+.jvk-opd-queue-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.jvk-opd-patient-avatar {
+  background: linear-gradient(155deg, #21876f, #045240);
+  color: white;
+  font-size: 1.1rem;
+}
+
+.jvk-opd-patient-ref {
+  padding: .15rem .6rem;
+  border-radius: var(--ds-radius-pill);
+  background: #e1f0e7;
+  color: #175b4b;
+  font-size: .75rem;
+  font-weight: 750;
+}
+
+.jvk-opd-patient-facts,
+.jvk-opd-patient-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .8rem;
+  align-items: center;
+  color: var(--opd-muted);
+  font-size: .8125rem;
+}
+
+.jvk-opd-patient-facts div {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+}
+
+.jvk-opd-patient-facts dt::after {
+  content: ":";
+}
+
+.jvk-opd-patient-facts dd {
+  color: var(--opd-ink);
+  font-weight: 600;
+}
+
+.jvk-opd-patient-status {
+  grid-column: 1 / -1;
+}
+
+.jvk-opd-patient-facility {
+  display: none;
+}
+
+.jvk-opd-subpage-wave {
+  block-size: 2.35rem;
+  margin-block-start: .75rem;
+  background: url("/assets/opd/opd-bottom-wave.png") center bottom / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.jvk-opd-queue-row {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem .9rem;
+  padding: .75rem .85rem;
+  border: 1px solid var(--opd-border);
+  border-inline-start-width: 3px;
+  border-radius: .85rem;
+  background: #fffdfa;
+  transition: border-color var(--ds-motion-normal) var(--ds-ease-standard);
+}
+
+.jvk-opd-queue-row[data-urgent="true"] {
+  border-color: #e87988;
+  border-inline-start-color: #cf2444;
+  background: linear-gradient(105deg, #fff8f6, #fcecef);
+}
+
+.jvk-opd-queue-row[data-selected="true"] {
+  border-color: #168367;
+  background: linear-gradient(105deg, #f2f8ee, #e7f2eb);
+}
+
+.jvk-opd-queue-row:hover {
+  border-color: #168367;
+}
+
+.jvk-opd-queue-avatar {
+  width: 2.7rem;
+  margin-top: .1rem;
+  background: #e2ece1;
+  color: #175b4b;
+}
+
+.jvk-opd-queue-row[data-urgent="true"] .jvk-opd-queue-avatar {
+  background: #f1e2db;
+  color: #752a36;
+}
+
+.jvk-opd-consultation-panels,
+.jvk-opd-rx-panels,
+.jvk-opd-cbc-access,
+.jvk-opd-cbc-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ds-space-4);
+  align-items: start;
+}
+
+.jvk-opd-consultation-side,
+.jvk-opd-rx-side {
+  display: grid;
+  gap: var(--ds-space-4);
+  min-width: 0;
+}
+
+.jvk-opd-vitals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ds-space-3);
+}
+
+.jvk-opd-cbc-review,
+.jvk-opd-cbc-history {
+  background: #fffdfa;
+  border: 1px solid var(--opd-border);
+  border-radius: var(--ds-radius-lg);
+  min-width: 0;
+  padding: var(--ds-space-4);
+}
+
+.jvk-opd-cbc-report-row[data-selected="true"] {
+  border-color: #168367;
+  background: #edf7f2;
+}
+
+@container opd-subpage (min-width: 480px) {
+  .jvk-opd-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jvk-opd-patient-status {
+    grid-column: auto;
+  }
+
+  .jvk-opd-patient-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@container opd-subpage (min-width: 620px) {
+  .jvk-opd-subpage-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-space-1);
+  }
+
+  .jvk-opd-subpage-tab {
+    padding-inline: .95rem;
+  }
+
+  .jvk-opd-queue-row {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@container opd-subpage (min-width: 760px) {
+  .jvk-opd-subpage-hero {
+    padding-inline-end: min(24%, 250px);
+  }
+
+  .jvk-opd-subpage-art {
+    display: block;
+  }
+
+  .jvk-opd-subpage-hero[data-page="consultation"] {
+    padding-inline-end: 115px;
+  }
+
+  .jvk-opd-vitals {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .jvk-opd-cbc-access {
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  }
+}
+
+@container opd-subpage (min-width: 950px) {
+  .jvk-opd-patient-summary:has(.jvk-opd-patient-facility) {
+    padding-inline-end: 160px;
+  }
+
+  .jvk-opd-patient-facility {
+    display: block;
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 0 auto;
+    inline-size: 155px;
+    background: url("/assets/kiosk/kiosk-clinic-watercolor.png") right bottom / contain no-repeat;
+    pointer-events: none;
+  }
+
+  .jvk-opd-consultation-panels {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  }
+
+  .jvk-opd-rx-panels {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+
+  .jvk-opd-cbc-workspace {
+    grid-template-columns: minmax(215px, .75fr) minmax(0, 2fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jvk-opd-subpage-tab,
+  .jvk-opd-queue-row {
+    transition: none;
+  }
+}
+
+.jvk-opd-consultation-warnings {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+@container opd-subpage (min-width: 850px) {
+  .jvk-opd-consultation-warnings:has([role="alert"]) {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  }
+}
+
+.jvk-opd-savings-grid,
+.jvk-opd-cbc-sign-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ds-space-2);
+  align-items: end;
+}
+
+@container opd-subpage (min-width: 610px) {
+  .jvk-opd-cbc-sign-in {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container opd-subpage (min-width: 640px) and (max-width: 949px) {
+  .jvk-opd-savings-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container opd-subpage (min-width: 1260px) {
+  .jvk-opd-savings-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container opd-subpage (min-width: 1080px) {
+  .jvk-opd-subpage-hero:has(.jvk-opd-subpage-selected) {
+    grid-template-columns: minmax(0, 1fr) minmax(165px, 220px);
+    padding-inline-end: min(19%, 225px);
+  }
+
+  .jvk-opd-subpage-hero[data-page="consultation"]:has(.jvk-opd-subpage-selected) {
+    padding-inline-end: 117px;
+  }
+
+  .jvk-opd-subpage-hero:has(.jvk-opd-subpage-selected) .jvk-opd-subpage-art {
+    width: min(19%, 215px);
+  }
+
+  .jvk-opd-subpage-hero[data-page="consultation"]:has(.jvk-opd-subpage-selected) .jvk-opd-subpage-art {
+    width: 110px;
+  }
+
+  .jvk-opd-subpage-selected {
+    justify-self: end;
+  }
+}
