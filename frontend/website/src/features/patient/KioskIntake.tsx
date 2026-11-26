@@ -232,6 +232,7 @@ export function KioskIntake() {
         <CardContent className="space-y-5 p-4 sm:p-8">
           <h1
             ref={heading}
+            data-jvk-entrance={step === 0 ? "left" : undefined}
             tabIndex={-1}
             lang={language}
             className="text-2xl font-bold sm:text-3xl"
@@ -254,7 +255,7 @@ export function KioskIntake() {
           )}
           {step === 0 && (
             <>
-              <p>Select the language you want to use at the kiosk.</p>
+              <p data-jvk-entrance="right">Select the language you want to use at the kiosk.</p>
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {Object.entries(patientLanguages).map(
                   ([key, [label, lang]]) => (

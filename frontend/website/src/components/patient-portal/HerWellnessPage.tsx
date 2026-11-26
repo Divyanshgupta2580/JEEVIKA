@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from "react";
+import { useRouteEntrance } from "@/lib/transitions";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -123,6 +124,7 @@ export function HerWellnessPage({
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
   const busy = useRef(false);
+  const entranceRef = useRouteEntrance("/app/home/her");
 
   const result = usePatientData<{
     consent: boolean;
@@ -251,6 +253,7 @@ export function HerWellnessPage({
       </header>
 
       <main
+        ref={entranceRef}
         id="patient-main"
         tabIndex={-1}
         className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-8 sm:px-6 lg:px-8 lg:pt-6 focus:outline-none"

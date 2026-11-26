@@ -56,11 +56,11 @@ export function OpdSubpageHeader({
             <span className="font-semibold text-[#0E2420]">{sectionTitle}</span>
           </div>
           <div className="flex flex-wrap items-baseline gap-2.5 pt-1">
-            <h1 className="jvk-opd-serif text-xl sm:text-2xl font-bold text-[#0E2420] tracking-tight">
+            <h1 data-jvk-entrance="left" className="jvk-opd-serif text-xl sm:text-2xl font-bold text-[#0E2420] tracking-tight">
               Doctor Consultation <span className="jvk-opd-italic">(OPD)</span>
             </h1>
             <span className="text-[#8A9991]" aria-hidden="true">·</span>
-            <h2 className="jvk-motion-heading text-lg sm:text-xl font-bold text-[#175B4B]">{sectionTitle}</h2>
+            <h2 data-jvk-entrance="right" className="text-lg sm:text-xl font-bold text-[#175B4B]">{sectionTitle}</h2>
           </div>
           <p className="text-sm text-[#4F635B]">{subtitle}</p>
         </div>

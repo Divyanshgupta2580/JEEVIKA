@@ -70,12 +70,14 @@ export function CasualtyBoardView({
                 <CareGoldCurve />
               </span>
             </h1>
-            <p className="max-w-lg text-sm sm:text-[15px] leading-relaxed text-[#3F554D]">
+            <p data-jvk-entrance="left" className="max-w-lg text-sm sm:text-[15px] leading-relaxed text-[#3F554D]">
               Rapid triage, emergency bay management, and referral coordination for critical and urgent cases.
             </p>
           </div>
 
           <img
+            data-jvk-entrance="right"
+            data-jvk-entrance-bleed=""
             src="/assets/casualty/casualty-er-hero.png"
             alt=""
             aria-hidden="true"

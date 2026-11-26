@@ -121,7 +121,7 @@ export function ClinicianAlertsPage() {
               <OpdGoldCurve />
             </span>
           </h1>
-          <p className="text-sm text-[#4F635B] max-w-2xl">
+          <p data-jvk-entrance="left" className="text-sm text-[#4F635B] max-w-2xl">
             Aggregated clinical, triage, Code Blue, pharmacovigilance, and intake safety warnings across your authorized clinic workflows.
           </p>
         </div>
@@ -130,7 +130,8 @@ export function ClinicianAlertsPage() {
           <button
             type="button"
             onClick={() => navigateOpd("/app/doctor")}
-            className="inline-flex min-h-10 items-center rounded-xl border border-[#DFD8C7] bg-white px-3.5 py-2 text-xs font-bold text-[#0E2420] hover:border-[#047C61]"
+            data-jvk-entrance="right"
+            className="jvk-motion-action inline-flex min-h-10 items-center rounded-xl border border-[#DFD8C7] bg-white px-3.5 py-2 text-xs font-bold text-[#0E2420] hover:border-[#047C61]"
           >
             Back to OPD Cockpit
           </button>

@@ -109,7 +109,7 @@ export function LoginPage() {
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-10">
           {/* Left Column: Staff Watercolor Illustration + Tagline + Benefits (First on Mobile & Left on Desktop) */}
-          <div className="lg:col-span-7 space-y-5">
+          <div data-jvk-entrance="left" className="lg:col-span-7 space-y-5">
             <AuthIllustrationPanel
               src="/assets/auth/staff-consultation.png"
               alt="Clinician consulting an elderly patient and family member in a sunlit clinic"
@@ -143,7 +143,7 @@ export function LoginPage() {
                   <span>Protected Clinical Access</span>
                 </div>
 
-                <h1 className="text-2xl sm:text-[1.85rem] font-extrabold tracking-tight text-[#0E2420] leading-tight">
+                <h1 data-jvk-entrance="right" className="text-2xl sm:text-[1.85rem] font-extrabold tracking-tight text-[#0E2420] leading-tight">
                   Staff Sign-In to{" "}
                   <span className="relative inline-block">
                     JEEVIKA

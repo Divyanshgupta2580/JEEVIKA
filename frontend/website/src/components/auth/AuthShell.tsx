@@ -1,8 +1,9 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Loader2, type LucideIcon } from "lucide-react";
 import { GoldUnderline } from "@/components/landing-public/shared";
 import { cn } from "@/lib/utils";
+import { useRouteEntrance } from "@/lib/transitions";
 
 /** Shared light-mode ivory canvas for all JEEVIKA authentication screens. */
 export function AuthLayout({
@@ -18,15 +19,16 @@ export function AuthLayout({
   className?: string;
   children: React.ReactNode;
 }) {
+  const entranceRef = useRouteEntrance(useLocation().pathname);
   return (
     <div
       className={cn(
-        "jvk-motion-auth jeevika-landing min-h-dvh bg-[#FEFBF6] text-[#0E2420] antialiased flex flex-col justify-between relative overflow-x-clip selection:bg-[#E7F2E8] selection:text-[#047C61]",
+        "jeevika-landing min-h-dvh bg-[#FEFBF6] text-[#0E2420] antialiased flex flex-col justify-between relative overflow-x-clip selection:bg-[#E7F2E8] selection:text-[#047C61]",
         className,
       )}
     >
       {header}
-      <main id="public-main" tabIndex={-1} className="relative z-10 flex-1 flex flex-col justify-center focus:outline-none">
+      <main ref={entranceRef} id="public-main" tabIndex={-1} className="relative z-10 flex-1 flex flex-col justify-center focus:outline-none">
         {children}
       </main>
       {footer}
@@ -120,7 +122,7 @@ export function AuthFormCard({
   return (
     <div
       className={cn(
-        "jvk-motion-auth rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] shadow-[0_20px_50px_rgba(14,36,32,0.08)]",
+        "rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] shadow-[0_20px_50px_rgba(14,36,32,0.08)]",
         className,
       )}
     >

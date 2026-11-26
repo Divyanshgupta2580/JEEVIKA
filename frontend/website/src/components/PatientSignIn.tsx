@@ -304,7 +304,7 @@ export function PatientSignIn({
         <div className="mx-auto inline-flex size-12 items-center justify-center rounded-full border border-[#D4E7DC] bg-[#E7F2E8] text-[#047C61]">
           <User aria-hidden="true" className="size-5" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#0E2420]">
+        <h1 data-jvk-entrance="right" className="text-2xl font-bold tracking-tight text-[#0E2420]">
           {mode === "register"
             ? "Patient Registration"
             : mode === "reset"
@@ -496,6 +496,7 @@ export function PatientSignIn({
               </div>
 
               <h2
+                data-jvk-entrance="left"
                 className="font-bold tracking-tight text-[#0E2420] leading-[1.08]"
                 style={{ fontSize: "clamp(2.1rem, 3.4vw, 3.25rem)" }}
               >

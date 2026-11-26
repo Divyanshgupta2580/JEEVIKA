@@ -69,6 +69,7 @@ const LoginPage = lazyWithRetry(() => import("@/components/LoginPage").then(modu
 const RegisterPage = lazyWithRetry(() => import("@/components/RegisterPage").then(module => ({ default: module.RegisterPage })));
 import { useLocation, useNavigate } from 'react-router-dom';
 import { logPageView } from '@/lib/analytics';
+import { useRouteEntrance } from '@/lib/transitions';
 
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button, WorkspaceSkeleton, DashboardSkeleton } from '@/components/ui/basic'
@@ -164,11 +165,11 @@ const SEO_ROUTES: Record<string, SeoConfig> = {
     }
 }
 
-const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="jvk-motion-info w-full h-full">
-        {children}
-    </div>
-);
+function PageWrapper({ children, route }: { children: React.ReactNode; route?: string }) {
+    const location = useLocation();
+    const entranceRef = useRouteEntrance<HTMLDivElement>(route ?? location.pathname);
+    return <div ref={entranceRef} className="w-full h-full">{children}</div>;
+}
 
 function AppContent() {
     const { session, profile, clinics } = useHospital();
@@ -234,7 +235,7 @@ function AppContent() {
             onSelectClinicId={setSelectedClinicId}
         >
             <Suspense fallback={<DashboardSkeleton />}>
-                <div className="w-full h-full">
+                <PageWrapper route={activeRoute}>
                     {view === 'nurse-calls' && routeAccess('/app/nurse-calls', verifiedRole) === 'Full' && (
                         <NurseCallQueue />
                     )}
@@ -408,7 +409,7 @@ function AppContent() {
                     {view === 'settings' && (
                         <SettingsDashboard />
                     )}
-                </div>
+                </PageWrapper>
             </Suspense>
 
             <Toaster />
@@ -650,9 +651,9 @@ function AppRouter() {
                 <Routes location={location}>
                     {/* Public routes */}
                     <Route path="/" element={<PublicLayout><PublicOverview /></PublicLayout>} />
-                    <Route path="/login" element={<PublicAuthRoute><PageWrapper><LoginPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/login" element={<PublicAuthRoute><div className="w-full h-full"><LoginPage /></div></PublicAuthRoute>} />
                     <Route path="/overview" element={<PublicLayout><PublicOverview /></PublicLayout>} />
-                    <Route path="/register" element={<PublicAuthRoute><PageWrapper><RegisterPage /></PageWrapper></PublicAuthRoute>} />
+                    <Route path="/register" element={<PublicAuthRoute><div className="w-full h-full"><RegisterPage /></div></PublicAuthRoute>} />
                     <Route path="/reset-password" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
                     <Route path="/home/sign-in" element={<PublicLayout><PatientSignIn /></PublicLayout>} />
                     <Route path="/home/register" element={<PublicLayout><PatientSignIn mode="register" /></PublicLayout>} />

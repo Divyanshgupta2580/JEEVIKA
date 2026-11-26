@@ -97,7 +97,7 @@ export function AyushDashboard() {
         {/* Hero Header */}
         <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[144px] lg:min-h-[164px] md:flex md:items-center">
           <div className="relative z-10 w-full md:max-w-[54%] lg:max-w-[55%] space-y-2.5">
-            <h1 className="jvk-motion-heading jvk-ca-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
+            <h1 className="jvk-ca-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
               AYUSH{" "}
               <span className="relative inline-block pr-1">
                 Portal

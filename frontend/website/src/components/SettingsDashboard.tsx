@@ -146,7 +146,7 @@ export function SettingsDashboard() {
 
     if (!isHospitalAdmin && !isClinicAdmin) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500">
+            <div data-jvk-stationary="" className="flex flex-col items-center justify-center h-full text-slate-500">
                 <Shield className="w-16 h-16 mb-4 text-slate-200" />
                 <h2 className="text-xl font-bold text-slate-700">Access Denied</h2>
                 <p>You need administrative privileges to view settings.</p>

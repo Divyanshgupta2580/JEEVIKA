@@ -22,6 +22,8 @@ export function HeroSection() {
         {/* Background/Right Healthcare Illustration on Desktop */}
         <div
           aria-hidden="true"
+          data-jvk-entrance="right"
+          data-jvk-entrance-bleed=""
           className="pointer-events-none hidden lg:block lg:absolute lg:inset-y-0 lg:right-[-2%] lg:w-[62%] xl:right-[-3%] xl:w-[62%]"
         >
           <img
@@ -49,6 +51,7 @@ export function HeroSection() {
             {/* Approved Hero Heading */}
             <h1
               id="hero-heading"
+              data-jvk-entrance="left"
               className="font-bold tracking-tight text-[#0E2420] leading-[1.08]"
               style={{ fontSize: "clamp(2.2rem, 3.65vw, 3.55rem)" }}
             >
@@ -98,7 +101,7 @@ export function HeroSection() {
           </div>
 
           {/* Mobile/Tablet Hero Illustration */}
-          <div className="lg:hidden">
+          <div data-jvk-entrance="right" className="lg:hidden">
             <img
               src="/assets/design/care-continuum.jpg"
               alt="Doctor sharing a reassuring consultation moment with a smiling child and her mother"

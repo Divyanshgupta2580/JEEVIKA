@@ -403,7 +403,7 @@ export function LandingNavbar() {
               <Link
                 to={destinations.patientSignIn.to}
                 state={destinations.patientSignIn.state}
-                className="hidden sm:inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#BBD8CC] bg-[#EEF8F3] px-3 py-1.5 text-[13.5px] font-semibold text-[#11312B] transition-colors hover:bg-[#E1F3EA] xl:px-3.5 xl:text-sm"
+                className="jvk-motion-action hidden sm:inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#BBD8CC] bg-[#EEF8F3] px-3 py-1.5 text-[13.5px] font-semibold text-[#11312B] hover:bg-[#E1F3EA] xl:px-3.5 xl:text-sm"
               >
                 <SignInDoorIcon className="size-4 text-[#047C61]" />
                 <span>Patient sign-in</span>
@@ -412,10 +412,10 @@ export function LandingNavbar() {
               <Link
                 to={destinations.enterWorkspace.to}
                 state={destinations.enterWorkspace.state}
-                className="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#047C61] px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#036450] sm:px-3.5 sm:text-[13.5px] xl:px-4 xl:text-sm"
+                className="jvk-motion-action inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#047C61] px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#036450] sm:px-3.5 sm:text-[13.5px] xl:px-4 xl:text-sm"
               >
                 <span>Enter workspace</span>
-                <ArrowRight aria-hidden="true" className="size-3.5 sm:size-4" />
+                <ArrowRight aria-hidden="true" className="jvk-motion-arrow size-3.5 sm:size-4" />
               </Link>
             </div>
           </nav>

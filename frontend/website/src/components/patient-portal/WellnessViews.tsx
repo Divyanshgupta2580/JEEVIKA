@@ -190,7 +190,7 @@ export function MoreView() {
             key={route}
             to={`/app/home/${route}`}
             aria-label={label}
-            className={`group flex items-start gap-4 p-5 sm:p-6 transition-transform hover:-translate-y-0.5 ${
+            className={`jvk-motion-card jvk-motion-card-shadow group flex items-start gap-4 p-5 sm:p-6 ${
               tone === "mint" ? "jvk-her-field-sage" : "jvk-her-field-gold"
             }`}
           >
@@ -201,7 +201,7 @@ export function MoreView() {
                   {label}
                 </h2>
                 <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-[#D4E3DA] bg-[#EEF8F3] text-[#047C61] group-hover:bg-[#047C61] group-hover:text-white transition-colors">
-                  <ArrowRight aria-hidden="true" className="size-4" />
+                  <ArrowRight aria-hidden="true" className="jvk-motion-arrow size-4" />
                 </span>
               </div>
               <p className="text-xs sm:text-[13.5px] leading-relaxed text-[#4B5D57]">

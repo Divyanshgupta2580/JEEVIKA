@@ -38,7 +38,7 @@ export function OpdOverview() {
       {/* Hero section matching approved OPD Cockpit reference */}
       <section className="relative overflow-hidden rounded-[22px] py-2 sm:py-3 md:min-h-[144px] lg:min-h-[168px] md:flex md:items-center">
         <div className="relative z-10 w-full md:max-w-[60%] lg:max-w-[63%] xl:max-w-[66%] space-y-2.5">
-          <h1 className="jvk-motion-heading jvk-opd-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
+          <h1 className="jvk-opd-serif text-[28px] sm:text-4xl lg:text-[38px] xl:text-[42px] font-semibold tracking-tight text-[#0E2420] leading-[1.15]">
             Doctor Consultation{" "}
             <span className="relative inline-block jvk-opd-italic pr-1">
               (OPD)

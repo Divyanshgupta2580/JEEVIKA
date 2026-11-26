@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useRouteEntrance } from "@/lib/transitions";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -70,8 +70,7 @@ export function PatientPortalShell({
 }) {
   const { pathname } = useLocation();
   const section = pathname.split("/").filter(Boolean).at(-1) ?? "thread";
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  useRouteEntrance(subtitleRef, section);
+  const entranceRef = useRouteEntrance(pathname);
 
   return (
     <div className="jvk-patient-portal relative min-h-dvh flex flex-col justify-between overflow-x-clip bg-[#FEFBF6] text-[#0E2420] pb-20 md:pb-0">
@@ -120,6 +119,7 @@ export function PatientPortalShell({
 
       {/* Main Content Area + Approved Watercolor Rural Landscape Banner */}
       <main
+        ref={entranceRef}
         id="patient-main"
         tabIndex={-1}
         className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-8 sm:px-6 lg:px-8 lg:pt-7 focus:outline-none"
@@ -163,7 +163,7 @@ export function PatientPortalShell({
               )}
               {titleSuffix}
             </h1>
-            <p ref={subtitleRef} className="text-[13px] sm:text-sm leading-relaxed text-[#465953]">
+            <p className="text-[13px] sm:text-sm leading-relaxed text-[#465953]">
               {subtitle}
             </p>
           </div>
