@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authService as auth } from '@/lib/authService';
+import { authService as auth, type StaffUser } from '@/lib/authService';
 import { dataService as db } from '@/lib/dataService';
 import { useSubscription, SubscriptionContextValue } from '@/hooks/useSubscription';
 import { showNotification } from '@/lib/notifications';
@@ -62,7 +62,7 @@ export interface Notification {
 }
 
 interface HospitalContextType {
-    session: any;
+    session: StaffUser | null;
     profile: Profile | null;
     hospital: Hospital | null;
     managedClinic: Clinic | null;
@@ -98,7 +98,7 @@ interface HospitalContextType {
 const HospitalContext = createContext<HospitalContextType | undefined>(undefined);
 
 export function HospitalProvider({ children }: { children: ReactNode }) {
-    const [session, setSession] = useState<any>(null);
+    const [session, setSession] = useState<StaffUser | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [hospital, setHospital] = useState<Hospital | null>(null);
     const [managedClinic, setManagedClinic] = useState<Clinic | null>(null);
@@ -157,40 +157,33 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         let active = true;
-        let changed = false;
-        const clearSession = () => {
-            setSession(null);
+        let revision = 0;
+
+        const applySession = (user: StaffUser | null) => {
+            const current = ++revision;
+            setSession(user);
             setProfile(null);
             setHospital(null);
             setManagedClinic(null);
             setClinics([]);
             setInventory([]);
-            setLoading(false);
+            setNotifications([]);
+            setRevenueSummary([]);
+            setExpiringItems([]);
+            setActiveIPDCount(0);
+            setPendingRestockId(null);
+            setPendingPOItem(null);
+            setLoading(Boolean(user));
+            if (user) void fetchProfile(user, () => active && current === revision);
         };
-        const unsubscribe = auth.onAuthStateChange((user, event) => {
-            changed = true;
-            if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
-            if (user) {
-                setLoading(true);
-                setSession(user);
-                void fetchProfile(user.id);
-            } else {
-                clearSession();
-            }
-        });
-
+        const unsubscribe = auth.onAuthStateChange(applySession);
         void auth.getSession().then((session) => {
-            if (!active || changed) return;
-            if (session?.user) {
-                setSession(session.user);
-                void fetchProfile(session.user.id);
-            } else {
-                clearSession();
-            }
+            if (active && revision === 0) applySession(session?.user ?? null);
         }).catch(() => {
-            if (active && !changed) clearSession();
+            if (active && revision === 0) applySession(null);
         });
 
+        const clearSession = () => applySession(null);
         window.addEventListener('jeevika_demo_logout', clearSession);
         return () => {
             active = false;
@@ -327,7 +320,11 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
         }
     }, [inventory, loading, profile]);
 
-    const fetchDashboardStats = async (hospitalId?: string, clinicsOverride?: Clinic[]) => {
+    const fetchDashboardStats = async (
+        hospitalId?: string,
+        clinicsOverride?: Clinic[],
+        isCurrent = () => true,
+    ) => {
         const hId = hospitalId || profile?.hospital_id;
         if (!hId) return;
 
@@ -349,6 +346,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                 select: '*, clinics(name)'
             });
 
+            if (!isCurrent()) return;
             if (expiryData) {
                 const results = expiryData.map((item: any) => ({
                     ...item,
@@ -376,6 +374,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
                 })
             ]);
 
+            if (!isCurrent()) return;
             setActiveIPDCount(activeAdmissions.length);
 
             // Aggregate sales by clinic to mimic the view structure
@@ -471,83 +470,66 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
         return () => subs.forEach(unsub => unsub());
     }, [profile]);
 
-    const fetchProfile = async (userId: string) => {
+    const fetchProfile = async (user: StaffUser, isCurrent: () => boolean) => {
         try {
-            const profileData = await db.get('profiles', userId);
-            if (profileData) {
-                setProfile(profileData);
+            const cached = await db.get('profiles', user.id);
+            if (!isCurrent()) return;
 
-                if (profileData.hospital_id) {
-                    const hospitalData = await db.get('hospitals', profileData.hospital_id);
-                    if (hospitalData) {
-                        setHospital(hospitalData);
-                        applyBranding(hospitalData.branding_color);
-                    }
-                }
+            // Legacy fixtures contain presentation metadata. Permissions and
+            // clinic assignment always come from the verified staff session.
+            const localProfile = cached?.org_id === user.orgId ||
+                (user.orgId === 'demo' && cached?.org_id == null) ? cached : null;
+            const activeProfile: Profile = {
+                ...localProfile,
+                id: user.id,
+                role: user.role,
+                clinic_id: user.clinicId,
+                email: user.email || localProfile?.email || 'staff@jeevika.in',
+                full_name: localProfile?.full_name || (user.role === 'DOCTOR' ? 'Dr. Senior Consultant, MD' : user.role === 'HOSPITAL_ADMIN' ? 'Chief Medical Officer, MD, DM' : 'Clinical Operations Lead'),
+                hospital_id: localProfile?.hospital_id || (user.orgId === 'demo'
+                    ? 'cdd763dd-5cda-4444-adad-699058e335d8'
+                    : user.orgId),
+            };
+            setProfile(activeProfile);
 
-                if (profileData.role === 'CLINIC_ADMIN' && profileData.clinic_id) {
-                    const clinicData = await db.get('clinics', profileData.clinic_id);
-                    if (clinicData) {
-                        setManagedClinic(clinicData);
-                    }
-                }
-
-                if (profileData.hospital_id) {
-                    await fetchData(profileData.hospital_id);
-                } else {
-                    setLoading(false);
-                }
-            } else {
-                // Fallback authorized profile for credential-based authentication
-                const sess = await auth.getSession();
-                const user = sess?.user;
-                if (user) {
-                    const role = user.role || (user.email?.includes('doctor') ? 'DOCTOR' : user.email?.includes('nurse') ? 'CLINIC_ADMIN' : 'HOSPITAL_ADMIN');
-                    const syntheticProfile: Profile = {
-                        id: userId,
-                        role,
-                        email: user.email || 'staff@jeevika.in',
-                        full_name: user.user_metadata?.full_name || (role === 'DOCTOR' ? 'Dr. Senior Consultant, MD' : role === 'HOSPITAL_ADMIN' ? 'Chief Medical Officer, MD, DM' : 'Clinical Operations Lead'),
-                        hospital_id: 'cdd763dd-5cda-4444-adad-699058e335d8',
-                        clinic_id: user.clinicId || 'clinic-opd-001'
-                    };
-                    setProfile(syntheticProfile);
-                    await fetchData(syntheticProfile.hospital_id);
-                } else {
-                    setLoading(false);
-                }
+            const [hospitalData, clinicData] = await Promise.all([
+                db.get('hospitals', activeProfile.hospital_id),
+                user.role === 'CLINIC_ADMIN' && user.clinicId ? db.get('clinics', user.clinicId) : null,
+            ]);
+            if (!isCurrent()) return;
+            if (hospitalData) {
+                setHospital(hospitalData);
+                applyBranding(hospitalData.branding_color);
             }
+            if (clinicData) setManagedClinic(clinicData);
+            await fetchData(activeProfile.hospital_id, isCurrent);
         } catch (error) {
             console.error("Error fetching profile:", error);
-            setLoading(false);
+        } finally {
+            if (isCurrent()) setLoading(false);
         }
     };
 
-    const fetchData = async (hospitalId: string) => {
+    const fetchData = async (hospitalId: string, isCurrent = () => true) => {
         try {
-            const clinicsData = await db.list('clinics', {
-                filters: [{ column: 'hospital_id', operator: 'eq', value: hospitalId }],
-                sort: { column: 'name', ascending: true }
-            });
-            if (clinicsData && clinicsData.length > 0) {
-                setClinics(clinicsData);
-            }
-
-            const inventoryData = await db.list('inventory', {
-                filters: [
-                    { column: 'hospital_id', operator: 'eq', value: hospitalId },
-                    { column: 'is_active', operator: 'eq', value: true }
-                ]
-            });
-            if (inventoryData && inventoryData.length > 0) {
-                setInventory(inventoryData);
-            }
-
-            await fetchDashboardStats(hospitalId, (clinicsData && clinicsData.length > 0) ? clinicsData : undefined);
+            const [clinicsData, inventoryData] = await Promise.all([
+                db.list('clinics', {
+                    filters: [{ column: 'hospital_id', operator: 'eq', value: hospitalId }],
+                    sort: { column: 'name', ascending: true }
+                }),
+                db.list('inventory', {
+                    filters: [
+                        { column: 'hospital_id', operator: 'eq', value: hospitalId },
+                        { column: 'is_active', operator: 'eq', value: true }
+                    ]
+                }),
+            ]);
+            if (!isCurrent()) return;
+            setClinics(clinicsData);
+            setInventory(inventoryData);
+            await fetchDashboardStats(hospitalId, clinicsData, isCurrent);
         } catch (err) {
             console.error("Error fetching data:", err);
-        } finally {
-            setLoading(false);
         }
     };
 

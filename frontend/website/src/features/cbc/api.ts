@@ -11,10 +11,11 @@ import {
   principalSchema,
 } from "../../../../../packages/shared/integration";
 import { CLOUDFLARE_API_BASE } from "../../lib/api";
+import { cbcSessionKey as sessionKey } from "../../lib/authService";
 import { closeDataSocket, socketRequest } from "../../lib/dataSocket";
 
 export type DoctorSession = z.infer<typeof loginResponseSchema>;
-export const sessionKey = "jeevika.cbc.doctor-session.v1";
+export { sessionKey };
 function expireCurrentSession(token?: string) {
   if (!token) return;
   closeDataSocket(token);

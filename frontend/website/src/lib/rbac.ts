@@ -62,6 +62,7 @@ const routePermissions = {
   "/app/home/drift": { PATIENT: "Full" },
   "/app/home/refill": { PATIENT: "Full" },
   "/app/home/prescriptions": { PATIENT: "Full" },
+  "/app/home/more": { PATIENT: "Full" },
   "/app/home/her": { PATIENT: "Full" },
   "/app/home/vitalis": { PATIENT: "Full" },
   "/app/home/yoga": { PATIENT: "Full" },
@@ -191,6 +192,28 @@ export function staffRouteForView(name: string, role: string | null): AppRoute |
 export function staffViewForRoute(path: string, role: string | null): StaffView | null {
   if (routeAccess(path, role) === "None") return null;
   return viewByRoute.get(path) ?? null;
+}
+
+export function staffReturnPath(from: unknown, role: string): string {
+  if (typeof from !== "object" || from === null ||
+      !("pathname" in from) || typeof from.pathname !== "string") {
+    return landingRoute(role);
+  }
+  const pathname = from.pathname.replace(/\/$/, "");
+  const search = "search" in from && typeof from.search === "string" && from.search.startsWith("?")
+    ? from.search : "";
+  if (pathname !== "/app" && !staffViewForRoute(pathname, role)) return landingRoute(role);
+  const view = new URLSearchParams(search).get("view");
+  if (view !== null) return staffRouteForView(view, role) ?? landingRoute(role);
+  if (pathname === "/app") return landingRoute(role);
+  const hash = "hash" in from && typeof from.hash === "string" && from.hash.startsWith("#") ? from.hash : "";
+  return pathname + search + hash;
+}
+
+export function patientReturnPath(from: unknown) {
+  const path = typeof from === "string" ? from.replace(/\/$/, "") : "";
+  return path !== "/app/home" && routeAccess(path, "PATIENT") === "Full"
+    ? path : "/app/home/thread";
 }
 
 export type StaffNavItem = {

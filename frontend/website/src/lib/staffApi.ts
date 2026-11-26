@@ -18,6 +18,7 @@ export async function staffApi<T>(
     cache: "no-store",
   });
   if (!response.ok) {
+    if (response.status === 401) authService.invalidateSession(session.access_token);
     const message =
       response.status === 403
         ? "You do not have access to this operation."

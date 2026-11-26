@@ -13,6 +13,7 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import { patientReturnPath } from "@/lib/rbac";
 import { Button, Label } from "@/components/ui/basic";
 import { InlineBanner } from "@/components/ui/design-primitives";
 import { demoPatientIdentity } from "../../../../packages/shared/patient-experience";
@@ -306,14 +307,7 @@ export function PatientSignIn({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const rawFrom = (
-    location.state as { from?: string | { pathname?: string } } | null
-  )?.from;
-  const requestedRoute = typeof rawFrom === "string" ? rawFrom : rawFrom?.pathname;
-  const next =
-    typeof requestedRoute === "string" && requestedRoute.startsWith("/app/home/")
-      ? requestedRoute
-      : "/app/home/thread";
+  const next = patientReturnPath(location.state?.from);
   const [passwordMode, setPasswordMode] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);

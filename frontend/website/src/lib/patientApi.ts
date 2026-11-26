@@ -1,15 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { CLOUDFLARE_API_BASE } from "./api";
+import { closeDataSocket } from "./dataSocket";
 
 const key = "jeevika_patient_session_v1";
+const sessionChanged = "jeevika-patient-session-changed";
 export type PatientSession = { patientId: string; expiresAt: string };
 
 export function patientToken() {
   return sessionStorage.getItem(key);
 }
 export function setPatientToken(token: string | null) {
+  const previous = patientToken();
+  if (previous === token) return;
+  if (previous) closeDataSocket(previous);
   if (token) sessionStorage.setItem(key, token);
   else sessionStorage.removeItem(key);
+  window.dispatchEvent(new Event(sessionChanged));
+}
+
+function subscribeToPatientSession(listener: () => void) {
+  window.addEventListener(sessionChanged, listener);
+  return () => window.removeEventListener(sessionChanged, listener);
+}
+
+export function usePatientSessionToken() {
+  return useSyncExternalStore(subscribeToPatientSession, patientToken);
 }
 
 export class PatientApiError extends Error {
@@ -47,6 +62,9 @@ export async function patientRequest<T>(
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   if (!response.ok) {
+    if (response.status === 401 && options.token && patientToken() === options.token) {
+      setPatientToken(null);
+    }
     const body: unknown = await response.json().catch(() => null);
     const apiError =
       body &&
@@ -88,14 +106,6 @@ export function usePatientData<T>(
       },
       (error: Error) => {
         if (controller.signal.aborted) return;
-        if (
-          authenticated &&
-          error instanceof PatientApiError &&
-          error.status === 401
-        ) {
-          setPatientToken(null);
-          window.dispatchEvent(new Event("jeevika-patient-session-ended"));
-        }
         setResult({ error: error.message });
       },
     );

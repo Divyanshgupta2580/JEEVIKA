@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowRight,
@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/basic";
 import { useToast } from "@/components/ui/use-toast";
 import { authService as auth } from "@/lib/authService";
-import { landingRoute } from "@/lib/rbac";
+import { staffReturnPath } from "@/lib/rbac";
 import {
   AuthBenefitsStrip,
   AuthFormCard,
@@ -61,6 +61,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const fillDemoCredentials = (account: DemoStaffAccount) => {
     setError(null);
@@ -76,16 +77,12 @@ export function LoginPage() {
 
     try {
       const user = await auth.signIn(email.trim(), password);
-      const from = location.state?.from;
-      const target = /^\/app(?:\/|$)/.test(from?.pathname ?? "")
-        ? from.pathname + (from.search ?? "") + (from.hash ?? "")
-        : landingRoute(user.role);
       toast({
         title: "Authentication Successful",
         description: `Signed in as ${email}. Entering workspace...`,
         className: "bg-emerald-50 border-emerald-200 text-emerald-900",
       });
-      window.location.hash = `#${target}`;
+      navigate(staffReturnPath(location.state?.from, user.role), { replace: true });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred";

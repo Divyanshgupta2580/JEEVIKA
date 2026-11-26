@@ -77,14 +77,13 @@ import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/basic'
 import { Toaster } from '@/components/ui/toaster'
 import { authService } from '@/lib/authService'
-import { dataService } from '@/lib/dataService'
-import { landingRoute, routeAccess, staffRouteForView, staffViewForRoute } from '@/lib/rbac'
+import { landingRoute, patientReturnPath, routeAccess, staffReturnPath, staffRouteForView, staffViewForRoute } from '@/lib/rbac'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { KioskLayout } from '@/components/layout/KioskLayout'
 import { PatientSignIn } from '@/components/PatientSignIn'
 import { PatientHome } from '@/components/layout/PatientHome'
 import { PublicOverview } from '@/components/PublicOverview'
-import { PatientApiError, patientRequest, patientToken, setPatientToken, type PatientSession } from '@/lib/patientApi'
+import { patientRequest, patientToken, setPatientToken, usePatientSessionToken, type PatientSession } from '@/lib/patientApi'
 const KioskIntake = lazy(() => import('@/features/patient/KioskIntake').then(({ KioskIntake }) => ({ default: KioskIntake })));
 import { NurseCallQueue } from '@/components/NurseCallQueue'
 
@@ -177,15 +176,11 @@ function PageWrapper({ children, route }: { children: React.ReactNode; route?: s
 
 function AppContent() {
     const { session, profile, clinics } = useHospital();
-    const verifiedRole = typeof session?.role === 'string' ? session.role : null;
+    const verifiedRole = session?.role ?? null;
     const location = useLocation();
     const navigate = useNavigate();
-    const currentPath = location.pathname.replace(/\/$/, '');
-    const requestedView = new URLSearchParams(location.search).get('view');
-    const pathView = staffViewForRoute(currentPath, verifiedRole);
-    const legacyRoute = requestedView === null ? null : staffRouteForView(requestedView, verifiedRole);
-    const view = legacyRoute ? staffViewForRoute(legacyRoute, verifiedRole) : pathView;
-    const activeRoute = legacyRoute ?? currentPath;
+    const activeRoute = location.pathname.replace(/\/$/, '');
+    const view = staffViewForRoute(activeRoute, verifiedRole);
     const access = routeAccess(activeRoute, verifiedRole);
     const pruneRoute = (['/app/prune/cache', '/app/prune/waf', '/app/prune/redaction'] as const)
         .find((path) => path === activeRoute) ?? '/app/prune';
@@ -206,28 +201,20 @@ function AppContent() {
 
     const handleLogout = async () => {
         if (!confirmCbcNavigation()) return;
-        try {
-            await authService.signOut();
-        } catch (err) {
-            console.warn('Sign out error:', err);
-        } finally {
-            // Clear all session-related localStorage
-            localStorage.removeItem('lastActiveView');
-            localStorage.removeItem('cf_auth_session');
-            // Remove auth tokens from localStorage
-            Object.keys(localStorage).forEach(key => {
-                if (key.includes('auth') || key.startsWith('jeevika-')) {
-                    localStorage.removeItem(key);
-                }
-            });
-            // Hard redirect to fully reset app state (avoids stale React state)
-            window.location.href = window.location.origin + window.location.pathname + '#/login';
-        }
+        const signOut = authService.signOut();
+        localStorage.removeItem('lastActiveView');
+        navigate('/login', { replace: true });
+        await signOut;
+    };
+
+    if (!view) return <Navigate to={landingRoute(verifiedRole)} replace />;
+    if (new URLSearchParams(location.search).has('view')) {
+        return <Navigate to={staffReturnPath(location, verifiedRole ?? '')} replace />;
     }
 
-    if (!pathView || !view || (requestedView !== null && !legacyRoute)) {
-        return <Navigate to={landingRoute(verifiedRole)} replace />;
-    }
+    const clinicId = verifiedRole === 'CLINIC_ADMIN'
+        ? session?.clinicId
+        : selectedClinicId || profile?.clinic_id || clinics[0]?.id;
 
     const workspaceShell = (
         <AppLayout
@@ -261,7 +248,7 @@ function AppContent() {
 
                     {/* SHIFT MANAGEMENT */}
                     {view === 'shift-management' && (
-                        (['HOSPITAL_ADMIN', 'ADMIN'].includes(profile?.role || '')) ? (
+                        (['HOSPITAL_ADMIN', 'ADMIN'].includes(verifiedRole ?? '')) ? (
                             <HospitalShiftManagement />
                         ) : (
                             profile?.clinic_id ? (
@@ -276,12 +263,12 @@ function AppContent() {
                     {view === 'admin' && (
                         <>
                             {/* TIER 1: SUPER ADMIN */}
-                            {(['SUPER_ADMIN', 'OWNER'].includes(profile?.role || '')) && (
+                            {(['SUPER_ADMIN', 'OWNER'].includes(verifiedRole ?? '')) && (
                                 <SuperAdminDashboard onView={navigateToHospital} />
                             )}
 
                             {/* TIER 2: HOSPITAL ADMIN */}
-                            {(['HOSPITAL_ADMIN', 'ADMIN'].includes(profile?.role || '')) && (
+                            {(['HOSPITAL_ADMIN', 'ADMIN'].includes(verifiedRole ?? '')) && (
                                 selectedClinicId ? (
                                     // Showing Clinic View (Drill Down)
                                     <ClinicAdminDashboard clinicId={selectedClinicId} onBack={() => setSelectedClinicId(null)} onNavigate={setView} />
@@ -292,38 +279,18 @@ function AppContent() {
                             )}
 
                             {/* TIER 3: CLINIC ADMIN */}
-                            {(profile?.role === 'CLINIC_ADMIN') && (
-                                profile.clinic_id ? (
-                                    <ClinicAdminDashboard clinicId={profile.clinic_id} onNavigate={setView} />
+                            {(verifiedRole === 'CLINIC_ADMIN') && (
+                                session?.clinicId ? (
+                                    <ClinicAdminDashboard clinicId={session.clinicId} onNavigate={setView} />
                                 ) : (
                                     <div className="p-12 text-center text-slate-500">
                                         <h2 className="text-xl font-bold text-slate-800">No Clinic Assigned</h2>
                                         <p className="mb-4">Please contact your Hospital Administrator.</p>
-
-                                        <Button
-                                            variant="outline"
-                                            className="border-slate-300 text-slate-600 hover:text-blue-600 hover:border-blue-300"
-                                            onClick={async () => {
-                                                // 1. Search Staff Details
-                                                const results = await dataService.list('staff_details', { filters: [{ field: 'user_id', operator: '==', value: profile.id }] });
-                                                const staffRec = results[0];
-
-                                                if (staffRec?.clinic_id) {
-                                                    await dataService.update('profiles', profile.id, { clinic_id: staffRec.clinic_id });
-                                                    window.location.reload();
-                                                    return;
-                                                }
-
-                                                alert("Could not automatically find your clinic linkage. Please report this to support.");
-                                            }}
-                                        >
-                                            Check for Linked Clinic (Auto-Fix)
-                                        </Button>
                                     </div>
                                 )
                             )}
                             {/* TIER 4: CLINICAL & STAFF ROLES FALLBACK */}
-                            {(!['SUPER_ADMIN', 'OWNER', 'HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'].includes(profile?.role || '')) && (
+                            {(!['SUPER_ADMIN', 'OWNER', 'HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'].includes(verifiedRole ?? '')) && (
                                 <HospitalDashboard onSelectClinic={setSelectedClinicId} />
                             )}
                         </>
@@ -361,7 +328,7 @@ function AppContent() {
 
                     {view === 'billing' && (
                         <div className="max-w-4xl mx-auto">
-                            {['SUPER_ADMIN', 'OWNER'].includes(profile?.role || '') ? (
+                            {['SUPER_ADMIN', 'OWNER'].includes(verifiedRole ?? '') ? (
                                 <BillingOverview />
                             ) : (
                                 <SubscriptionDashboard />
@@ -380,14 +347,18 @@ function AppContent() {
                     {view === 'ca-suite' && ['HOSPITAL_ADMIN','SUPER_ADMIN'].includes(verifiedRole ?? '') && <PostedFinance canManage={verifiedRole === 'SUPER_ADMIN'} />}
 
                     {view === 'clinic-admin' && (
-                        <ClinicAdminDashboard 
-                            clinicId={selectedClinicId || profile?.clinic_id || clinics[0]?.id || 'clinic-main'} 
-                            onBack={() => {
-                                setSelectedClinicId(null);
-                                setView('admin');
-                            }} 
-                            onNavigate={setView} 
-                        />
+                        clinicId ? (
+                            <ClinicAdminDashboard
+                                clinicId={clinicId}
+                                onBack={() => {
+                                    setSelectedClinicId(null);
+                                    setView('admin');
+                                }}
+                                onNavigate={setView}
+                            />
+                        ) : (
+                            <p className="p-6 text-center">No Clinic Assigned</p>
+                        )
                     )}
 
                     {view === 'ipd' && routeAccess('/app/ipd', verifiedRole) !== 'None' && <CareBoard kind="ipd" role={verifiedRole ?? ''} encounterId={careEncounterId} />}
@@ -545,86 +516,70 @@ function PublicAuthRoute({ children }: { children: ReactNode }) {
     }
 
     if (session && profile) {
-        const from = location.state?.from;
-        if (from?.pathname === '/kiosk' || /^\/app(?:\/|$)/.test(from?.pathname ?? '')) {
-            return <Navigate to={{ pathname: from.pathname, search: from.search, hash: from.hash }} replace />;
-        }
-        return <Navigate to={landingRoute(profile.role)} replace />;
+        return <Navigate to={staffReturnPath(location.state?.from, session.role)} replace />;
     }
 
     return <>{children}</>;
 }
 
 function AppLandingRedirect() {
-    const { session, loading } = useHospital();
-    const startupActive = useStartupActive();
+    const { session } = useHospital();
     const location = useLocation();
-    if (loading) return startupActive ? null : <JeevikaLoading embedded />;
-    if (!session) return <Navigate to="/login" replace />;
-    const role = typeof session.role === 'string' ? session.role : null;
-    const legacyView = new URLSearchParams(location.search).get('view');
-    const destination = legacyView ? staffRouteForView(legacyView, role) : null;
-    return <Navigate to={destination ?? landingRoute(role)} replace />;
+    return <Navigate to={staffReturnPath(location, session?.role ?? '')} replace />;
 }
 
 function PatientAppRoute({ children }: { children: ReactNode }) {
     const startupActive = useStartupActive();
     const location = useLocation();
-    const [patient, setPatient] = useState<PatientSession | null>(null);
-    const [ready, setReady] = useState(false);
-    const [error, setError] = useState("");
+    const token = usePatientSessionToken();
+    const [verification, setVerification] = useState<{ token: string; error?: string } | null>(null);
 
     useEffect(() => {
-        const token = patientToken();
-        const controller = new AbortController();
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        let routeError: string | undefined;
-        const end = () => { setPatient(null); setPatientToken(null); setReady(true); };
-        window.addEventListener("jeevika-patient-session-ended", end);
         if (!token) {
-            end();
             notifyPatientBoot({ ready: true });
-        } else {
-            patientRequest<PatientSession>("/auth/patient/me", { token, signal: controller.signal })
-                .then((record) => {
-                    if (controller.signal.aborted) return;
-                    const time = Date.parse(record.expiresAt) - Date.now();
-                    if (!record.patientId || !Number.isFinite(time) || time <= 0) end();
-                    else {
-                        setPatient(record);
-                        const scheduleExpiry = () => {
-                            const remaining = Date.parse(record.expiresAt) - Date.now();
-                            if (remaining <= 0) end();
-                            else timer = setTimeout(scheduleExpiry, Math.min(remaining, 2_147_483_647));
-                        };
-                        scheduleExpiry();
-                    }
-                })
-                .catch((failure: unknown) => {
-                    if (controller.signal.aborted) return;
-                    if (failure instanceof PatientApiError && failure.status === 401) end();
-                    else {
-                        routeError = "Could not verify your patient session. Reload to try again.";
-                        setError(routeError);
-                    }
-                })
-                .finally(() => {
-                    if (!controller.signal.aborted) {
-                        setReady(true);
-                        notifyPatientBoot(
-                            routeError ? { ready: true, error: routeError } : { ready: true },
-                        );
-                    }
-                });
+            return;
         }
+        const controller = new AbortController();
+        let timer: ReturnType<typeof setTimeout>;
+        const end = () => {
+            if (patientToken() === token) setPatientToken(null);
+        };
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]);
+        patientRequest<PatientSession>("/auth/patient/me", { token, signal })
+            .then((record) => {
+                if (controller.signal.aborted || patientToken() !== token) return;
+                const expiry = Date.parse(record.expiresAt);
+                if (typeof record.patientId !== "string" || !record.patientId || !Number.isFinite(expiry) || expiry <= Date.now()) {
+                    end();
+                    return;
+                }
+                const scheduleExpiry = () => {
+                    const remaining = expiry - Date.now();
+                    if (remaining <= 0) end();
+                    else timer = setTimeout(scheduleExpiry, Math.min(remaining, 2_147_483_647));
+                };
+                scheduleExpiry();
+                setVerification({ token });
+                notifyPatientBoot({ ready: true });
+            })
+            .catch(() => {
+                if (controller.signal.aborted || patientToken() !== token) return;
+                const error = "Could not verify your patient session. Reload to try again.";
+                setVerification({ token, error });
+                notifyPatientBoot({ ready: true, error });
+            });
         return () => {
             controller.abort();
             clearTimeout(timer);
-            window.removeEventListener("jeevika-patient-session-ended", end);
         };
-    }, []);
+    }, [token]);
 
-    if (!ready) return startupActive ? null : <JeevikaLoading embedded label="Verifying patient session…" />;
+    const path = patientReturnPath(location.pathname);
+    if (!token) return <Navigate to="/home/sign-in" state={{ from: path }} replace />;
+    if (verification?.token !== token) {
+        return startupActive ? null : <JeevikaLoading embedded label="Verifying patient session…" />;
+    }
+    const { error } = verification;
     if (error) return (
         <main className="jeevika-landing min-h-dvh bg-[#FEFBF6] flex items-center justify-center p-6">
             <div className="max-w-md w-full rounded-[24px] border border-[#E5E0D4] bg-[#FFFEFB] p-6 text-center shadow-[0_18px_48px_rgba(14,36,32,0.08)] space-y-4">
@@ -640,7 +595,7 @@ function PatientAppRoute({ children }: { children: ReactNode }) {
             </div>
         </main>
     );
-    if (!patient) return <Navigate to="/home/sign-in" state={{ from: location.pathname }} replace />;
+    if (location.pathname.replace(/\/$/, "") !== path) return <Navigate to={path} replace />;
     return <>{children}</>;
 }
 
@@ -648,7 +603,8 @@ function AppRouter() {
     const { isPasswordRecovery } = useHospital();
     const location = useLocation();
 
-    const isResetPath = window.location.hash.startsWith('#/reset-password');
+    const isResetPath = location.pathname === '/reset-password';
+    const isPatientLanding = patientToken() && !new URLSearchParams(location.search).has('view');
 
     if (isPasswordRecovery || isResetPath) {
         return (
@@ -675,7 +631,7 @@ function AppRouter() {
                     <Route path="/home/reset-password" element={<PublicLayout><PatientSignIn mode="reset" /></PublicLayout>} />
 
                     {/* Protected Clinical Workspaces */}
-                    <Route path="/app" element={patientToken() ? <Navigate to="/app/home/thread" replace /> : <ProtectedRoute><AppLandingRedirect /></ProtectedRoute>} />
+                    <Route path="/app" element={isPatientLanding ? <Navigate to="/app/home/thread" replace /> : <ProtectedRoute><AppLandingRedirect /></ProtectedRoute>} />
                     <Route path="/app/home/*" element={<PatientAppRoute><PatientHome /></PatientAppRoute>} />
                     <Route path="/app/*" element={<ProtectedRoute><AppContent /></ProtectedRoute>} />
                     <Route path="/kiosk" element={<KioskLayout><Suspense fallback={<JeevikaLoading embedded label="Loading kiosk…" />}><KioskIntake /></Suspense></KioskLayout>} />
@@ -768,12 +724,14 @@ function WorkspaceChrome() {
 function StartupShell() {
     const { loading } = useHospital();
     const location = useLocation();
+    const patientEntry = /^\/app\/home(?:\/|$)/.test(location.pathname) ||
+        (location.pathname === '/app' && !new URLSearchParams(location.search).has('view'));
 
     return (
         <StartupBoot
             entryPathname={location.pathname}
             hospitalLoading={loading}
-            hasPatientToken={Boolean(patientToken())}
+            hasPatientToken={patientEntry && Boolean(patientToken())}
         >
             {({ startupActive, mountRoutes }) =>
                 mountRoutes ? (
