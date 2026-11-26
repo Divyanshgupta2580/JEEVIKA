@@ -31,6 +31,7 @@ import {
 } from "../../patient-session";
 import { tokenHash } from "../../security";
 import { clinicalOriginAllowed } from "../../staff-session";
+import { kioskSpeech } from "./kiosk-speech";
 
 const demoScope = {
   orgId: "demo",
@@ -163,6 +164,7 @@ async function provisionDemoPatient(db: ReturnType<typeof tenantDb>) {
 
 export const kioskRouter = new Hono<{ Bindings: Env }>();
 kioskRouter.use("*", boundedBody);
+kioskRouter.get("/speech/:locale/:prompt", kioskSpeech);
 kioskRouter.get("/capabilities", (c) =>
   c.json({ intakeAvailable: isDemo(c.env), simulatedIdentity: isDemo(c.env) }),
 );

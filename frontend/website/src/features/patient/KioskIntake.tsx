@@ -41,7 +41,7 @@ import {
   VoiceControls,
   playKioskAlert,
 } from "./capture";
-import { kioskClinicalCopy, kioskPrompts } from "./kiosk-copy";
+import { kioskClinicalCopy, kioskPrompts } from "../../../../../packages/shared/kiosk-copy";
 import {
   KioskCardBottomDecor,
   KioskComplaintIcon,
@@ -456,6 +456,7 @@ export function KioskIntake() {
               <VoiceControls
                 caption={copy[0]}
                 locale={language}
+                kioskPrompt="language"
                 uiVariant="kiosk"
               />
 
@@ -491,6 +492,7 @@ export function KioskIntake() {
                     <VoiceControls
                       caption={copy[1]}
                       locale={language}
+                      kioskPrompt="consent"
                       uiVariant="kiosk"
                     />
                   </div>
@@ -684,6 +686,7 @@ export function KioskIntake() {
               <VoiceControls
                 caption={copy[3]}
                 locale={language}
+                kioskPrompt="visit"
                 uiVariant="kiosk"
                 onTranscript={(text) =>
                   setDescription((prev) =>
@@ -753,6 +756,9 @@ export function KioskIntake() {
               <VoiceControls
                 caption={caption}
                 locale={language}
+                kioskPrompt={step === 4
+                  ? firstStemi ? `stemi-${firstStemi}` : "urgent"
+                  : question ? `question-${question}` : "questions"}
                 uiVariant="kiosk"
               />
 

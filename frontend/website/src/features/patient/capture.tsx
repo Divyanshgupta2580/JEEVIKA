@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, QrCode, Square, Upload, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/basic";
 import { InlineBanner } from "@/components/ui/design-primitives";
+import { CLOUDFLARE_API_BASE } from "@/lib/api";
+import type { KioskSpeechPrompt } from "../../../../../packages/shared/kiosk-copy";
 
 export function playKioskAlert() {
   if (typeof window.AudioContext !== "function") return;
@@ -45,33 +47,81 @@ type RecognizerType = {
   }) => Promise<string>;
 };
 
+function releaseAudio(audio: HTMLAudioElement | null) {
+  if (!audio) return;
+  audio.onended = null;
+  audio.onerror = null;
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+}
+
 export function VoiceControls({
   caption,
   locale,
   onTranscript,
   uiVariant = "default",
+  kioskPrompt,
 }: {
   caption: string;
   locale: string;
   onTranscript?: (text: string) => void;
   uiVariant?: "default" | "kiosk";
+  kioskPrompt?: KioskSpeechPrompt;
 }) {
   const [status, setStatus] = useState("Voice idle");
   const [listening, setListening] = useState(false);
   const recognition = useRef<LocalRecognizer | null>(null);
   const attempt = useRef(0);
+  const voiceAttempt = useRef(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(
     () => () => {
       attempt.current++;
       recognition.current?.abort();
       setListening(false);
+      voiceAttempt.current++;
       window.speechSynthesis?.cancel();
+      releaseAudio(audioRef.current);
+      audioRef.current = null;
     },
-    [caption, locale],
+    [caption, locale, kioskPrompt],
   );
 
   function speak() {
+    const current = ++voiceAttempt.current;
     const speech = window.speechSynthesis;
+    speech?.cancel();
+    releaseAudio(audioRef.current);
+    audioRef.current = null;
+    const unavailable = "Playback unavailable. Read the caption below.";
+
+    function playKioskPrompt() {
+      if (voiceAttempt.current !== current) return;
+      if (!kioskPrompt) {
+        setStatus(unavailable);
+        return;
+      }
+      const language = locale.toLowerCase().split("-")[0];
+      const audio = new Audio(`${CLOUDFLARE_API_BASE}/kiosk/speech/${language}/${kioskPrompt}`);
+      audioRef.current = audio;
+      setStatus("Preparing audio…");
+      const finish = (status: string) => {
+        if (audioRef.current !== audio) return;
+        audioRef.current = null;
+        releaseAudio(audio);
+        setStatus(status);
+      };
+      audio.onerror = () => finish(unavailable);
+      audio.onended = () => finish("Voice idle");
+      void audio.play().then(
+        () => {
+          if (audioRef.current === audio) setStatus("Playing caption");
+        },
+        () => finish(unavailable),
+      );
+    }
+
     const voice = speech
       ?.getVoices()
       .find(
@@ -80,18 +130,21 @@ export function VoiceControls({
           voice.lang.toLowerCase().split("-")[0] === locale.split("-")[0],
       );
     if (!voice) {
-      setStatus("Local playback unavailable. Read the caption below.");
+      if (kioskPrompt) playKioskPrompt();
+      else setStatus("Local playback unavailable. Read the caption below.");
       return;
     }
-    speech.cancel();
     const utterance = new SpeechSynthesisUtterance(caption);
     utterance.voice = voice;
     utterance.lang = locale;
-    utterance.onstart = () => setStatus("Playing caption");
-    utterance.onend = () => setStatus("Voice idle");
-    utterance.onerror = () =>
-      setStatus("Playback unavailable. Read the caption below.");
-    speech.speak(utterance);
+    utterance.onstart = () => {
+      if (voiceAttempt.current === current) setStatus("Playing caption");
+    };
+    utterance.onend = () => {
+      if (voiceAttempt.current === current) setStatus("Voice idle");
+    };
+    utterance.onerror = playKioskPrompt;
+    speech?.speak(utterance);
   }
 
   async function listen() {
@@ -152,9 +205,12 @@ export function VoiceControls({
 
   function stop() {
     attempt.current++;
+    voiceAttempt.current++;
     recognition.current?.abort();
     setListening(false);
     window.speechSynthesis?.cancel();
+    releaseAudio(audioRef.current);
+    audioRef.current = null;
     setStatus("Voice idle");
   }
 

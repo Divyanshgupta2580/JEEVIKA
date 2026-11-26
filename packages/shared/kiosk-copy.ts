@@ -1,4 +1,22 @@
-import type { patientLanguages } from "../../../../../packages/shared/patient-experience";
+import { interceptorQuestions, sentinelQuestions, type patientLanguages } from "./patient-experience";
+
+type KioskLanguage = keyof typeof patientLanguages;
+const spokenHeadings = { language: 0, consent: 1, visit: 3, urgent: 4, questions: 5 } as const;
+export type KioskSpeechPrompt =
+  | keyof typeof spokenHeadings
+  | `stemi-${(typeof interceptorQuestions)[number]}`
+  | `question-${(typeof sentinelQuestions)[number]}`;
+
+/** Resolve public prompt IDs to the same fixed translations visible in the kiosk. */
+export function kioskSpeechText(locale: KioskLanguage, prompt: string): string | undefined {
+  if (Object.prototype.hasOwnProperty.call(spokenHeadings, prompt)) {
+    return kioskPrompts[locale][spokenHeadings[prompt as keyof typeof spokenHeadings]];
+  }
+  const stemi = interceptorQuestions.findIndex((question) => prompt === `stemi-${question}`);
+  if (stemi >= 0) return kioskClinicalCopy[locale].stemi[stemi];
+  const question = sentinelQuestions.findIndex((field) => prompt === `question-${field}`);
+  return kioskClinicalCopy[locale].questions[question];
+}
 
 const prompts = {
   en: [

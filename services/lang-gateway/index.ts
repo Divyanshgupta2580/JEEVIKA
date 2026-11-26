@@ -3,7 +3,7 @@ import { words } from "../../packages/i18n";
 export const speechInput = z.object({
   language: z.enum(["en-IN", "hi-IN", "ta-IN", "te-IN"]),
 });
-const responseSchema = z.object({
+export const sarvamAudioResponse = z.object({
   audios: z
     .array(
       z
@@ -14,6 +14,25 @@ const responseSchema = z.object({
     .min(1)
     .max(4),
 });
+export const sarvamVoice = {
+  model: "bulbul:v3",
+  speaker: "shubh",
+  output_audio_codec: "wav",
+} as const;
+
+export function requestSarvamAudio(
+  key: string,
+  language: string,
+  text: string,
+  transport: typeof fetch = fetch,
+) {
+  return transport("https://api.sarvam.ai/text-to-speech", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "api-subscription-key": key },
+    body: JSON.stringify({ text, language_code: language, ...sarvamVoice }),
+    signal: AbortSignal.timeout(8000),
+  });
+}
 type Result = {
   source: "sarvam" | "cache" | "fallback";
   text: string;
@@ -71,24 +90,7 @@ export function speechGateway(
           );
         calls++;
         try {
-          const response = await transport(
-            "https://api.sarvam.ai/text-to-speech",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "api-subscription-key": options.key,
-              },
-              body: JSON.stringify({
-                text,
-                language_code: language,
-                model: "bulbul:v3",
-                speaker: "shubh",
-                output_audio_codec: "wav",
-              }),
-              signal: AbortSignal.timeout(8000),
-            },
-          );
+          const response = await requestSarvamAudio(options.key, language, text, transport);
           if (!response.ok) {
             if (response.status === 401 || response.status === 403)
               return fallback(
@@ -97,7 +99,7 @@ export function speechGateway(
               );
             throw new Error("Speech provider unavailable");
           }
-          const value = responseSchema.parse(await response.json());
+          const value = sarvamAudioResponse.parse(await response.json());
           const result: Result = {
             source: "sarvam",
             text,
