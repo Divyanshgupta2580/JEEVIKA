@@ -7,6 +7,7 @@ import {
   Lock,
   Mail,
   ShieldCheck,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -34,14 +35,41 @@ const STAFF_BENEFITS: AuthBenefitItem[] = [
   { icon: ShieldCheck, title: "Built for clinical excellence" },
 ];
 
+interface DemoStaffAccount {
+  id: string;
+  label: string;
+  email: string;
+}
+
+const DEMO_EVALUATOR_CREDENTIAL = ["Dhaaga", "demo", "2026!"].join("-");
+
+const DEMO_STAFF_ACCOUNTS: readonly DemoStaffAccount[] = [
+  { id: "DOCTOR", label: "Doctor (OPD)", email: "doctor@demo.test" },
+  { id: "HOSPITAL_ADMIN", label: "Admin", email: "admin@demo.test" },
+  { id: "NURSE", label: "Nurse (IPD)", email: "nurse@demo.test" },
+  { id: "STAT_NURSE", label: "STAT Nurse", email: "stat-nurse@demo.test" },
+  { id: "CLINIC_ADMIN", label: "Clinic Admin", email: "clinic-admin@demo.test" },
+  { id: "CASHIER", label: "Cashier (POS)", email: "cashier@demo.test" },
+];
+
 export function LoginPage() {
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [filledDemoAccount, setFilledDemoAccount] =
+    useState<DemoStaffAccount | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+
+  const fillDemoCredentials = (account: DemoStaffAccount) => {
+    setError(null);
+    setIsForgotMode(false);
+    setEmail(account.email);
+    setPassword(DEMO_EVALUATOR_CREDENTIAL);
+    setFilledDemoAccount(account);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +209,10 @@ export function LoginPage() {
                       autoComplete="username"
                       placeholder="doctor@jeevika.in"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setFilledDemoAccount(null);
+                      }}
                       required
                     />
                   </div>
@@ -212,7 +243,10 @@ export function LoginPage() {
                         autoComplete="current-password"
                         placeholder="Enter security password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setFilledDemoAccount(null);
+                        }}
                         required
                         minLength={6}
                       />
@@ -234,6 +268,59 @@ export function LoginPage() {
                     </span>
                     <ArrowRight aria-hidden="true" className="size-4" />
                   </AuthSubmitButton>
+
+                  {!isForgotMode && (
+                    <div className="pt-2 space-y-2.5 border-t border-[#E6E0D3]">
+                      <button
+                        type="button"
+                        onClick={() => fillDemoCredentials(DEMO_STAFF_ACCOUNTS[0])}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#BBD8CC] bg-[#FFFDF9] px-4 text-xs font-semibold text-[#047C61] transition-colors hover:bg-[#EEF8F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#047C61]/40 cursor-pointer"
+                      >
+                        <Sparkles aria-hidden="true" className="size-3.5 shrink-0" />
+                        <span>Fill Dummy Evaluator ID (Doctor)</span>
+                      </button>
+
+                      <div className="rounded-xl border border-[#EAE5D8] bg-white/80 p-3 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#556761]">
+                          <span className="font-semibold text-[#233A34]">
+                            Evaluator Demo Roles
+                          </span>
+                          <span className="font-mono text-[10px] text-[#647871]">
+                            org: demo
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {DEMO_STAFF_ACCOUNTS.map((account) => {
+                            const selected = filledDemoAccount?.id === account.id;
+                            return (
+                              <button
+                                key={account.id}
+                                type="button"
+                                onClick={() => fillDemoCredentials(account)}
+                                className={`inline-flex min-h-7 items-center rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
+                                  selected
+                                    ? "border-[#047C61] bg-[#E7F2E8] text-[#035442]"
+                                    : "border-[#E1DBD0] bg-[#FAF8F2] text-[#324942] hover:border-[#047C61]/60 hover:bg-[#F1F7F4]"
+                                }`}
+                              >
+                                {account.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {filledDemoAccount && (
+                          <p
+                            aria-live="polite"
+                            className="text-[11px] leading-snug text-[#047C61] font-medium"
+                          >
+                            Filled {filledDemoAccount.label} (
+                            <span className="font-mono">{filledDemoAccount.email}</span>
+                            ). Click &ldquo;Sign In with Credentials&rdquo; above to enter.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {isForgotMode && (
                     <button
