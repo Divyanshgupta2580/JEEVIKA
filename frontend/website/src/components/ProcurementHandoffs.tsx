@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/design-primitives";
 import { staffApi, useStaffData } from "@/lib/staffApi";
 import { rupeesToPaise } from "@/lib/utils";
+import "@/design-system/clinic-ops.css";
 
 const procurement = "/clinical/procurement";
 const selectStyle =
@@ -147,253 +148,233 @@ export function PurchaseOrders({
   });
 
   return (
-    <section className="jvk-admin-page mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-      <header className="jvk-admin-card-hero flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-5 overflow-hidden">
-        <div className="space-y-3 max-w-2xl z-10">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#047C61]">
-              Headquarters Command Center
-            </p>
-            <h1 className="jvk-admin-serif text-3xl font-bold text-[#0E2420] mt-1">
-              Purchase orders
-            </h1>
-            <p className="text-sm text-[#556C63] mt-1">
-              Create, track, and manage purchase orders for clinic medicines and supplies.
-            </p>
-          </div>
-          <nav aria-label="Procurement sections" className="jvk-admin-tablist jvk-admin-tablist-light">
-            <span
-              role="tab"
-              aria-selected="true"
-              className="jvk-admin-tab !bg-[#047C61] !text-white"
-            >
-              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span>Purchase orders</span>
-            </span>
-            {canWrite && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected="false"
-                onClick={goToReceipts}
-                className="jvk-admin-tab"
-              >
-                <PackageCheck className="h-4 w-4" aria-hidden="true" />
-                <span>Goods receipt</span>
-              </button>
-            )}
-          </nav>
+    <section className="jvk-admin-page jvk-clinic-ops-page mx-auto max-w-5xl space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div data-jvk-entrance="left" className="flex items-center gap-3.5 min-w-0">
+          <span aria-hidden="true" className="jvk-clinic-ops-icon-badge">
+            <ShoppingCart className="h-5 w-5" />
+          </span>
+          <h1 className="jvk-clinic-ops-serif text-[26px] sm:text-[30px] font-bold leading-tight text-[#103B32]">
+            Purchase orders
+          </h1>
         </div>
-        <div className="hidden md:flex shrink-0 items-center justify-end">
-          <img
-            src="/assets/admin/procurement-hero.png"
-            alt=""
-            aria-hidden="true"
-            width={220}
-            height={138}
-            className="jvk-admin-artwork w-48 lg:w-56 h-auto"
-          />
-        </div>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={goToReceipts}
+            className="jvk-admin-secondary-btn shrink-0"
+          >
+            <PackageCheck className="h-4 w-4 text-[#087466]" aria-hidden="true" />
+            <span>Goods receipt</span>
+          </button>
+        )}
       </header>
-
-      {data && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="jvk-admin-card p-4 flex items-center gap-3.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
-              <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-medium text-[#556C63]">Total POs</p>
-              <p className="text-xl font-bold text-[#0E2420] tabular-nums">{orderEntries.length}</p>
-            </div>
-          </div>
-          <div className="jvk-admin-card p-4 flex items-center gap-3.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#FEF3DC] border border-[#F1DDA8] text-[#B45309]">
-              <Clock className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-medium text-[#556C63]">Draft</p>
-              <p className="text-xl font-bold text-[#B45309] tabular-nums">{draftCount}</p>
-            </div>
-          </div>
-          <div className="jvk-admin-card p-4 flex items-center gap-3.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#E8F4F8] border border-[#C7E0EC] text-[#0E7490]">
-              <Truck className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-medium text-[#556C63]">Open / Pending GRN</p>
-              <p className="text-xl font-bold text-[#0E7490] tabular-nums">{openCount}</p>
-            </div>
-          </div>
-          <div className="jvk-admin-card p-4 flex items-center gap-3.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#E4F4EA] border border-[#C1E4CC] text-[#059669]">
-              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xs font-medium text-[#556C63]">Fully received</p>
-              <p className="text-xl font-bold text-[#059669] tabular-nums">{receivedCount}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {(error || result.error) && (
         <InlineBanner tone="critical" title={result.error || error || ""} />
       )}
       {result.success && <InlineBanner tone="success" title={result.success} />}
       {!data && !error && (
-        <p role="status" className="text-sm text-[#556C63] px-1">
+        <div
+          role="status"
+          className="jvk-clinic-ops-card px-6 py-10 text-center text-sm font-medium text-[#52685F]"
+        >
           Loading purchase orders…
-        </p>
+        </div>
       )}
 
-      <div className="jvk-admin-card p-5 sm:p-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#DFF4ED] text-[#047C61]">
-              <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <h2 id="purchase-orders-list-heading" className="jvk-admin-serif text-xl font-bold text-[#0E2420]">
-              Purchase orders
-            </h2>
+      {orderEntries.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="jvk-clinic-ops-card p-4 flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#087466]">
+                <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#52685F]">Total POs</p>
+                <p className="text-xl font-bold text-[#103B32] tabular-nums">{orderEntries.length}</p>
+              </div>
+            </div>
+            <div className="jvk-clinic-ops-card p-4 flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#FEF3DC] border border-[#F1DDA8] text-[#B45309]">
+                <Clock className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#52685F]">Draft</p>
+                <p className="text-xl font-bold text-[#B45309] tabular-nums">{draftCount}</p>
+              </div>
+            </div>
+            <div className="jvk-clinic-ops-card p-4 flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#E8F4F8] border border-[#C7E0EC] text-[#0E7490]">
+                <Truck className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#52685F]">Open / Pending GRN</p>
+                <p className="text-xl font-bold text-[#0E7490] tabular-nums">{openCount}</p>
+              </div>
+            </div>
+            <div className="jvk-clinic-ops-card p-4 flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#E4F4EA] border border-[#C1E4CC] text-[#059669]">
+                <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#52685F]">Fully received</p>
+                <p className="text-xl font-bold text-[#059669] tabular-nums">{receivedCount}</p>
+              </div>
+            </div>
           </div>
-          {canWrite && (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={goToReceipts}
-                className="jvk-admin-secondary-btn !min-h-9"
-              >
-                <PackageCheck className="h-4 w-4" aria-hidden="true" />
-                <span>Goods receipt</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => createSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
-                className="jvk-admin-primary-btn !min-h-9"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                <span>Create purchase order</span>
-              </button>
-            </div>
-          )}
-        </div>
 
-        {orderEntries.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B847B]" aria-hidden="true" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search PO number, supplier, or item..."
-                aria-label="Search purchase orders"
-                className="pl-9 bg-white border-[#CEDAD3]"
-              />
+          <div className="jvk-clinic-ops-card p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#DFF4ED] text-[#087466]">
+                  <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <h2 id="purchase-orders-list-heading" className="jvk-clinic-ops-serif text-xl font-bold text-[#103B32]">
+                  Orders ledger ({orderEntries.length})
+                </h2>
+              </div>
+              {canWrite && (
+                <button
+                  type="button"
+                  onClick={() => createSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                  className="jvk-admin-primary-btn !min-h-9"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  <span>Create purchase order</span>
+                </button>
+              )}
             </div>
-            {uniqueStatuses.length > 0 && (
-              <select
-                aria-label="Filter order status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 rounded-lg border border-[#CEDAD3] bg-white px-3 text-xs font-semibold text-[#0E2420]"
-              >
-                <option value="ALL">All Statuses</option>
-                {uniqueStatuses.map((status) => (
-                  <option key={status} value={status}>{status}</option>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B847B]" aria-hidden="true" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search PO number, supplier, or item..."
+                  aria-label="Search purchase orders"
+                  className="pl-9 bg-white border-[#CEDAD3]"
+                />
+              </div>
+              {uniqueStatuses.length > 0 && (
+                <select
+                  aria-label="Filter order status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-10 rounded-lg border border-[#CEDAD3] bg-white px-3 text-xs font-semibold text-[#103B32]"
+                >
+                  <option value="ALL">All Statuses</option>
+                  {uniqueStatuses.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {filteredEntries.length === 0 ? (
+              <p className="rounded-xl border border-[#E5ECE6] bg-[#FAFBF8] px-4 py-6 text-center text-sm text-[#52685F]">
+                No purchase orders match your filter criteria.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {filteredEntries.map(([id, lines]) => (
+                  <div
+                    key={id}
+                    className="rounded-xl border border-[#E2ECE5] bg-[#FFFDF9] p-4 space-y-3 hover:border-[#A4CEBC] transition-colors"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="jvk-clinic-ops-serif text-base font-bold text-[#103B32] break-words">
+                          {lines[0].supplierReference} · <span className="font-mono text-xs text-[#087466]">{id.slice(0, 8)}</span>
+                        </h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusChip tone={lines[0].status === "draft" ? "warning" : "success"}>
+                          {lines[0].status}
+                        </StatusChip>
+                        {canWrite && lines[0].status === "draft" && (
+                          <button
+                            type="button"
+                            disabled={result.pending}
+                            onClick={() =>
+                              void post(
+                                `/orders/${id}/issue`,
+                                undefined,
+                                "Order issued for receiving.",
+                              )
+                            }
+                            className="jvk-admin-secondary-btn !min-h-8 !px-3 text-xs"
+                          >
+                            Issue order
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                      {lines.map((line) => (
+                        <li
+                          key={line.lineId}
+                          className="rounded-lg bg-[#F5FAF7] border border-[#E2EDE6] px-3 py-2 text-xs sm:text-sm text-[#243B34]"
+                        >
+                          <span className="font-semibold text-[#103B32]">{line.brand}</span> · {line.outstanding} of {line.units} units outstanding
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </select>
+              </div>
             )}
           </div>
-        )}
+        </>
+      )}
 
-        {data && !orders.size && (
-          <div className="rounded-xl border border-[#E5ECE6] bg-[#FAFBF8] px-6 py-10 text-center">
-            <img
-              src="/assets/admin/procurement-hero.png"
-              alt=""
-              aria-hidden="true"
-              width={136}
-              height={92}
-              className="jvk-admin-artwork w-36 h-auto mx-auto mb-3 opacity-85"
-            />
-            <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420]">No purchase orders</h3>
-            <p className="mt-1 max-w-md mx-auto text-sm text-[#556C63]">
-              Orders for this authorized clinic appear here.
-            </p>
-          </div>
-        )}
-
-        {filteredEntries.length > 0 && (
-          <div className="space-y-3">
-            {filteredEntries.map(([id, lines]) => (
-              <div
-                key={id}
-                className="rounded-xl border border-[#E2ECE5] bg-[#FFFDF9] p-4 space-y-3 hover:border-[#A4CEBC] transition-colors"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420] break-words">
-                      {lines[0].supplierReference} · <span className="font-mono text-xs text-[#047C61]">{id.slice(0, 8)}</span>
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusChip tone={lines[0].status === "draft" ? "warning" : "success"}>
-                      {lines[0].status}
-                    </StatusChip>
-                    {canWrite && lines[0].status === "draft" && (
-                      <button
-                        type="button"
-                        disabled={result.pending}
-                        onClick={() =>
-                          void post(
-                            `/orders/${id}/issue`,
-                            undefined,
-                            "Order issued for receiving.",
-                          )
-                        }
-                        className="jvk-admin-secondary-btn !min-h-8 !px-3 text-xs"
-                      >
-                        Issue order
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <ul className="grid gap-2 sm:grid-cols-2">
-                  {lines.map((line) => (
-                    <li
-                      key={line.lineId}
-                      className="rounded-lg bg-[#F5FAF7] border border-[#E2EDE6] px-3 py-2 text-xs sm:text-sm text-[#2A423A]"
-                    >
-                      <span className="font-semibold text-[#0E2420]">{line.brand}</span> · {line.outstanding} of {line.units} units outstanding
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {data && !orders.size && (
+        <div className="jvk-clinic-ops-card jvk-clinic-ops-enter flex flex-col items-center justify-center px-6 py-10 sm:py-12 text-center">
+          <img
+            src="/assets/admin/procurement-hero.png"
+            alt=""
+            aria-hidden="true"
+            width={220}
+            height={146}
+            className="jvk-clinic-ops-artwork w-48 sm:w-56 h-auto mb-2"
+          />
+          <h2 className="jvk-clinic-ops-serif text-[21px] sm:text-[23px] font-bold text-[#103B32]">
+            No purchase orders
+          </h2>
+          <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#52685F]">
+            Orders for this authorized clinic appear here.
+          </p>
+        </div>
+      )}
 
       {canWrite && data && (
-        <div ref={createSectionRef} className="jvk-admin-card p-5 sm:p-6 space-y-4">
-          <div className="flex items-start gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
-              <FilePlus2 className="h-5 w-5" aria-hidden="true" />
+        <div ref={createSectionRef} className="jvk-clinic-ops-card p-5 sm:p-6 space-y-4">
+          <div className="flex items-center gap-3.5">
+            <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#DCE5DF] bg-[#F5FAF6] text-[#52685F]">
+              {data.catalog.length === 0 ? (
+                <ShoppingCart className="h-5 w-5" />
+              ) : (
+                <FilePlus2 className="h-5 w-5 text-[#087466]" />
+              )}
             </span>
-            <div>
-              <h2 className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Create purchase order</h2>
-              <p className="text-xs sm:text-sm text-[#556C63]">
-                Add approved items from the clinic medicine catalog before placing an order.
-              </p>
+            <div className="min-w-0">
+              <h2 className="jvk-clinic-ops-serif text-lg sm:text-xl font-bold text-[#103B32]">
+                Create purchase order
+              </h2>
+              {data.catalog.length === 0 ? (
+                <p className="text-sm text-[#52685F] mt-0.5">
+                  Add approved items to the clinic medicine catalog before ordering.
+                </p>
+              ) : (
+                <p className="text-xs sm:text-sm text-[#52685F] mt-0.5">
+                  Select approved catalog items and set cost and selling price in INR.
+                </p>
+              )}
             </div>
           </div>
 
-          {data.catalog.length === 0 ? (
-            <div className="jvk-admin-card-amber px-4 py-3 text-sm font-medium text-[#78350F]">
-              Add approved items to the clinic medicine catalog before ordering.
-            </div>
-          ) : (
+          {data.catalog.length > 0 && (
             <form className="space-y-4" onSubmit={create}>
               <label className="block text-sm font-medium text-[#2A423A]" htmlFor="purchase-supplier">
                 Supplier reference

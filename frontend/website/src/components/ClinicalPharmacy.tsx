@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/design-primitives";
 import { staffApi, useStaffData } from "@/lib/staffApi";
 import { paiseToRupeesString, rupeesToPaise } from "@/lib/utils";
+import "@/design-system/clinic-ops.css";
 
 const pharmacy = "/clinical/pharmacy";
 const money = (paise: number) => `₹${paiseToRupeesString(paise)}`;
@@ -225,56 +226,114 @@ export function PharmacyInflow() {
   const { data, error } = useStaffData<{
     prescriptions: Array<{ id: string; patientName: string }>;
   }>(`${pharmacy}/inflow`, revision);
+  const isRefreshing = !data && !error && revision > 0;
   return (
-    <section className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
-      <header className="flex flex-wrap justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Pharmacy POS</h1>
-        <Button
-          variant="outline"
+    <section className="jvk-admin-page jvk-clinic-ops-page mx-auto max-w-5xl space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div data-jvk-entrance="left" className="flex items-center gap-3.5 min-w-0">
+          <span aria-hidden="true" className="jvk-clinic-ops-icon-badge">
+            <Pill className="h-5 w-5" />
+          </span>
+          <h1 className="jvk-clinic-ops-serif text-[26px] sm:text-[30px] font-bold leading-tight text-[#103B32]">
+            Pharmacy POS
+          </h1>
+        </div>
+        <button
+          type="button"
+          disabled={isRefreshing}
+          aria-busy={isRefreshing}
           onClick={() => setRevision((value) => value + 1)}
+          className="jvk-admin-secondary-btn shrink-0"
         >
-          Refresh inflow
-        </Button>
+          <RefreshCw
+            className={`h-4 w-4 text-[#087466] ${isRefreshing ? "animate-spin" : ""}`}
+            aria-hidden="true"
+          />
+          <span>Refresh inflow</span>
+        </button>
       </header>
       {error && <InlineBanner tone="critical" title={error} />}
-      {!data && !error && <p role="status">Loading prescriptions…</p>}
+      {!data && !error && (
+        <div
+          role="status"
+          className="jvk-clinic-ops-card px-6 py-10 text-center text-sm font-medium text-[#52685F]"
+        >
+          Loading prescriptions…
+        </div>
+      )}
       {receipt && (
-        <Card className="print:border-none">
-          <CardContent className="space-y-2 p-4">
-            <h2 className="font-semibold">Cash sale recorded</h2>
-            <p>Total {money(receipt.totalPaise)}</p>
-            <p className="break-all">Receipt {receipt.id}</p>
-            <time dateTime={receipt.createdAt}>
+        <Card className="jvk-clinic-ops-card print:border-none">
+          <CardContent className="space-y-2.5 p-5 sm:p-6">
+            <h2 className="jvk-clinic-ops-serif text-lg font-bold text-[#103B32]">
+              Cash sale recorded
+            </h2>
+            <p className="text-base font-bold text-[#087466] tabular-nums">
+              Total {money(receipt.totalPaise)}
+            </p>
+            <p className="break-all text-xs font-mono text-[#52685F]">
+              Receipt {receipt.id}
+            </p>
+            <time
+              dateTime={receipt.createdAt}
+              className="block text-xs text-[#52685F]"
+            >
               {new Date(receipt.createdAt).toLocaleString("en-IN")}
             </time>
-            <div className="print:hidden">
-              <Button variant="outline" onClick={() => window.print()}>
+            <div className="pt-1 print:hidden">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="jvk-admin-secondary-btn"
+              >
                 Print receipt
-              </Button>
+              </button>
             </div>
           </CardContent>
         </Card>
       )}
       {data?.prescriptions.length === 0 && (
-        <EmptyState
-          title="No prescriptions awaiting dispensing"
-          description="Signed prescriptions shared with this clinic’s pharmacy will appear here."
-        />
+        <div className="jvk-clinic-ops-card jvk-clinic-ops-enter flex flex-col items-center justify-center px-6 py-10 sm:py-12 text-center">
+          <img
+            src="/assets/admin/medicine-bottles.png"
+            alt=""
+            aria-hidden="true"
+            width={220}
+            height={176}
+            className="jvk-clinic-ops-artwork w-48 sm:w-56 h-auto mb-3"
+          />
+          <h2 className="jvk-clinic-ops-serif text-[21px] sm:text-[23px] font-bold text-[#103B32]">
+            No prescriptions awaiting dispensing
+          </h2>
+          <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#52685F]">
+            Signed prescriptions shared with this clinic’s pharmacy will appear
+            here.
+          </p>
+        </div>
       )}
       {!!data?.prescriptions.length && (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {data.prescriptions.map(({ id, patientName }) => (
-            <li key={id}>
-              <Button
-                className="h-auto w-full justify-start whitespace-normal py-3 text-left"
-                variant={selected === id ? "default" : "outline"}
-                aria-pressed={selected === id}
-                onClick={() => setSelected(id)}
-              >
-                {patientName} · {id.slice(0, 8)}
-              </Button>
-            </li>
-          ))}
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {data.prescriptions.map(({ id, patientName }) => {
+            const isSelected = selected === id;
+            return (
+              <li key={id}>
+                <button
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelected(id)}
+                  className={`jvk-admin-card-interactive flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition-colors cursor-pointer ${
+                    isSelected
+                      ? "border-[#087466] bg-[#DFF4ED] text-[#103B32] shadow-xs"
+                      : "border-[#E4E5DA] bg-[#FFFDF8] text-[#103B32] hover:border-[#99C7B7] hover:bg-[#F3FAF6]"
+                  }`}
+                >
+                  <span className="truncate font-bold">{patientName}</span>
+                  <span className="shrink-0 font-mono text-xs text-[#087466]">
+                    {id.slice(0, 8)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
       {selected && (
@@ -340,20 +399,30 @@ function Checkout({
     }
   }
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
-        <h2 className="font-semibold">Batch allocation and checkout</h2>
-        {!data && !error && <p role="status">Checking stock and price…</p>}
+    <Card className="jvk-clinic-ops-card">
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7ECE8] pb-3.5">
+          <h2 className="jvk-clinic-ops-serif text-lg font-bold text-[#103B32]">
+            Batch allocation and checkout
+          </h2>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setRevision((value) => value + 1)}
+            className="jvk-admin-secondary-btn !min-h-9"
+          >
+            <RefreshCw className="h-3.5 w-3.5 text-[#087466]" aria-hidden="true" />
+            <span>Refresh quote</span>
+          </button>
+        </div>
+        {!data && !error && (
+          <p role="status" className="text-sm text-[#52685F]">
+            Checking stock and price…
+          </p>
+        )}
         {(error || failure) && (
           <InlineBanner tone="critical" title={failure || error || ""} />
         )}
-        <Button
-          variant="outline"
-          disabled={pending}
-          onClick={() => setRevision((value) => value + 1)}
-        >
-          Refresh quote
-        </Button>
         {data && !data.complete && (
           <InlineBanner
             tone="warning"
@@ -365,27 +434,29 @@ function Checkout({
           </InlineBanner>
         )}
         {data?.complete && (
-          <form className="space-y-3" onSubmit={(event) => void submit(event)}>
-            <ul className="divide-y">
+          <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+            <ul className="divide-y divide-[#E7ECE8] rounded-xl border border-[#E4E5DA] bg-[#FAFBF7] px-4">
               {data.allocation.map((item) => (
                 <li
-                  className="flex flex-wrap justify-between gap-2 py-2"
+                  className="flex flex-wrap justify-between gap-2 py-3 text-sm text-[#103B32]"
                   key={`${item.lineId}-${item.batchId}`}
                 >
-                  <span>
+                  <span className="font-medium">
                     {item.brand} · {item.units} units · expires {item.expiry}
                   </span>
-                  <span>{money(item.unitPricePaise)} per unit</span>
+                  <span className="font-semibold text-[#087466] tabular-nums">
+                    {money(item.unitPricePaise)} per unit
+                  </span>
                 </li>
               ))}
             </ul>
-            <p className="text-lg font-semibold">
+            <p className="text-lg font-bold text-[#103B32] tabular-nums">
               Total {money(data.totalPaise)}
             </p>
-            <label className="block">
+            <label className="block text-sm font-medium text-[#243B34]">
               Tax treatment
               <select
-                className={selectStyle}
+                className={`${selectStyle} mt-1.5`}
                 name="taxMode"
                 required
                 defaultValue=""
@@ -395,13 +466,24 @@ function Checkout({
                 <option value="inter">Inter-state</option>
               </select>
             </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="cash" required />
-              Cash received and amount confirmed.
+            <label className="jvk-clinic-ops-check-label">
+              <input
+                type="checkbox"
+                name="cash"
+                required
+                className="jvk-clinic-ops-checkbox"
+              />
+              <span>Cash received and amount confirmed.</span>
             </label>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Posting checkout…" : "Record cash sale and dispense"}
-            </Button>
+            <div className="pt-1">
+              <button
+                type="submit"
+                disabled={pending}
+                className="jvk-admin-primary-btn"
+              >
+                {pending ? "Posting checkout…" : "Record cash sale and dispense"}
+              </button>
+            </div>
           </form>
         )}
       </CardContent>
@@ -437,34 +519,70 @@ export function ClinicStock({
   const lowStockCount = allBatches.filter((b) => b.available > 0 && b.available <= 10 && b.expiry >= date).length;
   const expiringCount = allBatches.filter((b) => b.expiry >= date && b.expiry <= cutoff).length;
   const expiredCount = allBatches.filter((b) => b.expiry < date).length;
+  const isRefreshing = !data && !error && revision > 0;
+  const hasFilters = Boolean(search.trim()) || expiryOnly;
 
   return (
-    <section className="jvk-admin-page mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-      <div className="jvk-admin-card-hero p-5 sm:p-6 space-y-5">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
-              <Package className="h-6 w-6" aria-hidden="true" />
-            </span>
-            <div>
-              <h1 className="jvk-admin-serif text-2xl sm:text-3xl font-bold text-[#0E2420]">
-                Clinic inventory
-              </h1>
-              <p className="text-sm text-[#556C63]">
-                Track clinic stock, expiry, and batches.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setRevision((value) => value + 1)}
-            className="jvk-admin-secondary-btn"
-          >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            <span>Refresh stock</span>
-          </button>
-        </header>
+    <section className="jvk-admin-page jvk-clinic-ops-page mx-auto max-w-5xl space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div data-jvk-entrance="left" className="flex items-center gap-3.5 min-w-0">
+          <span aria-hidden="true" className="jvk-clinic-ops-icon-badge">
+            <Package className="h-5 w-5" />
+          </span>
+          <h1 className="jvk-clinic-ops-serif text-[26px] sm:text-[30px] font-bold leading-tight text-[#103B32]">
+            Clinic Inventory
+          </h1>
+        </div>
+        <button
+          type="button"
+          disabled={isRefreshing}
+          aria-busy={isRefreshing}
+          onClick={() => setRevision((value) => value + 1)}
+          className="jvk-admin-secondary-btn shrink-0"
+        >
+          <RefreshCw
+            className={`h-4 w-4 text-[#087466] ${isRefreshing ? "animate-spin" : ""}`}
+            aria-hidden="true"
+          />
+          <span>Refresh stock</span>
+        </button>
+      </header>
 
+      <search className="space-y-2.5">
+        <div>
+          <label
+            htmlFor="clinic-stock-search"
+            className="mb-1.5 block text-sm font-semibold text-[#103B32]"
+          >
+            Search medicine or batch
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B847B]"
+              aria-hidden="true"
+            />
+            <Input
+              id="clinic-stock-search"
+              type="search"
+              placeholder="Search by medicine name, salt, or batch number..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-10 h-11 rounded-xl border-[#DCE2D7] bg-[#FFFDF8] text-[#103B32] shadow-xs focus:border-[#087466]"
+            />
+          </div>
+        </div>
+        <label className="jvk-clinic-ops-check-label">
+          <input
+            type="checkbox"
+            checked={expiryOnly}
+            onChange={(event) => setExpiryOnly(event.target.checked)}
+            className="jvk-clinic-ops-checkbox"
+          />
+          <span>Expires within 90 days or already expired</span>
+        </label>
+      </search>
+
+      {allBatches.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 rounded-2xl border border-[#D4E6DA] bg-[#F2F8F4] p-3.5">
           <div className="flex items-center gap-2.5 px-2 py-1">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#DFF4ED] text-[#047C61]">
@@ -512,61 +630,47 @@ export function ClinicStock({
             </div>
           </div>
         </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B847B]" aria-hidden="true" />
-            <label htmlFor="clinic-stock-search" className="sr-only">
-              Search medicine or batch
-            </label>
-            <Input
-              id="clinic-stock-search"
-              placeholder="Search medicine or batch"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="pl-10 h-11 rounded-xl border-[#CEDAD3] bg-white text-[#0E2420]"
-            />
-          </div>
-          <label className="inline-flex items-center gap-2.5 rounded-xl border border-[#D4E2DA] bg-white/85 px-3.5 py-2.5 text-sm font-medium text-[#2A423A] cursor-pointer shrink-0">
-            <input
-              type="checkbox"
-              checked={expiryOnly}
-              onChange={(event) => setExpiryOnly(event.target.checked)}
-              className="h-4 w-4 rounded border-[#B8CDC0] text-[#047C61]"
-            />
-            <span>Expires within 90 days or already expired</span>
-          </label>
-        </div>
-      </div>
+      )}
 
       {error && <InlineBanner tone="critical" title={error} />}
       {!data && !error && (
-        <p role="status" className="text-sm text-[#556C63] px-1">
+        <div
+          role="status"
+          className="jvk-clinic-ops-card px-6 py-10 text-center text-sm font-medium text-[#52685F]"
+        >
           Loading clinic stock…
-        </p>
+        </div>
       )}
       {data && batches.length === 0 && (
-        <div className="jvk-admin-card flex flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="jvk-clinic-ops-card jvk-clinic-ops-enter flex flex-col items-center justify-center px-6 py-10 sm:py-12 text-center">
           <img
-            src="/assets/admin/medicine-bottles.png"
+            src="/assets/clinic/inventory-empty-boxes.svg"
             alt=""
             aria-hidden="true"
-            width={148}
-            height={148}
-            className="jvk-admin-artwork w-36 h-36 mb-3"
+            width={360}
+            height={220}
+            className="jvk-clinic-ops-artwork w-52 sm:w-60 h-auto mb-2"
           />
-          <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">No matching batches</h3>
-          <p className="mt-1.5 max-w-md text-sm text-[#556C63]">
-            Stock received at this clinic appears here.
+          <h2 className="jvk-clinic-ops-serif text-[21px] sm:text-[23px] font-bold text-[#103B32]">
+            No matching batches
+          </h2>
+          <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#52685F]">
+            {allBatches.length > 0 && hasFilters
+              ? "No inventory batches match your search query or 90-day expiry filter."
+              : "Stock received at this clinic appears here."}
           </p>
-          <button
-            type="button"
-            onClick={() => setRevision((value) => value + 1)}
-            className="jvk-admin-primary-btn mt-5"
-          >
-            <PackageCheck className="h-4 w-4" aria-hidden="true" />
-            <span>Refresh stock</span>
-          </button>
+          {allBatches.length > 0 && hasFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setExpiryOnly(false);
+              }}
+              className="jvk-admin-secondary-btn mt-4"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       )}
       {!!batches.length && (
@@ -713,13 +817,13 @@ function CatalogEntry() {
               className="mt-1 bg-white"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-[#2A423A]">
-            <input name="nti" type="checkbox" className="h-4 w-4 rounded" />
-            Narrow therapeutic index
+          <label className="jvk-clinic-ops-check-label">
+            <input name="nti" type="checkbox" className="jvk-clinic-ops-checkbox" />
+            <span>Narrow therapeutic index</span>
           </label>
-          <label className="flex items-center gap-2 text-sm text-[#2A423A]">
-            <input name="scheduleH" type="checkbox" className="h-4 w-4 rounded" />
-            Schedule H
+          <label className="jvk-clinic-ops-check-label">
+            <input name="scheduleH" type="checkbox" className="jvk-clinic-ops-checkbox" />
+            <span>Schedule H</span>
           </label>
           <div className="sm:col-span-2 pt-1">
             <button type="submit" disabled={result.pending} className="jvk-admin-primary-btn">

@@ -5,6 +5,7 @@ import { staffApi } from '@/lib/staffApi'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button, Input, Label, Skeleton } from '@/components/ui/basic'
 import { useToast } from '@/components/ui/use-toast'
+import '@/design-system/clinic-ops.css'
 
 interface Shift {
     id: string
@@ -270,10 +271,10 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
             </div>
 
             {/* Preview */}
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Shift Preview</p>
-                <div className="flex items-center gap-3 text-sm text-slate-700">
-                    <Clock className="w-4 h-4 text-blue-600" />
+            <div className="p-4 bg-[#F7FAF6] rounded-xl border border-[#DCE7DF] space-y-2">
+                <p className="text-[10px] font-bold text-[#52685F] uppercase tracking-wider">Shift Preview</p>
+                <div className="flex items-center gap-3 text-sm text-[#103B32]">
+                    <Clock className="w-4 h-4 text-[#087466]" />
                     <span className="font-bold">{formData.start_time ? formatTime(formData.start_time) : '--'}</span>
                     <span className="text-slate-300">→</span>
                     <span className="font-bold">{formData.end_time ? formatTime(formData.end_time) : '--'}</span>
@@ -292,18 +293,20 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
     )
 
     return (
-        <div className="jvk-admin-page space-y-6">
+        <section className="jvk-admin-page jvk-clinic-ops-page mx-auto max-w-5xl space-y-5">
             {/* HEADER */}
-            <div className="jvk-admin-card-hero flex flex-col md:flex-row md:items-center justify-between gap-6 px-6 py-5">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl bg-[#DFF4ED] border border-[#C3E5D6] flex items-center justify-center text-[#047C61]">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">schedule</SymbolIcon>
-                        </div>
-                        <div>
-                            <h2 className="jvk-admin-serif text-2xl font-bold text-[#0E2420] tracking-tight">Shift Operations</h2>
-                            <p className="text-sm text-[#556C63]">Manage staff schedules and attendance windows</p>
-                        </div>
+            <header className="flex flex-wrap items-center justify-between gap-4">
+                <div data-jvk-entrance="left" className="flex items-center gap-3.5 min-w-0">
+                    <span aria-hidden="true" className="jvk-clinic-ops-icon-badge">
+                        <SymbolIcon className="material-symbols-outlined text-[22px]">schedule</SymbolIcon>
+                    </span>
+                    <div className="min-w-0">
+                        <h1 className="jvk-clinic-ops-serif text-[26px] sm:text-[30px] font-bold leading-tight text-[#103B32]">
+                            Shift Operations
+                        </h1>
+                        <p className="text-sm text-[#52685F] mt-0.5">
+                            Manage staff schedules and attendance windows
+                        </p>
                     </div>
                 </div>
 
@@ -312,7 +315,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                         <button
                             type="button"
                             onClick={() => { resetForm(); setIsCreateOpen(true) }}
-                            className="jvk-admin-primary-btn"
+                            className="jvk-admin-primary-btn shrink-0"
                         >
                             <Plus className="w-4 h-4" />
                             <span>New Shift</span>
@@ -325,20 +328,30 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                         {renderShiftForm(handleCreate, "Create Shift")}
                     </DialogContent>
                 </Dialog>}
-            </div>
+            </header>
 
             {/* SHIFT CARDS */}
             {shifts.length === 0 ? (
-                <div className="jvk-admin-card text-center py-16 px-6">
-                    <Clock className="w-12 h-12 text-[#88A399] mx-auto mb-4" />
-                    <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">No Shifts Created</h3>
-                    <p className="text-sm text-[#556C63] mt-1 max-w-sm mx-auto">
+                <div className="jvk-clinic-ops-card jvk-clinic-ops-enter flex flex-col items-center justify-center text-center py-10 sm:py-12 px-6">
+                    <img
+                        src="/assets/clinic/roster-empty-calendar.svg"
+                        alt=""
+                        aria-hidden="true"
+                        width={360}
+                        height={240}
+                        className="jvk-clinic-ops-artwork w-56 sm:w-64 h-auto mb-2"
+                    />
+                    <h2 className="jvk-clinic-ops-serif text-[21px] sm:text-[23px] font-bold text-[#103B32]">
+                        No Shifts Created
+                    </h2>
+                    <p className="text-sm text-[#52685F] mt-1.5 max-w-md leading-relaxed">
                         Create your first shift template to start managing staff schedules and enforcing attendance windows.
                     </p>
                     <button
                         type="button"
+                        disabled={!canManage}
                         onClick={() => { resetForm(); setIsCreateOpen(true) }}
-                        className="jvk-admin-primary-btn mt-6"
+                        className="jvk-admin-primary-btn mt-5"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Create First Shift</span>
@@ -552,6 +565,6 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </section>
     )
 }

@@ -1,0 +1,254 @@
+/* Isolated JEEVIKA Clinic Operations & POS styles (.jvk-clinic-ops-shell & .jvk-clinic-ops-page) */
+/* Strictly complements admin-workspace.css without altering unrelated Admin HQ, Nurse, or Doctor portals */
+
+.jvk-clinic-ops-shell {
+  --jvk-co-bg: #faf7f0;
+  --jvk-co-surface: #fffdf8;
+  --jvk-co-surface-soft: #fffefb;
+  --jvk-co-ink: #103b32;
+  --jvk-co-body: #243b34;
+  --jvk-co-muted: #52685f;
+  --jvk-co-teal: #087466;
+  --jvk-co-teal-hover: #065d52;
+  --jvk-co-sage: #e8f1e5;
+  --jvk-co-mint: #dff4ed;
+  --jvk-co-gold: #ebaa24;
+  --jvk-co-border: #e4e5da;
+  color-scheme: light;
+}
+
+.jvk-clinic-ops-shell .ayu-workspace-content {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(223, 244, 237, 0.34) 0%, transparent 45%),
+    linear-gradient(180deg, #faf7f0 0%, #f8f4ea 100%);
+}
+
+/* Sage intro banner with feathered watercolor corner leaves matching approved reference */
+.jvk-clinic-ops-shell .ayu-guide-invitation {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e5f1e3 0%, #f1f7ee 52%, #e6f2e5 100%);
+  border: 1px solid #d3e2d3;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(16, 59, 50, 0.035);
+  margin-bottom: 20px;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation::before,
+.jvk-clinic-ops-shell .ayu-guide-invitation::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 92px;
+  background: url("/assets/kiosk/kiosk-botanical-corner.png") no-repeat center / contain;
+  mix-blend-mode: multiply;
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation::before {
+  top: -12px;
+  left: -18px;
+  transform: scale(-1, -1) rotate(12deg);
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation::after {
+  right: -12px;
+  bottom: -14px;
+  transform: rotate(-4deg);
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation > * {
+  position: relative;
+  z-index: 1;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--jvk-co-ink);
+  letter-spacing: -0.015em;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation p {
+  color: var(--jvk-co-muted);
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation > button:first-of-type {
+  background: var(--jvk-co-teal);
+  border-color: var(--jvk-co-teal);
+  color: #ffffff;
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation > button:first-of-type:hover {
+  background: var(--jvk-co-teal-hover);
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation > button:last-of-type {
+  background: #fffdf8;
+  border-color: #d6dfd4;
+  color: var(--jvk-co-ink);
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+.jvk-clinic-ops-shell .ayu-guide-invitation > button:last-of-type:hover {
+  background: #f5f9f4;
+}
+
+/* Main workspace typography & surfaces */
+.jvk-clinic-ops-page {
+  color: var(--jvk-co-body);
+  min-width: 0;
+}
+
+.jvk-clinic-ops-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--jvk-co-ink);
+  letter-spacing: -0.02em;
+}
+
+.jvk-clinic-ops-card {
+  background: linear-gradient(180deg, #fffefb 0%, #fffdf8 100%);
+  border: 1px solid var(--jvk-co-border);
+  border-radius: 20px;
+  box-shadow: 0 6px 24px rgba(16, 59, 50, 0.04);
+}
+
+.jvk-clinic-ops-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  border: 1px solid #cce3d6;
+  background: #e3f1ea;
+  color: var(--jvk-co-teal);
+}
+
+.jvk-clinic-ops-artwork {
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 54%, rgba(0, 0, 0, 0.65) 74%, transparent 95%);
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 54%, rgba(0, 0, 0, 0.65) 74%, transparent 95%);
+}
+
+/* Native accessible checkbox per modern-web-guidance checkbox rule */
+.jvk-clinic-ops-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-block-size: 44px;
+  cursor: pointer;
+  color: var(--jvk-co-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.jvk-clinic-ops-checkbox {
+  --checkbox-size: 1.125rem;
+  --checkbox-icon-size: 0.72rem;
+  --checkbox-check: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>");
+
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  inline-size: var(--checkbox-size);
+  block-size: var(--checkbox-size);
+  min-inline-size: 0;
+  min-block-size: 0;
+  min-height: 0;
+  aspect-ratio: 1;
+  margin: 0;
+  border: 1.75px solid #95aca0;
+  border-radius: 5px;
+  background: #fffdf8;
+  color: #087466;
+  cursor: pointer;
+}
+
+.jvk-clinic-ops-checkbox::before {
+  content: "";
+  inline-size: var(--checkbox-icon-size);
+  aspect-ratio: 1;
+  background-color: #ffffff;
+  -webkit-mask: var(--checkbox-check) no-repeat center / contain;
+  mask: var(--checkbox-check) no-repeat center / contain;
+  scale: 0;
+}
+
+.jvk-clinic-ops-checkbox:checked {
+  border-color: #087466;
+  background: #087466;
+}
+
+.jvk-clinic-ops-checkbox:checked::before {
+  scale: 1;
+}
+
+.jvk-clinic-ops-checkbox:focus-visible {
+  outline: 2.5px solid #087466;
+  outline-offset: 2px;
+}
+
+.jvk-clinic-ops-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (forced-colors: active) {
+  .jvk-clinic-ops-checkbox::before {
+    background-color: CanvasText;
+  }
+}
+
+/* Gentle motion strictly honoring prefers-reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .jvk-clinic-ops-enter {
+    animation: jvk-clinic-ops-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .jvk-clinic-ops-checkbox::before {
+    transition: scale 140ms ease;
+  }
+}
+
+@keyframes jvk-clinic-ops-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .jvk-clinic-ops-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical {
+    margin-top: auto;
+    margin-bottom: 8px;
+  }
+
+  .jvk-clinic-ops-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical img {
+    max-width: 148px;
+    max-height: 142px;
+  }
+}
+
+@media (max-width: 639px) {
+  .jvk-clinic-ops-shell .ayu-guide-invitation::before,
+  .jvk-clinic-ops-shell .ayu-guide-invitation::after {
+    opacity: 0.22;
+    width: 112px;
+    height: 70px;
+  }
+}

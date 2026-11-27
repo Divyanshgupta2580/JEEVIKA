@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" width="360" height="220" fill="none">
+  <defs>
+    <radialGradient id="ibWash" cx="50%" cy="56%" r="44%">
+      <stop offset="0%" stop-color="#F6E6BF" stop-opacity="0.6"/>
+      <stop offset="56%" stop-color="#E4EFE4" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFFDF8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ibBoxFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAD2A5"/>
+      <stop offset="100%" stop-color="#D7B378"/>
+    </linearGradient>
+    <linearGradient id="ibBoxSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DFC290"/>
+      <stop offset="100%" stop-color="#C9A263"/>
+    </linearGradient>
+    <linearGradient id="ibBoxTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4E2BE"/>
+      <stop offset="100%" stop-color="#E5C893"/>
+    </linearGradient>
+    <linearGradient id="ibLeafDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9AC180"/>
+      <stop offset="100%" stop-color="#5B8F5F"/>
+    </linearGradient>
+    <linearGradient id="ibLeafLight" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#BDD696"/>
+      <stop offset="100%" stop-color="#7AA86E"/>
+    </linearGradient>
+    <filter id="ibBlur" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="180" cy="128" rx="146" ry="76" fill="url(#ibWash)" filter="url(#ibBlur)"/>
+
+  <!-- Left botanical foliage -->
+  <g opacity="0.9">
+    <path d="M108 164 C86 140 78 106 84 74" stroke="#6B9866" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M96 146 C72 142 58 130 60 120 C74 120 89 130 96 146 Z" fill="url(#ibLeafLight)"/>
+    <path d="M88 120 C66 111 56 97 62 87 C77 92 85 105 88 120 Z" fill="url(#ibLeafDark)"/>
+    <path d="M87 95 C72 84 68 70 76 63 C86 72 89 83 87 95 Z" fill="url(#ibLeafLight)"/>
+  </g>
+
+  <!-- Right botanical foliage -->
+  <g opacity="0.88">
+    <path d="M254 164 C274 140 282 108 276 76" stroke="#6B9866" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M266 144 C289 138 302 126 298 116 C284 118 272 128 266 144 Z" fill="url(#ibLeafDark)"/>
+    <path d="M274 116 C295 107 303 93 296 84 C282 88 276 102 274 116 Z" fill="url(#ibLeafLight)"/>
+  </g>
+
+  <!-- Floor ground wash shadow -->
+  <ellipse cx="180" cy="176" rx="92" ry="11" fill="#D5D9CD" opacity="0.62"/>
+
+  <!-- Small left kraft box behind -->
+  <g transform="translate(88, 90)">
+    <path d="M0 16 L34 2 L66 14 L32 28 Z" fill="url(#ibBoxTop)" stroke="#AA864F" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M0 16 V64 L32 76 V28 Z" fill="url(#ibBoxFront)" stroke="#AA864F" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M32 28 V76 L66 62 V14 Z" fill="url(#ibBoxSide)" stroke="#AA864F" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M13 10 L45 21 V32 L38 29 V19 L6 8 Z" fill="#F2E2BE" opacity="0.85"/>
+  </g>
+
+  <!-- Upper center-right kraft box stacked behind -->
+  <g transform="translate(154, 48)">
+    <path d="M0 18 L46 2 L92 16 L46 32 Z" fill="url(#ibBoxTop)" stroke="#A7824C" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M0 18 V72 L46 88 V32 Z" fill="url(#ibBoxFront)" stroke="#A7824C" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M46 32 V88 L92 70 V16 Z" fill="url(#ibBoxSide)" stroke="#A7824C" stroke-width="1.3" stroke-linejoin="round"/>
+    <!-- Packing tape highlight -->
+    <path d="M18 11 L64 25 V40 L54 37 V23 L9 9 Z" fill="#F6E9CB" opacity="0.85"/>
+  </g>
+
+  <!-- Main front medical supply box with crisp green medical cross -->
+  <g transform="translate(120, 88)">
+    <path d="M0 20 L54 2 L108 18 L54 36 Z" fill="url(#ibBoxTop)" stroke="#9E7944" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M0 20 V74 L54 90 V36 Z" fill="url(#ibBoxFront)" stroke="#9E7944" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M54 36 V90 L108 72 V18 Z" fill="url(#ibBoxSide)" stroke="#9E7944" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Tape strip across lid and front fold -->
+    <path d="M22 13 L76 29 L84 26 L30 10 Z" fill="#F8EED6" opacity="0.9"/>
+    <path d="M21 27 V46 L31 49 V30 Z" fill="#F6E8C7" opacity="0.85"/>
+    <!-- Green medical cross on the large front face -->
+    <g transform="translate(65, 44) skewY(-18)">
+      <path d="M11 0 H21 V11 H32 V21 H21 V32 H11 V21 H0 V11 H11 Z" fill="#17856D" stroke="#0C5D4B" stroke-width="1.2" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

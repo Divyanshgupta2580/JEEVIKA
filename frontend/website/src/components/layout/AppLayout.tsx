@@ -185,12 +185,13 @@ export function AppLayout({
     const isClinicianOpdTheme = isDoctorRole && (view === 'doctor-consultation' || view === 'doctor-alerts')
     const isCareOrAyushTheme = view === 'ipd' || view === 'emergency-triage' || view === 'ayush-center'
     const ADMIN_SHELL_ROLES = new Set(['SUPER_ADMIN', 'OWNER', 'HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'])
-    const ADMIN_SHELL_VIEWS = new Set(['admin', 'clinic-admin', 'inventory-dashboard', 'procurement', 'procurement-grn', 'shift-management', 'ca-suite', 'expenses', 'equipments', 'maritime-agents', 'prune-gateway', 'earnings', 'billing', 'settings', 'hospitals', 'audit_logs', 'medicine-migration'])
+    const ADMIN_SHELL_VIEWS = new Set(['admin', 'clinic-admin', 'pos', 'inventory-dashboard', 'procurement', 'procurement-grn', 'shift-management', 'ca-suite', 'expenses', 'equipments', 'maritime-agents', 'prune-gateway', 'earnings', 'billing', 'settings', 'hospitals', 'audit_logs', 'medicine-migration'])
     const isAdminShell = !isDoctorRole && view !== 'patient-kiosk' && (
         ADMIN_SHELL_VIEWS.has(view) ||
         (Boolean(verifiedRole && ADMIN_SHELL_ROLES.has(verifiedRole)) && (!isCareOrAyushTheme || view === 'ipd'))
     )
     const isNurseCallsShell = !isDoctorRole && view === 'nurse-calls'
+    const isClinicOpsShell = !isDoctorRole && (view === 'shift-management' || view === 'pos' || view === 'inventory-dashboard' || view === 'procurement')
     const isBotanicalRailShell = isAdminShell || isNurseCallsShell
     const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme || isBotanicalRailShell
     const isClinicianShell = isDoctorRole && (isClinicianOpdTheme || isCareOrAyushTheme)
@@ -202,7 +203,7 @@ export function AppLayout({
     const isFullBleedPortal = view === 'patient-kiosk';
     const [isCollapsed, setIsCollapsed] = useState(() => verifiedRole === 'DOCTOR');
     const CLINIC_VIEWS = ['clinic-admin', 'pos', 'attendance', 'shift-management', 'inventory-dashboard', 'staff', 'staff-management', 'earnings'];
-    const isClinicPortal = CLINIC_VIEWS.includes(view) || (selectedClinicId !== null && view !== 'admin');
+    const isClinicPortal = CLINIC_VIEWS.includes(view) || (verifiedRole === 'CLINIC_ADMIN' && view === 'procurement') || (selectedClinicId !== null && view !== 'admin');
 
     const getPortalMeta = () => {
         if (view === 'patient-kiosk') {
@@ -745,7 +746,7 @@ export function AppLayout({
     if (isRailShell) {
         return (
             <div
-                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isBotanicalRailShell ? 'jvk-admin-shell' : ''}${isNurseCallsShell ? ' jvk-nurse-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
+                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isBotanicalRailShell ? 'jvk-admin-shell' : ''}${isNurseCallsShell ? ' jvk-nurse-shell' : ''}${isClinicOpsShell ? ' jvk-clinic-ops-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
                 data-mobile-menu-open={isMobileMenuOpen}
                 onKeyDown={(event) => {
                     if (event.key === 'Escape' && isMobileMenuOpen) {
