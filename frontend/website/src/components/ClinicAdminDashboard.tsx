@@ -28,6 +28,7 @@ import { useHospital } from '@/context/HospitalContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/basic'
 import { ReceiptModal } from '@/components/ui/ReceiptModal'
+import '@/design-system/clinic-ops.css'
 import {
     AreaChart,
     Area,
@@ -50,12 +51,12 @@ interface ClinicAdminDashboardProps {
 }
 
 const PAYMENT_COLOR_MAP: Record<string, { fill: string; gradStart: string; gradEnd: string; badge: string }> = {
-    UPI: { fill: '#6366f1', gradStart: '#818cf8', gradEnd: '#4f46e5', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    CASH: { fill: '#10b981', gradStart: '#34d399', gradEnd: '#059669', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    CARD: { fill: '#3b82f6', gradStart: '#60a5fa', gradEnd: '#2563eb', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-    INSURANCE: { fill: '#8b5cf6', gradStart: '#a78bfa', gradEnd: '#7c3aed', badge: 'bg-purple-50 text-purple-700 border-purple-200' },
-    IPD_BILL: { fill: '#f59e0b', gradStart: '#fbbf24', gradEnd: '#d97706', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-    OTHER: { fill: '#64748b', gradStart: '#94a3b8', gradEnd: '#475569', badge: 'bg-slate-50 text-slate-700 border-slate-200' }
+    UPI: { fill: '#5b61d6', gradStart: '#7379e8', gradEnd: '#494fc2', badge: 'bg-[#eef0fc] text-[#3f45ad] border-[#d3d6f7]' },
+    CASH: { fill: '#059669', gradStart: '#10b981', gradEnd: '#047857', badge: 'bg-[#dff4ed] text-[#087466] border-[#bbe5d6]' },
+    CARD: { fill: '#0284c7', gradStart: '#38bdf8', gradEnd: '#0369a1', badge: 'bg-[#e8f4fa] text-[#0369a1] border-[#bfe3f2]' },
+    INSURANCE: { fill: '#7c3aed', gradStart: '#a78bfa', gradEnd: '#6d28d9', badge: 'bg-[#f3eefc] text-[#6b3fa0] border-[#decff6]' },
+    IPD_BILL: { fill: '#d97706', gradStart: '#fbbf24', gradEnd: '#b45309', badge: 'bg-[#fef3d6] text-[#9a5b0a] border-[#f4db9c]' },
+    OTHER: { fill: '#64748b', gradStart: '#94a3b8', gradEnd: '#475569', badge: 'bg-[#f3f4ef] text-[#4b635b] border-[#dfdfd2]' }
 };
 
 export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdminDashboardProps) {
@@ -219,20 +220,33 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
         return { cashCount, digitalCount, avgTicket };
     }, [dailySales, stats.transactions, stats.revenue]);
 
-    // Dynamic Revenue Trend Pill
+    // Dynamic Revenue Trend Pill (honest empty-baseline handling)
     const revenueTrend = useMemo(() => {
-        if (!weeklyData || weeklyData.length <= 1) return { percent: '+14.2%', positive: true };
+        if (!weeklyData || weeklyData.length <= 1) {
+            return {
+                percent: stats.revenue > 0 ? 'Live Today' : 'No baseline',
+                positive: stats.revenue > 0,
+                hasBaseline: false
+            };
+        }
         const pastDays = weeklyData.slice(0, -1);
         const avgDaily = pastDays.length > 0
             ? pastDays.reduce((acc, d) => acc + (d.revenue || 0), 0) / pastDays.length
             : 0;
 
-        if (avgDaily <= 0) return { percent: '+100%', positive: true };
+        if (avgDaily <= 0) {
+            return {
+                percent: stats.revenue > 0 ? 'New Today' : 'No baseline',
+                positive: stats.revenue > 0,
+                hasBaseline: false
+            };
+        }
         const diff = ((stats.revenue - avgDaily) / avgDaily) * 100;
         const sign = diff >= 0 ? '+' : '';
         return {
             percent: `${sign}${diff.toFixed(1)}%`,
-            positive: diff >= 0
+            positive: diff >= 0,
+            hasBaseline: true
         };
     }, [weeklyData, stats.revenue]);
 
@@ -450,54 +464,71 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
 
     if (loading) {
         return (
-            <div className="space-y-8 animate-in fade-in duration-300 max-w-[1600px] mx-auto pb-12">
+            <div className="jvk-admin-page jvk-clinic-ops-page jvk-clinic-hub-page space-y-6 animate-in fade-in duration-300 max-w-[1600px] mx-auto pb-12">
                 {/* 1. Cockpit Header Skeleton */}
-                <div className="relative bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 lg:p-7 shadow-sm">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <Skeleton className="h-6 w-32 rounded-full" />
-                                <Skeleton className="h-6 w-24 rounded-full" />
+                <div className="jvk-clinic-hub-card p-5 lg:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-14 w-14 rounded-2xl bg-[#E8EFE6]" />
+                            <div className="space-y-2.5">
+                                <div className="flex items-center gap-2.5">
+                                    <Skeleton className="h-7 w-52 bg-[#E8EFE6]" />
+                                    <Skeleton className="h-5 w-24 rounded-full bg-[#E8EFE6]" />
+                                </div>
+                                <Skeleton className="h-4 w-80 max-w-full bg-[#EFEFE5]" />
                             </div>
-                            <Skeleton className="h-8 w-64" />
-                            <Skeleton className="h-4 w-96 max-w-full" />
                         </div>
                         <div className="flex items-center gap-3">
-                            <Skeleton className="h-10 w-28 rounded-xl" />
-                            <Skeleton className="h-10 w-36 rounded-xl" />
+                            <Skeleton className="h-10 w-36 rounded-xl bg-[#EFEFE5]" />
+                            <Skeleton className="h-10 w-40 rounded-xl bg-[#DCECE4]" />
                         </div>
                     </div>
                 </div>
 
-                {/* 2. KPI Cards Skeleton */}
+                {/* 2. Fast Navigation Skeleton */}
+                <div className="jvk-clinic-hub-card p-4 space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-[#E4E5DA]">
+                        <Skeleton className="h-4 w-32 bg-[#E8EFE6]" />
+                        <Skeleton className="h-3.5 w-36 bg-[#EFEFE5]" />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                            <Skeleton key={idx} className="h-16 w-full rounded-xl bg-[#F1F3EA]" />
+                        ))}
+                    </div>
+                </div>
+
+                {/* 3. KPI Cards Skeleton */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="p-6 rounded-3xl border border-slate-200/80 bg-white shadow-sm space-y-3">
+                        <div key={i} className="jvk-clinic-hub-kpi p-5 lg:p-6 space-y-3">
                             <div className="flex justify-between items-center">
-                                <Skeleton className="h-4 w-28" />
-                                <Skeleton className="h-10 w-10 rounded-2xl" />
+                                <Skeleton className="h-10 w-10 rounded-xl bg-[#E8EFE6]" />
+                                <Skeleton className="h-6 w-20 rounded-full bg-[#EFEFE5]" />
                             </div>
-                            <Skeleton className="h-8 w-32" />
-                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-3.5 w-28 bg-[#EFEFE5]" />
+                            <Skeleton className="h-8 w-32 bg-[#E8EFE6]" />
+                            <Skeleton className="h-3.5 w-44 bg-[#EFEFE5]" />
                         </div>
                     ))}
                 </div>
 
-                {/* 3. Main Operational Panels Skeleton */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div className="lg:col-span-8 p-6 lg:p-7 rounded-3xl border border-slate-200/80 bg-white shadow-sm space-y-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <Skeleton className="h-6 w-48" />
-                            <Skeleton className="h-8 w-32 rounded-lg" />
+                {/* 4. Analytics Panels Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-8 jvk-clinic-hub-card p-6 lg:p-7 space-y-4">
+                        <div className="flex justify-between items-center mb-3">
+                            <Skeleton className="h-6 w-56 bg-[#E8EFE6]" />
+                            <Skeleton className="h-9 w-44 rounded-xl bg-[#EFEFE5]" />
                         </div>
-                        <Skeleton className="h-72 w-full rounded-2xl" />
+                        <Skeleton className="h-64 w-full rounded-2xl bg-[#F3F4EC]" />
+                        <Skeleton className="h-16 w-full rounded-2xl bg-[#EFEFE5]" />
                     </div>
-                    <div className="lg:col-span-4 p-6 lg:p-7 rounded-3xl border border-slate-200/80 bg-white shadow-sm space-y-4">
-                        <Skeleton className="h-6 w-36" />
-                        <Skeleton className="h-48 w-full rounded-2xl" />
-                        <div className="space-y-2 pt-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-5/6" />
+                    <div className="lg:col-span-4 jvk-clinic-hub-card p-6 lg:p-7 space-y-4">
+                        <Skeleton className="h-6 w-40 bg-[#E8EFE6]" />
+                        <Skeleton className="h-44 w-44 mx-auto rounded-full bg-[#EFEFE5]" />
+                        <div className="space-y-2.5 pt-2">
+                            <Skeleton className="h-4 w-full bg-[#EFEFE5]" />
+                            <Skeleton className="h-4 w-5/6 bg-[#EFEFE5]" />
                         </div>
                     </div>
                 </div>
@@ -507,58 +538,64 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
 
     const totalPeriodRevenue = weeklyData.reduce((sum, d) => sum + (d.revenue || 0), 0);
     const totalPeriodVisits = weeklyData.reduce((sum, d) => sum + (d.visits || 0), 0);
+    const totalBreakdownAmount = paymentBreakdown.reduce((sum, p) => sum + p.value, 0);
+    const hasActiveFilters = Boolean(searchQuery.trim() || selectedSaleType !== 'all' || selectedPaymentMode !== 'all');
+    const displayedRevenue = ledgerSummary?.revenuePaise ? Math.round(ledgerSummary.revenuePaise / 100) : stats.revenue;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-300 max-w-[1600px] mx-auto pb-12">
-            {/* 1. SINGLE CLINIC OPERATIONS COCKPIT HEADER */}
-            <div className="relative bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-3xl p-6 lg:p-7 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                    <div className="flex items-start sm:items-center gap-4">
+        <div className="jvk-admin-page jvk-clinic-ops-page jvk-clinic-hub-page space-y-6 animate-in fade-in duration-300 max-w-[1600px] mx-auto pb-12">
+            {/* 1. CLINIC OPERATIONS HUB IDENTITY HEADER */}
+            <div className="jvk-clinic-hub-card p-5 lg:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                    <div className="flex items-start sm:items-center gap-4 min-w-0">
                         {onBack && (
                             <button
+                                type="button"
                                 onClick={onBack}
-                                className="group flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 active:scale-95 text-slate-700 transition-all shadow-sm font-semibold text-xs"
+                                className="group inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FAF7F0] hover:bg-[#E8F1E5] active:scale-95 text-[#103B32] border border-[#E4E5DA] transition-all font-semibold text-xs shrink-0"
                                 title="Back to Jeevika Central Hospital Network (HQ)"
                             >
                                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
                                 <span className="hidden sm:inline">HQ Network</span>
                             </button>
                         )}
-                        <div className="relative">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-50">
+                        <div className="relative shrink-0">
+                            <div className="w-14 h-14 rounded-2xl bg-[#087466] flex items-center justify-center text-white shadow-[0_8px_20px_rgba(8,116,102,0.22)]">
                                 <Building2 className="w-7 h-7" />
                             </div>
-                            <span className="absolute -bottom-1 -right-1 flex h-4 w-4">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span>
+                            <span
+                                className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5"
+                                title="Telemetry Connected"
+                            >
+                                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#10B981] border-2 border-[#FFFDF9]" />
                             </span>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                                <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                                <h1 className="text-xl sm:text-2xl font-bold text-[#103B32] tracking-tight">
                                     {clinicData?.name || 'Clinic Operations Hub'}
                                 </h1>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E5F1E3] text-[#087466] border border-[#C6DFC9]">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                                     Operational
                                 </span>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-slate-100 text-slate-600">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA]">
                                     ID: {clinicId.slice(0, 8)}
                                 </span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium mt-1.5">
-                                <span className="flex items-center gap-1 text-slate-600 font-semibold">
-                                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#556D65] font-medium mt-1.5">
+                                <span className="inline-flex items-center gap-1.5 text-[#103B32] font-semibold">
+                                    <MapPin className="w-3.5 h-3.5 text-[#087466] shrink-0" />
                                     {clinicData?.location || clinicData?.address || 'Main Health Facility'}
                                 </span>
-                                <span className="text-slate-300">•</span>
-                                <span className="flex items-center gap-1 text-slate-600">
-                                    <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                                    Manager: <strong className="text-slate-800">{managerName}</strong>
+                                <span className="text-[#D2D6C8]" aria-hidden="true">|</span>
+                                <span className="inline-flex items-center gap-1.5 text-[#556D65]">
+                                    <UserCheck className="w-3.5 h-3.5 text-[#087466] shrink-0" />
+                                    Manager: <strong className="text-[#103B32] font-semibold">{managerName}</strong>
                                 </span>
-                                <span className="text-slate-300">•</span>
-                                <span className="flex items-center gap-1 text-slate-400">
-                                    <Radio className="w-3 h-3 text-emerald-500" />
+                                <span className="text-[#D2D6C8]" aria-hidden="true">|</span>
+                                <span className="inline-flex items-center gap-1.5 text-[#556D65] tabular-nums">
+                                    <Radio className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
                                     Synced: {lastSyncTime}
                                 </span>
                             </div>
@@ -566,20 +603,23 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                     </div>
 
                     {/* Cockpit Actions Cluster */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
                         <button
+                            type="button"
                             onClick={() => fetchData(true)}
                             disabled={refreshing}
-                            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-xs font-bold text-slate-700 transition-all disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#FAF7F0] hover:bg-[#E8F1E5] active:scale-[0.98] text-xs font-bold text-[#103B32] border border-[#E4E5DA] transition-all disabled:opacity-50"
                             title="Force Telemetry Sync"
                         >
-                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
+                            <RefreshCw className={`w-3.5 h-3.5 text-[#087466] ${refreshing ? 'animate-spin' : ''}`} />
                             <span className="hidden sm:inline">Sync Cloudflare D1</span>
+                            <span className="sm:hidden">Sync D1</span>
                         </button>
 
                         <button
+                            type="button"
                             onClick={() => onNavigate?.('pos')}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-xs font-bold text-white shadow-lg shadow-blue-500/25 transition-all"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#087466] hover:bg-[#065C51] active:scale-[0.98] text-xs font-bold text-white shadow-[0_6px_16px_rgba(8,116,102,0.2)] transition-all"
                         >
                             <Zap className="w-3.5 h-3.5" />
                             <span>Quick POS Checkout</span>
@@ -588,135 +628,149 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                 </div>
             </div>
 
-            {/* 2. QUICK NAV BAR (1-CLICK DOCK) */}
-            <div className="bg-white/80 backdrop-blur-md rounded-2xl p-3 border border-slate-200/80 shadow-sm">
-                <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-100">
+            {/* 2. FAST NAVIGATION (1-CLICK DOCK) */}
+            <div className="jvk-clinic-hub-card p-3.5 sm:p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-1.5 pb-2.5 mb-3 border-b border-[#E4E5DA]">
                     <div className="flex items-center gap-2">
-                        <SymbolIcon className="material-symbols-outlined text-blue-600 text-[18px]">bolt</SymbolIcon>
-                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Fast Navigation</span>
+                        <SymbolIcon className="material-symbols-outlined text-[#087466] text-[18px]">bolt</SymbolIcon>
+                        <span className="text-[11px] font-bold text-[#103B32] uppercase tracking-[0.08em]">Fast Navigation</span>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-medium">1-Click Direct Hub Access</span>
+                    <span className="text-[11px] text-[#556D65] font-medium">1-Click Direct Hub Access</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                     <button
+                        type="button"
                         onClick={() => onNavigate?.('pos')}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-md hover:shadow-blue-500/20 active:scale-[0.98] transition-all text-left group"
+                        className="jvk-clinic-hub-nav-tile jvk-clinic-hub-nav-tile--featured col-span-2 sm:col-span-1 flex items-center gap-3 p-3 active:scale-[0.98] text-left group"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">point_of_sale</SymbolIcon>
+                        <div className="w-10 h-10 rounded-xl bg-white/15 text-white flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[21px]">point_of_sale</SymbolIcon>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold leading-tight truncate">POS Billing</p>
-                            <p className="text-[10px] text-blue-100 truncate mt-0.5">Counter Checkout</p>
+                            <p className="text-xs font-bold leading-snug text-white">POS Billing</p>
+                            <p className="text-[11px] text-[#D4EFE6] leading-tight mt-0.5">Counter Checkout</p>
                         </div>
                     </button>
 
                     <button
+                        type="button"
                         onClick={() => onNavigate?.('inventory-dashboard')}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-700 hover:text-slate-900 border border-slate-200/60 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all text-left group"
+                        className="jvk-clinic-hub-nav-tile flex items-center gap-3 p-3 active:scale-[0.98] text-left group"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">inventory_2</SymbolIcon>
+                        <div className="w-10 h-10 rounded-xl bg-[#FEF6E0] text-[#B87414] border border-[#F4DFAA] flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[21px]">inventory_2</SymbolIcon>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold leading-tight truncate">Inventory Control</p>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">FEFO & Batches</p>
+                            <p className="text-xs font-bold leading-snug text-[#103B32]">Inventory Control</p>
+                            <p className="text-[11px] text-[#556D65] leading-tight mt-0.5">FEFO & Batches</p>
                         </div>
                     </button>
 
                     <button
+                        type="button"
                         onClick={() => onNavigate?.('staff')}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-700 hover:text-slate-900 border border-slate-200/60 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all text-left group"
+                        className="jvk-clinic-hub-nav-tile flex items-center gap-3 p-3 active:scale-[0.98] text-left group"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">badge</SymbolIcon>
+                        <div className="w-10 h-10 rounded-xl bg-[#DFF4ED] text-[#087466] border border-[#BFE6D8] flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[21px]">badge</SymbolIcon>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold leading-tight truncate">Staff Attendance</p>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">Roster & Logs</p>
+                            <p className="text-xs font-bold leading-snug text-[#103B32]">Staff Attendance</p>
+                            <p className="text-[11px] text-[#556D65] leading-tight mt-0.5">Roster & Logs</p>
                         </div>
                     </button>
 
                     <button
+                        type="button"
                         onClick={() => onNavigate?.('shift-management')}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-700 hover:text-slate-900 border border-slate-200/60 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all text-left group"
+                        className="jvk-clinic-hub-nav-tile flex items-center gap-3 p-3 active:scale-[0.98] text-left group"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">schedule</SymbolIcon>
+                        <div className="w-10 h-10 rounded-xl bg-[#E5F1E3] text-[#156C56] border border-[#C6DFC9] flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[21px]">schedule</SymbolIcon>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold leading-tight truncate">Shift Management</p>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">Duty Timetable</p>
+                            <p className="text-xs font-bold leading-snug text-[#103B32]">Shift Management</p>
+                            <p className="text-[11px] text-[#556D65] leading-tight mt-0.5">Duty Timetable</p>
                         </div>
                     </button>
 
                     <button
+                        type="button"
                         onClick={() => onNavigate?.('ipd')}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-700 hover:text-slate-900 border border-slate-200/60 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all text-left group"
+                        className="jvk-clinic-hub-nav-tile col-span-2 sm:col-span-1 flex items-center gap-3 p-3 active:scale-[0.98] text-left group"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                            <SymbolIcon className="material-symbols-outlined text-[22px]">hotel</SymbolIcon>
+                        <div className="w-10 h-10 rounded-xl bg-[#F3EEFC] text-[#6B4E9B] border border-[#DFD2F5] flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[21px]">hotel</SymbolIcon>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold leading-tight truncate">IPD Inpatients</p>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">Beds & Admissions</p>
+                            <p className="text-xs font-bold leading-snug text-[#103B32]">IPD Inpatients</p>
+                            <p className="text-[11px] text-[#556D65] leading-tight mt-0.5">Beds & Admissions</p>
                         </div>
                     </button>
                 </div>
             </div>
 
-            {/* 3. EXECUTIVE METRIC CARDS (4-CARD GRID) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* 3. OPERATIONAL KPI CARDS (4-CARD GRID) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-5">
                 {/* CARD 1: TODAY'S REVENUE */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <div className="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-blue-200 transition-all duration-300 cursor-pointer group flex flex-col justify-between">
-                            <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                                        <SymbolIcon className="material-symbols-outlined text-2xl">payments</SymbolIcon>
+                        <button
+                            type="button"
+                            className="jvk-clinic-hub-kpi jvk-clinic-hub-kpi--interactive p-4 sm:p-5 xl:p-6 text-left cursor-pointer group flex flex-col justify-between w-full"
+                        >
+                            <div className="w-full">
+                                <div className="flex items-center justify-between gap-2 mb-4">
+                                    <div className="w-10 h-10 rounded-xl bg-[#E8F1E5] text-[#087466] border border-[#CBE0D2] flex items-center justify-center shrink-0">
+                                        <SymbolIcon className="material-symbols-outlined text-[20px]">payments</SymbolIcon>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${revenueTrend.positive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-                                        {revenueTrend.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                        {revenueTrend.percent}
-                                    </span>
+                                    {revenueTrend.hasBaseline ? (
+                                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full tabular-nums border whitespace-nowrap ${revenueTrend.positive ? 'bg-[#DFF4ED] text-[#087466] border-[#BBE5D6]' : 'bg-[#FCEEEF] text-[#BE3144] border-[#F4C7CD]'}`}>
+                                            {revenueTrend.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                            {revenueTrend.percent}
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA] whitespace-nowrap">
+                                            {revenueTrend.percent}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Revenue</p>
-                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                        ₹{(ledgerSummary?.revenuePaise ? Math.round(ledgerSummary.revenuePaise / 100) : stats.revenue).toLocaleString('en-IN')}
+                                    <p className="text-[11px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Today's Revenue</p>
+                                    <h3 className="text-2xl sm:text-[28px] font-bold text-[#103B32] tracking-tight tabular-nums">
+                                        ₹{displayedRevenue.toLocaleString('en-IN')}
                                     </h3>
-                                    <p className="text-[11px] text-slate-400 font-medium">
+                                    <p className="text-[11px] text-[#556D65] font-medium">
                                         {ledgerSummary ? `${ledgerSummary.revenuePaise?.toLocaleString('en-IN')} paise · D1 Double-Entry Ledger` : 'Net settled collections today'}
                                     </p>
                                     {ledgerSummary && (
-                                        <div className="pt-2 flex flex-col gap-1 border-t border-slate-100 mt-2">
+                                        <div className="pt-2 flex flex-col gap-1 border-t border-[#E4E5DA] mt-2">
                                             <div className="flex items-center justify-between text-[10px]">
-                                                <span className="text-slate-500">Gross Margin:</span>
-                                                <strong className="text-emerald-700 font-mono">₹{Math.round((ledgerSummary.netProfitPaise || 0) / 100).toLocaleString('en-IN')}</strong>
+                                                <span className="text-[#556D65]">Gross Margin:</span>
+                                                <strong className="text-[#087466] font-mono tabular-nums">₹{Math.round((ledgerSummary.netProfitPaise || 0) / 100).toLocaleString('en-IN')}</strong>
                                             </div>
-                                            <div className="flex items-center gap-1 text-[10px] text-emerald-700 font-semibold">
-                                                <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <div className="flex items-center gap-1 text-[10px] text-[#087466] font-semibold">
+                                                <ShieldCheck className="w-3 h-3 text-[#087466] shrink-0" />
                                                 <span>Double-Entry Balanced: {ledgerSummary.isBalanced ? 'Audit Ready' : 'Pending'}</span>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-[11px] text-slate-500 font-medium">Inspect breakdown</span>
-                                <span className="text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                            <div className="w-full mt-5 pt-3.5 border-t border-[#E4E5DA] flex items-center justify-between gap-2">
+                                <span className="text-[11px] text-[#556D65] font-medium whitespace-nowrap">Breakdown</span>
+                                <span className="text-[11px] xl:text-xs font-bold text-[#087466] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                     View Modal →
                                 </span>
                             </div>
-                        </div>
+                        </button>
                     </DialogTrigger>
 
                     {/* Today's Transactions Dialog View */}
-                    <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col bg-white text-slate-900 rounded-3xl border-0 shadow-2xl p-6">
-                        <DialogHeader className="border-b border-slate-100 pb-4">
-                            <div className="flex items-center justify-between">
-                                <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2.5">
+                    <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col bg-[#FFFDF8] text-[#103B32] rounded-3xl border border-[#E4E5DA] shadow-2xl p-6">
+                        <DialogHeader className="border-b border-[#E4E5DA] pb-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <DialogTitle className="text-xl font-bold text-[#103B32] flex items-center gap-2.5">
                                     <img
                                         src="/assets/logo-jeevika.png"
                                         alt="Jeevika"
@@ -724,7 +778,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                     />
                                     <span>Today's Revenue Journal & Settlements</span>
                                 </DialogTitle>
-                                <span className="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100">
+                                <span className="text-xs font-bold bg-[#DFF4ED] text-[#087466] px-3 py-1 rounded-full border border-[#BBE5D6] tabular-nums">
                                     Total ₹{stats.revenue.toLocaleString('en-IN')}
                                 </span>
                             </div>
@@ -732,45 +786,46 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
 
                         <div className="flex-1 overflow-auto mt-4 pr-1">
                             {dailySales.length === 0 ? (
-                                <div className="text-center py-16 text-slate-400 font-medium">
-                                    <Receipt className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                <div className="text-center py-16 text-[#556D65] font-medium">
+                                    <Receipt className="w-12 h-12 mx-auto mb-2 text-[#9AAEA6]" />
                                     No transactions recorded yet today.
                                 </div>
                             ) : (
-                                <div className="rounded-2xl border border-slate-200 overflow-hidden">
-                                    <table className="w-full text-xs text-left">
-                                        <thead className="bg-slate-50 border-b border-slate-200">
+                                <div className="rounded-2xl border border-[#E4E5DA] overflow-x-auto bg-[#FFFDFB]">
+                                    <table className="w-full min-w-[600px] text-xs text-left">
+                                        <thead className="bg-[#FAF7F0] border-b border-[#E4E5DA]">
                                             <tr>
-                                                <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider">Patient Details</th>
-                                                <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider">Classification & Mode</th>
-                                                <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-right">Amount</th>
-                                                <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-center w-16">Receipt</th>
+                                                <th className="px-4 py-3 font-bold text-[#556D65] uppercase tracking-wider">Patient Details</th>
+                                                <th className="px-4 py-3 font-bold text-[#556D65] uppercase tracking-wider">Classification & Mode</th>
+                                                <th className="px-4 py-3 font-bold text-[#556D65] uppercase tracking-wider text-right">Amount</th>
+                                                <th className="px-4 py-3 font-bold text-[#556D65] uppercase tracking-wider text-center w-16">Receipt</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
+                                        <tbody className="divide-y divide-[#EAEBE0]">
                                             {dailySales.map((sale: any) => (
-                                                <tr key={sale.id} className="hover:bg-slate-50/80 transition-colors">
+                                                <tr key={sale.id} className="hover:bg-[#FAF7F0]/80 transition-colors">
                                                     <td className="px-4 py-3.5">
-                                                        <p className="font-bold text-slate-900">{sale.patient_name || 'Walk-in Patient'}</p>
-                                                        <p className="text-[11px] text-slate-400 mt-0.5">Dr. {sale.doctor_name || 'Staff'}</p>
+                                                        <p className="font-bold text-[#103B32]">{sale.patient_name || 'Walk-in Patient'}</p>
+                                                        <p className="text-[11px] text-[#556D65] mt-0.5">Dr. {sale.doctor_name || 'Staff'}</p>
                                                     </td>
                                                     <td className="px-4 py-3.5">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E5F1E3] text-[#087466] border border-[#C6DFC9]">
                                                                 {sale.sale_type || 'GENERAL'}
                                                             </span>
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA]">
                                                                 {sale.payment_mode || 'CASH'}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3.5 text-right font-black text-slate-900 text-sm">
+                                                    <td className="px-4 py-3.5 text-right font-bold text-[#103B32] text-sm tabular-nums">
                                                         ₹{(Number(sale.amount) || 0).toLocaleString('en-IN')}
                                                     </td>
                                                     <td className="px-4 py-3.5 text-center">
                                                         <button
+                                                            type="button"
                                                             onClick={() => openReceipt(sale)}
-                                                            className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                                            className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-[#556D65] hover:text-[#087466] hover:bg-[#E8F1E5] transition-colors"
                                                             title="View Tax Receipt"
                                                         >
                                                             <FileText className="w-4 h-4" />
@@ -787,192 +842,210 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                 </Dialog>
 
                 {/* CARD 2: TOTAL TRANSACTIONS */}
-                <div className="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
+                <div className="jvk-clinic-hub-kpi p-4 sm:p-5 xl:p-6 flex flex-col justify-between">
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
-                                <Receipt className="w-6 h-6" />
+                        <div className="flex items-center justify-between gap-2 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#E8F1E5] text-[#087466] border border-[#CBE0D2] flex items-center justify-center shrink-0">
+                                <Receipt className="w-5 h-5" />
                             </div>
-                            <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#DFF4ED] text-[#087466] border border-[#BBE5D6] tabular-nums whitespace-nowrap">
                                 Avg ₹{transactionMetrics.avgTicket.toLocaleString('en-IN')}
                             </span>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Transactions</p>
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                {stats.transactions} <span className="text-base font-semibold text-slate-400">Bills</span>
+                            <p className="text-[11px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Total Transactions</p>
+                            <h3 className="text-2xl sm:text-[28px] font-bold text-[#103B32] tracking-tight tabular-nums">
+                                {stats.transactions} <span className="text-sm sm:text-base font-semibold text-[#556D65]">Bills</span>
                             </h3>
-                            <p className="text-[11px] text-slate-400 font-medium">Today's billing counter volume</p>
+                            <p className="text-[11px] text-[#556D65] font-medium">Today's billing counter volume</p>
                         </div>
                     </div>
-                    <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
-                        <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    <div className="mt-5 pt-3.5 border-t border-[#E4E5DA] flex items-center justify-between gap-2 text-[11px] xl:text-xs text-[#103B32] font-medium tabular-nums">
+                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="w-2 h-2 rounded-full bg-[#5B61D6]" />
                             {transactionMetrics.digitalCount} Digital
                         </span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="w-2 h-2 rounded-full bg-[#059669]" />
                             {transactionMetrics.cashCount} Cash
                         </span>
                     </div>
                 </div>
 
                 {/* CARD 3: ACTIVE STAFF ON DUTY */}
-                <div
+                <button
+                    type="button"
                     onClick={() => onNavigate?.('staff')}
-                    className="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-emerald-200 transition-all duration-300 cursor-pointer group flex flex-col justify-between"
+                    className="jvk-clinic-hub-kpi jvk-clinic-hub-kpi--interactive p-4 sm:p-5 xl:p-6 text-left cursor-pointer group flex flex-col justify-between w-full"
                 >
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                                <Users className="w-6 h-6" />
+                    <div className="w-full">
+                        <div className="flex items-center justify-between gap-2 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#E8F1E5] text-[#087466] border border-[#CBE0D2] flex items-center justify-center shrink-0">
+                                <Users className="w-5 h-5" />
                             </div>
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#DFF4ED] text-[#087466] border border-[#BBE5D6] whitespace-nowrap">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                                 Active Roster
                             </span>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Staff on Duty</p>
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                {stats.staffCount} <span className="text-base font-semibold text-slate-400">Personnel</span>
+                            <p className="text-[11px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Active Staff on Duty</p>
+                            <h3 className="text-2xl sm:text-[28px] font-bold text-[#103B32] tracking-tight tabular-nums">
+                                {stats.staffCount} <span className="text-sm sm:text-base font-semibold text-[#556D65]">Personnel</span>
                             </h3>
-                            <p className="text-[11px] text-slate-400 font-medium">Nurses, Pharmacists & Front Desk</p>
+                            <p className="text-[11px] text-[#556D65] font-medium">Nurses, Pharmacists & Front Desk</p>
                         </div>
                     </div>
-                    <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <div className="flex -space-x-2 overflow-hidden">
-                            <div className="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-blue-500 text-[10px] text-white font-bold flex items-center justify-center">DR</div>
-                            <div className="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-emerald-500 text-[10px] text-white font-bold flex items-center justify-center">RN</div>
-                            <div className="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-purple-500 text-[10px] text-white font-bold flex items-center justify-center">PH</div>
+                    <div className="w-full mt-5 pt-3.5 border-t border-[#E4E5DA] flex items-center justify-between gap-2">
+                        <div className="flex -space-x-1.5 overflow-hidden shrink-0">
+                            <div className="h-6 w-6 xl:h-7 xl:w-7 rounded-full ring-2 ring-[#FFFDF9] bg-[#087466] text-[9px] xl:text-[10px] text-white font-bold flex items-center justify-center">DR</div>
+                            <div className="h-6 w-6 xl:h-7 xl:w-7 rounded-full ring-2 ring-[#FFFDF9] bg-[#10B981] text-[9px] xl:text-[10px] text-white font-bold flex items-center justify-center">RN</div>
+                            <div className="h-6 w-6 xl:h-7 xl:w-7 rounded-full ring-2 ring-[#FFFDF9] bg-[#6B4E9B] text-[9px] xl:text-[10px] text-white font-bold flex items-center justify-center">PH</div>
                             {stats.staffCount > 3 && (
-                                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 ring-2 ring-white text-[10px] font-bold text-slate-600">
+                                <div className="flex items-center justify-center h-6 w-6 xl:h-7 xl:w-7 rounded-full bg-[#FAF7F0] ring-2 ring-[#FFFDF9] border border-[#E4E5DA] text-[9px] xl:text-[10px] font-bold text-[#103B32]">
                                     +{stats.staffCount - 3}
                                 </div>
                             )}
                         </div>
-                        <span className="text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                        <span className="text-[11px] xl:text-xs font-bold text-[#087466] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                             Manage Roster →
                         </span>
                     </div>
-                </div>
+                </button>
 
                 {/* CARD 4: LOW STOCK ALERTS */}
                 <div
                     onClick={() => onNavigate?.('inventory-dashboard')}
-                    className="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-amber-200 transition-all duration-300 cursor-pointer group flex flex-col justify-between"
+                    className="jvk-clinic-hub-kpi jvk-clinic-hub-kpi--interactive p-4 sm:p-5 xl:p-6 cursor-pointer group flex flex-col justify-between"
                 >
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform ${lowStock.length > 0 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                <AlertTriangle className="w-6 h-6" />
+                        <div className="flex items-center justify-between gap-2 mb-4">
+                            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
+                                lowStock.length > 0
+                                    ? 'bg-[#FEF6E0] text-[#B87414] border-[#F4DFAA]'
+                                    : clinicInventory.length === 0
+                                        ? 'bg-[#FAF7F0] text-[#556D65] border-[#E4E5DA]'
+                                        : 'bg-[#E8F1E5] text-[#087466] border-[#CBE0D2]'
+                            }`}>
+                                <AlertTriangle className="w-5 h-5" />
                             </div>
                             <button
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onNavigate?.('inventory-dashboard');
                                 }}
-                                className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full transition-colors"
+                                className="text-[11px] font-bold text-[#087466] hover:text-[#065C51] bg-[#E8F1E5] hover:bg-[#D5E9D6] border border-[#CBE0D2] px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
                             >
                                 Fast Restock
                             </button>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Low Stock Alert Items</p>
-                            <h3 className={`text-3xl font-black tracking-tight ${lowStock.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                {lowStock.length} <span className="text-base font-semibold text-slate-400">SKUs</span>
+                            <p className="text-[11px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Low Stock Alert Items</p>
+                            <h3 className={`text-2xl sm:text-[28px] font-bold tracking-tight tabular-nums ${
+                                lowStock.length > 0
+                                    ? 'text-[#B87414]'
+                                    : clinicInventory.length === 0
+                                        ? 'text-[#103B32]'
+                                        : 'text-[#087466]'
+                            }`}>
+                                {lowStock.length} <span className="text-sm sm:text-base font-semibold text-[#556D65]">SKUs</span>
                             </h3>
-                            <p className="text-[11px] text-slate-400 font-medium">
-                                {criticalStock.length > 0 ? `${criticalStock.length} critical depleted (<5 units)` : 'All shelf levels within target'}
+                            <p className="text-[11px] text-[#556D65] font-medium">
+                                {clinicInventory.length === 0
+                                    ? 'Awaiting clinic SKU telemetry'
+                                    : criticalStock.length > 0
+                                        ? `${criticalStock.length} critical depleted (<5 units)`
+                                        : lowStock.length > 0
+                                            ? `${lowStock.length} SKUs below safety stock`
+                                            : 'All shelf levels within target'}
                             </p>
                         </div>
                     </div>
-                    <div className="mt-5 pt-4 border-t border-slate-100 space-y-1.5">
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div
-                                className={`h-1.5 rounded-full transition-all duration-500 ${lowStock.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                style={{ width: `${Math.min(100, Math.max(15, (lowStock.length / (clinicInventory.length || 1)) * 100))}%` }}
-                            />
+                    <div className="mt-5 pt-3.5 border-t border-[#E4E5DA] space-y-2">
+                        <div className="w-full bg-[#EAEBE0] rounded-full h-1.5 overflow-hidden">
+                            {clinicInventory.length > 0 && (
+                                <div
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${lowStock.length > 0 ? 'bg-[#D97706]' : 'bg-[#087466]'}`}
+                                    style={{ width: `${lowStock.length > 0 ? Math.min(100, Math.max(15, (lowStock.length / clinicInventory.length) * 100)) : 100}%` }}
+                                />
+                            )}
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-semibold uppercase">
-                            <span>{lowStock.length > 0 ? 'Action Required' : 'Optimal'}</span>
-                            <span className="text-blue-600 group-hover:translate-x-0.5 transition-transform">Control Hub →</span>
+                        <div className="flex justify-between items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                            <span className={`truncate ${lowStock.length > 0 ? 'text-[#B87414]' : clinicInventory.length === 0 ? 'text-[#556D65]' : 'text-[#087466]'}`}>
+                                {clinicInventory.length === 0 ? 'No SKUs Synced' : lowStock.length > 0 ? 'Action Required' : 'Optimal'}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onNavigate?.('inventory-dashboard');
+                                }}
+                                className="text-[#087466] group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0"
+                            >
+                                Control Hub →
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* 4. GLASSMORPHIC CHARTS (RECHARTS): REVENUE TRAJECTORY + PAYMENT MODES */}
+            {/* 4. TELEMETRY CHARTS (RECHARTS): REVENUE TRAJECTORY + PAYMENT MODES */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* REVENUE & VOLUME TRAJECTORY (AREA CHART - 7 COLS) */}
-                <div className="lg:col-span-8 bg-white/95 backdrop-blur-xl p-7 rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+                {/* REVENUE & VOLUME TRAJECTORY (AREA CHART - 8 COLS) */}
+                <div className="lg:col-span-8 jvk-clinic-hub-card p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
                     <div>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                                    <h2 className="text-lg font-black text-slate-900 tracking-tight">Revenue & Patient Flow Trajectory</h2>
+                                    <div className="w-2.5 h-2.5 rounded-full bg-[#087466]" />
+                                    <h2 className="text-base sm:text-lg font-bold text-[#103B32] tracking-tight">Revenue & Patient Flow Trajectory</h2>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-[#556D65] mt-1 tabular-nums">
                                     Consolidated telemetry over selected timeframe • {totalPeriodVisits} visits logged
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 self-start sm:self-auto">
+                            <div className="flex items-center gap-1 bg-[#FAF7F0] p-1 rounded-xl border border-[#E4E5DA] self-start sm:self-auto shrink-0">
                                 <button
+                                    type="button"
                                     onClick={() => setDateRange('week')}
-                                    className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${dateRange === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                                    className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${dateRange === 'week' ? 'bg-[#FFFDFB] text-[#103B32] shadow-xs border border-[#E4E5DA]' : 'text-[#556D65] hover:text-[#103B32]'}`}
                                 >
                                     Last 7 Days
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setDateRange('month')}
-                                    className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${dateRange === 'month' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                                    className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${dateRange === 'month' ? 'bg-[#FFFDFB] text-[#103B32] shadow-xs border border-[#E4E5DA]' : 'text-[#556D65] hover:text-[#103B32]'}`}
                                 >
                                     Last 30 Days
                                 </button>
                             </div>
                         </div>
 
-                        {/* Chart KPI Sub-pills */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100">
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Period Revenue</p>
-                                <p className="text-base font-black text-slate-900 mt-0.5">₹{totalPeriodRevenue.toLocaleString('en-IN')}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Average</p>
-                                <p className="text-base font-black text-slate-900 mt-0.5">
-                                    ₹{Math.round(totalPeriodRevenue / (dateRange === 'week' ? 7 : 30)).toLocaleString('en-IN')}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Visits</p>
-                                <p className="text-base font-black text-blue-600 mt-0.5">{totalPeriodVisits}</p>
-                            </div>
-                        </div>
-
-                        <div className="h-[280px] w-full">
+                        <div className="h-[245px] sm:h-[260px] w-full">
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                                <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <AreaChart data={weeklyData} margin={{ top: 10, right: 20, left: -14, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="clinicRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                                            <stop offset="5%" stopColor="#087466" stopOpacity={0.22} />
+                                            <stop offset="95%" stopColor="#087466" stopOpacity={0.0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EAECE2" />
                                     <XAxis
                                         dataKey="name"
+                                        padding={{ left: 8, right: 12 }}
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }}
-                                        dy={10}
+                                        tick={{ fill: '#556D65', fontSize: 11, fontWeight: 600 }}
+                                        dy={8}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                                        tick={{ fill: '#7B8F88', fontSize: 10, fontWeight: 600 }}
                                         tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
                                     />
                                     <Tooltip
@@ -980,17 +1053,17 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                             if (active && payload && payload.length) {
                                                 const data = payload[0].payload;
                                                 return (
-                                                    <div className="bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md text-xs animate-in zoom-in-95">
-                                                        <p className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider mb-1">
+                                                    <div className="bg-[#103B32] text-[#FFFDFB] p-3.5 rounded-2xl shadow-xl border border-[#245A4E] text-xs">
+                                                        <p className="font-semibold text-[#B9D5CB] text-[10px] uppercase tracking-wider mb-1">
                                                             {data.fullDate || data.name}
                                                         </p>
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-1 tabular-nums">
                                                             <div className="flex items-center justify-between gap-4">
-                                                                <span className="text-slate-300">Revenue:</span>
-                                                                <span className="font-black text-blue-400 text-sm">₹{Number(data.revenue || 0).toLocaleString('en-IN')}</span>
+                                                                <span className="text-[#D4EFE6]">Revenue:</span>
+                                                                <span className="font-bold text-[#7EE2BA] text-sm">₹{Number(data.revenue || 0).toLocaleString('en-IN')}</span>
                                                             </div>
                                                             <div className="flex items-center justify-between gap-4">
-                                                                <span className="text-slate-400">Total Visits:</span>
+                                                                <span className="text-[#B9D5CB]">Total Visits:</span>
                                                                 <span className="font-bold text-white">{data.visits || 0}</span>
                                                             </div>
                                                         </div>
@@ -1003,117 +1076,165 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                     <Area
                                         type="monotone"
                                         dataKey="revenue"
-                                        stroke="#2563eb"
-                                        strokeWidth={3}
+                                        stroke="#087466"
+                                        strokeWidth={2.5}
                                         fillOpacity={1}
                                         fill="url(#clinicRevenueGradient)"
                                         name="Daily Revenue"
-                                        animationDuration={1200}
+                                        animationDuration={900}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
+
+                    {/* Period Summary Strip Below Chart */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 p-4 rounded-2xl bg-[#FAF7F0] border border-[#E4E5DA]">
+                        <div>
+                            <p className="text-[10px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Period Revenue</p>
+                            <p className="text-base font-bold text-[#103B32] mt-0.5 tabular-nums">₹{totalPeriodRevenue.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Daily Average</p>
+                            <p className="text-base font-bold text-[#103B32] mt-0.5 tabular-nums">
+                                ₹{Math.round(totalPeriodRevenue / (dateRange === 'week' ? 7 : 30)).toLocaleString('en-IN')}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-[#556D65] uppercase tracking-[0.06em]">Total Visits</p>
+                            <p className="text-base font-bold text-[#087466] mt-0.5 tabular-nums">{totalPeriodVisits}</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* PAYMENT MODE DISTRIBUTION (DONUT CHART - 4 COLS) */}
-                <div className="lg:col-span-4 bg-white/95 backdrop-blur-xl p-7 rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+                <div className="lg:col-span-4 jvk-clinic-hub-card p-5 sm:p-6 lg:p-7 flex flex-col justify-between">
                     <div>
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between gap-2 mb-4">
                             <div>
-                                <h2 className="text-lg font-black text-slate-900 tracking-tight">Payment Channel Split</h2>
-                                <p className="text-xs text-slate-500 mt-0.5">UPI, Cash, Cards & Credits</p>
+                                <h2 className="text-base sm:text-lg font-bold text-[#103B32] tracking-tight">Payment Channel Split</h2>
+                                <p className="text-xs text-[#556D65] mt-0.5">UPI, Cash, Cards & Credits</p>
                             </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Today</span>
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA]">Today</span>
                         </div>
 
-                        {/* DONUT CHART WITH CENTER METRIC */}
-                        <div className="relative my-2 flex items-center justify-center">
-                            <div className="h-[200px] w-full">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                                    <PieChart>
-                                        <defs>
-                                            {paymentBreakdown.map((item, idx) => {
-                                                const colors = PAYMENT_COLOR_MAP[item.key] || PAYMENT_COLOR_MAP.OTHER;
-                                                return (
-                                                    <linearGradient key={`pie-grad-${idx}`} id={`pie-grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="0%" stopColor={colors.gradStart} />
-                                                        <stop offset="100%" stopColor={colors.gradEnd} />
-                                                    </linearGradient>
-                                                );
-                                            })}
-                                        </defs>
-                                        <Pie
-                                            data={paymentBreakdown}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={58}
-                                            outerRadius={80}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                            stroke="#ffffff"
-                                            strokeWidth={2}
-                                            onMouseEnter={(_, index) => setActivePieIndex(index)}
-                                            onMouseLeave={() => setActivePieIndex(null)}
-                                        >
-                                            {paymentBreakdown.map((_, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={`url(#pie-grad-${index})`}
-                                                    style={{
-                                                        transform: activePieIndex === index ? 'scale(1.05)' : 'scale(1)',
-                                                        transformOrigin: 'center',
-                                                        transition: 'transform 0.2s ease-out'
-                                                    }}
-                                                />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            content={({ active, payload }: any) => {
-                                                if (active && payload && payload.length) {
-                                                    const entry = payload[0].payload;
-                                                    const totalAmt = paymentBreakdown.reduce((sum, p) => sum + p.value, 0);
-                                                    const pct = totalAmt > 0 ? ((entry.value / totalAmt) * 100).toFixed(1) : '0';
+                        {/* DONUT CHART OR HONEST EMPTY RING */}
+                        <div className="relative my-3 flex items-center justify-center min-h-[190px]">
+                            {totalBreakdownAmount > 0 ? (
+                                <div className="h-[196px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                        <PieChart>
+                                            <defs>
+                                                {paymentBreakdown.map((item, idx) => {
+                                                    const colors = PAYMENT_COLOR_MAP[item.key] || PAYMENT_COLOR_MAP.OTHER;
                                                     return (
-                                                        <div className="bg-slate-900/95 text-white px-3 py-2 rounded-xl shadow-2xl border border-slate-700/60 backdrop-blur-md text-xs">
-                                                            <p className="font-bold text-slate-200">{entry.name}</p>
-                                                            <p className="font-black text-white text-sm mt-0.5">₹{entry.value.toLocaleString('en-IN')}</p>
-                                                            <p className="text-slate-400 text-[10px]">{entry.count} txns ({pct}%)</p>
-                                                        </div>
+                                                        <linearGradient key={`pie-grad-${idx}`} id={`pie-grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="0%" stopColor={colors.gradStart} />
+                                                            <stop offset="100%" stopColor={colors.gradEnd} />
+                                                        </linearGradient>
                                                     );
-                                                }
-                                                return null;
-                                            }}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
+                                                })}
+                                            </defs>
+                                            <Pie
+                                                data={paymentBreakdown}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={58}
+                                                outerRadius={80}
+                                                paddingAngle={4}
+                                                dataKey="value"
+                                                stroke="#FFFDF9"
+                                                strokeWidth={2}
+                                                onMouseEnter={(_, index) => setActivePieIndex(index)}
+                                                onMouseLeave={() => setActivePieIndex(null)}
+                                            >
+                                                {paymentBreakdown.map((_, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={`url(#pie-grad-${index})`}
+                                                        style={{
+                                                            transform: activePieIndex === index ? 'scale(1.04)' : 'scale(1)',
+                                                            transformOrigin: 'center',
+                                                            transition: 'transform 0.2s ease-out'
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                content={({ active, payload }: any) => {
+                                                    if (active && payload && payload.length) {
+                                                        const entry = payload[0].payload;
+                                                        const pct = totalBreakdownAmount > 0 ? ((entry.value / totalBreakdownAmount) * 100).toFixed(1) : '0';
+                                                        return (
+                                                            <div className="bg-[#103B32] text-[#FFFDFB] px-3 py-2 rounded-xl shadow-xl border border-[#245A4E] text-xs tabular-nums">
+                                                                <p className="font-bold text-[#D4EFE6]">{entry.name}</p>
+                                                                <p className="font-bold text-white text-sm mt-0.5">₹{entry.value.toLocaleString('en-IN')}</p>
+                                                                <p className="text-[#B9D5CB] text-[10px]">{entry.count} txns ({pct}%)</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <svg
+                                    viewBox="0 0 180 180"
+                                    className="w-[172px] h-[172px]"
+                                    aria-label="No collections settled today"
+                                >
+                                    <circle
+                                        cx="90"
+                                        cy="90"
+                                        r="68"
+                                        fill="none"
+                                        stroke="#EAECE2"
+                                        strokeWidth="16"
+                                    />
+                                    <circle
+                                        cx="90"
+                                        cy="90"
+                                        r="68"
+                                        fill="none"
+                                        stroke="#CBE0D2"
+                                        strokeWidth="2"
+                                        strokeDasharray="4 6"
+                                    />
+                                </svg>
+                            )}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Collections</span>
-                                <span className="text-base font-black text-slate-900 mt-0.5">₹{stats.revenue.toLocaleString('en-IN')}</span>
-                                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-0.5">
-                                    100% Settled
-                                </span>
+                                <span className="text-[10px] font-bold text-[#556D65] uppercase tracking-[0.1em]">Collections</span>
+                                <span className="text-base font-bold text-[#103B32] mt-0.5 tabular-nums">₹{stats.revenue.toLocaleString('en-IN')}</span>
+                                {totalBreakdownAmount > 0 ? (
+                                    <span className="text-[10px] font-semibold text-[#087466] bg-[#DFF4ED] border border-[#BBE5D6] px-2 py-0.5 rounded-full mt-1">
+                                        {stats.transactions} Settled
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-semibold text-[#556D65] bg-[#FAF7F0] border border-[#E4E5DA] px-2 py-0.5 rounded-full mt-1">
+                                        Awaiting Collections
+                                    </span>
+                                )}
                             </div>
                         </div>
 
                         {/* Breakdown Channels Legend */}
-                        <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
+                        <div className="space-y-2 mt-4 pt-4 border-t border-[#E4E5DA]">
                             {paymentBreakdown.map((mode) => {
                                 const colors = PAYMENT_COLOR_MAP[mode.key] || PAYMENT_COLOR_MAP.OTHER;
-                                const totalAmt = paymentBreakdown.reduce((sum, p) => sum + p.value, 0);
-                                const pct = totalAmt > 0 ? ((mode.value / totalAmt) * 100).toFixed(0) : '0';
+                                const pct = totalBreakdownAmount > 0 ? ((mode.value / totalBreakdownAmount) * 100).toFixed(0) : '0';
 
                                 return (
                                     <div key={mode.key} className="flex items-center justify-between text-xs py-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.fill }} />
-                                            <span className="font-semibold text-slate-700">{mode.label}</span>
-                                            <span className="text-[10px] text-slate-400">({mode.count})</span>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: colors.fill }} />
+                                            <span className="font-semibold text-[#103B32] truncate">{mode.label}</span>
+                                            <span className="text-[11px] text-[#556D65] tabular-nums">({mode.count})</span>
                                         </div>
-                                        <div className="flex items-center gap-2 font-bold text-slate-900">
+                                        <div className="flex items-center gap-2 font-bold text-[#103B32] tabular-nums shrink-0">
                                             <span>₹{mode.value.toLocaleString('en-IN')}</span>
-                                            <span className="text-[10px] font-medium text-slate-400 w-8 text-right">{pct}%</span>
+                                            <span className="text-[11px] font-medium text-[#556D65] w-8 text-right">{pct}%</span>
                                         </div>
                                     </div>
                                 );
@@ -1124,67 +1245,68 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
             </div>
 
             {/* 5. DRIFT RADAR: INVENTORY TELEMETRY SECTION */}
-            <div className="bg-white/95 backdrop-blur-xl p-7 rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                                <Radio className="w-5 h-5 animate-pulse" />
+            <div className="jvk-clinic-hub-card p-5 sm:p-6 lg:p-7 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E4E5DA] pb-4">
+                    <div className="flex items-start sm:items-center gap-3">
+                        <div className="relative shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-[#FEF6E0] text-[#B87414] border border-[#F4DFAA] flex items-center justify-center">
+                                <Radio className="w-5 h-5" />
                             </div>
-                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#D97706] border border-[#FFFDF9]" />
                             </span>
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-black text-slate-900 tracking-tight">Drift Radar: Inventory Telemetry</h2>
-                                <span className="text-[10px] font-bold bg-amber-100/70 text-amber-800 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-base sm:text-lg font-bold text-[#103B32] tracking-tight">Drift Radar: Inventory Telemetry</h2>
+                                <span className="text-[10px] font-bold bg-[#FEF3D6] text-[#9A5B0A] border border-[#F4DB9C] px-2 py-0.5 rounded-md uppercase tracking-wider">
                                     FEFO Active
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Automated expiry surveillance (&lt;30 days), critical stock depletion & fast reorder dispatch
+                            <p className="text-xs text-[#556D65] mt-0.5">
+                                Automated expiry surveillance (&lt;30 days), critical stock depletion &amp; fast reorder dispatch
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <button
+                            type="button"
                             onClick={() => onNavigate?.('inventory-dashboard')}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FAF7F0] hover:bg-[#E8F1E5] border border-[#E4E5DA] text-xs font-bold text-[#103B32] transition-colors"
                         >
-                            <Package className="w-3.5 h-3.5 text-slate-500" />
+                            <Package className="w-3.5 h-3.5 text-[#087466]" />
                             <span>Open Inventory Dashboard</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="w-3.5 h-3.5 text-[#556D65]" />
                         </button>
                     </div>
                 </div>
 
                 {opsRadar?.rebalancing && (
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="p-4 rounded-2xl bg-[#EFF7F3] border border-[#BBE0D1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-[#087466] text-white flex items-center justify-center shrink-0">
                                 <Package className="w-5 h-5" />
                             </div>
                             <div>
-                                <div className="flex items-center gap-2">
-                                    <h4 className="text-xs font-bold text-slate-900">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="text-xs font-bold text-[#103B32]">
                                         HQ Central Depot AI Rebalance Radar: {opsRadar.rebalancing.recommendedTransferUnits > 0 ? `${opsRadar.rebalancing.recommendedTransferUnits} units recommended for dispatch` : 'Safety Buffers Optimal'}
                                     </h4>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DFF4ED] text-[#087466] border border-[#BBE5D6]">
                                         Live Telemetry
                                     </span>
                                 </div>
-                                <p className="text-[11px] text-slate-500 mt-0.5">
-                                    Source: <strong>{opsRadar.rebalancing.sourceHub}</strong> → Target Clinic: <strong>{opsRadar.rebalancing.targetClinic}</strong> · Est. Transit: {opsRadar.rebalancing.estimatedTransitDays} day
+                                <p className="text-[11px] text-[#556D65] mt-0.5">
+                                    Source: <strong className="text-[#103B32]">{opsRadar.rebalancing.sourceHub}</strong> → Target Clinic: <strong className="text-[#103B32]">{opsRadar.rebalancing.targetClinic}</strong> · Est. Transit: {opsRadar.rebalancing.estimatedTransitDays} day
                                 </p>
                             </div>
                         </div>
                         {opsRadar.rebalancing.recommendedTransferUnits > 0 && (
                             <button
+                                type="button"
                                 onClick={() => onNavigate?.('inventory-dashboard')}
-                                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shrink-0"
+                                className="px-3.5 py-1.5 rounded-xl bg-[#087466] hover:bg-[#065C51] text-white text-xs font-bold transition-all shrink-0"
                             >
                                 Request Dispatch
                             </button>
@@ -1192,25 +1314,35 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* PANEL A: NEAR-EXPIRY BATCHES (<30 DAYS) */}
-                    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between">
+                    <div className="jvk-clinic-hub-subcard p-5 flex flex-col justify-between">
                         <div>
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center justify-between gap-2 mb-4">
                                 <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-amber-600" />
-                                    <h3 className="text-sm font-bold text-slate-900">Near-Expiry Batches (&lt; 30 Days)</h3>
+                                    <Clock className="w-4 h-4 text-[#B87414]" />
+                                    <h3 className="text-sm font-bold text-[#103B32]">Near-Expiry Batches (&lt; 30 Days)</h3>
                                 </div>
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${nearExpiryBatches.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full tabular-nums border ${
+                                    nearExpiryBatches.length > 0
+                                        ? 'bg-[#FEF3D6] text-[#9A5B0A] border-[#F4DB9C]'
+                                        : 'bg-[#DFF4ED] text-[#087466] border-[#BBE5D6]'
+                                }`}>
                                     {nearExpiryBatches.length} {nearExpiryBatches.length === 1 ? 'Batch' : 'Batches'}
                                 </span>
                             </div>
 
-                            {nearExpiryBatches.length === 0 ? (
-                                <div className="p-8 text-center bg-white rounded-xl border border-slate-200/60">
-                                    <ShieldCheck className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                                    <p className="text-xs font-bold text-slate-800">Shelf Health 100% Clear</p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">Zero batches expiring within 30 days. FEFO rotation optimal.</p>
+                            {clinicInventory.length === 0 ? (
+                                <div className="p-7 text-center bg-[#FFFDFB] rounded-xl border border-[#E4E5DA]">
+                                    <Package className="w-9 h-9 text-[#8FA59D] mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-[#103B32]">Awaiting Inventory Sync</p>
+                                    <p className="text-[11px] text-[#556D65] mt-0.5">Add pharmacy stock batches in Inventory Control to track &lt;30 day expiry windows.</p>
+                                </div>
+                            ) : nearExpiryBatches.length === 0 ? (
+                                <div className="p-7 text-center bg-[#FFFDFB] rounded-xl border border-[#E4E5DA]">
+                                    <ShieldCheck className="w-9 h-9 text-[#087466] mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-[#103B32]">Shelf Health 100% Clear</p>
+                                    <p className="text-[11px] text-[#556D65] mt-0.5">Zero batches expiring within 30 days. FEFO rotation optimal.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
@@ -1219,27 +1351,28 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                         return (
                                             <div
                                                 key={batch.id}
-                                                className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/60 hover:border-amber-200 transition-all shadow-sm"
+                                                className="flex items-center justify-between gap-3 p-3 bg-[#FFFDFB] rounded-xl border border-[#E4E5DA] hover:border-[#E5B85C] transition-all"
                                             >
                                                 <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-xs font-bold text-slate-900 truncate">{batch.item_name}</p>
-                                                        <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="text-xs font-bold text-[#103B32] truncate">{batch.item_name}</p>
+                                                        <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA]">
                                                             {batch.batch_number ? `B: ${batch.batch_number}` : 'Batch Ref'}
                                                         </span>
                                                     </div>
-                                                    <p className="text-[11px] text-slate-500 mt-0.5">
-                                                        Quantity left: <strong className="text-slate-800">{batch.quantity} units</strong> • Exp: {batch.expiry_date}
+                                                    <p className="text-[11px] text-[#556D65] mt-0.5 tabular-nums">
+                                                        Quantity left: <strong className="text-[#103B32]">{batch.quantity} units</strong> • Exp: {batch.expiry_date}
                                                     </p>
                                                 </div>
 
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <span className={`text-[11px] font-black px-2 py-1 rounded-lg ${isCritical ? 'bg-rose-100 text-rose-700 animate-pulse' : 'bg-amber-100 text-amber-800'}`}>
+                                                    <span className={`text-[11px] font-bold px-2 py-1 rounded-lg tabular-nums ${isCritical ? 'bg-[#FCEEEF] text-[#BE3144] border border-[#F4C7CD]' : 'bg-[#FEF3D6] text-[#9A5B0A] border border-[#F4DB9C]'}`}>
                                                         {batch.daysRemaining <= 0 ? 'Expired' : `${batch.daysRemaining}d left`}
                                                     </span>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleFastReorder(batch.id)}
-                                                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors"
+                                                        className="p-1.5 rounded-lg bg-[#FAF7F0] hover:bg-[#E8F1E5] text-[#556D65] hover:text-[#087466] border border-[#E4E5DA] transition-colors"
                                                         title="FEFO Restock / Review"
                                                     >
                                                         <Package className="w-3.5 h-3.5" />
@@ -1252,30 +1385,40 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                             )}
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                        <div className="mt-4 pt-3 border-t border-[#E4E5DA] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#556D65]">
                             <span>Rule: First-Expiry-First-Out (FEFO) Priority</span>
-                            <span className="font-semibold text-amber-700">Expedite dispense before discard</span>
+                            <span className="font-semibold text-[#B87414]">Expedite dispense before discard</span>
                         </div>
                     </div>
 
                     {/* PANEL B: CRITICAL OUT-OF-STOCK & FAST REORDER */}
-                    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between">
+                    <div className="jvk-clinic-hub-subcard p-5 flex flex-col justify-between">
                         <div>
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center justify-between gap-2 mb-4">
                                 <div className="flex items-center gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-rose-600" />
-                                    <h3 className="text-sm font-bold text-slate-900">Critical Out-of-Stock Depletions</h3>
+                                    <AlertTriangle className="w-4 h-4 text-[#BE3144]" />
+                                    <h3 className="text-sm font-bold text-[#103B32]">Critical Out-of-Stock Depletions</h3>
                                 </div>
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${criticalStock.length > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full tabular-nums border ${
+                                    criticalStock.length > 0
+                                        ? 'bg-[#FCEEEF] text-[#BE3144] border-[#F4C7CD]'
+                                        : 'bg-[#DFF4ED] text-[#087466] border-[#BBE5D6]'
+                                }`}>
                                     {criticalStock.length} {criticalStock.length === 1 ? 'Item' : 'Items'} Critical
                                 </span>
                             </div>
 
-                            {criticalStock.length === 0 ? (
-                                <div className="p-8 text-center bg-white rounded-xl border border-slate-200/60">
-                                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                                    <p className="text-xs font-bold text-slate-800">Adequate Stock Buffer</p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">No critical shortages below minimum safety stock.</p>
+                            {clinicInventory.length === 0 ? (
+                                <div className="p-7 text-center bg-[#FFFDFB] rounded-xl border border-[#E4E5DA]">
+                                    <CheckCircle2 className="w-9 h-9 text-[#8FA59D] mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-[#103B32]">No SKUs Monitored Yet</p>
+                                    <p className="text-[11px] text-[#556D65] mt-0.5">Sync medicine catalog to evaluate minimum safety stock buffers.</p>
+                                </div>
+                            ) : criticalStock.length === 0 ? (
+                                <div className="p-7 text-center bg-[#FFFDFB] rounded-xl border border-[#E4E5DA]">
+                                    <CheckCircle2 className="w-9 h-9 text-[#087466] mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-[#103B32]">Adequate Stock Buffer</p>
+                                    <p className="text-[11px] text-[#556D65] mt-0.5">No critical shortages below minimum safety stock.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
@@ -1286,34 +1429,36 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                         return (
                                             <div
                                                 key={item.id}
-                                                className="p-3 bg-white rounded-xl border border-slate-200/60 hover:border-rose-200 transition-all shadow-sm space-y-2"
+                                                className="p-3 bg-[#FFFDFB] rounded-xl border border-[#E4E5DA] hover:border-[#E4A5AE] transition-all space-y-2"
                                             >
-                                                <div className="flex items-center justify-between">
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
                                                     <div className="min-w-0">
-                                                        <p className="text-xs font-bold text-slate-900 truncate">{item.item_name}</p>
-                                                        <p className="text-[10px] text-slate-400">
-                                                            Available: <strong className="text-rose-600 font-bold">{item.total_quantity} units</strong> • Threshold: {item.threshold || 10} • Deficit: <strong className="text-rose-600 font-bold">{deficit} units</strong>
+                                                        <p className="text-xs font-bold text-[#103B32] truncate">{item.item_name}</p>
+                                                        <p className="text-[11px] text-[#556D65] tabular-nums">
+                                                            Available: <strong className="text-[#BE3144]">{item.total_quantity} units</strong> • Threshold: {item.threshold || 10} • Deficit: <strong className="text-[#BE3144]">{deficit} units</strong>
                                                         </p>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 shrink-0">
                                                         <button
+                                                            type="button"
                                                             onClick={() => setSelectedStockItem(item)}
-                                                            className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 rounded-lg transition-colors"
+                                                            className="px-2.5 py-1 text-[11px] font-bold text-[#103B32] bg-[#FAF7F0] hover:bg-[#E8F1E5] border border-[#E4E5DA] rounded-lg transition-colors"
                                                         >
                                                             Inspect
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleFastReorder(item.id)}
-                                                            className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-black text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all"
+                                                            className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-white bg-[#087466] hover:bg-[#065C51] rounded-lg transition-all"
                                                         >
                                                             <Zap className="w-3 h-3" />
                                                             Fast Reorder
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex">
+                                                <div className="w-full bg-[#EAEBE0] rounded-full h-1.5 overflow-hidden flex">
                                                     <div
-                                                        className="h-1.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500"
+                                                        className="h-1.5 rounded-full bg-gradient-to-r from-[#BE3144] to-[#D97706]"
                                                         style={{ width: `${Math.min(100, Math.max(8, percentage))}%` }}
                                                     />
                                                 </div>
@@ -1324,32 +1469,35 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                             )}
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                        <div className="mt-4 pt-3 border-t border-[#E4E5DA] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#556D65]">
                             <span>Deficit Target: Safety threshold buffer</span>
-                            <span className="font-semibold text-rose-600">Immediate PO recommendation</span>
+                            <span className="font-semibold text-[#BE3144]">Immediate PO recommendation</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* 6. LIVE TRANSACTIONS STREAM & SEARCH TABLE */}
-            <div className="bg-white/95 backdrop-blur-xl p-7 rounded-3xl border border-slate-200/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] space-y-6">
+            {/* 6. LIVE COUNTER TRANSACTIONS & SETTLEMENTS */}
+            <div className="jvk-clinic-hub-card p-5 sm:p-6 lg:p-7 space-y-5">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <SymbolIcon className="material-symbols-outlined text-blue-600">receipt_long</SymbolIcon>
-                            <h2 className="text-lg font-black text-slate-900 tracking-tight">Live Counter Transactions & Settlements</h2>
+                    <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#E8F1E5] text-[#087466] border border-[#CBE0D2] flex items-center justify-center shrink-0">
+                            <SymbolIcon className="material-symbols-outlined text-[20px]">receipt_long</SymbolIcon>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Real-time streaming ledger of today's pharmacy, consultation, and IPD billings
-                        </p>
+                        <div>
+                            <h2 className="text-base sm:text-lg font-bold text-[#103B32] tracking-tight">Live Counter Transactions & Settlements</h2>
+                            <p className="text-xs text-[#556D65] mt-0.5">
+                                Real-time settlement ledger for today's pharmacy, consultation, and IPD billings
+                            </p>
+                        </div>
                     </div>
 
                     {/* Real-time Search Box */}
                     <div className="relative w-full lg:w-96">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-[#7B8F88] absolute left-3.5 top-1/2 -translate-y-1/2" />
                         <input
-                            className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                            aria-label="Search counter transactions"
+                            className="w-full pl-10 pr-9 py-2.5 bg-[#FAF7F0] border border-[#E4E5DA] rounded-xl text-xs font-medium text-[#103B32] focus:outline-none focus:ring-2 focus:ring-[#087466]/20 focus:border-[#087466] transition-all placeholder:text-[#7B8F88]"
                             placeholder="Search patient, clinician, sale type, invoice #..."
                             type="text"
                             value={searchQuery}
@@ -1357,8 +1505,10 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                         />
                         {searchQuery && (
                             <button
+                                type="button"
+                                aria-label="Clear search query"
                                 onClick={() => setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7B8F88] hover:text-[#103B32]"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
@@ -1367,138 +1517,180 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                 </div>
 
                 {/* Filter Pills Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     {/* Sale Type Pills */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Type:</span>
-                        {['all', 'PHARMACY', 'CONSULTATION', 'IPD', 'SERVICES'].map((type) => (
+                        <span className="text-[11px] font-bold text-[#556D65] uppercase tracking-wider mr-1">Type:</span>
+                        {[
+                            { value: 'all', label: 'All Types' },
+                            { value: 'PHARMACY', label: 'Pharmacy' },
+                            { value: 'CONSULTATION', label: 'Consultation' },
+                            { value: 'IPD', label: 'IPD' },
+                            { value: 'SERVICES', label: 'Services' }
+                        ].map((type) => (
                             <button
-                                key={type}
-                                onClick={() => setSelectedSaleType(type)}
-                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${selectedSaleType === type ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                type="button"
+                                key={type.value}
+                                onClick={() => setSelectedSaleType(type.value)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                                    selectedSaleType === type.value
+                                        ? 'bg-[#087466] text-white border-[#087466] shadow-xs'
+                                        : 'bg-[#FAF7F0] text-[#556D65] border-[#E4E5DA] hover:bg-[#E8F1E5] hover:text-[#103B32]'
+                                }`}
                             >
-                                {type === 'all' ? 'All Types' : type}
+                                {type.label}
                             </button>
                         ))}
                     </div>
 
                     {/* Payment Mode Pills */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Mode:</span>
-                        {['all', 'UPI', 'CASH', 'CARD', 'IPD_BILL'].map((mode) => (
+                        <span className="text-[11px] font-bold text-[#556D65] uppercase tracking-wider mr-1">Mode:</span>
+                        {[
+                            { value: 'all', label: 'All Modes' },
+                            { value: 'UPI', label: 'UPI' },
+                            { value: 'CASH', label: 'Cash' },
+                            { value: 'CARD', label: 'Card' },
+                            { value: 'IPD_BILL', label: 'IPD Credit' }
+                        ].map((mode) => (
                             <button
-                                key={mode}
-                                onClick={() => setSelectedPaymentMode(mode)}
-                                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${selectedPaymentMode === mode ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                type="button"
+                                key={mode.value}
+                                onClick={() => setSelectedPaymentMode(mode.value)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                                    selectedPaymentMode === mode.value
+                                        ? 'bg-[#087466] text-white border-[#087466] shadow-xs'
+                                        : 'bg-[#FAF7F0] text-[#556D65] border-[#E4E5DA] hover:bg-[#E8F1E5] hover:text-[#103B32]'
+                                }`}
                             >
-                                {mode === 'all' ? 'All Modes' : mode === 'IPD_BILL' ? 'IPD Credit' : mode}
+                                {mode.label}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 {/* TRANSACTIONS TABLE */}
-                <div className="rounded-2xl border border-slate-200 overflow-hidden">
-                    <table className="w-full text-xs text-left">
-                        <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                            <tr>
-                                <th className="px-5 py-3.5">Invoice # & Time</th>
-                                <th className="px-5 py-3.5">Patient Details</th>
-                                <th className="px-5 py-3.5">Clinician / Staff</th>
-                                <th className="px-5 py-3.5">Category</th>
-                                <th className="px-5 py-3.5">Payment Mode</th>
-                                <th className="px-5 py-3.5 text-right">Settled Amount</th>
-                                <th className="px-5 py-3.5 text-center w-24">Tax Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredTransactions.length === 0 ? (
+                <div className="rounded-2xl border border-[#E4E5DA] overflow-hidden bg-[#FFFDFB]">
+                    <div className="jvk-admin-table-region overflow-x-auto">
+                        <table className="w-full min-w-[740px] text-xs text-left">
+                            <thead className="bg-[#FAF7F0] border-b border-[#E4E5DA] text-[#556D65] font-bold uppercase tracking-wider">
                                 <tr>
-                                    <td colSpan={7} className="text-center py-12 text-slate-400">
-                                        <div className="space-y-1">
-                                            <Receipt className="w-8 h-8 text-slate-300 mx-auto" />
-                                            <p className="text-sm font-semibold text-slate-700">No matching transactions</p>
-                                            <p className="text-xs text-slate-400">Try adjusting your search query or channel filters</p>
-                                        </div>
-                                    </td>
+                                    <th className="px-5 py-3.5 whitespace-nowrap">Invoice # &amp; Time</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap">Patient Details</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap">Clinician / Staff</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap">Category</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap">Payment Mode</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap text-right">Settled Amount</th>
+                                    <th className="px-5 py-3.5 whitespace-nowrap text-center w-28">Tax Receipt</th>
                                 </tr>
-                            ) : (
-                                filteredTransactions.map((sale: any) => {
-                                    const modeColor = PAYMENT_COLOR_MAP[(sale.payment_mode || '').toUpperCase()] || PAYMENT_COLOR_MAP.OTHER;
-                                    const saleTime = sale.timestamp ? new Date(sale.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Today';
+                            </thead>
+                            {filteredTransactions.length > 0 && (
+                                <tbody className="divide-y divide-[#EAEBE0]">
+                                    {filteredTransactions.map((sale: any) => {
+                                        const modeColor = PAYMENT_COLOR_MAP[(sale.payment_mode || '').toUpperCase()] || PAYMENT_COLOR_MAP.OTHER;
+                                        const saleTime = sale.timestamp ? new Date(sale.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Today';
 
-                                    return (
-                                        <tr key={sale.id} className="hover:bg-slate-50/80 transition-colors group">
-                                            <td className="px-5 py-3.5 font-mono">
-                                                <span className="font-bold text-slate-900">#{sale.id?.slice(0, 8)}</span>
-                                                <p className="text-[10px] text-slate-400 font-sans mt-0.5">{saleTime}</p>
-                                            </td>
+                                        return (
+                                            <tr key={sale.id} className="hover:bg-[#FAF7F0]/80 transition-colors group">
+                                                <td className="px-5 py-3.5 font-mono">
+                                                    <span className="font-bold text-[#103B32]">#{sale.id?.slice(0, 8)}</span>
+                                                    <p className="text-[10px] text-[#556D65] font-sans mt-0.5 tabular-nums">{saleTime}</p>
+                                                </td>
 
-                                            <td className="px-5 py-3.5">
-                                                <p className="font-bold text-slate-900">{sale.patient_name || 'Walk-in Patient'}</p>
-                                                {sale.patient_phone && (
-                                                    <p className="text-[10px] text-slate-400">{sale.patient_phone}</p>
-                                                )}
-                                            </td>
+                                                <td className="px-5 py-3.5">
+                                                    <p className="font-bold text-[#103B32]">{sale.patient_name || 'Walk-in Patient'}</p>
+                                                    {sale.patient_phone && (
+                                                        <p className="text-[10px] text-[#556D65] tabular-nums">{sale.patient_phone}</p>
+                                                    )}
+                                                </td>
 
-                                            <td className="px-5 py-3.5 font-medium text-slate-600">
-                                                Dr. {sale.doctor_name || 'Staff Attendant'}
-                                            </td>
+                                                <td className="px-5 py-3.5 font-medium text-[#556D65]">
+                                                    Dr. {sale.doctor_name || 'Staff Attendant'}
+                                                </td>
 
-                                            <td className="px-5 py-3.5">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
-                                                    sale.sale_type === 'PHARMACY'
-                                                        ? 'bg-purple-100 text-purple-700'
-                                                        : sale.sale_type === 'CONSULTATION'
-                                                            ? 'bg-blue-100 text-blue-700'
-                                                            : 'bg-emerald-100 text-emerald-700'
-                                                }`}>
-                                                    {sale.sale_type || 'GENERAL'}
-                                                </span>
-                                            </td>
+                                                <td className="px-5 py-3.5">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                        sale.sale_type === 'PHARMACY'
+                                                            ? 'bg-[#F3EEFC] text-[#6B3FA0] border-[#DECFF6]'
+                                                            : sale.sale_type === 'CONSULTATION'
+                                                                ? 'bg-[#E8F4FA] text-[#0369A1] border-[#BFE3F2]'
+                                                                : 'bg-[#DFF4ED] text-[#087466] border-[#BBE5D6]'
+                                                    }`}>
+                                                        {sale.sale_type || 'GENERAL'}
+                                                    </span>
+                                                </td>
 
-                                            <td className="px-5 py-3.5">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${modeColor.badge}`}>
-                                                    {sale.payment_mode === 'IPD_BILL' ? 'IPD CREDIT' : sale.payment_mode || 'CASH'}
-                                                </span>
-                                            </td>
+                                                <td className="px-5 py-3.5">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${modeColor.badge}`}>
+                                                        {sale.payment_mode === 'IPD_BILL' ? 'IPD CREDIT' : sale.payment_mode || 'CASH'}
+                                                    </span>
+                                                </td>
 
-                                            <td className="px-5 py-3.5 text-right font-black text-slate-900 text-sm">
-                                                <span className={sale.payment_mode === 'IPD_BILL' ? 'text-amber-600 font-semibold italic' : ''}>
-                                                    ₹{(Number(sale.amount) || 0).toLocaleString('en-IN')}
-                                                </span>
-                                            </td>
+                                                <td className="px-5 py-3.5 text-right font-bold text-[#103B32] text-sm tabular-nums">
+                                                    <span className={sale.payment_mode === 'IPD_BILL' ? 'text-[#B87414] font-semibold italic' : ''}>
+                                                        ₹{(Number(sale.amount) || 0).toLocaleString('en-IN')}
+                                                    </span>
+                                                </td>
 
-                                            <td className="px-5 py-3.5 text-center">
-                                                <button
-                                                    onClick={() => openReceipt(sale)}
-                                                    disabled={isReceiptLoading}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 text-[11px] font-bold transition-all shadow-sm active:scale-95"
-                                                    title="View Full Tax Receipt"
-                                                >
-                                                    <FileText className="w-3.5 h-3.5" />
-                                                    <span>Receipt</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
+                                                <td className="px-5 py-3.5 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openReceipt(sale)}
+                                                        disabled={isReceiptLoading}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF7F0] hover:bg-[#E8F1E5] text-[#103B32] hover:text-[#087466] border border-[#E4E5DA] text-[11px] font-bold transition-all active:scale-95"
+                                                        title="View Full Tax Receipt"
+                                                    >
+                                                        <FileText className="w-3.5 h-3.5" />
+                                                        <span>Receipt</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
                             )}
-                        </tbody>
-                        {filteredTransactions.length > 0 && (
-                            <tfoot className="bg-slate-50 border-t border-slate-200 font-bold text-slate-900">
-                                <tr>
-                                    <td colSpan={5} className="px-5 py-3.5 text-right text-xs uppercase tracking-wider text-slate-500">
-                                        Filtered Volume ({filteredTransactions.length} items) • Total:
-                                    </td>
-                                    <td className="px-5 py-3.5 text-right text-base font-black text-blue-600">
-                                        ₹{filteredTransactions.reduce((acc, s) => acc + (Number(s.amount) || 0), 0).toLocaleString('en-IN')}
-                                    </td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
+                            {filteredTransactions.length > 0 && (
+                                <tfoot className="bg-[#FAF7F0] border-t border-[#E4E5DA] font-bold text-[#103B32]">
+                                    <tr>
+                                        <td colSpan={5} className="px-5 py-3.5 text-right text-xs uppercase tracking-wider text-[#556D65]">
+                                            Filtered Volume ({filteredTransactions.length} items) • Total:
+                                        </td>
+                                        <td className="px-5 py-3.5 text-right text-base font-bold text-[#087466] tabular-nums">
+                                            ₹{filteredTransactions.reduce((acc, s) => acc + (Number(s.amount) || 0), 0).toLocaleString('en-IN')}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            )}
+                        </table>
+                    </div>
+
+                    {filteredTransactions.length === 0 && (
+                        <div className="text-center py-12 px-4 text-[#556D65]">
+                            <div className="space-y-1.5 max-w-sm mx-auto">
+                                <Receipt className="w-8 h-8 text-[#9AAEA6] mx-auto" />
+                                <p className="text-sm font-bold text-[#103B32]">No matching transactions</p>
+                                <p className="text-xs text-[#556D65]">
+                                    {hasActiveFilters
+                                        ? 'Try adjusting your search query or channel filters'
+                                        : 'Counter pharmacy, consultation, and IPD settlements will appear here in real time.'}
+                                </p>
+                                {hasActiveFilters && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setSelectedSaleType('all');
+                                            setSelectedPaymentMode('all');
+                                        }}
+                                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF7F0] hover:bg-[#E8F1E5] border border-[#E4E5DA] text-xs font-bold text-[#087466] transition-colors"
+                                    >
+                                        Reset filters
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1514,27 +1706,27 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
 
             {/* 8. STOCK ITEM INSPECTION & REORDER MODAL */}
             <Dialog open={!!selectedStockItem} onOpenChange={(open) => !open && setSelectedStockItem(null)}>
-                <DialogContent className="sm:max-w-md bg-white border border-slate-200 shadow-2xl p-0 overflow-hidden rounded-3xl text-slate-900">
+                <DialogContent className="sm:max-w-md bg-[#FFFDF8] border border-[#E4E5DA] shadow-2xl p-0 overflow-hidden rounded-3xl text-[#103B32]">
                     {selectedStockItem && (
                         <div>
-                            <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-amber-200 flex items-center justify-center text-amber-600">
+                            <div className="p-6 bg-[#FEF6E0]/75 border-b border-[#F4DB9C] flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-[#FFFDFB] border border-[#F4DB9C] flex items-center justify-center text-[#B87414]">
                                     <Package className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <DialogTitle className="text-lg font-black text-slate-900">Stock Telemetry Review</DialogTitle>
-                                    <p className="text-xs text-amber-700 font-bold uppercase tracking-wider mt-0.5">
+                                    <DialogTitle className="text-lg font-bold text-[#103B32]">Stock Telemetry Review</DialogTitle>
+                                    <p className="text-xs text-[#9A5B0A] font-bold uppercase tracking-wider mt-0.5">
                                         FEFO Replenishment Recommended
                                     </p>
                                 </div>
                             </div>
 
                             <div className="p-6 space-y-5">
-                                <div className="flex items-center gap-3 p-4 bg-amber-50/70 border border-amber-200/60 rounded-2xl">
-                                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                                <div className="flex items-center gap-3 p-4 bg-[#FAF7F0] border border-[#E4E5DA] rounded-2xl">
+                                    <AlertTriangle className="w-5 h-5 text-[#B87414] shrink-0" />
                                     <div className="min-w-0">
-                                        <p className="font-bold text-slate-900 text-sm truncate">{selectedStockItem.item_name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                                        <p className="font-bold text-[#103B32] text-sm truncate">{selectedStockItem.item_name}</p>
+                                        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-[#556D65]">
                                             {selectedStockItem.batch_number && (
                                                 <span className="font-mono">Batch: {selectedStockItem.batch_number}</span>
                                             )}
@@ -1546,35 +1738,35 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">In Stock</p>
-                                        <p className="text-2xl font-black text-amber-600 mt-1">{(selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0}</p>
-                                        <p className="text-[10px] text-slate-400">units</p>
+                                    <div className="p-3.5 bg-[#FAF7F0] rounded-2xl border border-[#E4E5DA] text-center">
+                                        <p className="text-[10px] font-bold text-[#556D65] uppercase tracking-wider">In Stock</p>
+                                        <p className="text-2xl font-bold text-[#B87414] mt-1 tabular-nums">{(selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0}</p>
+                                        <p className="text-[10px] text-[#556D65]">units</p>
                                     </div>
-                                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Threshold</p>
-                                        <p className="text-2xl font-black text-slate-900 mt-1">{selectedStockItem.threshold || 10}</p>
-                                        <p className="text-[10px] text-slate-400">safety min</p>
+                                    <div className="p-3.5 bg-[#FAF7F0] rounded-2xl border border-[#E4E5DA] text-center">
+                                        <p className="text-[10px] font-bold text-[#556D65] uppercase tracking-wider">Threshold</p>
+                                        <p className="text-2xl font-bold text-[#103B32] mt-1 tabular-nums">{selectedStockItem.threshold || 10}</p>
+                                        <p className="text-[10px] text-[#556D65]">safety min</p>
                                     </div>
-                                    <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-100 text-center">
-                                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Deficit</p>
-                                        <p className="text-2xl font-black text-rose-600 mt-1">
+                                    <div className="p-3.5 bg-[#FCEEEF] rounded-2xl border border-[#F4C7CD] text-center">
+                                        <p className="text-[10px] font-bold text-[#BE3144] uppercase tracking-wider">Deficit</p>
+                                        <p className="text-2xl font-bold text-[#BE3144] mt-1 tabular-nums">
                                             {Math.max(0, (selectedStockItem.threshold || 10) - ((selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0))}
                                         </p>
-                                        <p className="text-[10px] text-rose-400">units short</p>
+                                        <p className="text-[10px] text-[#BE3144]">units short</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase">
+                                    <div className="flex justify-between text-[11px] font-bold text-[#556D65] uppercase tabular-nums">
                                         <span>Current Buffer Level</span>
-                                        <span className="text-amber-600">
+                                        <span className="text-[#B87414]">
                                             {Math.round((((selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0) / (selectedStockItem.threshold || 10)) * 100)}% of buffer
                                         </span>
                                     </div>
-                                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div className="w-full bg-[#EAEBE0] rounded-full h-2 overflow-hidden">
                                         <div
-                                            className="h-2 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-300"
+                                            className="h-2 rounded-full bg-gradient-to-r from-[#BE3144] to-[#D97706] transition-all duration-300"
                                             style={{
                                                 width: `${Math.min(100, Math.round((((selectedStockItem as any).total_quantity || selectedStockItem.quantity || 0) / (selectedStockItem.threshold || 10)) * 100))}%`
                                             }}
@@ -1583,11 +1775,12 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         setSelectedStockItem(null);
                                         handleFastReorder(selectedStockItem.id);
                                     }}
-                                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-500/20 text-xs flex items-center justify-center gap-2 active:scale-95"
+                                    className="w-full py-3 bg-[#087466] hover:bg-[#065C51] text-white font-bold rounded-2xl transition-all shadow-[0_8px_18px_rgba(8,116,102,0.2)] text-xs flex items-center justify-center gap-2 active:scale-[0.99]"
                                 >
                                     <Zap className="w-4 h-4" />
                                     Dispatch Reorder via Inventory Dashboard

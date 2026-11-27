@@ -252,3 +252,100 @@
     height: 70px;
   }
 }
+
+/* Strictly scoped visual system for Clinic Operations Hub (#/app/command for CLINIC_ADMIN) */
+.jvk-clinic-hub-page {
+  --jvk-hub-surface: #fffdf9;
+  --jvk-hub-cream: #faf7f0;
+  --jvk-hub-sage: #e8f1e5;
+  --jvk-hub-mint: #dff4ed;
+  --jvk-hub-border: #e4e5da;
+  --jvk-hub-border-strong: rgba(16, 59, 50, 0.16);
+  --jvk-hub-ink: #103b32;
+  --jvk-hub-ink-muted: #556d65;
+  --jvk-hub-teal: #087466;
+  --jvk-hub-teal-deep: #065c51;
+  --jvk-hub-amber: #b87414;
+  --jvk-hub-amber-bg: #fef6e0;
+  --jvk-hub-crimson: #be3144;
+  --jvk-hub-shadow: 0 4px 20px rgba(16, 59, 50, 0.045);
+  color: var(--jvk-hub-ink);
+  min-width: 0;
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-card {
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.97) 0%, rgba(252, 249, 242, 0.93) 100%);
+  border: 1px solid var(--jvk-hub-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--jvk-hub-shadow);
+  min-width: 0;
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-kpi {
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.98) 0%, rgba(253, 250, 244, 0.95) 100%);
+  border: 1px solid var(--jvk-hub-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--jvk-hub-shadow);
+  min-width: 0;
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-kpi--interactive:hover {
+  border-color: rgba(8, 116, 102, 0.3);
+  box-shadow: 0 10px 24px rgba(16, 59, 50, 0.08);
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-subcard {
+  background: var(--jvk-hub-cream);
+  border: 1px solid var(--jvk-hub-border);
+  border-radius: 1rem;
+  min-width: 0;
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-nav-tile {
+  border-radius: 0.95rem;
+  border: 1px solid var(--jvk-hub-border);
+  background: var(--jvk-hub-cream);
+  color: var(--jvk-hub-ink);
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-nav-tile:hover {
+  background: #ffffff;
+  border-color: rgba(8, 116, 102, 0.25);
+  box-shadow: 0 6px 14px rgba(16, 59, 50, 0.06);
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-nav-tile--featured {
+  background: linear-gradient(135deg, #087466 0%, #065d52 100%);
+  border-color: #065c51;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(8, 116, 102, 0.18);
+}
+
+.jvk-clinic-hub-page .jvk-clinic-hub-nav-tile--featured:hover {
+  background: linear-gradient(135deg, #076a5d 0%, #055148 100%);
+  border-color: #055148;
+  box-shadow: 0 10px 22px rgba(8, 116, 102, 0.24);
+}
+
+.jvk-clinic-hub-page button:focus-visible,
+.jvk-clinic-hub-page input:focus-visible,
+.jvk-clinic-hub-page [role="button"]:focus-visible {
+  outline: 2px solid #087466;
+  outline-offset: 2px;
+}
+
+.jvk-clinic-hub-page .recharts-responsive-container {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jvk-clinic-hub-page .jvk-clinic-hub-kpi,
+  .jvk-clinic-hub-page .jvk-clinic-hub-nav-tile {
+    transition: background-color 160ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .jvk-clinic-hub-page .jvk-clinic-hub-kpi--interactive:hover,
+  .jvk-clinic-hub-page .jvk-clinic-hub-nav-tile:hover {
+    transform: translateY(-1px);
+  }
+}
