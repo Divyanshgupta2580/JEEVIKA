@@ -215,6 +215,11 @@ export function Slider({
   max,
   step = 1,
   onChange,
+  unitSuffix,
+  className = "",
+  headerClassName = "",
+  outputClassName = "",
+  rangeClassName = "",
 }: {
   label: string;
   value: number;
@@ -222,12 +227,27 @@ export function Slider({
   max: number;
   step?: number;
   onChange: (value: number) => void;
+  unitSuffix?: string;
+  className?: string;
+  headerClassName?: string;
+  outputClassName?: string;
+  rangeClassName?: string;
 }) {
+  const formattedValue = unitSuffix ? `${value} ${unitSuffix}` : String(value);
+  const sliderVars = {
+    "--attr-min": String(min),
+    "--attr-max": String(max),
+    "--control-value": String(value),
+  } as React.CSSProperties;
   return (
-    <label className="block">
-      <span className="mb-2 flex items-center justify-between text-sm font-bold text-[var(--ds-text-primary)]">
+    <label className={`block ${className}`.trim()}>
+      <span
+        className={`mb-2 flex items-center justify-between text-sm font-bold text-[var(--ds-text-primary)] ${headerClassName}`.trim()}
+      >
         <span>{label}</span>
-        <output className="tabular-nums">{value}</output>
+        <output className={`tabular-nums ${outputClassName}`.trim()}>
+          {formattedValue}
+        </output>
       </span>
       <input
         type="range"
@@ -235,8 +255,10 @@ export function Slider({
         min={min}
         max={max}
         step={step}
+        aria-valuetext={unitSuffix ? `${value} minutes` : undefined}
+        style={sliderVars}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="h-3 w-full accent-[var(--ds-primary)]"
+        className={rangeClassName || "h-3 w-full accent-[var(--ds-primary)]"}
       />
     </label>
   );

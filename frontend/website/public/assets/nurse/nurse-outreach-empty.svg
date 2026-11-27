@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280" width="420" height="280" fill="none">
+  <defs>
+    <radialGradient id="ncSageWash" cx="56%" cy="54%" r="44%">
+      <stop offset="0%" stop-color="#D7EBDF" stop-opacity="0.72"/>
+      <stop offset="56%" stop-color="#E7F2E4" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#FFFDF9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ncGoldWash" cx="44%" cy="62%" r="36%">
+      <stop offset="0%" stop-color="#F6E2B3" stop-opacity="0.62"/>
+      <stop offset="65%" stop-color="#FBF2DA" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#FFFDF9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ncSunHalo" cx="50%" cy="32%" r="28%">
+      <stop offset="0%" stop-color="#FAF0CF" stop-opacity="0.58"/>
+      <stop offset="100%" stop-color="#FFFDF9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ncLeafDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9AC17E"/>
+      <stop offset="100%" stop-color="#5D8F5E"/>
+    </linearGradient>
+    <linearGradient id="ncLeafLight" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B9D48F"/>
+      <stop offset="100%" stop-color="#78AA6E"/>
+    </linearGradient>
+    <linearGradient id="ncCurtainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#AED5C8" stop-opacity="0.78"/>
+      <stop offset="100%" stop-color="#D6ECE4" stop-opacity="0.26"/>
+    </linearGradient>
+    <linearGradient id="ncBedBlanket" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#CBE4DA"/>
+      <stop offset="100%" stop-color="#B2D6C9"/>
+    </linearGradient>
+    <linearGradient id="ncTunic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="62%" stop-color="#F2F8F4"/>
+      <stop offset="100%" stop-color="#DCECE4"/>
+    </linearGradient>
+    <linearGradient id="ncSkin" x1="15%" y1="10%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#ECC29F"/>
+      <stop offset="100%" stop-color="#DCA67F"/>
+    </linearGradient>
+    <linearGradient id="ncClipboard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8EC0B3"/>
+      <stop offset="100%" stop-color="#6AA597"/>
+    </linearGradient>
+    <filter id="ncSoftBlur" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <!-- Soft ambient watercolor splashes dissolving to warm ivory -->
+  <ellipse cx="235" cy="146" rx="168" ry="102" fill="url(#ncSageWash)"/>
+  <ellipse cx="176" cy="176" rx="122" ry="72" fill="url(#ncGoldWash)" filter="url(#ncSoftBlur)"/>
+  <circle cx="204" cy="96" r="76" fill="url(#ncSunHalo)" filter="url(#ncSoftBlur)"/>
+
+  <!-- Background muted hospital room: curtain, IV drip, bed -->
+  <g opacity="0.88">
+    <!-- Mint pleated curtain behind bed head -->
+    <path d="M276 74 H348 V186 C324 190 300 184 276 188 Z" fill="url(#ncCurtainGrad)"/>
+    <line x1="292" y1="74" x2="292" y2="186" stroke="#8FBEB0" stroke-width="1" stroke-opacity="0.45"/>
+    <line x1="308" y1="74" x2="308" y2="187" stroke="#8FBEB0" stroke-width="1" stroke-opacity="0.45"/>
+    <line x1="324" y1="74" x2="324" y2="186" stroke="#8FBEB0" stroke-width="1" stroke-opacity="0.45"/>
+    <line x1="339" y1="74" x2="339" y2="185" stroke="#8FBEB0" stroke-width="1" stroke-opacity="0.45"/>
+    <path d="M270 73 H354" stroke="#8BAEA4" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- IV Stand & hanging saline pouches -->
+    <line x1="258" y1="76" x2="258" y2="196" stroke="#8DA69E" stroke-width="2" stroke-linecap="round"/>
+    <path d="M244 82 Q258 76 272 82" stroke="#8DA69E" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M249 197 H267" stroke="#8DA69E" stroke-width="2" stroke-linecap="round"/>
+    <rect x="242" y="88" width="12" height="19" rx="3" fill="#FFFDF9" stroke="#99B7AD" stroke-width="1.2"/>
+    <path d="M244 97 H252 V104 C252 105.5 251 106 248 106 C245 106 244 105.5 244 104 Z" fill="#C4E1D7"/>
+    <rect x="262" y="90" width="11" height="17" rx="3" fill="#FFFDF9" stroke="#99B7AD" stroke-width="1.2"/>
+    <path d="M264 98 H271 V104 C271 105 270 105.5 267.5 105.5 C265 105.5 264 105 264 104 Z" fill="#D5ECE4"/>
+
+    <!-- Minimalist hospital bed -->
+    <rect x="266" y="132" width="6" height="65" rx="2.5" fill="#B9C7BA"/>
+    <rect x="362" y="146" width="6" height="51" rx="2.5" fill="#B9C7BA"/>
+    <!-- Pillow & Mattress -->
+    <path d="M272 153 C282 146 300 146 308 153 L306 164 H272 Z" fill="#FFFDF9" stroke="#B7C8BF" stroke-width="1.2"/>
+    <rect x="272" y="160" width="90" height="22" rx="4" fill="#F8FBF8" stroke="#A6BFB5" stroke-width="1.3"/>
+    <!-- Folded blanket + rail -->
+    <path d="M298 159 H360 C363 159 364 162 364 165 V180 H298 Z" fill="url(#ncBedBlanket)" stroke="#89B4A6" stroke-width="1.2"/>
+    <rect x="294" y="150" width="54" height="15" rx="3" fill="none" stroke="#9DB5AC" stroke-width="1.5"/>
+    <line x1="308" y1="150" x2="308" y2="165" stroke="#9DB5AC" stroke-width="1.2"/>
+    <line x1="322" y1="150" x2="322" y2="165" stroke="#9DB5AC" stroke-width="1.2"/>
+    <line x1="336" y1="150" x2="336" y2="165" stroke="#9DB5AC" stroke-width="1.2"/>
+    <!-- Casters -->
+    <circle cx="269" cy="199" r="3.2" fill="#8FA59D"/>
+    <circle cx="365" cy="199" r="3.2" fill="#8FA59D"/>
+  </g>
+
+  <!-- Right soft botanical leaf spray -->
+  <g opacity="0.72">
+    <path d="M352 204 C368 178 378 148 380 120" stroke="#7BA471" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M364 182 C382 174 394 162 392 152 C379 154 368 166 364 182 Z" fill="url(#ncLeafLight)"/>
+    <path d="M372 158 C389 148 397 134 391 124 C379 130 374 144 372 158 Z" fill="url(#ncLeafDark)" opacity="0.8"/>
+    <path d="M356 196 C340 198 329 193 328 184 C339 181 349 186 356 196 Z" fill="url(#ncLeafLight)"/>
+  </g>
+
+  <!-- Left botanical leafy spray framing the nurse -->
+  <g opacity="0.9">
+    <path d="M126 226 C100 186 84 138 90 88" stroke="#689563" stroke-width="2" stroke-linecap="round"/>
+    <path d="M107 200 C80 196 62 184 62 172 C78 170 98 182 107 200 Z" fill="url(#ncLeafLight)"/>
+    <path d="M97 170 C68 160 52 142 56 128 C74 132 90 149 97 170 Z" fill="url(#ncLeafDark)"/>
+    <path d="M92 140 C68 126 58 106 66 94 C81 102 90 120 92 140 Z" fill="url(#ncLeafLight)"/>
+    <path d="M92 110 C78 96 74 78 82 70 C94 80 96 96 92 110 Z" fill="url(#ncLeafDark)"/>
+    <path d="M116 212 C100 220 82 220 75 210 C89 202 104 204 116 212 Z" fill="url(#ncLeafDark)" opacity="0.82"/>
+    <!-- Delicate midrib lines -->
+    <path d="M106 199 L72 178 M96 168 L64 136 M91 138 L71 103 M91 108 L83 78" stroke="#E8F3E1" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+  </g>
+
+  <!-- Nurse character holding patient outreach clipboard -->
+  <g>
+    <!-- Soft ground shadow wash below figure -->
+    <ellipse cx="192" cy="226" rx="76" ry="12" fill="#DCEADE" opacity="0.65"/>
+
+    <!-- Nurse low hair bun behind head -->
+    <circle cx="164" cy="84" r="14" fill="#2A312F"/>
+    <circle cx="163" cy="83" r="12" fill="#363E3B"/>
+
+    <!-- Neck & head -->
+    <path d="M180 108 V126 H198 V108 Z" fill="url(#ncSkin)"/>
+    <path d="M180 116 Q189 123 198 116" fill="#C98F6A" opacity="0.32"/>
+
+    <!-- Nurse hair framing face -->
+    <path d="M167 82 C164 60 183 49 201 55 C215 60 218 76 214 91 C210 79 204 71 190 71 C177 71 171 80 167 82 Z" fill="#28302E"/>
+
+    <!-- Nurse cap -->
+    <path d="M167 62 C173 45 198 42 208 58 L201 66 C191 61 178 62 167 62 Z" fill="#FFFFFF" stroke="#85ACA0" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M170 60 C181 56 194 56 205 60" stroke="#087466" stroke-width="2.1" stroke-linecap="round"/>
+
+    <!-- Face -->
+    <path d="M169 78 C167 96 175 113 190 114 C205 114 214 99 213 82 C212 72 204 67 191 67 C179 67 170 71 169 78 Z" fill="url(#ncSkin)"/>
+    <!-- Subtle ear -->
+    <path d="M169 87 C164 87 164 96 170 97" fill="#E3B38D" stroke="#C68E68" stroke-width="1"/>
+    <!-- Gentle rosy cheek -->
+    <ellipse cx="198" cy="96" rx="5.5" ry="3.2" fill="#E19A7F" opacity="0.34"/>
+    <!-- Eyebrows & attentive downcast eyes looking at clipboard -->
+    <path d="M182 82 Q187 79.5 192 82" stroke="#362D2A" stroke-width="1.35" stroke-linecap="round"/>
+    <path d="M199 82 Q204 79.5 208 82" stroke="#362D2A" stroke-width="1.35" stroke-linecap="round"/>
+    <path d="M183 88 Q187 91 192 88.5" stroke="#2D2624" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M199 88.5 Q203.5 91 207.5 88" stroke="#2D2624" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Nose & gentle smile -->
+    <path d="M197 86 C199 91 199 94 196 96" stroke="#BA825E" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M189 102 Q195 105.5 200 102" stroke="#A66554" stroke-width="1.45" stroke-linecap="round"/>
+
+    <!-- Nurse tunic/coat body -->
+    <path d="M148 152 C152 130 166 121 180 120 L199 120 C215 122 228 134 231 154 L235 224 H143 Z" fill="url(#ncTunic)" stroke="#5A8B7E" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- Collar V-trim in medical teal -->
+    <path d="M174 120 L189 144 L205 120" fill="none" stroke="#0E7C6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M179 121 L189 138 L200 121 Z" fill="#E3F2EA"/>
+    <!-- Left shoulder sleeve trim -->
+    <path d="M144 166 L158 172" stroke="#539D8A" stroke-width="3" stroke-linecap="round"/>
+    <!-- Pocket + pen clip on left chest -->
+    <path d="M161 152 H177 V167 C177 170 175 172 172 172 H166 C163 172 161 170 161 167 Z" fill="#F8FCF9" stroke="#75A799" stroke-width="1.2"/>
+    <line x1="166" y1="145" x2="166" y2="154" stroke="#087466" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- Left arm cradling clipboard -->
+    <path d="M146 164 C139 183 145 198 164 198 L175 195" fill="url(#ncTunic)" stroke="#5A8B7E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Mint clinical clipboard held at gentle angle -->
+    <g transform="translate(174, 146) rotate(12)">
+      <rect x="0" y="6" width="54" height="68" rx="7" fill="url(#ncClipboard)" stroke="#3D786B" stroke-width="1.4"/>
+      <rect x="6" y="13" width="42" height="54" rx="4" fill="#FFFDF7" stroke="#DFDBD0" stroke-width="0.9"/>
+      <!-- Top metal clip -->
+      <rect x="17" y="1" width="20" height="9" rx="3.5" fill="#A5BEB5" stroke="#4D7D71" stroke-width="1.2"/>
+      <!-- Checklist lines on clipboard -->
+      <rect x="12" y="23" width="7" height="7" rx="1.8" fill="#DFF2E9" stroke="#087466" stroke-width="1"/>
+      <line x1="23" y1="26.5" x2="42" y2="26.5" stroke="#9EB6AE" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="12" y="36" width="7" height="7" rx="1.8" fill="#DFF2E9" stroke="#087466" stroke-width="1"/>
+      <line x1="23" y1="39.5" x2="40" y2="39.5" stroke="#9EB6AE" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="12" y="49" width="7" height="7" rx="1.8" fill="#F8EED8" stroke="#E0A330" stroke-width="1"/>
+      <line x1="23" y1="52.5" x2="37" y2="52.5" stroke="#BFCAC4" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+
+    <!-- Left & right hands holding clipboard gently -->
+    <ellipse cx="168" cy="193" rx="9.5" ry="6.2" transform="rotate(-8 168 193)" fill="url(#ncSkin)" stroke="#B77E5B" stroke-width="1.1"/>
+    <path d="M226 154 C236 168 232 184 218 186" fill="none" stroke="#5A8B7E" stroke-width="1.5" stroke-linecap="round"/>
+    <ellipse cx="215" cy="184" rx="8.5" ry="5.5" transform="rotate(14 215 184)" fill="url(#ncSkin)" stroke="#B77E5B" stroke-width="1.1"/>
+  </g>
+</svg>

@@ -190,9 +190,11 @@ export function AppLayout({
         ADMIN_SHELL_VIEWS.has(view) ||
         (Boolean(verifiedRole && ADMIN_SHELL_ROLES.has(verifiedRole)) && (!isCareOrAyushTheme || view === 'ipd'))
     )
-    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme || isAdminShell
+    const isNurseCallsShell = !isDoctorRole && view === 'nurse-calls'
+    const isBotanicalRailShell = isAdminShell || isNurseCallsShell
+    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme || isBotanicalRailShell
     const isClinicianShell = isDoctorRole && (isClinicianOpdTheme || isCareOrAyushTheme)
-    const isRailShell = isClinicianShell || isAdminShell
+    const isRailShell = isClinicianShell || isBotanicalRailShell
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -441,7 +443,7 @@ export function AppLayout({
                     onClose={() => setIsNotificationsOpen(false)}
                     onNavigate={setView}
                 />
-                {isAdminShell && (
+                {isBotanicalRailShell && (
                     <div className="hidden sm:inline-flex shrink-0">
                         <WebsiteLanguageSelect inline />
                     </div>
@@ -567,7 +569,7 @@ export function AppLayout({
                         />
                     ))}
 
-                {isAdminShell && (!isCollapsed || isMobileMenuOpen) && (
+                {isBotanicalRailShell && (!isCollapsed || isMobileMenuOpen) && (
                     <div className="jvk-admin-sidebar-botanical" aria-hidden="true">
                         <img
                             src="/assets/admin/sidebar-botanical-mortar.png"
@@ -580,7 +582,7 @@ export function AppLayout({
                 )}
             </nav>
 
-            {isIvoryShellTheme && !isAdminShell && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
+            {isIvoryShellTheme && !isBotanicalRailShell && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
                 <div className="jvk-sidebar-botanical-layer pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
                     <img
                         src="/assets/opd/sidebar-botanical-watercolor.png"
@@ -608,7 +610,7 @@ export function AppLayout({
                         <p className="text-[11px] text-[#586C64]">{getBrandSubtitle()}</p>
                     </div>
                 </div>
-                {isAdminShell && (
+                {isBotanicalRailShell && (
                     <div className="sm:hidden w-full">
                         <WebsiteLanguageSelect inline />
                     </div>
@@ -743,7 +745,7 @@ export function AppLayout({
     if (isRailShell) {
         return (
             <div
-                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isAdminShell ? 'jvk-admin-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
+                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isBotanicalRailShell ? 'jvk-admin-shell' : ''}${isNurseCallsShell ? ' jvk-nurse-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
                 data-mobile-menu-open={isMobileMenuOpen}
                 onKeyDown={(event) => {
                     if (event.key === 'Escape' && isMobileMenuOpen) {
@@ -752,8 +754,8 @@ export function AppLayout({
                     }
                 }}
             >
-                <header className={`jvk-clinician-header ${isAdminShell ? 'jvk-admin-topbar' : ''} sticky top-0 z-30 shrink-0`}>
-                    <ClinicianTooltip label={isAdminShell ? 'Home — Command Center' : 'Home — OPD Cockpit'} position="bottom" enabled>
+                <header className={`jvk-clinician-header ${isBotanicalRailShell ? 'jvk-admin-topbar' : ''} sticky top-0 z-30 shrink-0`}>
+                    <ClinicianTooltip label={isAdminShell ? 'Home — Command Center' : isNurseCallsShell ? 'Home — IPD' : 'Home — OPD Cockpit'} position="bottom" enabled>
                         <Link
                             to={homeDestination}
                             aria-label="JEEVIKA — Go to dashboard"
@@ -786,7 +788,7 @@ export function AppLayout({
                         </Link>
                     </ClinicianTooltip>
 
-                    {isAdminShell && (
+                    {isBotanicalRailShell && (
                         <span className="hidden md:inline-block truncate text-sm sm:text-base font-bold text-[#0E2420] tracking-tight ml-3">
                             {portalMeta.name}
                         </span>

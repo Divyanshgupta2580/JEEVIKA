@@ -1,0 +1,345 @@
+/* Isolated JEEVIKA Nurse Call Queue styles (.jvk-nurse-shell & .jvk-nurse-page) */
+/* Reuses approved JEEVIKA ivory/teal/botanical tokens without altering unrelated pages */
+
+.jvk-nurse-shell {
+  --jvk-nurse-bg: #faf7f0;
+  --jvk-nurse-surface: #fffdf8;
+  --jvk-nurse-surface-soft: #fffefb;
+  --jvk-nurse-ink: #103b32;
+  --jvk-nurse-ink-body: #243b34;
+  --jvk-nurse-muted: #52685f;
+  --jvk-nurse-teal: #087466;
+  --jvk-nurse-teal-hover: #065d52;
+  --jvk-nurse-sage: #e8f1e5;
+  --jvk-nurse-mint: #dff4ed;
+  --jvk-nurse-gold: #ebaa24;
+  --jvk-nurse-border: #e4e5da;
+  color-scheme: light;
+}
+
+.jvk-nurse-shell .ayu-workspace-content {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(223, 244, 237, 0.34) 0%, transparent 45%),
+    linear-gradient(180deg, #faf7f0 0%, #f8f4ea 100%);
+}
+
+/* Guide introduction banner with subtle corner botanical leaves matching reference */
+.jvk-nurse-shell .ayu-guide-invitation {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e5f1e3 0%, #f1f7ee 52%, #e6f2e5 100%);
+  border: 1px solid #d3e2d3;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(16, 59, 50, 0.035);
+  margin-bottom: 18px;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation::before,
+.jvk-nurse-shell .ayu-guide-invitation::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 92px;
+  background: url("/assets/kiosk/kiosk-botanical-corner.png") no-repeat center / contain;
+  mix-blend-mode: multiply;
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation::before {
+  top: -12px;
+  left: -18px;
+  transform: scale(-1, -1) rotate(12deg);
+}
+
+.jvk-nurse-shell .ayu-guide-invitation::after {
+  right: -12px;
+  bottom: -14px;
+  transform: rotate(-4deg);
+}
+
+.jvk-nurse-shell .ayu-guide-invitation > * {
+  position: relative;
+  z-index: 1;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--jvk-nurse-ink);
+  letter-spacing: -0.015em;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation p {
+  color: var(--jvk-nurse-muted);
+}
+
+.jvk-nurse-shell .ayu-guide-invitation > button:first-of-type {
+  background: var(--jvk-nurse-teal);
+  border-color: var(--jvk-nurse-teal);
+  color: #ffffff;
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation > button:first-of-type:hover {
+  background: var(--jvk-nurse-teal-hover);
+}
+
+.jvk-nurse-shell .ayu-guide-invitation > button:last-of-type {
+  background: #fffdf8;
+  border-color: #d6dfd4;
+  color: var(--jvk-nurse-ink);
+  border-radius: 11px;
+  font-weight: 600;
+}
+
+.jvk-nurse-shell .ayu-guide-invitation > button:last-of-type:hover {
+  background: #f5f9f4;
+}
+
+/* Main workspace typography & card containers */
+.jvk-nurse-page {
+  color: var(--jvk-nurse-ink-body);
+  min-width: 0;
+}
+
+.jvk-nurse-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--jvk-nurse-ink);
+  letter-spacing: -0.02em;
+}
+
+.jvk-nurse-main-card {
+  background: linear-gradient(180deg, #fffefb 0%, #fdfaf3 100%);
+  border: 1px solid var(--jvk-nurse-border);
+  border-radius: 22px;
+  box-shadow: 0 8px 30px rgba(16, 59, 50, 0.045);
+}
+
+.jvk-nurse-empty-card {
+  background: linear-gradient(180deg, #fffefb 0%, #fffdf8 100%);
+  border: 1px solid #e7e8de;
+  border-radius: 18px;
+}
+
+.jvk-nurse-call-card {
+  background: var(--jvk-nurse-surface-soft);
+  border: 1px solid var(--jvk-nurse-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(16, 59, 50, 0.03);
+}
+
+.jvk-nurse-artwork {
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 58%, rgba(0, 0, 0, 0.72) 78%, transparent 98%);
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 58%, rgba(0, 0, 0, 0.72) 78%, transparent 98%);
+}
+
+/* Native accessible range slider styled per modern-web-guidance (WebKit & Firefox split blocks) */
+.jvk-nurse-slider {
+  --slider-track-size: 0.5rem;
+  --slider-thumb-size: 1.15rem;
+  --slider-track-radius: 999px;
+  --slider-thumb-radius: 50%;
+  --slider-track-color: #d6dfd9;
+  --slider-fill-color: #087466;
+  --slider-thumb-color: #087466;
+  --slider-direction: to right;
+  --attr-min: 0;
+  --attr-max: 240;
+  --control-value: 60;
+  --slider-progress: calc(
+    progress(var(--control-value), var(--attr-min), var(--attr-max)) * 100%
+  );
+
+  appearance: none;
+  inline-size: 100%;
+  block-size: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.jvk-nurse-slider:dir(rtl) {
+  --slider-direction: to left;
+}
+
+@supports not (opacity: progress(1, 0, 100)) {
+  .jvk-nurse-slider {
+    --slider-progress: calc(
+      (var(--control-value) - var(--attr-min)) /
+      max(var(--attr-max) - var(--attr-min), 1) * 100%
+    );
+  }
+}
+
+.jvk-nurse-slider::-webkit-slider-runnable-track {
+  block-size: var(--slider-track-size);
+  border: 0;
+  border-radius: var(--slider-track-radius);
+  box-shadow: inset 0 0 0 1px rgba(16, 59, 50, 0.22);
+  background: linear-gradient(
+    var(--slider-direction),
+    var(--slider-fill-color) var(--slider-progress),
+    var(--slider-track-color) var(--slider-progress)
+  );
+}
+
+.jvk-nurse-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+  border: 2px solid #fffdf8;
+  border-radius: var(--slider-thumb-radius);
+  background: var(--slider-thumb-color);
+  box-shadow: 0 2px 6px rgba(8, 116, 102, 0.28);
+}
+
+.jvk-nurse-slider::-moz-range-track {
+  block-size: var(--slider-track-size);
+  border: 0;
+  border-radius: var(--slider-track-radius);
+  box-shadow: inset 0 0 0 1px rgba(16, 59, 50, 0.22);
+  background: var(--slider-track-color);
+}
+
+.jvk-nurse-slider::-moz-range-progress {
+  block-size: var(--slider-track-size);
+  border-radius: var(--slider-track-radius);
+  background: var(--slider-fill-color);
+}
+
+.jvk-nurse-slider::-moz-range-thumb {
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  border: 2px solid #fffdf8;
+  border-radius: var(--slider-thumb-radius);
+  background: var(--slider-thumb-color);
+  box-shadow: 0 2px 6px rgba(8, 116, 102, 0.28);
+}
+
+.jvk-nurse-slider:focus-visible {
+  outline: 2.5px solid var(--slider-fill-color);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.jvk-nurse-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 11px;
+  border: 1px solid #d9ded4;
+  background: #fffdf8;
+  color: var(--jvk-nurse-ink);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(16, 59, 50, 0.04);
+  cursor: pointer;
+}
+
+.jvk-nurse-page :where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2.5px solid var(--jvk-nurse-teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jvk-nurse-enter {
+    animation: jvk-nurse-fade-up 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .jvk-nurse-refresh-btn,
+  .jvk-nurse-call-card,
+  .jvk-nurse-outcome-btn {
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 160ms ease,
+      transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .jvk-nurse-refresh-btn:hover:not(:disabled) {
+    background: #f2f8f4;
+    border-color: rgba(8, 116, 102, 0.36);
+    color: var(--jvk-nurse-teal);
+    transform: translateY(-1px);
+  }
+
+  .jvk-nurse-refresh-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .jvk-nurse-call-card:hover {
+    border-color: rgba(8, 116, 102, 0.28);
+    box-shadow: 0 8px 22px rgba(16, 59, 50, 0.065);
+  }
+
+  .jvk-nurse-outcome-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .jvk-nurse-slider::-webkit-slider-thumb {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  .jvk-nurse-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(8, 116, 102, 0.35);
+  }
+
+  .jvk-nurse-slider::-moz-range-thumb {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  .jvk-nurse-slider:hover::-moz-range-thumb {
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(8, 116, 102, 0.35);
+  }
+}
+
+@keyframes jvk-nurse-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .jvk-nurse-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical {
+    margin-top: auto;
+    margin-bottom: 8px;
+  }
+
+  .jvk-nurse-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical img {
+    max-width: 156px;
+    max-height: 152px;
+  }
+}
+
+@media (max-width: 639px) {
+  .jvk-nurse-shell .ayu-guide-invitation::before,
+  .jvk-nurse-shell .ayu-guide-invitation::after {
+    opacity: 0.22;
+    width: 112px;
+    height: 70px;
+  }
+}
