@@ -14,6 +14,7 @@ import { ShellEmergency } from '@/components/ShellEmergency'
 import { useOptionalOpdWorkspace } from '@/features/opd/opdContext'
 import { WebsiteLanguageSelect } from '@/components/WebsiteLanguageSelect'
 import '@/design-system/opd-cockpit.css'
+import '@/design-system/sidebar-unified.css'
 
 function ClinicianTooltip({
     label,
@@ -196,17 +197,29 @@ export function AppLayout({
     const isNurseCallsShell = !isDoctorRole && view === 'nurse-calls'
     const isClinicOpsShell = !isDoctorRole && (view === 'shift-management' || view === 'pos' || view === 'inventory-dashboard' || view === 'procurement')
     const isBotanicalRailShell = isAdminShell || isNurseCallsShell
-    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme || isBotanicalRailShell
+    const isIvoryShellTheme = true
     const isClinicianShell = isDoctorRole && (isClinicianOpdTheme || isCareOrAyushTheme)
-    const isRailShell = isClinicianShell || isBotanicalRailShell
+    const isFullBleedPortal = view === 'patient-kiosk';
+    const isRailShell = !isFullBleedPortal
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
-    const isFullBleedPortal = view === 'patient-kiosk';
-    const [isCollapsed, setIsCollapsed] = useState(() => verifiedRole === 'DOCTOR');
+    const SIDEBAR_COLLAPSE_KEY = 'jeevika_sidebar_collapsed';
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        try {
+            return localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    });
+    useEffect(() => {
+        try {
+            localStorage.setItem(SIDEBAR_COLLAPSE_KEY, String(isCollapsed));
+        } catch {}
+    }, [isCollapsed]);
     const CLINIC_VIEWS = ['clinic-admin', 'pos', 'attendance', 'shift-management', 'inventory-dashboard', 'staff', 'staff-management', 'earnings'];
-    const isClinicPortal = CLINIC_VIEWS.includes(view) || (verifiedRole === 'CLINIC_ADMIN' && view === 'procurement') || (selectedClinicId !== null && view !== 'admin');
+    const isClinicPortal = CLINIC_VIEWS.includes(view) || (verifiedRole === 'CLINIC_ADMIN' && view === 'procurement') || (verifiedRole === 'CLINIC_ADMIN' && view === 'admin') || (selectedClinicId !== null && view !== 'admin');
 
     const getPortalMeta = () => {
         if (view === 'patient-kiosk') {
@@ -421,7 +434,7 @@ export function AppLayout({
                                 window.location.reload();
                             }
                         }}
-                        className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#DCE5DC] bg-white/90 text-[#1F5A45] text-xs font-semibold hover:bg-[#EEF6F1] transition-colors"
+                        className="hidden xl:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#DCE5DC] bg-white/90 text-[#1F5A45] text-xs font-semibold hover:bg-[#EEF6F1] transition-colors"
                         title="Enable Desktop Notifications"
                     >
                         <SymbolIcon className="material-symbols-outlined text-[16px]">notifications_active</SymbolIcon>
@@ -447,11 +460,9 @@ export function AppLayout({
                     onClose={() => setIsNotificationsOpen(false)}
                     onNavigate={setView}
                 />
-                {isBotanicalRailShell && (
-                    <div className="hidden sm:inline-flex shrink-0">
-                        <WebsiteLanguageSelect inline />
-                    </div>
-                )}
+                <div className="hidden sm:inline-flex shrink-0">
+                    <WebsiteLanguageSelect inline />
+                </div>
             </div>
         </>
     );
@@ -521,6 +532,26 @@ export function AppLayout({
         </button>
     );
 
+    const visibleNavItems = staffNavItems(verifiedRole).filter(({ route }) => routeAccess(route, verifiedRole) !== 'None');
+    const hasDedicatedGrnNav = visibleNavItems.some((item) => item.view === 'procurement-grn');
+    const isNavItemActive = (itemView: string) => {
+        if (view === itemView) return true;
+        if (itemView === 'ca-suite' && view === 'audit_logs') return true;
+        if (itemView === 'inventory-dashboard' && view === 'medicine-migration') return true;
+        if (itemView === 'procurement' && view === 'procurement-grn' && !hasDedicatedGrnNav) return true;
+        if (itemView === 'admin' && ['clinic-admin', 'hospitals', 'setup', 'earnings', 'settings', 'billing'].includes(view)) return true;
+        return false;
+    };
+
+    const getHomeTooltipLabel = () => {
+        if (verifiedRole === 'CLINIC_ADMIN') return 'Home — Clinic Operations';
+        if (isAdminShell) return 'Home — Command Center';
+        if (verifiedRole === 'STAT_NURSE') return 'Home — Casualty';
+        if (verifiedRole === 'NURSE' || isNurseCallsShell) return 'Home — IPD';
+        if (verifiedRole === 'CASHIER' || verifiedRole === 'CLINIC_STAFF') return 'Home — Pharmacy POS';
+        return 'Home — OPD Cockpit';
+    };
+
     const sidebarElement = !isFullBleedPortal && (
         <aside
             aria-label="Workspace navigation"
@@ -555,23 +586,21 @@ export function AppLayout({
             </div>
 
             <nav id="workspace-menu" aria-label="Staff workspaces" className="ayu-workspace-nav relative z-10">
-                {staffNavItems(verifiedRole)
-                    .filter(({ route }) => routeAccess(route, verifiedRole) !== 'None')
-                    .map((item) => (
-                        <NavItem
-                            key={item.id}
-                            id={`tour-${item.id}`}
-                            icon={item.icon}
-                            label={item.label}
-                            active={view === item.view}
-                            badgeCount={item.id === 'alerts' && isDoctorRole ? activeAlertCount : undefined}
-                            urgentBadge={item.id === 'alerts' && hasEmergencyAlerts}
-                            onClick={() => {
-                                if (item.view === 'admin') onSelectClinicId?.(null);
-                                setView(item.view);
-                            }}
-                        />
-                    ))}
+                {visibleNavItems.map((item) => (
+                    <NavItem
+                        key={item.id}
+                        id={`tour-${item.id}`}
+                        icon={item.icon}
+                        label={item.label}
+                        active={isNavItemActive(item.view)}
+                        badgeCount={item.id === 'alerts' && isDoctorRole ? activeAlertCount : undefined}
+                        urgentBadge={item.id === 'alerts' && hasEmergencyAlerts}
+                        onClick={() => {
+                            if (item.view === 'admin') onSelectClinicId?.(null);
+                            setView(item.view);
+                        }}
+                    />
+                ))}
             </nav>
 
             {isIvoryShellTheme && (!isCollapsed || isMobileMenuOpen) && (
@@ -612,11 +641,9 @@ export function AppLayout({
                         <p className="text-[11px] text-[#586C64]">{getBrandSubtitle()}</p>
                     </div>
                 </div>
-                {isBotanicalRailShell && (
-                    <div className="sm:hidden w-full">
-                        <WebsiteLanguageSelect inline />
-                    </div>
-                )}
+                <div className="sm:hidden w-full">
+                    <WebsiteLanguageSelect inline />
+                </div>
                 {isRailShell ? (
                     <ClinicianTooltip label="Sign Out" enabled={isCollapsed}>
                         {signOutButton}
@@ -747,8 +774,9 @@ export function AppLayout({
     if (isRailShell) {
         return (
             <div
-                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isBotanicalRailShell ? 'jvk-admin-shell' : ''}${isNurseCallsShell ? ' jvk-nurse-shell' : ''}${isClinicOpsShell ? ' jvk-clinic-ops-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
+                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell jvk-staff-shell ${isBotanicalRailShell ? 'jvk-admin-shell' : ''}${isNurseCallsShell ? ' jvk-nurse-shell' : ''}${isClinicOpsShell ? ' jvk-clinic-ops-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
                 data-mobile-menu-open={isMobileMenuOpen}
+                data-sidebar-collapsed={isCollapsed ? 'true' : 'false'}
                 onKeyDown={(event) => {
                     if (event.key === 'Escape' && isMobileMenuOpen) {
                         setIsMobileMenuOpen(false);
@@ -757,7 +785,7 @@ export function AppLayout({
                 }}
             >
                 <header className={`jvk-clinician-header ${isBotanicalRailShell ? 'jvk-admin-topbar' : ''} sticky top-0 z-30 shrink-0`}>
-                    <ClinicianTooltip label={isAdminShell ? 'Home — Command Center' : isNurseCallsShell ? 'Home — IPD' : 'Home — OPD Cockpit'} position="bottom" enabled>
+                    <ClinicianTooltip label={getHomeTooltipLabel()} position="bottom" enabled>
                         <Link
                             to={homeDestination}
                             aria-label="JEEVIKA — Go to dashboard"

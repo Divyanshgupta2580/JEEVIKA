@@ -1,0 +1,450 @@
+/* Authoritative Application-Wide Unified Staff Sidebar Stylesheet (.jvk-staff-shell) */
+/* Standardized visual system matching the approved Nurse IPD reference across ALL staff roles */
+
+.ayu-erp:has(.jvk-staff-shell) .jvk-floating-locale {
+  display: none;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background-color: #fefbf6;
+  color: #0e2420;
+}
+
+/* Header bar: fixed-size JEEVIKA logo stays anchored independently of sidebar collapse */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell > .jvk-clinician-header {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  min-height: 62px;
+  padding: 10px 16px;
+  background: rgba(254, 251, 246, 0.96);
+  backdrop-filter: blur(8px);
+  border-block-end: 1px solid #ebe4d5;
+  z-index: 44;
+}
+
+@media (min-width: 640px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell > .jvk-clinician-header {
+    padding-inline: 16px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell > .jvk-clinician-header {
+    padding-inline: 16px 32px;
+  }
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-home-link {
+  position: relative;
+  z-index: 48;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 120px;
+  border-radius: 10px;
+  padding: 2px 4px;
+  transition: opacity 160ms ease;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-logo,
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-brand-logo {
+  display: block;
+  width: auto;
+  height: 38px;
+  max-width: 126px;
+  flex: none;
+  object-fit: contain;
+}
+
+/* Full-height expanded sidebar on desktop (seamlessly merges under top-left logo band) */
+@media (min-width: 1024px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell > .jvk-clinician-body {
+    overflow: visible;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell > .jvk-clinician-body > .ayu-workspace-scroll {
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="false"] > .jvk-clinician-header {
+    height: 62px;
+    flex-wrap: nowrap;
+    background: transparent;
+    backdrop-filter: none;
+    border-block-end-color: transparent;
+    padding-inline-start: 264px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="true"] > .jvk-clinician-header {
+    height: 62px;
+    flex-wrap: nowrap;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="false"] > .jvk-clinician-header::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 240px;
+    inset-inline-end: 0;
+    background: rgba(254, 251, 246, 0.96);
+    backdrop-filter: blur(8px);
+    border-block-end: 1px solid #ebe4d5;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="false"] > .jvk-clinician-header > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="false"] > .jvk-clinician-header > .jvk-clinician-home-link {
+    position: absolute;
+    inset-inline-start: 16px;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    z-index: 48;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-sidebar-collapsed="true"] > .jvk-clinician-header > .jvk-clinician-home-link {
+    margin-inline-end: 12px;
+  }
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-header-actions {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 767px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Unified extreme-left sidebar surface (expanded vs collapsed) */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: 240px;
+  min-height: 0;
+  margin: 0;
+  inset-inline-start: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, #fffdf9 0%, #fcf8ef 100%);
+  border-inline-end: 1px solid #ebe4d5;
+  box-shadow: 2px 0 18px rgba(14, 36, 32, 0.025);
+  z-index: 42;
+  transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 1024px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar:not([data-collapsed="true"]) {
+    width: 240px;
+    height: 100dvh;
+    margin-top: -62px;
+    padding-top: 62px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] {
+    width: 56px;
+    height: 100%;
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* Compact Menu toggle button aligned cleanly with nav items (matching reference screenshot) */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar > .ayu-workspace-sidebar-top {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 12px 6px;
+  gap: 0;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn,
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .ayu-workspace-menu-desktop {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2ddd0;
+  background: #fffdf9;
+  color: #2c453d;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(14, 36, 32, 0.03);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn:hover {
+    background: #eef6f0;
+    border-color: #c6e1d1;
+    color: #087466;
+    box-shadow: 0 1px 3px rgba(8, 116, 102, 0.08);
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-menu-btn:hover .jvk-sidebar-icon {
+    color: #087466;
+  }
+}
+
+/* Navigation items container & standardized states */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .ayu-workspace-nav {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 10px;
+  padding: 4px 12px 10px;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item {
+  border: 1px solid transparent;
+  border-radius: 11px;
+  min-height: 38px;
+  padding: 6px 12px;
+  gap: 11px;
+  background: transparent;
+  color: #2d453d;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item .jvk-sidebar-icon {
+  color: #466157;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"] {
+  background: #e5f3eb;
+  border-color: #c6e1d1;
+  color: #0e2420;
+  box-shadow: 0 1px 3px rgba(4, 124, 97, 0.07);
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"] .jvk-sidebar-icon {
+  color: #047c61;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="false"]:not(:disabled):hover {
+    background: #edf6f0;
+    border-color: #d6e8dd;
+    color: #103b32;
+    box-shadow: 0 1px 2px rgba(8, 116, 102, 0.06);
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="false"]:not(:disabled):hover .jvk-sidebar-icon {
+    color: #087466;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover {
+    background: #daf0e3;
+    border-color: #a8d4bb;
+    color: #09221c;
+    box-shadow: 0 2px 6px rgba(4, 124, 97, 0.11);
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-nav-item[data-active="true"]:not(:disabled):hover .jvk-sidebar-icon {
+    color: #03634d;
+  }
+}
+
+/* Large bottom-left botanical watercolor branch + mortar & pestle artwork */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-sidebar-botanical-layer {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 2px 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  isolation: isolate;
+  container-type: size;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-sidebar-botanical-img {
+  position: static;
+  display: block;
+  width: auto;
+  height: min(312px, 100%);
+  max-width: 97%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: left bottom;
+  margin: 0;
+  opacity: 0.98;
+  mix-blend-mode: multiply;
+  filter: brightness(1.02) contrast(1.03);
+  pointer-events: none;
+  user-select: none;
+}
+
+@container (max-height: 108px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-sidebar-botanical-img {
+    display: none;
+  }
+}
+
+/* Anchored profile & sign-out footer */
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .ayu-workspace-sidebar-footer {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: start;
+  gap: 10px;
+  padding: 12px 12px max(14px, env(safe-area-inset-bottom));
+  border-block-start: 1px solid #ebe4d5;
+  background: linear-gradient(180deg, rgba(253, 250, 243, 0.92) 0%, #faf7f0 100%);
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-sign-out {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ebcbc7;
+  background: #fdf5f4;
+  color: #b9382c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-sign-out .jvk-sidebar-icon {
+  color: #b9382c;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:hover {
+    background: #fce5e2;
+    border-color: #dda49d;
+    color: #991f16;
+    box-shadow: 0 1px 3px rgba(185, 56, 44, 0.1);
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar .jvk-clinician-sign-out:hover .jvk-sidebar-icon {
+    color: #991f16;
+  }
+}
+
+/* Collapsed rail rules (desktop >= 1024px) */
+@media (min-width: 1024px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .jvk-clinician-rail-label {
+    display: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .jvk-sidebar-botanical-layer {
+    display: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] > .ayu-workspace-sidebar-top {
+    align-items: center;
+    padding: 8px 8px 6px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .ayu-workspace-menu-desktop {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .ayu-workspace-nav {
+    flex: 1 1 auto;
+    align-items: center;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .ayu-workspace-nav-item {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    border-radius: 11px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .ayu-workspace-sidebar-footer {
+    justify-items: center;
+    padding: 10px 8px max(12px, env(safe-area-inset-bottom));
+    border-block-start-color: transparent;
+    background: transparent;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar[data-collapsed="true"] .ayu-workspace-sign-out {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    border-radius: 11px;
+  }
+}
+
+/* Mobile & tablet drawer (below 1024px) */
+@media (max-width: 1023px) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar > .ayu-workspace-sidebar-top {
+    display: none;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar {
+    max-height: calc(100dvh - 88px);
+    background: #fcf8ef;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-mobile-menu-open="true"] .ayu-workspace-nav {
+    flex: 0 1 auto;
+    padding-block: 6px;
+    gap: 3px;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-mobile-menu-open="true"] .jvk-sidebar-botanical-layer {
+    padding: 4px 0 0;
+  }
+
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell[data-mobile-menu-open="true"] .jvk-sidebar-botanical-img {
+    height: min(240px, 100%);
+    max-width: min(220px, 72%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar,
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out),
+  .ayu-erp .jvk-clinician-shell.jvk-staff-shell .jvk-clinician-sidebar :is(.jvk-clinician-menu-btn, .jvk-clinician-nav-item, .jvk-clinician-sign-out) .jvk-sidebar-icon {
+    transition: none;
+  }
+}
