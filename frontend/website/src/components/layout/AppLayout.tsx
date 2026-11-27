@@ -149,6 +149,9 @@ function ClinicianTooltip({
     );
 }
 
+const SIDEBAR_BOTANICAL_ARTWORK = '/assets/admin/sidebar-botanical-mortar.png';
+const SIDEBAR_BOTANICAL_FALLBACK = '/assets/opd/sidebar-botanical-watercolor.png';
+
 interface AppLayoutProps {
     children: React.ReactNode
     onLogout: () => void
@@ -569,29 +572,27 @@ export function AppLayout({
                             }}
                         />
                     ))}
-
-                {isBotanicalRailShell && (!isCollapsed || isMobileMenuOpen) && (
-                    <div className="jvk-admin-sidebar-botanical" aria-hidden="true">
-                        <img
-                            src="/assets/admin/sidebar-botanical-mortar.png"
-                            alt=""
-                            aria-hidden="true"
-                            width={158}
-                            height={162}
-                        />
-                    </div>
-                )}
             </nav>
 
-            {isIvoryShellTheme && !isBotanicalRailShell && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
-                <div className="jvk-sidebar-botanical-layer pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+            {isIvoryShellTheme && (!isCollapsed || isMobileMenuOpen) && (
+                <div
+                    className="jvk-admin-sidebar-botanical jvk-sidebar-botanical-layer pointer-events-none select-none z-0"
+                    aria-hidden="true"
+                >
                     <img
-                        src="/assets/opd/sidebar-botanical-watercolor.png"
+                        src={SIDEBAR_BOTANICAL_ARTWORK}
                         alt=""
                         aria-hidden="true"
-                        width={248}
-                        height={240}
+                        width={520}
+                        height={693}
                         className="jvk-sidebar-botanical-img"
+                        onError={(event) => {
+                            const img = event.currentTarget;
+                            if (!img.dataset.fallbackApplied) {
+                                img.dataset.fallbackApplied = 'true';
+                                img.src = SIDEBAR_BOTANICAL_FALLBACK;
+                            }
+                        }}
                     />
                 </div>
             )}

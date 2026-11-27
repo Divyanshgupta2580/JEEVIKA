@@ -477,25 +477,79 @@
   }
 }
 
-/* Isolated sidebar bottom-left botanical watercolor artwork */
-.ayu-erp .jvk-sidebar-botanical-layer {
-  isolation: isolate;
+/* Unified shared sidebar bottom-left botanical watercolor + mortar artwork */
+.ayu-erp .jvk-opd-sidebar .ayu-workspace-nav {
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
-.ayu-erp .jvk-sidebar-botanical-img {
-  position: absolute;
-  inset-block-end: 120px;
-  inset-inline-start: 0;
-  display: block;
-  width: 192px;
-  max-width: 80%;
-  height: auto;
-  aspect-ratio: 248 / 240;
-  object-fit: contain;
-  opacity: 0.96;
-  mix-blend-mode: multiply;
+@media (min-width: 1024px) {
+  .ayu-erp .jvk-opd-sidebar[data-collapsed="true"] .ayu-workspace-nav {
+    flex: 1 1 auto;
+  }
+
+  .ayu-erp .jvk-opd-sidebar[data-collapsed="true"] .jvk-sidebar-botanical-layer {
+    display: none;
+  }
+}
+
+.ayu-erp .jvk-opd-sidebar .jvk-sidebar-botanical-layer {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 2px 0 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  overflow: hidden;
   pointer-events: none;
   user-select: none;
+  isolation: isolate;
+  container-type: size;
+}
+
+.ayu-erp .jvk-opd-sidebar .jvk-sidebar-botanical-img {
+  position: static;
+  display: block;
+  width: auto;
+  height: min(312px, 100%);
+  max-width: 97%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: left bottom;
+  margin: 0;
+  opacity: 0.98;
+  mix-blend-mode: multiply;
+  filter: brightness(1.02) contrast(1.03);
+  pointer-events: none;
+  user-select: none;
+}
+
+@container (max-height: 115px) {
+  .ayu-erp .jvk-opd-sidebar .jvk-sidebar-botanical-img {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ayu-erp .ayu-workspace-shell[data-mobile-menu-open="false"] .jvk-sidebar-botanical-layer {
+    display: none;
+  }
+
+  .ayu-erp .ayu-workspace-shell[data-mobile-menu-open="true"] .jvk-opd-sidebar .ayu-workspace-nav {
+    flex: 0 1 auto;
+  }
+
+  .ayu-erp .ayu-workspace-shell[data-mobile-menu-open="true"] .jvk-opd-sidebar .jvk-sidebar-botanical-layer {
+    padding: 4px 0 4px;
+  }
+
+  .ayu-erp .ayu-workspace-shell[data-mobile-menu-open="true"] .jvk-opd-sidebar .jvk-sidebar-botanical-img {
+    height: min(260px, 100%);
+    max-width: min(240px, 76%);
+  }
 }
 
 /* Notification panel responsive scroll containment and mobile header clearance */

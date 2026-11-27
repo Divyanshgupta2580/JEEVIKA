@@ -234,13 +234,13 @@
 
 @media (max-width: 1023px) {
   .jvk-clinic-ops-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical {
-    margin-top: auto;
-    margin-bottom: 8px;
+    margin: 0;
+    padding: 4px 0 4px;
   }
 
   .jvk-clinic-ops-shell[data-mobile-menu-open="true"] .jvk-clinician-sidebar .jvk-admin-sidebar-botanical img {
-    max-width: 148px;
-    max-height: 142px;
+    height: min(260px, 100%);
+    max-width: min(240px, 76%);
   }
 }
 
