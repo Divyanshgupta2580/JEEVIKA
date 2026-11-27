@@ -1,3 +1,4 @@
+import { kioskPurposeDenied } from "../kiosk-consent";
 import { type Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
@@ -64,14 +65,14 @@ async function encounter(c: Ctx, id: string) {
   const p = c.get("principal");
   const row = await dbFor(c)
     .statement(
-      `SELECT e.id,e.patient_id FROM encounters e
+      `SELECT e.id,e.patient_id,NOT ${kioskPurposeDenied("e", "research")} AS research_allowed FROM encounters e
     JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
     JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care'
     WHERE e.org_id=:org AND e.id=? AND e.clinic_id=? AND p.synthetic=1 AND c.revoked_at IS NULL`,
       id,
       p.clinicId,
     )
-    .first<{ id: string; patient_id: string }>();
+    .first<{ id: string; patient_id: string; research_allowed: number }>();
   if (!row)
     throw new HTTPException(404, {
       message: "Authorized consented encounter not found",
@@ -98,14 +99,15 @@ async function response(c: Ctx, row: ReportRow) {
       row.id,
     )
     .all<RevisionRow>();
-  await encounter(c, row.encounter_id);
+  const access = await encounter(c, row.encounter_id);
+  const researchAllowed = !!(row.research_consent && access.research_allowed);
   return cbcReportSchema.parse({
     id: row.id,
     encounterId: row.encounter_id,
     patientId: row.patient_id,
     revision: row.revision,
     createdAt: row.created_at,
-    researchConsent: !!row.research_consent,
+    researchConsent: researchAllowed,
     sourceRetained: !!row.document_key,
     revisions: results.map((r) => ({
       revision: r.revision,
@@ -117,19 +119,20 @@ async function response(c: Ctx, row: ReportRow) {
       confirmedAt: r.confirmed_at,
       confirmedBy: r.confirmed_by,
       inputHash: r.input_hash,
-      prediction: r.prediction_json
+      prediction: researchAllowed && r.prediction_json
         ? cbcPredictionSchema.parse(JSON.parse(r.prediction_json))
         : null,
-      predictedAt: r.predicted_at,
+      predictedAt: researchAllowed ? r.predicted_at : null,
     })),
   });
 }
 function operationKey(c: Ctx) {
   return idSchema.parse(c.req.header("Idempotency-Key"));
 }
-function audit(c: Ctx, encounterId: string, action: string) {
+function audit(c: Ctx, encounterId: string, action: string, afterWrite = false) {
   return dbFor(c).statement(
-    "INSERT INTO activity(org_id,id,encounter_id,actor_id,action,created_at) VALUES(:org,?,?,?,?,?)",
+    `INSERT INTO activity(org_id,id,encounter_id,actor_id,action,created_at)
+      SELECT :org,?,?,?,?,? ${afterWrite ? "WHERE changes()>0" : ""}`,
     crypto.randomUUID(),
     encounterId,
     c.get("principal").userId,
@@ -196,6 +199,8 @@ cbcRouter.post("/reports", async (c) => {
   const e = await encounter(c, input.encounterId),
     p = c.get("principal"),
     db = dbFor(c);
+  if (input.researchConsent && !e.research_allowed)
+    throw new HTTPException(403, { message: "Research processing permission required" });
   const hash = await tokenHash(JSON.stringify(input));
   const prior = await db
     .statement(
@@ -388,7 +393,7 @@ cbcRouter.post("/reports/:id/predict", async (c) => {
     throw new HTTPException(409, {
       message: "Idempotency key already used for another prediction",
     });
-  if (!row.research_consent)
+  if (!row.research_consent || !(await encounter(c, row.encounter_id)).research_allowed)
     throw new HTTPException(403, {
       message: "Research processing permission required",
     });
@@ -444,7 +449,8 @@ cbcRouter.post("/reports/:id/predict", async (c) => {
       dbFor(c).statement(
         `UPDATE cbc_revisions SET prediction_json=?,predicted_at=?,predicted_by=? WHERE org_id=:org AND report_id=? AND revision=? AND prediction_json IS NULL
         AND EXISTS (SELECT 1 FROM cbc_reports WHERE cbc_reports.org_id=cbc_revisions.org_id AND cbc_reports.id=cbc_revisions.report_id
-        AND revision=? AND deleted_at IS NULL AND research_consent=1 AND ${currentCare})`,
+        AND revision=? AND deleted_at IS NULL AND research_consent=1 AND ${currentCare}
+        AND NOT ${kioskPurposeDenied("cbc_reports", "research")})`,
         JSON.stringify(prediction),
         new Date().toISOString(),
         c.get("principal").userId,
@@ -452,10 +458,12 @@ cbcRouter.post("/reports/:id/predict", async (c) => {
         input.revision,
         input.revision,
       ),
-      audit(c, row.encounter_id, "cbc.research.executed"),
+      audit(c, row.encounter_id, "cbc.research.executed", true),
     ]);
   }
   const current = await report(c, row.id);
+  if (!(await encounter(c, current.encounter_id)).research_allowed)
+    throw new HTTPException(403, { message: "Research processing permission required" });
   if (current.revision !== input.revision)
     throw new HTTPException(409, {
       message: "Report revision changed during inference",

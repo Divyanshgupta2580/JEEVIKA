@@ -27,6 +27,7 @@ import {
   interceptorQuestions,
   needsStemiQuestions,
   patientLanguages,
+  patientLanguage,
   sentinelQuestions,
   type kioskIntakeSchema,
   type SentinelQuestion,
@@ -41,6 +42,7 @@ import {
   VoiceControls,
   playKioskAlert,
 } from "./capture";
+import { kioskGuidance } from "../../../../../packages/shared/kiosk-guidance";
 import { kioskClinicalCopy, kioskPrompts } from "../../../../../packages/shared/kiosk-copy";
 import {
   KioskCardBottomDecor,
@@ -59,6 +61,8 @@ type Token = {
   receiptId: string;
   createdAt: string;
   triage: "emergency" | "priority" | "routine";
+  consent: Intake["consent"];
+  consentVersion: string;
 };
 
 const emptyConsent = {
@@ -75,6 +79,18 @@ const consentOptions = [
   "research",
   "guardian",
 ] as const;
+
+const localeKey = "jeevika.kiosk.locale";
+
+function savedLocale(): Intake["locale"] {
+  try {
+    const saved = patientLanguage.safeParse(sessionStorage.getItem(localeKey));
+    if (saved.success) return saved.data;
+  } catch {
+    // Storage may be disabled on a shared kiosk.
+  }
+  return "en";
+}
 
 function formatIssuedAt(iso: string) {
   const date = new Date(iso);
@@ -95,11 +111,12 @@ function formatIssuedAt(iso: string) {
 }
 
 export function KioskIntake() {
-  const [locale, setLocale] = useState<Intake["locale"]>("en");
+  const [locale, setLocale] = useState<Intake["locale"]>(savedLocale);
   const [step, setStep] = useState(0);
   const [navDirection, setNavDirection] = useState<"forward" | "backward">(
     "forward",
   );
+  const [minor, setMinor] = useState(false);
   const [consent, setConsent] = useState(emptyConsent);
   const [verified, setVerified] = useState<string>();
   const [abha, setAbha] = useState("");
@@ -130,7 +147,11 @@ export function KioskIntake() {
   const language = patientLanguages[locale][1];
   const copy = kioskPrompts[locale];
   const localized = kioskClinicalCopy[locale];
-  const allConsentGiven = consentOptions.every((key) => Boolean(consent[key]));
+  const guide = kioskGuidance[locale];
+  const canContinue = consent.care && (!minor || consent.guardian);
+  useEffect(() => {
+    try { sessionStorage.setItem(localeKey, locale); } catch { /* Language selection still works for this visit. */ }
+  }, [locale]);
   const firstStemi = interceptorQuestions.find((field) => !interceptor[field]);
   const question = sentinel({ answers })
     .nextQuestion as SentinelQuestion | null;
@@ -147,7 +168,21 @@ export function KioskIntake() {
   }
 
   useEffect(() => {
-    heading.current?.focus();
+    const current = heading.current;
+    if (!current) return;
+    const inert = current.closest("[inert]");
+    if (!inert) {
+      current.focus();
+      return;
+    }
+    // A direct kiosk load can mount the heading while the startup splash keeps it inert.
+    const observer = new MutationObserver(() => {
+      if (inert.hasAttribute("inert")) return;
+      observer.disconnect();
+      current.focus();
+    });
+    observer.observe(inert, { attributes: true, attributeFilter: ["inert"] });
+    return () => observer.disconnect();
   }, [step, caption]);
 
   useEffect(
@@ -194,8 +229,7 @@ export function KioskIntake() {
       });
       setToken(response);
       setUrgent(response.triage === "emergency");
-    } catch (err) {
-      console.error("Kiosk intake error:", err);
+    } catch {
       setError("A token could not be issued. Ask the reception desk for help.");
     } finally {
       working.current = false;
@@ -212,6 +246,7 @@ export function KioskIntake() {
       {
         locale,
         intent: "intake",
+        ageGroup: minor ? "minor" : "adult",
         consent,
         verifiedIdentityId: verified,
         complaint,
@@ -248,9 +283,7 @@ export function KioskIntake() {
       const result = sentinel({ answers: next });
       if (result.tier === "emergency") void submit(next, interceptor, true);
       else if (!result.nextQuestion)
-        goToStep(consent.care ? 6 : 7, "forward");
-      if (!result.nextQuestion && result.tier !== "emergency" && !consent.care)
-        void submit(next);
+        goToStep(6, "forward");
     }
   }
 
@@ -264,14 +297,15 @@ export function KioskIntake() {
         setVerified(undefined);
         setAbha("");
       }
-      goToStep(step === 3 && !consent.care ? 1 : step - 1, "backward");
+      goToStep(step === 3 && minor ? 1 : step - 1, "backward");
     }
   }
 
   function reset() {
     setNavDirection("forward");
     setStep(0);
-    setLocale("en");
+    setMinor(false);
+    if (copyTimer.current) window.clearTimeout(copyTimer.current);
     setConsent(emptyConsent);
     setVerified(undefined);
     setAbha("");
@@ -310,7 +344,7 @@ export function KioskIntake() {
         className="jvk-motion-action jvk-kiosk-compact-btn print:hidden inline-flex items-center gap-2 rounded-xl border border-[#DCE3DA] bg-white px-5 py-2.5 text-[15px] font-semibold text-[#182E29] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#8DC5B1] hover:bg-[#F5FAF7] cursor-pointer"
       >
         <ArrowLeft aria-hidden="true" className="jvk-motion-arrow size-4 text-[#4B5D57]" />
-        <span>Back</span>
+        <span>{guide[9]}</span>
       </button>
     ) : null;
 
@@ -364,7 +398,7 @@ export function KioskIntake() {
             className="jvk-kiosk-urgent-btn jvk-kiosk-compact-btn inline-flex items-center gap-2 rounded-xl bg-[#EE3D3D] px-4 py-2.5 text-[15px] font-semibold text-white shadow-[0_6px_16px_rgba(238,61,61,0.22)] transition-colors hover:bg-[#D72C2C] active:bg-[#B91C1C] cursor-pointer"
           >
             <PhoneCall aria-hidden="true" className="size-4 shrink-0" />
-            <span>Get urgent help</span>
+            <span>{guide[8]}</span>
           </button>
         )}
       </header>
@@ -406,7 +440,7 @@ export function KioskIntake() {
                 headingRef={heading}
                 title={copy[0]}
                 language={language}
-                subtitle="Select the language you want to use at the kiosk."
+                subtitle={guide[0]}
                 entrance="left"
                 subtitleEntrance="right"
                 illustration={{
@@ -500,17 +534,25 @@ export function KioskIntake() {
               />
 
               {capability?.simulatedIdentity !== false && (
-                <KioskInfoAlert title="Synthetic intake trial">
-                  Use only test information. You can skip identity verification
-                  and continue as an anonymous walk-in.
-                </KioskInfoAlert>
+                <KioskInfoAlert title={guide[1]}>{guide[2]}</KioskInfoAlert>
               )}
 
               <fieldset className="space-y-2.5">
                 <legend className="mb-2 text-[16px] font-bold text-[#0E2420]">
-                  Consent choices
+                  {guide[3]}
                 </legend>
+                <label className="jvk-kiosk-consent-row flex items-center gap-3 px-4 py-2.5 cursor-pointer">
+                  <input type="checkbox" className="jvk-kiosk-checkbox shrink-0" checked={minor}
+                    onChange={(event) => {
+                      setMinor(event.target.checked);
+                      setConsent((previous) => ({ ...previous, guardian: false }));
+                      setVerified(undefined);
+                      setAbha("");
+                    }} />
+                  <span lang={language} className="text-[15px] font-medium text-[#162C27] leading-snug">{guide[4]}</span>
+                </label>
                 {consentOptions.map((key, index) => {
+                  if (key === "guardian" && !minor) return null;
                   const checked = consent[key];
                   return (
                     <label
@@ -545,27 +587,27 @@ export function KioskIntake() {
                 <button
                   type="button"
                   lang={language}
-                  disabled={!allConsentGiven}
-                  aria-disabled={!allConsentGiven}
+                  disabled={!canContinue}
+                  aria-disabled={!canContinue}
                   onClick={() =>
-                    goToStep(consent.care ? 2 : 3, "forward")
+                    goToStep(minor ? 3 : 2, "forward")
                   }
                   className={`jvk-motion-action jvk-kiosk-primary-btn jvk-kiosk-compact-btn flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-[15px] font-semibold text-white transition-all ${
-                    allConsentGiven
+                    canContinue
                       ? "bg-gradient-to-b from-[#047C61] to-[#02644F] shadow-[0_8px_18px_rgba(4,124,97,0.2)] hover:from-[#036B54] hover:to-[#025140] cursor-pointer"
                       : "bg-[#9AC0B2] cursor-not-allowed"
                   }`}
                 >
                   <span>{copy[8]}</span>
-                  {allConsentGiven && (
+                  {canContinue && (
                     <ArrowRight aria-hidden="true" className="jvk-motion-arrow size-4 shrink-0" />
                   )}
                 </button>
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                   {backButton}
-                  {!allConsentGiven && (
+                  {!canContinue && (
                     <p className="jvk-kiosk-meta-text text-[#566A63]">
-                      All consent choices are required to continue.
+                      {consent.care ? guide[6] : guide[5]}
                     </p>
                   )}
                 </div>
@@ -608,7 +650,7 @@ export function KioskIntake() {
                       onClick={() => goToStep(3, "forward")}
                       className="jvk-kiosk-compact-btn inline-flex items-center justify-center rounded-xl border border-[#DCE3DA] bg-white px-4 py-2.5 text-[15px] font-semibold text-[#182E29] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#8DC5B1] hover:bg-[#F5FAF7] cursor-pointer"
                     >
-                      Continue without verification
+                      {guide[7]}
                     </button>
                     {backButton}
                   </div>
@@ -699,7 +741,7 @@ export function KioskIntake() {
 
               <label className="block space-y-1.5">
                 <span className="block text-[15px] font-semibold text-[#132924]">
-                  Describe your symptoms
+                  {guide[10]}
                 </span>
                 <div className="relative">
                   <Pencil
@@ -710,7 +752,7 @@ export function KioskIntake() {
                     className="jvk-motion-field block w-full rounded-xl border border-[#DCE3DA] bg-[#FAFBF8] py-3 pr-3.5 pl-10 text-[15px] text-[#0E2420] placeholder:text-[#6B7E77] focus:border-[#047C61] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#047C61]/20"
                     maxLength={600}
                     rows={3}
-                    placeholder="Type or speak your symptoms here..."
+                    placeholder={guide[11]}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                   />
@@ -744,7 +786,7 @@ export function KioskIntake() {
                 headingRef={heading}
                 title={copy[step]}
                 language={language}
-                subtitle="Choose the option that best matches what you are feeling right now."
+                subtitle={guide[12]}
                 illustration={{
                   src: "/assets/kiosk/kiosk-symptoms-stethoscope.png",
                   width: 412,
@@ -801,7 +843,7 @@ export function KioskIntake() {
                 headingRef={heading}
                 title={copy[6]}
                 language={language}
-                subtitle="Optional. Scan a previous prescription or report and confirm the text before sharing it."
+                subtitle={guide[13]}
                 illustration={{
                   src: "/assets/kiosk/kiosk-consent-clipboard.png",
                   width: 376,
@@ -831,7 +873,7 @@ export function KioskIntake() {
                     onChange={(event) => setDocConfirmed(event.target.checked)}
                   />
                   <span className="text-[15px] font-medium text-[#162C27]">
-                    I checked the extracted text and want to share it.
+                    {guide[14]}
                   </span>
                 </label>
               )}
@@ -842,7 +884,7 @@ export function KioskIntake() {
                   onClick={() => void submit()}
                   className="jvk-kiosk-primary-btn jvk-kiosk-compact-btn inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#047C61] to-[#02644F] px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_18px_rgba(4,124,97,0.2)] transition-all hover:from-[#036B54] hover:to-[#025140] cursor-pointer"
                 >
-                  <span>Request token</span>
+                  <span>{guide[15]}</span>
                   <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
                 </button>
                 {backButton}
@@ -868,7 +910,7 @@ export function KioskIntake() {
                 <p className="jvk-kiosk-subcopy text-[#4B5D57]">
                   {error
                     ? "We could not complete registration digitally."
-                    : "Your registration is complete. Keep this token for your visit."}
+                    : token ? "Your registration is complete. Keep this token for your visit." : null}
                 </p>
               </div>
 
@@ -1055,6 +1097,16 @@ export function KioskIntake() {
                     </div>
                   </div>
 
+                  <div className="rounded-xl border border-[#DCE8E0] bg-[#FAFBF8] px-4 py-2.5">
+                    <h2 className="text-sm font-bold text-[#132924]">{guide[3]}</h2>
+                    <ul className="mt-1 space-y-1 text-sm text-[#1E3B33]">
+                      {consentOptions.map((purpose, index) => (
+                        (purpose !== "guardian" || token.consent.guardian) && (
+                          <li key={purpose}>{localized.consent[index]} · {token.consent[purpose] ? copy[9] : copy[10]}</li>
+                        )
+                      ))}
+                    </ul>
+                  </div>
                   <div
                     role="status"
                     className="flex items-center gap-2.5 rounded-xl border border-[#DCE8E0] bg-[#EEF7F1] px-4 py-2.5 text-sm text-[#1E3B33]"
@@ -1103,7 +1155,7 @@ export function KioskIntake() {
                       aria-hidden="true"
                       className="size-4 shrink-0 text-[#057C61]"
                     />
-                    <span>Start a new visit</span>
+                    <span>{guide[16]}</span>
                   </button>
                 )}
               </div>

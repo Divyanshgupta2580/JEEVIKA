@@ -26,7 +26,7 @@ export const demoPatientIdentity = {
   abha: "91900000000001",
   mobile: "9000000000",
 } as const;
-export const consentVersion = "kiosk-consent-v1";
+export const consentVersion = "kiosk-consent-v2";
 export const complaints = [
   "fever",
   "stomach",
@@ -58,16 +58,19 @@ export const needsStemiQuestions = (complaint: string, description: string) =>
     description,
   );
 
+export const kioskConsentChoices = z.strictObject({
+  care: z.boolean(),
+  pharmacy: z.boolean(),
+  remote: z.boolean(),
+  research: z.boolean(),
+  guardian: z.boolean(),
+});
+
 export const kioskIntakeSchema = z.strictObject({
   locale: patientLanguage,
   intent: z.enum(["intake", "urgent-help"]),
-  consent: z.strictObject({
-    care: z.boolean(),
-    pharmacy: z.boolean(),
-    remote: z.boolean(),
-    research: z.boolean(),
-    guardian: z.boolean(),
-  }),
+  ageGroup: z.enum(["adult", "minor"]).optional(),
+  consent: kioskConsentChoices,
   verifiedIdentityId: z.uuid().optional(),
   complaint: z.enum(complaints).optional(),
   description: z.string().trim().max(600).default(""),

@@ -14,6 +14,8 @@ import { platformRouter } from "./modules/platform/routes";
 import { herRouter } from "./modules/her/routes";
 import { vitalisRouter } from "./modules/vitalis/routes";
 import { companionRouter, kioskRouter, patientOtpRouter } from "./modules/patient_experience";
+import { recoveryRouter } from "./modules/password-recovery";
+import { kioskOptionalPurposes } from "./modules/kiosk-consent";
 import { patientAuthRouter, patientProfileRouter } from "./modules/patient_auth/routes";
 import { cbcRouter, clinicalAccessEnabled } from "./modules/cbc/routes";
 import { pruneCbcSources } from "./modules/cbc/maintenance";
@@ -94,8 +96,12 @@ export type Env = {
   ENVIRONMENT: string;
   DEMO_MODE?: string;
   PLATFORM_SUPER_ADMINS?: string;
+  ORGANIZATION_OWNERS?: string;
+  PATIENT_SIGNUP_ORG?: string;
+  PASSWORD_RECOVERY?: { fetch(request: Request): Promise<Response> };
   PUBLIC_ORIGIN?: string;
   API_VERSION: string;
+  CF_VERSION_METADATA?: { id: string };
   SARVAM_API_KEY?: string;
   SARVAM_SPEECH_ENABLED?: string;
   GEMINI_API_KEY?: string;
@@ -436,14 +442,13 @@ export function createIntegrationApp() {
       });
     const token = `${input.orgId}.${newToken()}`;
     const expiresAt = new Date(now.getTime() + 3600000).toISOString();
-    await db
-      .statement(
-        "INSERT INTO sessions (org_id,token_hash,user_id,expires_at) VALUES (:org,?,?,?)",
-        await tokenHash(token),
-        user.id,
-        expiresAt,
-      )
-      .run();
+    const saved = await db.statement(
+      `INSERT INTO sessions (org_id,token_hash,user_id,expires_at)
+       SELECT org_id,?,id,? FROM users WHERE org_id=:org AND id=? AND password_hash=?`,
+      await tokenHash(token), expiresAt, user.id, hash,
+    ).run();
+    if (saved.meta.changes !== 1)
+      throw new HTTPException(401, { message: "Invalid organization, email or password" });
     return c.json({
       token,
       expiresAt,
@@ -697,6 +702,25 @@ export function createIntegrationApp() {
       throw new HTTPException(404, { message: "Active consent unavailable" });
     return c.json({ revoked: true });
   });
+  integrationApp.post("/api/v1/encounters/:id/revoke/:purpose", async (c) => {
+    const p = c.get("principal");
+    const id = z.uuid().parse(c.req.param("id"));
+    const purpose = z.enum(kioskOptionalPurposes).parse(c.req.param("purpose"));
+    const db = integrationTenantDb({ db: c.env.DB, orgId: p.orgId });
+    const eligible = await db.statement(
+      `SELECT e.id FROM encounters e JOIN kiosk_intakes k
+       ON k.org_id=e.org_id AND k.clinic_id=e.clinic_id AND k.encounter_id=e.id
+       WHERE e.org_id=:org AND e.clinic_id=? AND e.id=? AND json_extract(k.consent_json,?)=1`,
+      p.clinicId, id, `$.${purpose}`,
+    ).first();
+    if (!eligible) throw new HTTPException(404, { message: "Kiosk permission unavailable" });
+    await db.statement(
+      `INSERT INTO kiosk_consent_withdrawals(org_id,encounter_id,purpose,withdrawn_at,actor_id)
+       VALUES(:org,?,?,?,?) ON CONFLICT(org_id,encounter_id,purpose) DO NOTHING`,
+      id, purpose, new Date().toISOString(), p.userId,
+    ).run();
+    return c.json({ revoked: true, purpose });
+  });
   integrationApp.all("/api/v1/ops/pos/*", () => {
     throw new HTTPException(501, {
       message: "This integration capability is not implemented yet",
@@ -777,6 +801,7 @@ app.get("/healthz", (c) => {
     status: "ok",
     service: "jeevika-api",
     version: "1.0.0",
+    revision: c.env?.CF_VERSION_METADATA?.id ?? null,
     timestamp: new Date().toISOString(),
   });
 });
@@ -2034,6 +2059,7 @@ v1.route("/prescriptions", protectedPrescriptions);
 v1.route("/patients", protectedPatients);
 v1.route("/her", herRouter);
 v1.route("/vitalis", vitalisRouter);
+v1.route("/auth/password-reset", recoveryRouter);
 v1.route("/auth/patient", patientAuthRouter);
 v1.route("/auth/patient/otp", patientOtpRouter);
 v1.route("/kiosk", kioskRouter);

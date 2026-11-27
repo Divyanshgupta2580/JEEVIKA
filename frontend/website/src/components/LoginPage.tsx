@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowRight,
@@ -229,6 +229,10 @@ export function LoginPage() {
                     <span>Sign In with Credentials</span>
                     <ArrowRight aria-hidden="true" className="size-4" />
                   </AuthSubmitButton>
+
+                  <Link to="/reset-password" className="block text-center text-xs font-semibold text-[#047C61] hover:underline">
+                    Forgot password?
+                  </Link>
 
                   <div className="pt-2 space-y-2.5 border-t border-[#E6E0D3]">
                     <button

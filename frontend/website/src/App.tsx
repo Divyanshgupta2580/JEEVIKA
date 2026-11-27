@@ -344,7 +344,7 @@ function AppContent() {
                         <EquipmentsDashboard />
                     )}
 
-                    {view === 'ca-suite' && ['HOSPITAL_ADMIN','SUPER_ADMIN'].includes(verifiedRole ?? '') && <PostedFinance canManage={verifiedRole === 'SUPER_ADMIN'} />}
+                    {view === 'ca-suite' && ['HOSPITAL_ADMIN','SUPER_ADMIN','OWNER'].includes(verifiedRole ?? '') && <PostedFinance canManage={verifiedRole === 'SUPER_ADMIN'} />}
 
                     {view === 'clinic-admin' && (
                         clinicId ? (

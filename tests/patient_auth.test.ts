@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import backendApp from "../backend/src/index";
+import { LocalDatabase } from "../backend/local/database";
+import { migrateLocal } from "../backend/local/migrate";
+
+const db = new LocalDatabase();
+migrateLocal(db);
+afterAll(() => db.close());
+const env = { DB: db, ENVIRONMENT: "test", PATIENT_SIGNUP_ORG: "org_test" };
+const request = (path: string, init: RequestInit) => backendApp.request(path, init, env);
 
 describe("Mobile Patient Auth & Profile Customization API", () => {
   const testPhone = "+919876543219";
@@ -8,7 +16,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   let patientId = "";
 
   it("registers a new patient via /api/v1/auth/patient/signup", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/signup", {
+    const res = await request("/api/v1/auth/patient/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,7 +46,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("rejects duplicate phone signup", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/signup", {
+    const res = await request("/api/v1/auth/patient/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,7 +67,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("authenticates via /api/v1/auth/patient/login with phone and password", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/login", {
+    const res = await request("/api/v1/auth/patient/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +87,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("rejects invalid password", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/login", {
+    const res = await request("/api/v1/auth/patient/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -97,7 +105,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("verifies session via /api/v1/auth/patient/me", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/me", {
+    const res = await request("/api/v1/auth/patient/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${sessionToken}`,
@@ -113,7 +121,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("updates extended profile via /api/v1/patient/:id/profile", async () => {
-    const res = await backendApp.request(
+    const res = await request(
       `/api/v1/patient/${patientId}/profile`,
       {
         method: "PUT",
@@ -135,7 +143,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("updates app preferences via /api/v1/patient/:id/preferences", async () => {
-    const res = await backendApp.request(
+    const res = await request(
       `/api/v1/patient/${patientId}/preferences`,
       {
         method: "PUT",
@@ -161,7 +169,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("saves and retrieves Ayurvedic Prakriti profile via /api/v1/patient/:id/ayurveda", async () => {
-    const res = await backendApp.request(
+    const res = await request(
       `/api/v1/patient/${patientId}/ayurveda`,
       {
         method: "PUT",
@@ -195,7 +203,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
     expect(data.success).toBe(true);
     expect(data.ayurveda.primaryDosha).toBe("PITTA_KAPHA");
 
-    const getRes = await backendApp.request(
+    const getRes = await request(
       `/api/v1/patient/${patientId}/ayurveda`,
       {
         method: "GET",
@@ -208,7 +216,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
   });
 
   it("logs out via /api/v1/auth/patient/logout", async () => {
-    const res = await backendApp.request("/api/v1/auth/patient/logout", {
+    const res = await request("/api/v1/auth/patient/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${sessionToken}`,
@@ -221,7 +229,7 @@ describe("Mobile Patient Auth & Profile Customization API", () => {
     expect(data.success).toBe(true);
 
     // Verifying session after logout should fail
-    const meRes = await backendApp.request("/api/v1/auth/patient/me", {
+    const meRes = await request("/api/v1/auth/patient/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${sessionToken}`,

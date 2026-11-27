@@ -21,9 +21,20 @@ const clinicalBrowserFixture: Plugin = {
   },
 };
 
+const revision = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.BUILD_REVISION;
+const releaseMetadata: Plugin = {
+  name: "jeevika-release-metadata",
+  transformIndexHtml() {
+    return revision && /^[0-9a-f]{40}$/.test(revision)
+      ? [{ tag: "meta", attrs: { name: "jeevika-build-revision", content: revision }, injectTo: "head" }]
+      : [];
+  },
+};
+
 export default defineConfig({
   plugins: [
     cbcAssets() as any,
+    releaseMetadata,
     ...(process.env.INTEGRATION_E2E_CLINICAL === "1" ? [clinicalBrowserFixture] : []),
   ],
   root: __dirname,

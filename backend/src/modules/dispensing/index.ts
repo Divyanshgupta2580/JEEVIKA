@@ -1,3 +1,4 @@
+import { kioskPurposeDenied } from "../kiosk-consent";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -54,7 +55,7 @@ const availableRx = `SELECT r.id,r.encounter_id AS encounterId,e.patient_id AS p
  JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
  JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care' AND c.revoked_at IS NULL
  JOIN encounter_permissions ep ON ep.org_id=r.org_id AND ep.encounter_id=r.encounter_id AND ep.purpose='pharmacy' AND ep.revoked_at IS NULL
- WHERE r.org_id=:org AND r.clinic_id=?
+ WHERE r.org_id=:org AND r.clinic_id=? AND NOT ${kioskPurposeDenied("e", "pharmacy")}
  AND NOT EXISTS (SELECT 1 FROM reservations v WHERE v.org_id=r.org_id AND v.prescription_id=r.id AND v.status='dispensed')`;
 
 async function prescription(
@@ -154,7 +155,7 @@ clinicalPharmacyRouter.post(
         `SELECT e.id FROM encounters e JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id
     AND c.purpose='care' AND c.revoked_at IS NULL
     WHERE e.org_id=:org AND e.clinic_id=? AND e.id=? AND e.status='reviewed'
-    AND NOT EXISTS(SELECT 1 FROM kiosk_intakes k WHERE k.org_id=e.org_id AND k.encounter_id=e.id AND json_extract(k.consent_json,'$.pharmacy') IS NOT 1)`,
+    AND NOT ${kioskPurposeDenied("e", "pharmacy")}`,
         p.clinicId,
         body.encounterId,
       )
@@ -448,7 +449,7 @@ clinicalPharmacyRouter.post("/checkout", posRoles, async (c) => {
 export const postedLedgerRouter = new Hono<IntegrationContext>();
 postedLedgerRouter.get(
   "/",
-  staffAccess("SUPER_ADMIN", "HOSPITAL_ADMIN"),
+  staffAccess("SUPER_ADMIN", "OWNER", "HOSPITAL_ADMIN"),
   async (c) => {
     const p = c.get("principal");
     const db = tenantDb({ db: c.env.DB, orgId: p.orgId });

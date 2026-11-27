@@ -1,3 +1,4 @@
+import { PasswordRecoveryForm } from "./ResetPasswordPage";
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -367,12 +368,7 @@ export function PatientSignIn({
             Contact the clinic to register a real patient account.
           </InlineBanner>
         )}
-        {mode === "reset" && (
-          <InlineBanner title="Password reset unavailable">
-            OTP accounts are passwordless. For a password-based account, contact
-            your clinic to recover access.
-          </InlineBanner>
-        )}
+        {mode === "reset" && <PasswordRecoveryForm account="patient" />}
 
         {mode !== "reset" &&
           (passwordMode ? (

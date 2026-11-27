@@ -1,3 +1,4 @@
+import { kioskPurposeDenied } from "../kiosk-consent";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -405,7 +406,7 @@ const outreachItems = `SELECT a.id AS admissionId, p.name AS patientName, i.day 
  JOIN kiosk_intakes k ON k.org_id=e.org_id AND k.clinic_id=e.clinic_id AND k.encounter_id=e.id
       AND json_extract(k.consent_json,'$.remote')=1
  JOIN patient_check_ins i ON i.org_id=e.org_id AND i.patient_id=e.patient_id AND i.created_at>a.discharged_at
- WHERE a.org_id=:org AND a.clinic_id=? AND a.discharged_at IS NOT NULL
+ WHERE a.org_id=:org AND a.clinic_id=? AND a.discharged_at IS NOT NULL AND NOT ${kioskPurposeDenied("e", "remote")}
  AND NOT EXISTS(
    SELECT 1 FROM care_admissions newer
    JOIN care_locations newer_location ON newer_location.org_id=newer.org_id AND newer_location.clinic_id=newer.clinic_id AND newer_location.id=newer.location_id AND newer_location.kind='bed'

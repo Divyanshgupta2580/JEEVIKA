@@ -1,3 +1,4 @@
+import { patientLanguages } from "../../../../../packages/shared/patient-experience";
 import {
   EngineChipIcon,
   JourneyPinIcon,
@@ -21,7 +22,7 @@ const stats = [
     serif: false,
   },
   {
-    value: "5",
+    value: String(Object.keys(patientLanguages).length),
     strongLabel: "Intake",
     label: "language choices",
     Icon: LanguageChoiceIcon,

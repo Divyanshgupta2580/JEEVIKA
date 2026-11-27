@@ -1,16 +1,8 @@
 export type AccessLevel = "Full" | "Read-only" | "None";
-export type JeevikaRole =
-  | "SUPER_ADMIN"
-  | "OWNER"
-  | "HOSPITAL_ADMIN"
-  | "ADMIN"
-  | "CLINIC_ADMIN"
-  | "DOCTOR"
-  | "NURSE"
-  | "STAT_NURSE"
-  | "CASHIER"
-  | "CLINIC_STAFF"
-  | "PATIENT";
+import { roleSchema, type Principal } from "../../../../packages/shared/integration";
+
+type LegacyDisplayRole = "ADMIN" | "CLINIC_STAFF";
+export type JeevikaRole = Principal["role"] | LegacyDisplayRole;
 
 const routePermissions = {
   "/app/command": { SUPER_ADMIN: "Full", OWNER: "Full", HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Full" },
@@ -31,7 +23,7 @@ const routePermissions = {
   "/app/inventory": { HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Full", CASHIER: "Read-only" },
   "/app/procurement": { SUPER_ADMIN: "Read-only", OWNER: "Read-only", HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Full" },
   "/app/procurement/grn": { SUPER_ADMIN: "Read-only", OWNER: "Read-only", HOSPITAL_ADMIN: "Full", ADMIN: "Full", CLINIC_ADMIN: "Full", CASHIER: "Full" },
-  "/app/ca": { SUPER_ADMIN: "Full", OWNER: "Full", HOSPITAL_ADMIN: "Read-only", ADMIN: "Read-only" },
+  "/app/ca": { SUPER_ADMIN: "Full", OWNER: "Read-only", HOSPITAL_ADMIN: "Read-only", ADMIN: "Read-only" },
   "/app/swarm": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
   "/app/prune": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
   "/app/prune/cache": { SUPER_ADMIN: "Full", HOSPITAL_ADMIN: "Read-only" },
@@ -80,13 +72,11 @@ const permissionsByRoute = new Map<string, Partial<Record<JeevikaRole, AccessLev
 
 export function normalizeJeevikaRole(role: string | null | undefined): JeevikaRole | null {
   if (!role) return null;
-  if (role === "OWNER") return "OWNER";
   if (role === "ADMIN") return "ADMIN";
   if (role === "CLINIC_STAFF") return "CLINIC_STAFF";
-  if (["SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN", "DOCTOR", "NURSE", "STAT_NURSE", "CASHIER", "PATIENT"].includes(role)) {
-    return role as JeevikaRole;
-  }
-  return null;
+  // The aliases above serve historical UI profiles only. Verified sessions use the shared principal enum.
+  const parsed = roleSchema.safeParse(role);
+  return parsed.success ? parsed.data : null;
 }
 
 export function routeAccess(route: string, role: string | null | undefined): AccessLevel {

@@ -1,541 +1,304 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import type { Env } from "../../context";
-import { passwordHash, tokenHash, equalHash } from "../../security";
-import { tenantDb } from "../../db/tenant";
+import { tenantDb } from "../../database";
+import { equalHash, newToken, passwordHash, tokenHash } from "../../security";
 import { issuePatientSession, revokePatientSession, validatePatientSession } from "../../patient-session";
+import { incrementAuthLimit } from "../../auth-rate";
 import {
-  patientSignupSchema,
-  patientLoginSchema,
-  patientProfileUpdateSchema,
-  patientPreferencesSchema,
   ayurvedicProfileSchema,
+  patientLoginSchema,
+  patientPreferencesSchema,
+  patientProfileUpdateSchema,
+  patientSignupSchema,
 } from "./contracts";
-import { patientStore, savePatientToStore, type PatientRecord } from "../../index";
+import { patientStore } from "../../index";
 
-export const patientAuthRouter = new Hono<{ Bindings: Env }>();
+type AccountContext = { Bindings: Env; Variables: { patientOrgId: string } };
+type PatientDb = ReturnType<typeof tenantDb>;
+const unavailable = { success: false, error: "Patient account service unavailable." };
+const invalidLogin = { success: false, error: "Invalid phone number, email, or password" };
+const invalidSession = { success: false, error: "Session invalid or expired" };
+const defaultOrg = "org_default";
+const normalizePhone = (phone: string) => phone.replace(/[\s()-]/g, "");
 
-// In-memory credential and session caches for seamless multi-tenant local/dev/test execution
-interface InMemoryCredential {
-  id: string;
-  orgId: string;
-  patientId: string;
-  phoneNumber: string;
-  phoneHash: string;
-  email?: string;
-  passwordSalt: string;
-  passwordHash: string;
+function accountOrg(c: Context<AccountContext>) {
+  const org = c.req.header("X-Tenant-Id") ?? c.req.header("X-Org-Id") ?? defaultOrg;
+  return /^[a-z0-9_-]{1,80}$/.test(org) ? org : null;
 }
 
-const memoryCredentials = new Map<string, InMemoryCredential>(); // Key: orgId:phoneHash or orgId:email
-const memoryPreferences = new Map<string, any>(); // Key: patientId
-const memoryAyurveda = new Map<string, any>(); // Key: patientId
-
-function getOrgId(c: any): string {
-  return c.req.header("X-Tenant-Id") ?? c.req.header("X-Org-Id") ?? "org_default";
-}
-
-// POST /api/v1/auth/patient/signup
-patientAuthRouter.post("/signup", async (c) => {
-  if (c.env?.ENVIRONMENT && !["development", "test"].includes(c.env.ENVIRONMENT))
-    return c.json({ success: false, error: "Self-registration is unavailable. Contact your clinic." }, 503);
-  const orgId = getOrgId(c);
-  const rawBody = await c.req.json().catch(() => ({}));
-  const parseResult = patientSignupSchema.safeParse(rawBody);
-
-  if (!parseResult.success) {
-    return c.json(
-      {
-        success: false,
-        error: "Validation failed",
-        issues: parseResult.error.issues,
-      },
-      400
-    );
-  }
-
-  const input = parseResult.data;
-  const cleanPhone = input.phone.replace(/[\s\-\(\)]/g, "");
-  const pHash = await tokenHash(cleanPhone);
-
-  // Check if phone already registered in memory or D1
-  const existingCred = memoryCredentials.get(`${orgId}:${pHash}`);
-  if (existingCred) {
-    return c.json({ success: false, error: "A patient account with this phone number already exists" }, 409);
-  }
-
-  const patientId = `pat-${crypto.randomUUID().slice(0, 8)}`;
-  const salt = crypto.randomUUID();
-  const hash = await passwordHash(input.password, salt);
-  const credId = `cred-${crypto.randomUUID().slice(0, 8)}`;
-
-  // Save in memory cache
-  const credRecord: InMemoryCredential = {
-    id: credId,
-    orgId,
-    patientId,
-    phoneNumber: cleanPhone,
-    phoneHash: pHash,
-    email: input.email ?? undefined,
-    passwordSalt: salt,
-    passwordHash: hash,
-  };
-  memoryCredentials.set(`${orgId}:${pHash}`, credRecord);
-  if (input.email) {
-    memoryCredentials.set(`${orgId}:${input.email.toLowerCase()}`, credRecord);
-  }
-
-  // Create patient record
-  const patientData: PatientRecord = {
-    id: patientId,
-    orgId,
-    name: input.name,
-    phone: cleanPhone,
-    phoneHash: pHash,
-    dob: input.dob,
-    gender: input.sex,
-    preferredLang: input.preferredLang,
-    abhaNumber: input.abhaNumber || undefined,
-    bloodGroup: input.bloodGroup || undefined,
-    emergencyContact: input.emergencyContact || undefined,
-    address: input.address || undefined,
-    allergies: [],
-    chronicConditions: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  savePatientToStore(patientData);
-
-  // Default Preferences
-  const defaultPrefs = {
-    id: `pref-${patientId}`,
-    orgId,
-    patientId,
-    primaryFocus: "longevity",
-    primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-    themeMode: "light",
-    colorAccent: "botanical_teal",
-    language: input.preferredLang,
-    notificationsEnabled: true,
-    medicineRemindersEnabled: true,
-    cycleRemindersEnabled: true,
-    vitalsDriftAlertsEnabled: true,
-    biometricLoginEnabled: false,
-    reminderMorningTime: "08:00",
-    reminderAfternoonTime: "13:00",
-    reminderNightTime: "20:30",
-  };
-  memoryPreferences.set(`${orgId}:${patientId}`, defaultPrefs);
-
-  // Persist to D1 if available
-  if (c.env?.DB) {
-    try {
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      await tDb.patients.create({
-        id: patientId,
-        name: input.name,
-        phoneHash: pHash,
-        abhaNumber: input.abhaNumber || null,
-        dob: input.dob,
-        sex: input.sex,
-        preferredLang: input.preferredLang,
-      });
-
-      await tDb.patientAuth.createCredentials({
-        id: credId,
-        patientId,
-        phoneNumber: cleanPhone,
-        phoneHash: pHash,
-        email: input.email || null,
-        passwordSalt: salt,
-        passwordHash: hash,
-      });
-
-      await tDb.patientPreferences.upsert({
-        id: defaultPrefs.id,
-        patientId,
-        primaryFocus: defaultPrefs.primaryFocus,
-        primaryModulesJson: JSON.stringify(defaultPrefs.primaryModules),
-        themeMode: defaultPrefs.themeMode,
-        colorAccent: defaultPrefs.colorAccent,
-        language: defaultPrefs.language,
-      });
-    } catch (e) {
-      console.warn("D1 persistence skipped or failed during signup:", e);
-    }
-  }
-
-  const session = await issuePatientSession(c.env, orgId, patientId);
-  if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
-
-  return c.json(
-    {
-      success: true,
-      ...session,
-      patient: patientData,
-      preferences: defaultPrefs,
-      onboardingComplete: false,
-    },
-    201
-  );
-});
-
-// POST /api/v1/auth/patient/login
-patientAuthRouter.post("/login", async (c) => {
-  const orgId = getOrgId(c);
-  const rawBody = await c.req.json().catch(() => ({}));
-  const parseResult = patientLoginSchema.safeParse(rawBody);
-
-  if (!parseResult.success) {
-    return c.json({ success: false, error: "Identifier and password required" }, 400);
-  }
-
-  const { identifier, password } = parseResult.data;
-  const cleanId = identifier.replace(/[\s\-\(\)]/g, "");
-  const pHash = await tokenHash(cleanId);
-
-  // Search credentials in memory or D1
-  let cred =
-    memoryCredentials.get(`${orgId}:${pHash}`) ||
-    memoryCredentials.get(`${orgId}:${cleanId.toLowerCase()}`) ||
-    memoryCredentials.get(`${orgId}:${identifier.toLowerCase()}`);
-
-  if (!cred && c.env?.DB) {
-    try {
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      const d1Cred =
-        (await tDb.patientAuth.findCredentialsByPhoneHash(pHash)) ||
-        (await tDb.patientAuth.findCredentialsByEmail(identifier.toLowerCase()));
-      if (d1Cred) {
-        cred = {
-          id: d1Cred.id,
-          orgId: d1Cred.org_id,
-          patientId: d1Cred.patient_id,
-          phoneNumber: d1Cred.phone_number,
-          phoneHash: d1Cred.phone_hash,
-          email: d1Cred.email || undefined,
-          passwordSalt: d1Cred.password_salt,
-          passwordHash: d1Cred.password_hash,
-        };
-      }
-    } catch (_) {}
-  }
-
-  if (!cred) {
-    if (password !== "demo" || (c.env && !["development", "test"].includes(c.env.ENVIRONMENT)))
-      return c.json({ success: false, error: "Invalid phone number, email, or password" }, 401);
-    // If not found as mobile registered, check if this is the demo patient pat-048291 (Ramesh) or pat-048292 (Priya)
-    if (cleanId === "pat-048291" || cleanId === "9876543210" || cleanId.includes("048291")) {
-      const demoPatient = patientStore.get("pat-048291");
-      if (demoPatient) {
-        const session = await issuePatientSession(c.env, orgId, "pat-048291", true);
-        if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
-        return c.json({
-          success: true,
-          ...session,
-          patient: demoPatient,
-          preferences: memoryPreferences.get(`${orgId}:${"pat-048291"}`) || {
-            primaryFocus: "longevity",
-            primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-            themeMode: "light",
-            language: "hi",
-          },
-          onboardingComplete: true,
-        });
-      }
-    }
-
-    if (
-      cleanId === "pat-048292" ||
-      cleanId === "9811122334" ||
-      cleanId === "9123456780" ||
-      cleanId.includes("048292") ||
-      cleanId.toLowerCase().includes("priya")
-    ) {
-      const demoPatient = patientStore.get("pat-048292") || patientStore.get("91-5910-2941-8402") || patientStore.get("9811122334");
-      if (demoPatient) {
-        const session = await issuePatientSession(c.env, orgId, demoPatient.id, true);
-        if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
-        return c.json({
-          success: true,
-          ...session,
-          patient: demoPatient,
-          preferences: memoryPreferences.get(`${orgId}:${demoPatient.id}`) || {
-            primaryFocus: "digestive_wellness",
-            primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-            themeMode: "light",
-            language: "hi",
-          },
-          onboardingComplete: true,
-        });
-      }
-    }
-    return c.json({ success: false, error: "Invalid phone number, email, or password" }, 401);
-  }
-
-  // Validate password
-  const computedHash = await passwordHash(password, cred.passwordSalt);
-  if (!equalHash(computedHash, cred.passwordHash)) {
-    return c.json({ success: false, error: "Invalid phone number, email, or password" }, 401);
-  }
-
-  // Get patient profile
-  let patient = patientStore.get(cred.patientId);
-  if (!patient && c.env?.DB) {
-    try {
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      const d1p = await tDb.patients.findById(cred.patientId);
-      if (d1p) {
-        patient = {
-          id: d1p.id,
-          name: d1p.name || "Jeevika Patient",
-          phone: cred.phoneNumber,
-          phoneHash: d1p.phone_hash,
-          dob: d1p.dob || "1990-01-01",
-          sex: d1p.sex || "OTHER",
-          preferredLang: d1p.preferred_lang || "hi",
-          bloodGroup: d1p.blood_group || null,
-          emergencyContact: d1p.emergency_contact || null,
-          address: d1p.address || null,
-          allergies: [],
-          chronicConditions: [],
-          createdAt: d1p.created_at,
-        };
-        savePatientToStore(patient);
-      }
-    } catch (_) {}
-  }
-
-  const session = await issuePatientSession(c.env, orgId, cred.patientId);
-  if (!session) return c.json({ success: false, error: "Patient session unavailable" }, 503);
-  if (c.env?.DB) {
-    try {
-      await tenantDb(c.env.DB as unknown as D1Database, { orgId }).patientAuth.updateLastLogin(cred.patientId);
-    } catch (_) {}
-  }
-
-  const prefs = memoryPreferences.get(`${orgId}:${cred.patientId}`) || {
-    primaryFocus: "longevity",
-    primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-    themeMode: "light",
-    language: patient?.preferredLang || "hi",
-  };
-
-  const ayurveda = memoryAyurveda.get(`${orgId}:${cred.patientId}`) || null;
-
-  return c.json({
-    success: true,
-    ...session,
-    patient,
-    preferences: prefs,
-    ayurveda,
-    onboardingComplete: !!ayurveda,
+function useAccountBoundary(app: Hono<AccountContext>) {
+  app.use("*", async (c, next) => {
+    c.header("Cache-Control", "no-store");
+    return bodyLimit({ maxSize: 16000 })(c, next);
   });
+  app.onError((_error, c) => c.json(unavailable, 503));
+}
+
+const patientColumns = `p.org_id AS orgId,p.id,p.name,COALESCE(p.dob,p.birth_date) AS dob,
+  COALESCE(p.sex,p.gender) AS sex,COALESCE(p.preferred_lang,p.language) AS preferredLang,
+  p.blood_group AS bloodGroup,p.abha_number AS abhaNumber,p.address,
+  p.emergency_contact AS emergencyContact,p.updated_at AS updatedAt,
+  p.allergies_json AS allergies,p.chronic_conditions_json AS chronicConditions,
+  a.phone_number AS phone`;
+
+function patientRecord(db: PatientDb, id: string) {
+  return db.statement(
+    `SELECT ${patientColumns} FROM patients p LEFT JOIN patient_credentials a
+     ON a.org_id=p.org_id AND a.patient_id=p.id WHERE p.org_id=:org AND p.id=?`, id,
+  ).first<{id: string; preferredLang: string; allergies: string | null; chronicConditions: string | null}>();
+}
+
+function profilePayload(patient: NonNullable<Awaited<ReturnType<typeof patientRecord>>>) {
+  return { ...patient, allergies: JSON.parse(patient.allergies ?? "[]") as unknown,
+    chronicConditions: JSON.parse(patient.chronicConditions ?? "[]") as unknown };
+}
+
+const preferenceFields = [
+  ["primary_focus", "primaryFocus"], ["primary_modules_json", "primaryModules"],
+  ["theme_mode", "themeMode"], ["color_accent", "colorAccent"], ["language", "language"],
+  ["notifications_enabled", "notificationsEnabled"], ["medicine_reminders_enabled", "medicineRemindersEnabled"],
+  ["cycle_reminders_enabled", "cycleRemindersEnabled"], ["vitals_drift_alerts_enabled", "vitalsDriftAlertsEnabled"],
+  ["biometric_login_enabled", "biometricLoginEnabled"], ["reminder_morning_time", "reminderMorningTime"],
+  ["reminder_afternoon_time", "reminderAfternoonTime"], ["reminder_night_time", "reminderNightTime"],
+] as const;
+const ayurvedaFields = [
+  ["primary_dosha", "primaryDosha"], ["secondary_dosha", "secondaryDosha"],
+  ["prakriti_summary", "prakritiSummary"], ["vikriti_aggravation", "vikritiAggravation"],
+  ["agni_type", "agniType"], ["koshtha_type", "koshthaType"],
+  ["dietary_guidelines_json", "dietaryGuidelines"], ["yoga_recommendations_json", "yogaRecommendations"],
+] as const;
+
+function decodeField(column: string, value: string | number | null) {
+  if (column.endsWith("_json")) return JSON.parse(String(value)) as unknown;
+  if (column.endsWith("_enabled")) return Boolean(value);
+  return value;
+}
+
+async function accountDetails(db: PatientDb, id: string, language: string) {
+  const [preferences, ayurveda] = await Promise.all([
+    db.statement("SELECT * FROM patient_app_preferences WHERE org_id=:org AND patient_id=?", id).first<Record<string, string | number | null>>(),
+    db.statement("SELECT * FROM patient_ayurvedic_profiles WHERE org_id=:org AND patient_id=?", id).first<Record<string, string | number | null>>(),
+  ]);
+  return {
+    preferences: preferences ? Object.fromEntries(preferenceFields.map(([column, key]) => [key, decodeField(column, preferences[column] ?? null)])) : patientPreferencesSchema.parse({ language }),
+    ayurveda: ayurveda ? { patientId: id, assessedAt: ayurveda.assessed_at,
+      ...Object.fromEntries(ayurvedaFields.map(([column, key]) => [key, decodeField(column, ayurveda[column] ?? null)])) } : null,
+    onboardingComplete: ayurveda !== null,
+  };
+}
+
+function patientSessionToken(org: string) {
+  const token = `${org}.pat.${newToken()}`;
+  return { token, expiresAt: new Date(Date.now() + 30 * 86400000).toISOString() };
+}
+
+export const patientAuthRouter = new Hono<AccountContext>();
+useAccountBoundary(patientAuthRouter);
+
+patientAuthRouter.post("/signup", async (c) => {
+  if (!c.env?.DB || !["development", "test"].includes(c.env.ENVIRONMENT))
+    return c.json({ success: false, error: "Self-registration is unavailable. Contact your clinic." }, 503);
+  const orgId = accountOrg(c);
+  if (!orgId || orgId !== (c.env.PATIENT_SIGNUP_ORG ?? defaultOrg))
+    return c.json({ success: false, error: "Registration is unavailable for this organization." }, 403);
+  const parsed = patientSignupSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ success: false, error: "Invalid registration fields" }, 400);
+  const input = parsed.data;
+  const phone = normalizePhone(input.phone);
+  if (!/^\+?[0-9]{10,15}$/.test(phone)) return c.json({ success: false, error: "Invalid registration fields" }, 400);
+  const phoneHash = await tokenHash(phone);
+  const email = input.email?.toLowerCase() ?? null;
+  const db = tenantDb({ db: c.env.DB, orgId });
+  const id = crypto.randomUUID();
+  const salt = crypto.randomUUID();
+  const stamp = new Date().toISOString();
+  const session = patientSessionToken(orgId);
+  const [hash, tokenDigest] = await Promise.all([passwordHash(input.password, salt), tokenHash(session.token)]);
+  try {
+    await db.batch([
+      db.statement(
+        `INSERT INTO patients (org_id,id,name,birth_date,gender,language,synthetic,phone_hash,dob,sex,preferred_lang,
+         abha_number,blood_group,emergency_contact,address,updated_at)
+         VALUES (:org,?,?,?,?,?,1,?,?,?,?,?,?,?,?,?)`,
+        id, input.name, input.dob, input.sex.toLowerCase(), input.preferredLang,
+        phoneHash, input.dob, input.sex, input.preferredLang, input.abhaNumber ?? null,
+        input.bloodGroup ?? null, input.emergencyContact ?? null, input.address ?? null, stamp,
+      ),
+      db.statement(`INSERT INTO patient_credentials
+        (org_id,id,patient_id,phone_number,phone_hash,email,password_salt,password_hash,phone_verified)
+        VALUES (:org,?,?,?,?,?,?,?,0)`, crypto.randomUUID(), id, phone, phoneHash, email, salt, hash),
+      db.statement("INSERT INTO patient_app_preferences (org_id,id,patient_id,language) VALUES (:org,?,?,?)",
+        crypto.randomUUID(), id, input.preferredLang),
+      db.statement("INSERT INTO patient_sessions (org_id,token_hash,patient_id,expires_at) VALUES (:org,?,?,?)",
+        tokenDigest, id, session.expiresAt),
+    ]);
+  } catch {
+    const exists = await db.statement(`SELECT 1 FROM patient_credentials
+      WHERE org_id=:org AND (phone_hash=? OR lower(email)=?)`, phoneHash, email).first();
+    if (exists) return c.json({ success: false, error: "A patient account with these details already exists" }, 409);
+    return c.json(unavailable, 503);
+  }
+  return c.json({ success: true, ...session,
+    patient: { id, orgId, name: input.name, dob: input.dob, sex: input.sex, phone, preferredLang: input.preferredLang,
+      bloodGroup: input.bloodGroup, abhaNumber: input.abhaNumber, address: input.address,
+      emergencyContact: input.emergencyContact, allergies: [], chronicConditions: [], createdAt: stamp, updatedAt: stamp },
+    preferences: patientPreferencesSchema.parse({ language: input.preferredLang }), onboardingComplete: false,
+  }, 201);
 });
 
-// POST /api/v1/auth/patient/logout
+patientAuthRouter.post("/login", async (c) => {
+  const orgId = accountOrg(c);
+  if (!orgId) return c.json(invalidLogin, 401);
+  if (!c.env?.DB) return c.json(unavailable, 503);
+  const parsed = patientLoginSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ success: false, error: "Identifier and password required" }, 400);
+  const { identifier, password } = parsed.data;
+  const phone = normalizePhone(identifier);
+  const phoneHash = await tokenHash(phone);
+  const db = tenantDb({ db: c.env.DB, orgId });
+  if (!await incrementAuthLimit(db, "patient-login", /^[+0-9]+$/.test(phone) ? phone : identifier.toLowerCase(), 10, 60_000))
+    return c.json({ success: false, error: "Too many login attempts. Try again in a minute." }, 429);
+  const credential = await db.statement(`SELECT patient_id,password_salt,password_hash FROM patient_credentials
+    WHERE org_id=:org AND status='ACTIVE' AND (lockout_until IS NULL OR lockout_until<=?)
+      AND (phone_hash=? OR lower(email)=?)`, new Date().toISOString(), phoneHash, identifier.toLowerCase())
+    .first<{ patient_id: string; password_salt: string; password_hash: string }>();
+  const hash = await passwordHash(password, credential?.password_salt ?? "unknown-patient-account");
+  if (!credential || !equalHash(hash, credential.password_hash)) {
+    // Exact legacy evaluator credentials remain development/test only, scoped to their fixture organization.
+    if (!credential && password === "demo" && ["development", "test"].includes(c.env.ENVIRONMENT)) {
+      const demoId = ["pat-048291", "9876543210"].includes(phone) ? "pat-048291" :
+        ["pat-048292", "9811122334", "9123456780"].includes(phone) ? "pat-048292" : null;
+      const patient = demoId ? patientStore.get(demoId) : undefined;
+      if (patient?.orgId === orgId) {
+        const session = await issuePatientSession(c.env, orgId, patient.id, true);
+        if (session) return c.json({ success: true, ...session, patient, onboardingComplete: true });
+      }
+    }
+    return c.json(invalidLogin, 401);
+  }
+  const patient = await patientRecord(db, credential.patient_id);
+  if (!patient) return c.json(unavailable, 503);
+  const details = await accountDetails(db, patient.id, patient.preferredLang);
+  const session = patientSessionToken(orgId);
+  const result = await db.statement(`INSERT INTO patient_sessions(org_id,token_hash,patient_id,expires_at)
+    SELECT org_id,?,patient_id,? FROM patient_credentials
+    WHERE org_id=:org AND patient_id=? AND status='ACTIVE' AND password_hash=?`,
+    await tokenHash(session.token), session.expiresAt, patient.id, hash).run();
+  if (result.meta.changes !== 1) return c.json(invalidLogin, 401);
+  return c.json({ success: true, ...session, patient: profilePayload(patient), ...details });
+});
+
+function sessionFor(c: Context<AccountContext>) {
+  const header = c.req.header("Authorization") ?? "";
+  return header.startsWith("Bearer ") ? validatePatientSession(c.env, header.slice(7)) : null;
+}
+
 patientAuthRouter.post("/logout", async (c) => {
   const authorization = c.req.header("Authorization") ?? "";
-  if (authorization.startsWith("Bearer ")) {
-    try {
-      await revokePatientSession(c.env, authorization.slice(7));
-    } catch {
-      return c.json({ success: false, error: "Patient session could not be revoked" }, 503);
-    }
-  }
+  if (authorization.startsWith("Bearer ")) await revokePatientSession(c.env, authorization.slice(7));
   return c.json({ success: true, message: "Logged out successfully" });
 });
 
-// GET /api/v1/auth/patient/me
 patientAuthRouter.get("/me", async (c) => {
-  const authorization = c.req.header("Authorization") ?? "";
-  const session = authorization.startsWith("Bearer ")
-    ? await validatePatientSession(c.env, authorization.slice(7))
-    : null;
-  if (!session) return c.json({ success: false, error: "Session invalid or expired" }, 401);
-
-  const record = patientStore.get(session.patientId);
-  const patient = record?.orgId === session.orgId ? record : undefined;
-  const prefs = memoryPreferences.get(`${session.orgId}:${session.patientId}`) || {
-    primaryFocus: "longevity",
-    primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-    themeMode: "light",
-    language: "hi",
-  };
-  const ayurveda = memoryAyurveda.get(`${session.orgId}:${session.patientId}`) || null;
-
-  return c.json({
-    success: true,
-    patientId: session.patientId,
-    expiresAt: session.expiresAt,
-    patient,
-    preferences: prefs,
-    ayurveda,
-    onboardingComplete: !!ayurveda,
+  const session = await sessionFor(c);
+  if (!session) return c.json(invalidSession, 401);
+  if (!c.env?.DB) return c.json(unavailable, 503);
+  const db = tenantDb({ db: c.env.DB, orgId: session.orgId });
+  const patient = await patientRecord(db, session.patientId);
+  const demo = !patient && ["development", "test"].includes(c.env.ENVIRONMENT) ? patientStore.get(session.patientId) : undefined;
+  if (!patient && demo?.orgId !== session.orgId) return c.json(invalidSession, 401);
+  return c.json({ success: true, patientId: session.patientId, expiresAt: session.expiresAt,
+    patient: patient ? profilePayload(patient) : demo,
+    ...await accountDetails(db, session.patientId, patient?.preferredLang ?? "hi"),
   });
 });
 
-// Patient Personalization & Customization Routes
-export const patientProfileRouter = new Hono<{
-  Bindings: Env;
-  Variables: { patientOrgId: string };
-}>();
+export const patientProfileRouter = new Hono<AccountContext>();
+useAccountBoundary(patientProfileRouter);
 patientProfileRouter.use("/:id/*", async (c, next) => {
-  const authorization = c.req.header("Authorization") ?? "";
-  const session = authorization.startsWith("Bearer ")
-    ? await validatePatientSession(c.env, authorization.slice(7))
-    : null;
-  if (!session) return c.json({ success: false, error: "Session invalid or expired" }, 401);
-  if (c.req.param("id") !== session.patientId)
-    return c.json({ success: false, error: "Patient access denied" }, 403);
+  const session = await sessionFor(c);
+  if (!session) return c.json(invalidSession, 401);
+  if (session.patientId !== c.req.param("id")) return c.json({ success: false, error: "Patient access denied" }, 403);
+  if (!c.env?.DB) return c.json(unavailable, 503);
   c.set("patientOrgId", session.orgId);
   await next();
 });
 
-// GET /api/v1/patient/:id/profile
+function profileDb(c: Context<AccountContext>) {
+  return tenantDb({ db: c.env.DB, orgId: c.get("patientOrgId") });
+}
+
 patientProfileRouter.get("/:id/profile", async (c) => {
-  const patientId = c.req.param("id");
-  let patient = patientStore.get(patientId);
-  if (!patient || patient.orgId !== c.get("patientOrgId")) return c.json({ success: false, error: "Patient not found" }, 404);
-  return c.json({ success: true, patient });
+  const patient = await patientRecord(profileDb(c), c.req.param("id"));
+  return patient ? c.json({ success: true, patient: profilePayload(patient) }) :
+    c.json({ success: false, error: "Patient not found" }, 404);
 });
 
-// PUT /api/v1/patient/:id/profile
 patientProfileRouter.put("/:id/profile", async (c) => {
-  const patientId = c.req.param("id");
-  const rawBody = await c.req.json().catch(() => ({}));
-  const parseResult = patientProfileUpdateSchema.safeParse(rawBody);
-
-  if (!parseResult.success) {
-    return c.json({ success: false, error: "Invalid profile data", issues: parseResult.error.issues }, 400);
-  }
-
-  const input = parseResult.data;
-  let patient = patientStore.get(patientId);
-  if (patient && patient.orgId !== c.get("patientOrgId")) {
-    return c.json({ success: false, error: "Patient not found" }, 404);
-  }
-  if (patient) {
-    const updated = {
-      ...patient,
-      name: input.name ?? patient.name,
-      dob: input.dob ?? patient.dob,
-      sex: input.sex ?? patient.sex,
-      bloodGroup: input.bloodGroup ?? patient.bloodGroup,
-      address: input.address ?? patient.address,
-      emergencyContact: input.emergencyContact ?? patient.emergencyContact,
-      allergies: input.allergies ?? patient.allergies,
-      chronicConditions: input.chronicConditions ?? patient.chronicConditions,
-      preferredLang: input.preferredLang ?? patient.preferredLang,
-    };
-    savePatientToStore(updated);
-    patient = updated;
-  }
-
-  return c.json({ success: true, patient });
+  const parsed = patientProfileUpdateSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ success: false, error: "Invalid profile data" }, 400);
+  const id = c.req.param("id");
+  const db = profileDb(c);
+  const input = parsed.data;
+  await db.statement(`UPDATE patients SET name=COALESCE(?,name),dob=COALESCE(?,dob),
+    birth_date=COALESCE(?,birth_date),sex=COALESCE(?,sex),gender=COALESCE(?,gender),
+    blood_group=COALESCE(?,blood_group),address=COALESCE(?,address),emergency_contact=COALESCE(?,emergency_contact),
+    preferred_lang=COALESCE(?,preferred_lang),language=COALESCE(?,language),allergies_json=COALESCE(?,allergies_json),
+    chronic_conditions_json=COALESCE(?,chronic_conditions_json),updated_at=? WHERE org_id=:org AND id=?`,
+    input.name ?? null, input.dob ?? null, input.dob ?? null, input.sex ?? null, input.sex?.toLowerCase() ?? null,
+    input.bloodGroup ?? null, input.address ?? null, input.emergencyContact ?? null, input.preferredLang ?? null,
+    input.preferredLang ?? null, input.allergies ? JSON.stringify(input.allergies) : null,
+    input.chronicConditions ? JSON.stringify(input.chronicConditions) : null, new Date().toISOString(), id).run();
+  const patient = await patientRecord(db, id);
+  return patient ? c.json({ success: true, patient: profilePayload(patient) }) :
+    c.json({ success: false, error: "Patient not found" }, 404);
 });
 
-// GET /api/v1/patient/:id/preferences
 patientProfileRouter.get("/:id/preferences", async (c) => {
-  const patientId = c.req.param("id");
-  const prefs = memoryPreferences.get(`${c.get("patientOrgId")}:${patientId}`) || {
-    primaryFocus: "longevity",
-    primaryModules: ["prescriptions", "vitalis", "her", "yoga"],
-    themeMode: "light",
-    colorAccent: "botanical_teal",
-    language: "hi",
-    notificationsEnabled: true,
-    medicineRemindersEnabled: true,
-    cycleRemindersEnabled: true,
-    vitalsDriftAlertsEnabled: true,
-    biometricLoginEnabled: false,
-    reminderMorningTime: "08:00",
-    reminderAfternoonTime: "13:00",
-    reminderNightTime: "20:30",
-  };
-  return c.json({ success: true, preferences: prefs });
+  const db = profileDb(c);
+  const id = c.req.param("id");
+  const patient = await patientRecord(db, id);
+  if (!patient) return c.json({ success: false, error: "Patient not found" }, 404);
+  return c.json({ success: true, preferences: (await accountDetails(db, id, patient.preferredLang)).preferences });
 });
 
-// PUT /api/v1/patient/:id/preferences
+function encodeField(value: string | number | boolean | readonly string[] | undefined) {
+  if (typeof value === "boolean") return Number(value);
+  if (typeof value === "object") return JSON.stringify(value);
+  return value ?? null;
+}
+
 patientProfileRouter.put("/:id/preferences", async (c) => {
-  const patientId = c.req.param("id");
-  const rawBody = await c.req.json().catch(() => ({}));
-  const parseResult = patientPreferencesSchema.safeParse(rawBody);
-
-  if (!parseResult.success) {
-    return c.json({ success: false, error: "Invalid preferences data", issues: parseResult.error.issues }, 400);
-  }
-
-  const existing = memoryPreferences.get(`${c.get("patientOrgId")}:${patientId}`) || {};
-  const updated = { ...existing, ...parseResult.data, patientId };
-  memoryPreferences.set(`${c.get("patientOrgId")}:${patientId}`, updated);
-
-  if (c.env?.DB) {
-    try {
-      const orgId = c.get("patientOrgId");
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      await tDb.patientPreferences.upsert({
-        id: `pref-${patientId}`,
-        patientId,
-        primaryFocus: updated.primaryFocus,
-        primaryModulesJson: JSON.stringify(updated.primaryModules),
-        themeMode: updated.themeMode,
-        colorAccent: updated.colorAccent,
-        language: updated.language,
-        notificationsEnabled: updated.notificationsEnabled ? 1 : 0,
-        medicineRemindersEnabled: updated.medicineRemindersEnabled ? 1 : 0,
-        reminderMorningTime: updated.reminderMorningTime,
-        reminderAfternoonTime: updated.reminderAfternoonTime,
-        reminderNightTime: updated.reminderNightTime,
-      });
-    } catch (_) {}
-  }
-
-  return c.json({ success: true, preferences: updated });
+  const parsed = patientPreferencesSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ success: false, error: "Invalid preferences data" }, 400);
+  const id = c.req.param("id");
+  const columns = preferenceFields.map(([column]) => column);
+  await profileDb(c).statement(`INSERT INTO patient_app_preferences(org_id,id,patient_id,${columns.join(",")})
+    VALUES (:org,?,?,${columns.map(() => "?").join(",")})
+    ON CONFLICT(org_id,patient_id) DO UPDATE SET ${columns.map((column) => `${column}=excluded.${column}`).join(",")},
+      updated_at=CURRENT_TIMESTAMP`, crypto.randomUUID(), id, ...preferenceFields.map(([, key]) => encodeField(parsed.data[key]))).run();
+  return c.json({ success: true, preferences: { ...parsed.data, patientId: id } });
 });
 
-// GET /api/v1/patient/:id/ayurveda
 patientProfileRouter.get("/:id/ayurveda", async (c) => {
-  const patientId = c.req.param("id");
-  const ayurveda = memoryAyurveda.get(`${c.get("patientOrgId")}:${patientId}`) || null;
-  return c.json({ success: true, ayurveda });
+  const db = profileDb(c);
+  const id = c.req.param("id");
+  const patient = await patientRecord(db, id);
+  if (!patient) return c.json({ success: false, error: "Patient not found" }, 404);
+  return c.json({ success: true, ayurveda: (await accountDetails(db, id, patient.preferredLang)).ayurveda });
 });
 
-// PUT /api/v1/patient/:id/ayurveda
 patientProfileRouter.put("/:id/ayurveda", async (c) => {
-  const patientId = c.req.param("id");
-  const rawBody = await c.req.json().catch(() => ({}));
-  const parseResult = ayurvedicProfileSchema.safeParse(rawBody);
-
-  if (!parseResult.success) {
-    return c.json({ success: false, error: "Invalid Ayurvedic profile data", issues: parseResult.error.issues }, 400);
-  }
-
-  const data = parseResult.data;
-  const updated = {
-    ...data,
-    patientId,
-    assessedAt: new Date().toISOString(),
-  };
-  memoryAyurveda.set(`${c.get("patientOrgId")}:${patientId}`, updated);
-
-  if (c.env?.DB) {
-    try {
-      const orgId = c.get("patientOrgId");
-      const tDb = tenantDb(c.env.DB as any, { orgId });
-      await tDb.patientAyurveda.upsert({
-        id: `ayur-${patientId}`,
-        patientId,
-        primaryDosha: data.primaryDosha,
-        secondaryDosha: data.secondaryDosha,
-        prakritiSummary: data.prakritiSummary,
-        vikritiAggravation: data.vikritiAggravation,
-        agniType: data.agniType,
-        koshthaType: data.koshthaType,
-        dietaryGuidelinesJson: JSON.stringify(data.dietaryGuidelines),
-        yogaRecommendationsJson: JSON.stringify(data.yogaRecommendations),
-      });
-    } catch (_) {}
-  }
-
-  return c.json({ success: true, ayurveda: updated });
+  const parsed = ayurvedicProfileSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ success: false, error: "Invalid Ayurvedic profile data" }, 400);
+  const id = c.req.param("id");
+  const columns = ayurvedaFields.map(([column]) => column);
+  const assessedAt = new Date().toISOString();
+  await profileDb(c).statement(`INSERT INTO patient_ayurvedic_profiles(org_id,id,patient_id,assessed_at,${columns.join(",")})
+    VALUES (:org,?,?,?,${columns.map(() => "?").join(",")})
+    ON CONFLICT(org_id,patient_id) DO UPDATE SET ${columns.map((column) => `${column}=excluded.${column}`).join(",")},
+      assessed_at=excluded.assessed_at,updated_at=CURRENT_TIMESTAMP`, crypto.randomUUID(), id, assessedAt,
+    ...ayurvedaFields.map(([, key]) => encodeField(parsed.data[key]))).run();
+  return c.json({ success: true, ayurveda: { ...parsed.data, patientId: id, assessedAt } });
 });

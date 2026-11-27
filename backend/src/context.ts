@@ -4,8 +4,11 @@ export type Env = {
   DB: Database;
   ENVIRONMENT: string;
   DEMO_MODE?: string;
+  PATIENT_SIGNUP_ORG?: string;
+  PASSWORD_RECOVERY?: { fetch(request: Request): Promise<Response> };
   PUBLIC_ORIGIN?: string;
   PLATFORM_SUPER_ADMINS?: string;
+  ORGANIZATION_OWNERS?: string;
   PRUNE_API_KEY?: string;
   PRUNE_BASE_URL?: string;
   PRUNE_MODEL?: string;

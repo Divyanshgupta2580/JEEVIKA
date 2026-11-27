@@ -46,7 +46,7 @@ const linesSql = `SELECT o.id AS orderId,o.status,o.supplier_reference AS suppli
 
 procurementHandoffs.get(
   "/orders",
-  staffAccess("SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN"),
+  staffAccess("SUPER_ADMIN", "OWNER", "HOSPITAL_ADMIN", "CLINIC_ADMIN"),
   async (c) => {
     const p = c.get("principal");
     const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
@@ -157,7 +157,7 @@ procurementHandoffs.post("/orders/:id/issue", managers, async (c) => {
 });
 procurementHandoffs.get(
   "/grn",
-  staffAccess("SUPER_ADMIN", "HOSPITAL_ADMIN", "CLINIC_ADMIN", "CASHIER"),
+  staffAccess("SUPER_ADMIN", "OWNER", "HOSPITAL_ADMIN", "CLINIC_ADMIN", "CASHIER"),
   async (c) => {
     const p = c.get("principal");
     const { results } = await tenantDb({ db: c.env.DB, orgId: p.orgId })

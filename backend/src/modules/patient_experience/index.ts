@@ -17,6 +17,7 @@ import { herWellnessRanker } from "../../../../packages/engine/her/wellness_rank
 import {
   checkInSchema,
   consentVersion,
+  kioskConsentChoices,
   demoPatientIdentity,
   interceptorQuestions,
   kioskIntakeSchema,
@@ -185,7 +186,7 @@ kioskRouter.post("/intake", async (c) => {
   const find = () =>
     db
       .statement(
-        `SELECT request_hash,receipt_id,token_number,created_at FROM kiosk_intakes
+        `SELECT request_hash,receipt_id,token_number,created_at,consent_version,consent_json FROM kiosk_intakes
      WHERE org_id=:org AND clinic_id=? AND request_id=?`,
         clinicId,
         key.data,
@@ -195,6 +196,8 @@ kioskRouter.post("/intake", async (c) => {
         receipt_id: string;
         token_number: string;
         created_at: string;
+        consent_version: string;
+        consent_json: string;
       }>();
   const reply = (
     record: NonNullable<Awaited<ReturnType<typeof find>>>,
@@ -215,6 +218,8 @@ kioskRouter.post("/intake", async (c) => {
         token: record.token_number,
         receiptId: record.receipt_id,
         createdAt: record.created_at,
+        consentVersion: record.consent_version,
+        consent: kioskConsentChoices.parse(JSON.parse(record.consent_json)),
         triage,
       },
       status,
@@ -224,7 +229,6 @@ kioskRouter.post("/intake", async (c) => {
   if (existing) return reply(existing, 200);
 
   const urgentHelp = data.intent === "urgent-help";
-  const consented = consent.care && !urgentHelp;
   if (!urgentHelp && !complaint)
     throw new HTTPException(400, {
       message: "Choose the reason for your visit.",
@@ -241,6 +245,16 @@ kioskRouter.post("/intake", async (c) => {
     stemi &&
     interceptorQuestions.some((field) => data.interceptor[field] === "yes");
   const emergency = urgentHelp || positive || result.tier === "emergency";
+  const minor = data.ageGroup === "minor";
+  const consented = consent.care && (!minor || consent.guardian) && !urgentHelp;
+  if (!emergency && !consented)
+    throw new HTTPException(403, {
+      message: minor && consent.care ? "Guardian authorization is required for routine intake." :
+        "Direct care consent is required for digital check-in. Ask reception for help.",
+    });
+  // An emergency can always receive a token, including if an earlier identity proof expired.
+  const identity = consented && !emergency && !minor ? verifiedIdentityId : undefined;
+
   if (
     !emergency &&
     stemi &&
@@ -263,11 +277,11 @@ kioskRouter.post("/intake", async (c) => {
   const date = new Date();
   const now = date.toISOString();
   const serviceDate = day(date);
-  if (verifiedIdentityId && consented) {
+  if (identity) {
     const proof = await db
       .statement(
         "SELECT id FROM patient_otp_challenges WHERE org_id=:org AND id=? AND purpose='kiosk' AND verified_at IS NOT NULL AND expires_at>?",
-        verifiedIdentityId,
+        identity,
         now,
       )
       .first();
@@ -279,16 +293,14 @@ kioskRouter.post("/intake", async (c) => {
     await provisionDemoPatient(db);
   }
   const patientId =
-    verifiedIdentityId && consented ? demoScope.patientId : crypto.randomUUID();
+    identity ? demoScope.patientId : crypto.randomUUID();
   const encounter = crypto.randomUUID();
   const receipt = crypto.randomUUID();
   const summary = consented
     ? String(complaint)
-    : emergency
-      ? "Anonymous urgent request"
-      : "Anonymous walk-in";
+    : "Anonymous urgent request";
   const consentJson = consented
-    ? JSON.stringify(consent)
+    ? JSON.stringify({ ...consent, guardian: minor && consent.guardian })
     : JSON.stringify({
         care: false,
         pharmacy: false,
@@ -346,7 +358,7 @@ kioskRouter.post("/intake", async (c) => {
         prefix,
         consentVersion,
         consentJson,
-        consented ? (verifiedIdentityId ?? null) : null,
+        identity ?? null,
         consented ? (data.documentText ?? null) : null,
         consented ? description || null : null,
         now,

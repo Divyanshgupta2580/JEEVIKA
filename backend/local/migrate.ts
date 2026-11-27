@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename } from "node:path";
 import type { LocalDatabase } from "./database";
 
 /** Split our SQLite migration scripts while retaining complete trigger bodies. */
@@ -76,47 +76,32 @@ export const clinicalMigrationPaths = [
   "backend/migrations/0011_procurement_stock.sql",
   "backend/migrations/0012_authorized_workspaces.sql",
   "backend/migrations/0013_kiosk_speech_cache.sql",
+  "backend/migrations/0014_durable_accounts.sql",
+  "backend/migrations/0015_kiosk_consent_withdrawals.sql",
 ] as const;
 
 export function migrationScripts() {
   return clinicalMigrationPaths.map((path) => readFileSync(path, "utf8"));
 }
-const patientAuthMigrations = [
-  ["backend/migrations", "0006_patient_auth_and_preferences.sql"],
-  ["backend/local/migrations", "0007_patient_auth_tenant_foreign_keys.sql"],
-] as const;
-
-function migratePatientAuth(db: LocalDatabase) {
-  // SQLite checks the old, invalid child foreign key during DROP TABLE when enabled.
-  // Re-enable enforcement after the atomic rebuild, and check all new references before committing.
+// Early standalone databases used a patient-only parent key. Worker deployments
+// on the canonical manifest never used that schema. Keep its repair local.
+function repairLegacyPatientReferences(db: LocalDatabase) {
+  const hasLegacyKey = db.raw.prepare("PRAGMA foreign_key_list(patient_credentials)").all()
+    .some((column) => column.from === "patient_id" && column.to === "id") &&
+    !db.raw.prepare("PRAGMA foreign_key_list(patient_credentials)").all()
+      .some((column) => column.from === "org_id");
+  if (!hasLegacyKey) return;
   db.raw.exec("PRAGMA foreign_keys = OFF");
-  let began = false;
   try {
     db.raw.exec("BEGIN IMMEDIATE");
-    began = true;
-    db.raw.exec("CREATE TABLE IF NOT EXISTS standalone_schema_migrations (name TEXT PRIMARY KEY)");
-    const applied = db.raw.prepare("SELECT 1 FROM standalone_schema_migrations WHERE name = ?");
-    const record = db.raw.prepare("INSERT INTO standalone_schema_migrations(name) VALUES (?)");
-    const columns = new Set(db.raw.prepare("PRAGMA table_info(patients)").all().map((column) => column.name));
-    for (const [directory, name] of patientAuthMigrations) {
-      if (applied.get(name)) continue;
-      const script = readFileSync(join(directory, name), "utf8");
-      for (const statement of splitSqlScript(script)) {
-        // Existing databases may already have received part or all of 0006.
-        const column = statement.match(/^ALTER TABLE patients ADD COLUMN (\w+)/m)?.[1];
-        if (column && columns.has(column)) continue;
-        db.raw.exec(statement);
-        if (column) columns.add(column);
-      }
-      record.run(name);
-    }
+    db.raw.exec(readFileSync("backend/local/migrations/0007_patient_auth_tenant_foreign_keys.sql", "utf8"));
     for (const table of ["patient_credentials", "patient_sessions", "patient_ayurvedic_profiles", "patient_app_preferences"]) {
       if (db.raw.prepare(`PRAGMA foreign_key_check(${table})`).get())
-        throw new Error(`Patient auth migration found an invalid tenant reference in ${table}`);
+        throw new Error(`Invalid patient reference in ${table}`);
     }
     db.raw.exec("COMMIT");
   } catch (error) {
-    if (began) db.raw.exec("ROLLBACK");
+    db.raw.exec("ROLLBACK");
     throw error;
   } finally {
     db.raw.exec("PRAGMA foreign_keys = ON");
@@ -124,47 +109,34 @@ function migratePatientAuth(db: LocalDatabase) {
 }
 
 export function migrateLocal(db: LocalDatabase) {
-  // Current scripts are additive/idempotent. Keep the schema files in order.
-  for (const script of migrationScripts()) {
+  db.raw.exec("CREATE TABLE IF NOT EXISTS standalone_schema_migrations (name TEXT PRIMARY KEY)");
+  repairLegacyPatientReferences(db);
+  const applied = db.raw.prepare("SELECT 1 FROM standalone_schema_migrations WHERE name = ?");
+  const record = db.raw.prepare("INSERT INTO standalone_schema_migrations(name) VALUES (?)");
+  for (const path of clinicalMigrationPaths) {
+    const name = basename(path);
+    if (applied.get(name)) continue;
+    db.raw.exec("BEGIN IMMEDIATE");
     try {
-      db.raw.exec(script);
-    } catch {
-      for (const statement of splitSqlScript(script)) {
-        try {
-          db.raw.exec(statement);
-        } catch {}
+      for (const sql of splitSqlScript(readFileSync(path, "utf8"))) {
+        // Older standalone installations already have some or all of 0014's columns.
+        const column = sql.match(/^ALTER TABLE (patients|encounters) ADD COLUMN (\w+)/m);
+        if (column && db.raw.prepare(`PRAGMA table_info(${column[1]})`).all()
+          .some((item) => item.name === column[2])) continue;
+        db.raw.exec(sql);
       }
+      record.run(name);
+      db.raw.exec("COMMIT");
+    } catch (error) {
+      db.raw.exec("ROLLBACK");
+      throw new Error(`Migration failed: ${name}`, { cause: error });
     }
   }
-
-  // Ensure clinic_token_sequences table and required columns always exist
-  try {
-    db.raw.exec(`
-      CREATE TABLE IF NOT EXISTS clinic_token_sequences (
-        org_id TEXT NOT NULL,
-        clinic_id TEXT NOT NULL,
-        service_date TEXT NOT NULL,
-        last_value INTEGER NOT NULL CHECK (last_value > 0),
-        PRIMARY KEY (org_id, clinic_id, service_date)
-      );
-    `);
-  } catch {}
-  try { db.raw.exec("ALTER TABLE encounters ADD COLUMN tier INTEGER DEFAULT 0;"); } catch {}
-  try { db.raw.exec("ALTER TABLE encounters ADD COLUMN token_number INTEGER;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN phone_hash TEXT;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN dob TEXT;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN sex TEXT;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN preferred_lang TEXT;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN abha_number TEXT;"); } catch {}
-  try { db.raw.exec("ALTER TABLE patients ADD COLUMN abha_address TEXT;"); } catch {}
-  try {
-    db.raw.exec(`
-      INSERT OR IGNORE INTO clinics (org_id, id, name) VALUES 
-        ('org-jeevika-primary', 'clinic-delhi-01', 'JEEVIKA Primary Health Centre'),
-        ('org-jeevika-primary', 'clinic-delhi-02', 'JEEVIKA Urban Clinic'),
-        ('org-jeevika-primary', 'north', 'North Clinic'),
-        ('org-jeevika-primary', 'east', 'East Clinic');
-    `);
-  } catch {}
-  migratePatientAuth(db);
+  db.raw.exec(`
+    INSERT OR IGNORE INTO clinics (org_id, id, name) VALUES
+      ('org-jeevika-primary', 'clinic-delhi-01', 'JEEVIKA Primary Health Centre'),
+      ('org-jeevika-primary', 'clinic-delhi-02', 'JEEVIKA Urban Clinic'),
+      ('org-jeevika-primary', 'north', 'North Clinic'),
+      ('org-jeevika-primary', 'east', 'East Clinic');
+  `);
 }

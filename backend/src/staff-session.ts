@@ -17,9 +17,12 @@ export function clinicalOriginAllowed(request: Request, env?: Env) {
 
 // Explicit deployment grants are scoped to a verified organization and staff ID.
 export function effectiveStaffRole(env: Env, orgId: string, userId: string, role: Principal["role"]) {
-  return role === "HOSPITAL_ADMIN" &&
-    env.PLATFORM_SUPER_ADMINS?.split(",").some((grant) => grant.trim() === `${orgId}/${userId}`)
-    ? "SUPER_ADMIN" : role;
+  if (role !== "HOSPITAL_ADMIN") return role;
+  const grant = `${orgId}/${userId}`;
+  if (env.PLATFORM_SUPER_ADMINS?.split(",").some((item) => item.trim() === grant))
+    return "SUPER_ADMIN";
+  return env.ORGANIZATION_OWNERS?.split(",").some((item) => item.trim() === grant)
+    ? "OWNER" : role;
 }
 
 export async function validateStaffSession(env: Env, token: string) {

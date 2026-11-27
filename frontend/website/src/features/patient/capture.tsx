@@ -1,3 +1,5 @@
+import { kioskGuidance } from "../../../../../packages/shared/kiosk-guidance";
+import { patientLanguage } from "../../../../../packages/shared/patient-experience";
 import { useEffect, useRef, useState } from "react";
 import { Mic, QrCode, Square, Upload, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/basic";
@@ -214,6 +216,8 @@ export function VoiceControls({
     setStatus("Voice idle");
   }
 
+  const language = patientLanguage.safeParse(locale.split("-")[0]);
+  const guide = kioskGuidance[language.success ? language.data : "en"];
   if (uiVariant === "kiosk") {
     return (
       <div className="space-y-2.5">
@@ -224,7 +228,7 @@ export function VoiceControls({
             className="jvk-kiosk-compact-btn inline-flex items-center gap-2 rounded-xl border border-[#DCE3DA] bg-white px-3.5 py-2 text-[13.5px] font-semibold text-[#132924] shadow-[0_1px_2px_rgba(14,36,32,0.03)] transition-colors hover:border-[#78B9A3] hover:bg-[#F3F9F5] cursor-pointer"
           >
             <Volume2 aria-hidden="true" className="size-4 shrink-0 text-[#057C61]" />
-            <span>Read aloud</span>
+            <span>{guide[17]}</span>
           </button>
           {onTranscript && (
             <button
@@ -238,7 +242,7 @@ export function VoiceControls({
               }`}
             >
               <Mic aria-hidden="true" className="size-4 shrink-0 text-[#057C61]" />
-              <span>Use microphone</span>
+              <span>{guide[18]}</span>
             </button>
           )}
           <button
@@ -250,7 +254,7 @@ export function VoiceControls({
               aria-hidden="true"
               className="size-3.5 shrink-0 fill-[#057C61] text-[#057C61]"
             />
-            <span>Stop voice</span>
+            <span>{guide[19]}</span>
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-[#E2EAE1] bg-[#EFF4EE] px-3.5 py-2">
@@ -268,7 +272,7 @@ export function VoiceControls({
             role="status"
             className="jvk-kiosk-meta-text font-semibold text-[#163029]"
           >
-            {status}
+            {status === "Voice idle" ? guide[20] : status}
           </span>
           <span
             className="jvk-kiosk-meta-text min-w-0 flex-1 text-[#4A5E57]"
