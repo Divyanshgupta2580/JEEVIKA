@@ -36,7 +36,7 @@ import { useHospital } from '@/context/HospitalContext'
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { getStartOfTodayIST } from '@/lib/utils'
+import { getStartOfTodayIST, paiseToRupeesString } from '@/lib/utils'
 import {
     Select,
     SelectContent,
@@ -725,7 +725,15 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
     const totalSelectedPaise = totalSelectedRevenue * 100;
 
-    const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'];
+    const COLORS = ['#047C61', '#149A7A', '#E5A736', '#2B7A9B', '#6D9F71', '#C87D32', '#0D9488', '#4F7768'];
+
+    const totalInventoryValuePaise = useMemo(() => {
+        return inventory.reduce((sum, item: any) => {
+            const unitsPerPack = item.units_per_pack && item.units_per_pack > 0 ? item.units_per_pack : 1;
+            const unitPaise = Math.round((Number(item.mrp || 0) * 100) / unitsPerPack);
+            return sum + Math.round(Number(item.quantity || 0)) * unitPaise;
+        }, 0);
+    }, [inventory]);
 
     const totalRevenue = useMemo(() => {
         return revenueSummary.reduce((acc: number, curr: any) => acc + (curr.total_revenue || 0), 0);
@@ -749,59 +757,74 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
     };
 
     return (
-        <div className="ayu-headquarters space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12">
+        <div className="jvk-admin-page ayu-headquarters space-y-6 max-w-[1600px] mx-auto pb-12">
             {/* --------------------------------------------------------- */}
             {/* PLATFORM INTEGRITY HUD: Cryptographic Audit & D1 Tenant */}
             {/* --------------------------------------------------------- */}
-            <a href="#/app/ca/audit" className="inline-flex min-h-11 items-center rounded-lg border bg-white px-4 text-sm font-semibold">
-                View audit status
-            </a>
+            <div>
+                <a href="#/app/ca/audit" className="jvk-admin-secondary-btn !min-h-10 !px-4 text-xs sm:text-sm">
+                    View audit status
+                </a>
+            </div>
 
             {/* --------------------------------------------------------- */}
             {/* EXECUTIVE MULTI-CLINIC COMMAND CENTER HEADER */}
             {/* --------------------------------------------------------- */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200/80 pb-6">
-                <div id="welcome-step" className="space-y-1.5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+            <div className="jvk-admin-card-hero flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 px-6 py-5 overflow-hidden relative">
+                <div id="welcome-step" className="space-y-1.5 z-10">
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-[#047C61] flex items-center justify-center text-white shadow-sm shrink-0">
                             <Building2 className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-black text-slate-900 tracking-tight">{hospital?.name || "Apex Health Network"}</h1>
-                                <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 font-bold text-[10px] uppercase">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h1 className="jvk-admin-serif text-2xl sm:text-3xl font-bold text-[#0E2420] tracking-tight">
+                                    {hospital?.name || "Apex Health Network"}
+                                </h1>
+                                <Badge variant="outline" className="bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1] font-bold text-[10px] uppercase">
                                     Group HQ Command
                                 </Badge>
                             </div>
-                            <p className="text-sm text-slate-500 font-medium">
+                            <p className="text-xs sm:text-sm text-[#556C63] font-medium mt-0.5">
                                 Central Headquarters Portal · Orchestrating {clinics.length} Network Branches across India
                             </p>
                         </div>
                     </div>
                 </div>
 
+                <div className="hidden xl:flex shrink-0 items-center justify-center pointer-events-none" aria-hidden="true">
+                    <img
+                        src="/assets/kiosk/kiosk-clinic-watercolor.png"
+                        alt=""
+                        width={220}
+                        height={110}
+                        className="jvk-admin-artwork w-52 h-auto"
+                    />
+                </div>
+
                 {/* HEADER ACTION CONTROLS */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 z-10 shrink-0">
                     {/* Inter-Clinic Stock Transfer Trigger */}
-                    <Button
-                        variant="outline"
+                    <button
+                        type="button"
                         onClick={() => setIsTransferModalOpen(true)}
-                        className="bg-white hover:bg-slate-50 border-slate-200 shadow-sm text-slate-800 font-semibold gap-2 h-11 px-4 rounded-xl"
+                        className="jvk-admin-secondary-btn h-11"
                     >
-                        <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
-                        Central Stock Transfer
-                    </Button>
+                        <ArrowRightLeft className="w-4 h-4 text-[#047C61]" />
+                        <span>Central Stock Transfer</span>
+                    </button>
 
                     {/* Add/Register Clinic Wizard */}
                     <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
                         <DialogTrigger asChild>
-                            <Button
+                            <button
                                 id="tour-new-clinic"
-                                className="bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-950/20 text-white font-semibold gap-2 h-11 px-5 rounded-xl transition-all active:scale-[0.98]"
+                                type="button"
+                                className="jvk-admin-primary-btn h-11 px-5"
                             >
-                                <Plus className="w-4 h-4 text-blue-400" />
-                                Onboard Clinic HUB
-                            </Button>
+                                <Plus className="w-4 h-4" />
+                                <span>Onboard Clinic HUB</span>
+                            </button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[560px] bg-slate-950/98 backdrop-blur-2xl border-slate-800 text-slate-50 shadow-2xl p-6 gap-6">
                             <DialogHeader>
@@ -983,95 +1006,95 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 {/* 1. Group Consolidated Revenue (INR & Paise) */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Card id="tour-revenue-card" className="glass-card border border-slate-200/80 overflow-hidden relative group cursor-pointer hover:ring-2 hover:ring-emerald-500/20 hover:border-emerald-300 transition-all duration-300">
+                        <Card id="tour-revenue-card" className="jvk-admin-card jvk-admin-card-interactive border-0 overflow-hidden relative group cursor-pointer">
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between pb-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Group Revenue (Today)</span>
-                                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-[#556C63]">Group Revenue (Today)</span>
+                                    <div className="w-8 h-8 rounded-xl bg-[#DFF4ED] text-[#047C61] flex items-center justify-center">
                                         <TrendingUp className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
                                     ₹{totalRevenue.toLocaleString('en-IN')}
                                 </div>
-                                <div className="text-[11px] font-mono text-emerald-700 font-semibold flex items-center gap-1.5 mt-1.5">
+                                <div className="text-[11px] font-mono text-[#047C61] font-semibold flex items-center gap-1.5 mt-1.5">
                                     <span>{totalRevenuePaise.toLocaleString('en-IN')} Paise</span>
-                                    <span className="text-slate-300">•</span>
-                                    <span className="text-slate-500 font-sans">Zero Float Precision</span>
+                                    <span className="text-[#9AB5AA]">•</span>
+                                    <span className="text-[#556C63] font-sans">Zero Float Precision</span>
                                 </div>
-                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Consolidated Gross</span>
-                                    <span className="text-emerald-600 font-bold flex items-center">
+                                    <span className="text-[#047C61] font-bold flex items-center">
                                         View Breakdown <ArrowRight className="w-3 h-3 ml-0.5" />
                                     </span>
                                 </div>
                             </CardContent>
                         </Card>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[480px] bg-white border-slate-200 text-slate-900">
+                    <DialogContent className="sm:max-w-[480px] bg-[#FFFDF8] border-[#DCE7DF] text-[#0E2420]">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-slate-900">Network Revenue Breakdown</DialogTitle>
-                            <DialogDescription className="text-xs text-slate-500">
+                            <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Network Revenue Breakdown</DialogTitle>
+                            <DialogDescription className="text-xs text-[#556C63]">
                                 Real-time gross performance across {revenueSummary.length} active reporting branches.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-3 py-3 max-h-[60vh] overflow-y-auto pr-1">
                             {revenueSummary.map(c => (
-                                <div key={c.clinic_id} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
+                                <div key={c.clinic_id} className="p-3.5 bg-[#F5FAF7] rounded-2xl border border-[#DCE8E0]">
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                            <div className="w-9 h-9 rounded-xl bg-[#DFF4ED] flex items-center justify-center text-[#047C61] font-bold text-xs">
                                                 <Building2 className="w-4 h-4" />
                                             </div>
                                             <div>
-                                                <p className="font-bold text-slate-900 text-sm">{c.clinic_name}</p>
-                                                <p className="text-[11px] text-slate-500">{c.transaction_count} Transactions Today</p>
+                                                <p className="font-bold text-[#0E2420] text-sm">{c.clinic_name}</p>
+                                                <p className="text-[11px] text-[#556C63]">{c.transaction_count} Transactions Today</p>
                                             </div>
                                         </div>
-                                        <p className="font-mono font-bold text-blue-600 text-base">₹{c.total_revenue?.toLocaleString('en-IN')}</p>
+                                        <p className="font-mono font-bold text-[#047C61] text-base">₹{c.total_revenue?.toLocaleString('en-IN')}</p>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60 text-center">
+                                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#DCE8E0] text-center">
                                         <div>
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase">OPD</p>
-                                            <p className="text-xs font-bold text-slate-700">₹{(c.opd_revenue || 0).toLocaleString('en-IN')}</p>
+                                            <p className="text-[9px] text-[#6A8178] font-bold uppercase">OPD</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.opd_revenue || 0).toLocaleString('en-IN')}</p>
                                         </div>
-                                        <div className="border-x border-slate-200/60">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase">IPD</p>
-                                            <p className="text-xs font-bold text-slate-700">₹{(c.ipd_revenue || 0).toLocaleString('en-IN')}</p>
+                                        <div className="border-x border-[#DCE8E0]">
+                                            <p className="text-[9px] text-[#6A8178] font-bold uppercase">IPD</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.ipd_revenue || 0).toLocaleString('en-IN')}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase">Pharma</p>
-                                            <p className="text-xs font-bold text-slate-700">₹{(c.pharma_revenue || 0).toLocaleString('en-IN')}</p>
+                                            <p className="text-[9px] text-[#6A8178] font-bold uppercase">Pharma</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.pharma_revenue || 0).toLocaleString('en-IN')}</p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             {revenueSummary.length === 0 && (
-                                <p className="text-center py-6 text-slate-400 text-sm italic">No sales recorded yet today.</p>
+                                <p className="text-center py-6 text-[#556C63] text-sm italic">No sales recorded yet today.</p>
                             )}
                         </div>
                     </DialogContent>
                 </Dialog>
 
                 {/* 2. Active Inpatient Census (IPD) */}
-                <Card className="glass-card border border-slate-200/80 overflow-hidden relative group">
+                <Card className="jvk-admin-card border-0 overflow-hidden relative group">
                     <CardContent className="p-5">
                         <div className="flex items-center justify-between pb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Inpatients (IPD)</span>
-                            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#556C63]">Active Inpatients (IPD)</span>
+                            <div className="w-8 h-8 rounded-xl bg-[#DFF4ED] text-[#047C61] flex items-center justify-center">
                                 <Bed className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-slate-900 tracking-tight">
+                        <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
                             {activeIPDCount}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium mt-1.5 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                        <div className="text-[11px] text-[#556C63] font-medium mt-1.5 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#047C61]" />
                             <span>Currently Admitted across Network</span>
                         </div>
-                        <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                        <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                             <span>Bed Census Live</span>
-                            <span className="text-indigo-600 font-semibold">{activeClinicsCount} Active Hubs</span>
+                            <span className="text-[#047C61] font-semibold">{activeClinicsCount} Active Hubs</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -1079,54 +1102,54 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 {/* 3. Top Performing Hub */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Card className="glass-card border border-slate-200/80 overflow-hidden relative group cursor-pointer hover:ring-2 hover:ring-blue-500/20 hover:border-blue-300 transition-all duration-300">
+                        <Card className="jvk-admin-card jvk-admin-card-interactive border-0 overflow-hidden relative group cursor-pointer">
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between pb-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Leading Branch</span>
-                                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-[#556C63]">Leading Branch</span>
+                                    <div className="w-8 h-8 rounded-xl bg-[#DFF4ED] text-[#047C61] flex items-center justify-center">
                                         <Flame className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-2xl font-black text-slate-900 tracking-tight truncate">
+                                <div className="jvk-admin-serif text-xl sm:text-2xl font-bold text-[#0E2420] tracking-tight truncate">
                                     {topClinic.clinic_name}
                                 </div>
-                                <p className="text-[11px] text-slate-500 font-medium mt-1.5">
+                                <p className="text-[11px] text-[#556C63] font-medium mt-1.5">
                                     ₹{topClinic.total_revenue?.toLocaleString('en-IN')} revenue today
                                 </p>
-                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Top Volume</span>
-                                    <span className="text-blue-600 font-bold flex items-center">
+                                    <span className="text-[#047C61] font-bold flex items-center">
                                         Excellence Metrics <ArrowRight className="w-3 h-3 ml-0.5" />
                                     </span>
                                 </div>
                             </CardContent>
                         </Card>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[420px] bg-white border-slate-200 text-slate-900">
+                    <DialogContent className="sm:max-w-[420px] bg-[#FFFDF8] border-[#DCE7DF] text-[#0E2420]">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-slate-900">Branch Excellence Metrics</DialogTitle>
-                            <DialogDescription className="text-xs text-slate-500">
+                            <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Branch Excellence Metrics</DialogTitle>
+                            <DialogDescription className="text-xs text-[#556C63]">
                                 Detailed operational performance for {topClinic.clinic_name}.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-4 space-y-4 text-center">
-                            <div className="w-16 h-16 bg-blue-100 rounded-3xl flex items-center justify-center mx-auto text-blue-600">
+                            <div className="w-16 h-16 bg-[#DFF4ED] rounded-3xl flex items-center justify-center mx-auto text-[#047C61]">
                                 <Building2 className="w-8 h-8" />
                             </div>
                             <div>
-                                <h4 className="text-3xl font-black text-slate-900">₹{topClinic.total_revenue?.toLocaleString('en-IN')}</h4>
-                                <p className="text-xs text-slate-500 font-medium mt-1">Today's Gross Billing</p>
+                                <h4 className="text-3xl font-black text-[#0E2420]">₹{topClinic.total_revenue?.toLocaleString('en-IN')}</h4>
+                                <p className="text-xs text-[#556C63] font-medium mt-1">Today's Gross Billing</p>
                             </div>
                             <div className="grid grid-cols-2 gap-3 pt-2">
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-xl font-bold text-slate-900">{topClinic.transaction_count}</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Patient Invoices</p>
+                                <div className="p-3 bg-[#F5FAF7] rounded-xl border border-[#DCE8E0]">
+                                    <p className="text-xl font-bold text-[#0E2420]">{topClinic.transaction_count}</p>
+                                    <p className="text-[10px] text-[#6A8178] font-bold uppercase">Patient Invoices</p>
                                 </div>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-xl font-bold text-slate-900">
+                                <div className="p-3 bg-[#F5FAF7] rounded-xl border border-[#DCE8E0]">
+                                    <p className="text-xl font-bold text-[#0E2420]">
                                         ₹{(Number(topClinic.total_revenue) / (topClinic.transaction_count || 1)).toFixed(0)}
                                     </p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Avg Ticket Size</p>
+                                    <p className="text-[10px] text-[#6A8178] font-bold uppercase">Avg Ticket Size</p>
                                 </div>
                             </div>
                         </div>
@@ -1136,29 +1159,29 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 {/* 4. Critical Stock & System Alerts */}
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Card className={`glass-card border overflow-hidden relative group cursor-pointer transition-all duration-300 ${lowStock.length > 0 || expiringItems.length > 0
-                            ? 'bg-rose-50/40 border-rose-200/80 hover:ring-2 hover:ring-rose-500/20'
-                            : 'border-slate-200/80 hover:ring-2 hover:ring-indigo-500/20'
+                        <Card className={`jvk-admin-card jvk-admin-card-interactive border-0 overflow-hidden relative group cursor-pointer ${lowStock.length > 0 || expiringItems.length > 0
+                            ? 'jvk-admin-card-rose'
+                            : ''
                             }`}>
                             <CardContent className="p-5">
                                 <div className="flex items-center justify-between pb-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Group Stock Alerts</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-[#556C63]">Group Stock Alerts</span>
                                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${lowStock.length > 0 || expiringItems.length > 0
-                                        ? 'bg-rose-100 text-rose-600'
-                                        : 'bg-emerald-50 text-emerald-600'
+                                        ? 'bg-[#FCE7E5] text-[#B9382C]'
+                                        : 'bg-[#DFF4ED] text-[#047C61]'
                                         }`}>
-                                        <AlertTriangle className={`w-4 h-4 ${lowStock.length > 0 ? 'animate-bounce' : ''}`} />
+                                        <AlertTriangle className="w-4 h-4" />
                                     </div>
                                 </div>
-                                <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
                                     {lowStock.length + expiringItems.length}
                                 </div>
-                                <p className="text-[11px] text-slate-500 font-medium mt-1.5">
+                                <p className="text-[11px] text-[#556C63] font-medium mt-1.5">
                                     {lowStock.length} Depleted Branches · {expiringItems.length} Expiring Batches
                                 </p>
-                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Procurement Status</span>
-                                    <span className="text-rose-600 font-bold flex items-center">
+                                    <span className="text-[#B9382C] font-bold flex items-center">
                                         Review Alerts <ArrowRight className="w-3 h-3 ml-0.5" />
                                     </span>
                                 </div>
@@ -1242,41 +1265,42 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             </div>
 
             {/* --------------------------------------------------------- */}
-            {/* MULTI-CLINIC GRID CARDS (STEVE JOBS SIGNATURE FEATURE) */}
+            {/* MULTI-CLINIC GRID CARDS */}
             {/* --------------------------------------------------------- */}
             <div className="space-y-4">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/70 p-4 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-indigo-600" />
-                            Multi-Clinic Hub Fleet ({clinics.length})
+                <div className="jvk-admin-card flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 p-4 sm:px-5">
+                    <div className="min-w-0">
+                        <h2 className="jvk-admin-serif text-xl font-bold text-[#0E2420] tracking-tight flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-[#047C61] shrink-0" />
+                            <span>Multi-Clinic Hub Fleet ({clinics.length})</span>
                         </h2>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[#556C63] mt-0.5">
                             Real-time operational status, today's revenues, patient volumes, and direct 1-click drill down.
                         </p>
                     </div>
 
                     {/* Filter and View Controls */}
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 sm:w-64">
-                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <div className="flex flex-wrap xl:flex-nowrap items-center gap-2 w-full xl:w-auto shrink-0">
+                        <div className="relative flex-1 min-w-[145px] xl:w-[172px] xl:flex-none">
+                            <Search className="w-4 h-4 text-[#6B847B] absolute left-3 top-1/2 -translate-y-1/2" />
                             <Input
                                 value={clinicSearch}
                                 onChange={(e) => setClinicSearch(e.target.value)}
-                                placeholder="Search clinic, code, city..."
-                                className="pl-9 h-10 text-xs bg-slate-50 border-slate-200 rounded-xl"
+                                placeholder="Search clinic, code..."
+                                className="pl-9 h-9 text-xs bg-white border-[#CEDAD3] rounded-xl"
                             />
                         </div>
 
                         {/* Status Pills */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <div className="flex bg-[#F0F6F2] border border-[#DCE7DF] p-0.5 rounded-xl shrink-0">
                             {(['all', 'active', 'paused'] as const).map(st => (
                                 <button
                                     key={st}
+                                    type="button"
                                     onClick={() => setClinicStatusFilter(st)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${clinicStatusFilter === st
-                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-800'
+                                    className={`px-2 py-1.5 rounded-lg text-[11.5px] font-semibold capitalize transition-all whitespace-nowrap ${clinicStatusFilter === st
+                                        ? 'bg-white text-[#047C61] shadow-xs'
+                                        : 'text-[#556C63] hover:text-[#0E2420]'
                                         }`}
                                 >
                                     {st === 'all' ? `All (${clinics.length})` : st === 'active' ? `Active (${activeClinicsCount})` : `Paused (${pausedClinicsCount})`}
@@ -1286,7 +1310,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                         {/* Sort Selector */}
                         <Select value={clinicSortBy} onValueChange={(v: any) => setClinicSortBy(v)}>
-                            <SelectTrigger className="w-[150px] h-10 text-xs bg-slate-50 border-slate-200 rounded-xl">
+                            <SelectTrigger className="w-[138px] h-9 text-[11.5px] bg-white border-[#CEDAD3] rounded-xl shrink-0">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-white">
@@ -1297,16 +1321,18 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </Select>
 
                         {/* View Switcher */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <div className="flex bg-[#F0F6F2] border border-[#DCE7DF] p-1 rounded-xl shrink-0">
                             <button
+                                type="button"
                                 onClick={() => setClinicViewMode('grid')}
-                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${clinicViewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+                                className={`px-2.5 py-1.5 rounded-lg text-[11.5px] font-bold transition-all ${clinicViewMode === 'grid' ? 'bg-white text-[#047C61] shadow-xs' : 'text-[#556C63]'}`}
                             >
                                 Cards
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setClinicViewMode('table')}
-                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${clinicViewMode === 'table' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+                                className={`px-2.5 py-1.5 rounded-lg text-[11.5px] font-bold transition-all ${clinicViewMode === 'table' ? 'bg-white text-[#047C61] shadow-xs' : 'text-[#556C63]'}`}
                             >
                                 Matrix
                             </button>
@@ -1317,36 +1343,83 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 {/* Grid View */}
                 {clinicViewMode === 'grid' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                        {filteredClinics.map((clinic: any, index: number) => {
+                        {filteredClinics.length === 0 ? (
+                            <div className="jvk-admin-card col-span-full flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-8 text-center sm:text-left">
+                                <div className="hidden md:flex shrink-0">
+                                    <img
+                                        src="/assets/kiosk/kiosk-clinic-watercolor.png"
+                                        alt=""
+                                        aria-hidden="true"
+                                        width={200}
+                                        height={102}
+                                        className="jvk-admin-artwork w-48 h-auto"
+                                    />
+                                </div>
+                                <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto">
+                                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#DFF4ED] text-[#047C61] mb-3">
+                                        <Building2 className="w-5 h-5" />
+                                    </span>
+                                    <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">
+                                        {clinics.length === 0 ? 'No clinics added to the network' : 'No clinics match the search criteria'}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-[#556C63] mt-1">
+                                        {clinics.length === 0
+                                            ? 'Onboard a clinic hub to start monitoring operations, stock, and revenue.'
+                                            : 'Try adjusting your search keyword or clinic status filter.'}
+                                    </p>
+                                    {clinics.length === 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsRegisterOpen(true)}
+                                            className="jvk-admin-primary-btn mt-4"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            <span>Onboard Clinic HUB</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="hidden md:flex shrink-0 opacity-75">
+                                    <img
+                                        src="/assets/opd/opd-sidebar-leaves.png"
+                                        alt=""
+                                        aria-hidden="true"
+                                        width={140}
+                                        height={96}
+                                        className="jvk-admin-artwork w-32 h-auto"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                        filteredClinics.map((clinic: any, index: number) => {
                             const isPaused = clinic.status === 'paused';
                             return (
                                 <div
                                     key={clinic.id}
                                     id={index === 0 ? "tour-clinic-management-toggle" : undefined}
-                                    className={`rounded-2xl border p-5 backdrop-blur-md transition-all duration-300 relative flex flex-col justify-between group ${isPaused
-                                        ? 'bg-slate-50/80 border-slate-200 opacity-80'
-                                        : 'bg-white/90 border-slate-200/90 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5'
+                                    className={`rounded-2xl border p-5 transition-all duration-300 relative flex flex-col justify-between group ${isPaused
+                                        ? 'bg-[#F5F7F5] border-[#DCE5DF] opacity-85'
+                                        : 'jvk-admin-card-elevated jvk-admin-card-interactive'
                                         }`}
                                 >
                                     <div>
                                         {/* Card Header */}
                                         <div className="flex items-start justify-between gap-3 mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm ${isPaused
+                                                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shadow-xs ${isPaused
                                                     ? 'bg-slate-200 text-slate-500'
-                                                    : 'bg-gradient-to-tr from-indigo-600 to-blue-600 text-white shadow-indigo-200'
+                                                    : 'bg-[#047C61] text-white'
                                                     }`}>
                                                     <Building2 className="w-5 h-5" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-slate-900 text-base leading-tight group-hover:text-indigo-600 transition-colors">
+                                                    <h3 className="jvk-admin-serif font-bold text-[#0E2420] text-base leading-tight group-hover:text-[#047C61] transition-colors">
                                                         {clinic.name}
                                                     </h3>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <Badge variant="outline" className="font-mono text-[10px] text-indigo-700 bg-indigo-50/80 border-indigo-200 px-1.5 py-0">
+                                                        <Badge variant="outline" className="font-mono text-[10px] text-[#047C61] bg-[#DFF4ED] border-[#BBE2D1] px-1.5 py-0">
                                                             {clinic.hubCode}
                                                         </Badge>
-                                                        <span className="text-[11px] text-slate-400 font-medium">
+                                                        <span className="text-[11px] text-[#556C63] font-medium">
                                                             {clinic.settings?.tier || 'General OPD'}
                                                         </span>
                                                     </div>
@@ -1355,70 +1428,72 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                                             {/* Status Badge */}
                                             {isPaused ? (
-                                                <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px] uppercase font-bold tracking-wider">
+                                                <Badge variant="outline" className="bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF] text-[10px] uppercase font-bold tracking-wider">
                                                     Paused
                                                 </Badge>
                                             ) : (
-                                                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
-                                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DFF4ED] text-[#065F46] border border-[#BBE2D1] text-[10px] font-bold uppercase tracking-wider">
+                                                    <span className="w-2 h-2 rounded-full bg-[#047C61]" />
                                                     Active
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Clinic Meta: Location & Manager */}
-                                        <div className="space-y-1.5 py-2.5 border-y border-slate-100 text-xs text-slate-600">
+                                        <div className="space-y-1.5 py-2.5 border-y border-[#E6EDE7] text-xs text-[#3C544C]">
                                             <div className="flex items-center gap-2 truncate">
-                                                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                <MapPin className="w-3.5 h-3.5 text-[#6B847B] shrink-0" />
                                                 <span className="truncate">{clinic.address || 'Address not registered'}</span>
                                             </div>
                                             <div className="flex items-center gap-2 truncate">
-                                                <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                <span className="truncate">Staff Lead: <strong className="text-slate-800">{clinic.managerName}</strong></span>
+                                                <Users className="w-3.5 h-3.5 text-[#6B847B] shrink-0" />
+                                                <span className="truncate">Staff Lead: <strong className="text-[#0E2420]">{clinic.managerName}</strong></span>
                                             </div>
                                         </div>
 
                                         {/* Performance Metrics Strip */}
-                                        <div className="grid grid-cols-2 gap-2 my-3 p-3 bg-slate-50/80 rounded-xl border border-slate-100">
+                                        <div className="grid grid-cols-2 gap-2 my-3 p-3 bg-[#F4F9F5] rounded-xl border border-[#E2EDE6]">
                                             <div>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Today's Revenue</p>
-                                                <p className="text-lg font-black text-slate-900 font-mono">
+                                                <p className="text-[10px] text-[#556C63] font-bold uppercase tracking-wider">Today's Revenue</p>
+                                                <p className="text-lg font-black text-[#0E2420] font-mono tabular-nums">
                                                     ₹{clinic.revenueInr.toLocaleString('en-IN')}
                                                 </p>
-                                                <p className="text-[10px] text-slate-400 font-mono">{clinic.revenuePaise.toLocaleString('en-IN')}p</p>
+                                                <p className="text-[10px] text-[#556C63] font-mono">{clinic.revenuePaise.toLocaleString('en-IN')}p</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Patient Volume</p>
-                                                <p className="text-lg font-black text-slate-900">
-                                                    {clinic.patientCount} <span className="text-xs font-medium text-slate-500">Visits</span>
+                                                <p className="text-[10px] text-[#556C63] font-bold uppercase tracking-wider">Patient Volume</p>
+                                                <p className="text-lg font-black text-[#0E2420] tabular-nums">
+                                                    {clinic.patientCount} <span className="text-xs font-medium text-[#556C63]">Visits</span>
                                                 </p>
-                                                <p className="text-[10px] text-slate-400">{clinic.bedCapacity} Total Beds</p>
+                                                <p className="text-[10px] text-[#556C63]">{clinic.bedCapacity} Total Beds</p>
                                             </div>
                                         </div>
 
                                         {/* Mini Sub-Revenue Pill */}
-                                        <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 mb-4">
-                                            <span>OPD: <strong>₹{clinic.opdRev}</strong></span>
-                                            <span>IPD: <strong>₹{clinic.ipdRev}</strong></span>
-                                            <span>Rx: <strong>₹{clinic.pharmaRev}</strong></span>
+                                        <div className="flex items-center justify-between text-[11px] text-[#556C63] px-1 mb-4">
+                                            <span>OPD: <strong className="text-[#0E2420]">₹{clinic.opdRev}</strong></span>
+                                            <span>IPD: <strong className="text-[#0E2420]">₹{clinic.ipdRev}</strong></span>
+                                            <span>Rx: <strong className="text-[#0E2420]">₹{clinic.pharmaRev}</strong></span>
                                         </div>
                                     </div>
 
                                     {/* Action Deck */}
-                                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-                                        <Button
+                                    <div className="pt-2 border-t border-[#E6EDE7] flex items-center gap-2">
+                                        <button
+                                            type="button"
                                             onClick={() => onSelectClinic(clinic.id)}
-                                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9 rounded-xl shadow-md shadow-indigo-600/20 gap-1.5 transition-all"
+                                            className="jvk-admin-primary-btn flex-1 !min-h-9 text-xs"
                                         >
-                                            Drill-down to Clinic <ArrowUpRight className="w-3.5 h-3.5" />
-                                        </Button>
+                                            <span>Drill-down to Clinic</span>
+                                            <ArrowUpRight className="w-3.5 h-3.5" />
+                                        </button>
 
                                         {isPaused ? (
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handleUnpause(clinic.id)}
-                                                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 h-9 px-3 rounded-xl text-xs font-semibold"
+                                                className="border-[#BBE2D1] text-[#047C61] hover:bg-[#DFF4ED] h-9 px-3 rounded-xl text-xs font-semibold"
                                             >
                                                 Unpause
                                             </Button>
@@ -1427,7 +1502,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handlePause(clinic.id)}
-                                                className="border-rose-200 text-rose-700 hover:bg-rose-50 h-9 px-3 rounded-xl text-xs font-semibold"
+                                                className="border-[#F2D2CF] text-[#B9382C] hover:bg-[#FDF1EF] h-9 px-3 rounded-xl text-xs font-semibold"
                                             >
                                                 Pause
                                             </Button>
@@ -1435,73 +1510,74 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </div>
                                 </div>
                             );
-                        })}
+                        })
+                        )}
                     </div>
                 )}
 
                 {/* Matrix Table View */}
                 {clinicViewMode === 'table' && (
-                    <Card className="glass-card border border-slate-200/80 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-200/80 text-xs uppercase tracking-wider">
+                    <div className="jvk-admin-card overflow-hidden">
+                        <div className="jvk-admin-table-region border-0 rounded-none" tabIndex={0} role="region" aria-label="Multi-clinic matrix view">
+                            <table className="jvk-admin-table">
+                                <thead>
                                     <tr>
-                                        <th className="px-5 py-3.5">Clinic Hub</th>
-                                        <th className="px-5 py-3.5">Hub Code</th>
-                                        <th className="px-5 py-3.5">Location</th>
-                                        <th className="px-5 py-3.5">Manager</th>
-                                        <th className="px-5 py-3.5">Status</th>
-                                        <th className="px-5 py-3.5">Revenue (Today)</th>
-                                        <th className="px-5 py-3.5">Invoices</th>
-                                        <th className="px-5 py-3.5 text-right">Actions</th>
+                                        <th>Clinic Hub</th>
+                                        <th>Hub Code</th>
+                                        <th>Location</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th>Revenue (Today)</th>
+                                        <th>Invoices</th>
+                                        <th className="text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody>
                                     {filteredClinics.map((clinic: any) => (
-                                        <tr key={clinic.id} className="hover:bg-slate-50/60 transition-colors">
-                                            <td className="px-5 py-3.5 font-bold text-slate-800">
+                                        <tr key={clinic.id}>
+                                            <td className="font-bold text-[#0E2420]">
                                                 {clinic.name}
                                             </td>
-                                            <td className="px-5 py-3.5 font-mono text-xs text-indigo-600 font-bold">
+                                            <td className="font-mono text-xs text-[#047C61] font-bold">
                                                 {clinic.hubCode}
                                             </td>
-                                            <td className="px-5 py-3.5 text-slate-500 text-xs">
+                                            <td className="text-[#556C63] text-xs">
                                                 {clinic.address || 'N/A'}
                                             </td>
-                                            <td className="px-5 py-3.5 text-slate-700 text-xs font-medium">
+                                            <td className="text-[#0E2420] text-xs font-medium">
                                                 {clinic.managerName}
                                             </td>
-                                            <td className="px-5 py-3.5">
+                                            <td>
                                                 {clinic.status === 'paused' ? (
-                                                    <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold uppercase">
+                                                    <span className="px-2 py-0.5 rounded-full bg-[#FDF1EF] text-[#B9382C] text-[10px] font-bold uppercase">
                                                         Paused
                                                     </span>
                                                 ) : (
-                                                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase">
+                                                    <span className="px-2 py-0.5 rounded-full bg-[#DFF4ED] text-[#065F46] text-[10px] font-bold uppercase">
                                                         Active
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-5 py-3.5 font-mono font-bold text-slate-900">
+                                            <td className="font-mono font-bold text-[#0E2420] tabular-nums">
                                                 ₹{clinic.revenueInr.toLocaleString('en-IN')}
                                             </td>
-                                            <td className="px-5 py-3.5 text-slate-600 font-medium">
+                                            <td className="text-[#3C544C] font-medium tabular-nums">
                                                 {clinic.patientCount}
                                             </td>
-                                            <td className="px-5 py-3.5 text-right space-x-2">
-                                                <Button
-                                                    size="sm"
+                                            <td className="text-right space-x-2 whitespace-nowrap">
+                                                <button
+                                                    type="button"
                                                     onClick={() => onSelectClinic(clinic.id)}
-                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 px-3 rounded-lg"
+                                                    className="jvk-admin-primary-btn !min-h-8 !px-3 text-xs"
                                                 >
                                                     Drill Down
-                                                </Button>
+                                                </button>
                                                 {clinic.status === 'paused' ? (
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handleUnpause(clinic.id)}
-                                                        className="text-xs h-8 px-2.5 text-emerald-700 border-emerald-200"
+                                                        className="text-xs h-8 px-2.5 text-[#047C61] border-[#BBE2D1]"
                                                     >
                                                         Unpause
                                                     </Button>
@@ -1510,7 +1586,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handlePause(clinic.id)}
-                                                        className="text-xs h-8 px-2.5 text-rose-700 border-rose-200"
+                                                        className="text-xs h-8 px-2.5 text-[#B9382C] border-[#F2D2CF]"
                                                     >
                                                         Pause
                                                     </Button>
@@ -1520,7 +1596,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     ))}
                                     {filteredClinics.length === 0 && (
                                         <tr>
-                                            <td colSpan={8} className="px-5 py-8 text-center text-slate-400 italic">
+                                            <td colSpan={8} className="px-5 py-8 text-center text-[#556C63] italic">
                                                 No clinics match the search criteria.
                                             </td>
                                         </tr>
@@ -1528,7 +1604,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 </tbody>
                             </table>
                         </div>
-                    </Card>
+                    </div>
                 )}
             </div>
 
@@ -1536,20 +1612,20 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
             {/* GROUP FINANCIAL & OPERATIONAL ANALYTICS SECTION */}
             {/* --------------------------------------------------------- */}
             <div className="space-y-4">
-                <div id="tour-analytics-hub" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 p-4 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
+                <div id="tour-analytics-hub" className="jvk-admin-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:px-5">
                     <div data-jvk-reveal="">
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-indigo-600" />
-                            Group Financial & Operational Analytics
+                        <h2 className="jvk-admin-serif text-xl font-bold text-[#0E2420] tracking-tight flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-[#047C61]" />
+                            <span>Group Financial & Operational Analytics</span>
                         </h2>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[#556C63] mt-0.5">
                             Consolidated revenue in INR & integer Paise, cross-branch comparison, and payment mode distribution.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <Select value={dateFilter} onValueChange={setDateFilter}>
-                            <SelectTrigger className="w-[140px] bg-white border-slate-200 rounded-xl font-medium text-xs h-10">
+                            <SelectTrigger className="w-[140px] bg-white border-[#CEDAD3] rounded-xl font-medium text-xs h-10">
                                 <SelectValue placeholder="Date Range" />
                             </SelectTrigger>
                             <SelectContent className="bg-white">
@@ -1560,120 +1636,122 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </SelectContent>
                         </Select>
 
-                        <Button
-                            variant="outline"
-                            size="sm"
+                        <button
+                            type="button"
                             onClick={copySegmentReport}
-                            className="bg-white border-slate-200 text-slate-700 text-xs h-10 rounded-xl gap-1.5 font-semibold"
+                            className="jvk-admin-secondary-btn h-10 text-xs"
                         >
-                            <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
-                            Copy Report
-                        </Button>
+                            <FileSpreadsheet className="w-4 h-4 text-[#047C61]" />
+                            <span>Copy Report</span>
+                        </button>
                     </div>
                 </div>
 
                 {/* Live Group Ledger Rollup (Cloudflare Worker Double-Entry Ledger) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="glass-card border border-slate-200/80 p-4 bg-white/90">
+                    <Card className="jvk-admin-card border-0 p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Group Gross Revenue</span>
-                            <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <span className="text-xs font-bold text-[#556C63] uppercase tracking-wider">Group Gross Revenue</span>
+                            <span className="p-2 bg-[#DFF4ED] text-[#047C61] rounded-xl">
                                 <TrendingUp className="w-4 h-4" />
                             </span>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-slate-900 tabular-nums">
+                            <div className="text-2xl font-black text-[#0E2420] tabular-nums">
                                 ₹{((hqLedger?.revenuePaise !== undefined ? hqLedger.revenuePaise : totalRevenue * 100) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </div>
-                            <div className="text-[11px] font-mono text-emerald-600 font-semibold mt-0.5">
+                            <div className="text-[11px] font-mono text-[#047C61] font-semibold mt-0.5">
                                 {(hqLedger?.revenuePaise !== undefined ? hqLedger.revenuePaise : totalRevenue * 100).toLocaleString('en-IN')} Paise
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                        <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
                             <span>Double-entry Cr: Revenue</span>
-                            <span className="font-semibold text-slate-600">Live D1 Rollup</span>
+                            <span className="font-semibold text-[#0E2420]">Live D1 Rollup</span>
                         </div>
                     </Card>
 
-                    <Card className="glass-card border border-slate-200/80 p-4 bg-white/90">
+                    <Card className="jvk-admin-card border-0 p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Group COGS (Cost)</span>
-                            <span className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                            <span className="text-xs font-bold text-[#556C63] uppercase tracking-wider">Group COGS (Cost)</span>
+                            <span className="p-2 bg-[#FEF3DC] text-[#B45309] rounded-xl">
                                 <Package className="w-4 h-4" />
                             </span>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-slate-900 tabular-nums">
+                            <div className="text-2xl font-black text-[#0E2420] tabular-nums">
                                 ₹{((hqLedger?.cogsPaise ?? 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </div>
-                            <div className="text-[11px] font-mono text-amber-600 font-semibold mt-0.5">
+                            <div className="text-[11px] font-mono text-[#B45309] font-semibold mt-0.5">
                                 {(hqLedger?.cogsPaise ?? 0).toLocaleString('en-IN')} Paise
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                        <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
                             <span>Double-entry Dr: COGS</span>
-                            <span className="font-semibold text-slate-600">Inventory Relieved</span>
+                            <span className="font-semibold text-[#0E2420]">Inventory Relieved</span>
                         </div>
                     </Card>
 
-                    <Card className="glass-card border border-slate-200/80 p-4 bg-white/90">
+                    <Card className="jvk-admin-card border-0 p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Operating Profit</span>
-                            <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                            <span className="text-xs font-bold text-[#556C63] uppercase tracking-wider">Net Operating Profit</span>
+                            <span className="p-2 bg-[#DFF4ED] text-[#047C61] rounded-xl">
                                 <Activity className="w-4 h-4" />
                             </span>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-slate-900 tabular-nums">
+                            <div className="text-2xl font-black text-[#0E2420] tabular-nums">
                                 ₹{((hqLedger?.netProfitPaise !== undefined ? hqLedger.netProfitPaise : totalRevenue * 100) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </div>
-                            <div className="text-[11px] font-mono text-indigo-600 font-semibold mt-0.5">
+                            <div className="text-[11px] font-mono text-[#047C61] font-semibold mt-0.5">
                                 {(hqLedger?.netProfitPaise !== undefined ? hqLedger.netProfitPaise : totalRevenue * 100).toLocaleString('en-IN')} Paise
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                        <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
                             <span>{(() => {
                                 const revPaise = hqLedger?.revenuePaise ?? totalRevenue * 100;
                                 const profitPaise = hqLedger?.netProfitPaise ?? totalRevenue * 100;
                                 return `Margin: ${revPaise > 0 ? ((profitPaise / revPaise) * 100).toFixed(1) : '0.0'}%`;
                             })()}</span>
-                            <span className="font-semibold text-slate-600">OPEX Factored</span>
+                            <span className="font-semibold text-[#0E2420]">OPEX Factored</span>
                         </div>
                     </Card>
 
-                    <Card className="glass-card border border-slate-200/80 p-4 bg-white/90">
+                    <Card className="jvk-admin-card border-0 p-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Double-Entry Consensus</span>
-                            <span className={`p-2 rounded-xl ${hqLedger?.isBalanced !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                            <span className="text-xs font-bold text-[#556C63] uppercase tracking-wider">Double-Entry Consensus</span>
+                            <span className={`p-2 rounded-xl ${hqLedger?.isBalanced !== false ? 'bg-[#DFF4ED] text-[#047C61]' : 'bg-[#FDF1EF] text-[#B9382C]'}`}>
                                 <ShieldCheck className="w-4 h-4" />
                             </span>
                         </div>
                         <div className="mt-2">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-lg font-black text-slate-900">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-lg font-black text-[#0E2420]">
                                     {hqLedger?.isBalanced !== false ? 'Balanced & Locked' : 'Variance Detected'}
                                 </span>
-                                <Badge variant="outline" className={`text-[10px] font-bold ${hqLedger?.isBalanced !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                                <Badge variant="outline" className={`text-[10px] font-bold ${hqLedger?.isBalanced !== false ? 'bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1]' : 'bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF]'}`}>
                                     {hqLedger?.isBalanced !== false ? 'Audit Ready' : 'Review'}
                                 </Badge>
                             </div>
-                            <div className="text-[11px] font-mono text-slate-500 mt-1">
+                            <div className="text-[11px] font-mono text-[#556C63] mt-1">
                                 Σ Debit = Σ Credit: ₹{((hqLedger?.debitPaise ?? 0) / 100).toLocaleString('en-IN')}
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                        <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
                             <span>{hqLedger?.journalsCount ?? 0} Journals Posted</span>
-                            <span className="font-semibold text-emerald-600">Zero Leakage</span>
+                            <span className="font-semibold text-[#047C61]">Zero Leakage</span>
                         </div>
                     </Card>
                 </div>
 
-                <Card className="glass-card border border-slate-200/80 overflow-hidden p-6">
+                <Card className="jvk-admin-card border-0 overflow-hidden p-5 sm:p-6">
                     {/* Dimension Selector & Filters */}
-                    <div className="flex flex-col lg:flex-row gap-6 mb-8 border-b border-slate-100 pb-6 justify-between">
+                    <div className="flex flex-col lg:flex-row gap-5 mb-6 border-b border-[#E6EDE7] pb-5 justify-between">
                         <div className="space-y-2.5">
-                            <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Primary Analytical Dimension</Label>
-                            <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl w-fit">
+                            <Label className="jvk-admin-serif text-base font-bold text-[#0E2420] flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-[#047C61]" />
+                                <span>Primary Analytical Dimension</span>
+                            </Label>
+                            <div role="tablist" aria-label="Primary Analytical Dimension" className="jvk-admin-tablist jvk-admin-tablist-light">
                                 {[
                                     { label: 'Branch Comparison', value: 'clinic_id' },
                                     { label: 'Payment Matrix', value: 'payment_mode' },
@@ -1681,11 +1759,11 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 ].map((tab) => (
                                     <button
                                         key={tab.value}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={groupBy === tab.value}
                                         onClick={() => setGroupBy(tab.value as any)}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${groupBy === tab.value
-                                            ? 'bg-white text-indigo-600 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700'
-                                            }`}
+                                        className="jvk-admin-tab text-xs"
                                     >
                                         {tab.label}
                                     </button>
@@ -1695,9 +1773,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                         <div className="flex flex-wrap gap-3 items-end">
                             <div className="space-y-1.5">
-                                <Label className="text-[11px] font-bold text-slate-400">Clinic Node</Label>
+                                <Label className="text-[11px] font-bold text-[#556C63]">Clinic Node</Label>
                                 <Select value={filters.clinic} onValueChange={(v) => setFilters(f => ({ ...f, clinic: v }))}>
-                                    <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200 rounded-xl h-9 text-xs font-medium text-slate-700">
+                                    <SelectTrigger className="w-[160px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -1712,9 +1790,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label className="text-[11px] font-bold text-slate-400">Payment Mode</Label>
+                                <Label className="text-[11px] font-bold text-[#556C63]">Payment Mode</Label>
                                 <Select value={filters.payment} onValueChange={(v) => setFilters(f => ({ ...f, payment: v }))}>
-                                    <SelectTrigger className="w-[130px] bg-slate-50 border-slate-200 rounded-xl h-9 text-xs font-medium text-slate-700">
+                                    <SelectTrigger className="w-[130px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -1727,9 +1805,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label className="text-[11px] font-bold text-slate-400">Service Line</Label>
+                                <Label className="text-[11px] font-bold text-[#556C63]">Service Line</Label>
                                 <Select value={filters.type} onValueChange={(v) => setFilters(f => ({ ...f, type: v }))}>
-                                    <SelectTrigger className="w-[140px] bg-slate-50 border-slate-200 rounded-xl h-9 text-xs font-medium text-slate-700">
+                                    <SelectTrigger className="w-[140px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -1746,255 +1824,253 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     </div>
 
                     {/* Chart & Breakdown Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[420px]">
-                        {/* Donut Chart / Graphical Visualizer */}
-                        <div className="lg:col-span-7 h-[360px] md:h-full relative flex flex-col justify-center">
-                            {analyticsLoading ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 space-y-4">
-                                    <div className="w-52 h-52 rounded-full border-[20px] border-slate-200/80 animate-pulse flex items-center justify-center">
-                                        <div className="w-24 h-24 rounded-full bg-slate-100 animate-pulse" />
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <Skeleton className="h-3.5 w-20" />
-                                        <Skeleton className="h-3.5 w-20" />
-                                        <Skeleton className="h-3.5 w-20" />
-                                    </div>
-                                </div>
-                            ) : displayData.length === 0 ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 italic gap-2 h-full">
-                                    <TrendingUp className="w-12 h-12 text-slate-200" />
-                                    <p className="text-sm">No transactions match these filter criteria</p>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Center Display Callout */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                                        <div className="bg-white/90 backdrop-blur-md px-5 py-3.5 rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5 flex flex-col items-center">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selected Aggregate</p>
-                                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 mt-0.5 tabular-nums">
-                                                ₹{totalSelectedRevenue.toLocaleString('en-IN')}
-                                            </h3>
-                                            <p className="text-[10px] font-mono font-semibold text-indigo-600 mt-0.5">
-                                                {totalSelectedPaise.toLocaleString('en-IN')} Paise
-                                            </p>
-                                            <div className="flex gap-1 mt-2">
-                                                <div className="w-6 h-1 bg-indigo-600 rounded-full" />
-                                                <div className="w-2 h-1 bg-indigo-200 rounded-full" />
-                                            </div>
+                    {analyticsLoading ? (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <div className="w-48 h-48 rounded-full border-[18px] border-[#E4EDE7] animate-pulse flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-full bg-[#F2F7F4] animate-pulse" />
+                            </div>
+                            <div className="flex gap-4">
+                                <Skeleton className="h-3.5 w-20" />
+                                <Skeleton className="h-3.5 w-20" />
+                                <Skeleton className="h-3.5 w-20" />
+                            </div>
+                        </div>
+                    ) : displayData.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <img
+                                src="/assets/admin/analytics-empty.png"
+                                alt=""
+                                aria-hidden="true"
+                                width={164}
+                                height={164}
+                                className="jvk-admin-artwork w-40 h-auto mb-2"
+                            />
+                            <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420]">
+                                No transactions match these filter criteria
+                            </h3>
+                            <p className="text-xs sm:text-sm text-[#556C63] mt-1">
+                                Try adjusting the selected clinic, payment mode, or service line.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[380px]">
+                            {/* Donut Chart / Graphical Visualizer */}
+                            <div className="lg:col-span-7 h-[350px] relative flex flex-col justify-center">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                                    <div className="bg-[#FFFDF9]/95 backdrop-blur-md px-5 py-3.5 rounded-3xl border border-[#DCE7DF] shadow-md flex flex-col items-center">
+                                        <p className="text-[10px] font-bold text-[#556C63] uppercase tracking-widest">Selected Aggregate</p>
+                                        <h3 className="text-2xl md:text-3xl font-black text-[#0E2420] mt-0.5 tabular-nums">
+                                            ₹{totalSelectedRevenue.toLocaleString('en-IN')}
+                                        </h3>
+                                        <p className="text-[10px] font-mono font-semibold text-[#047C61] mt-0.5">
+                                            {totalSelectedPaise.toLocaleString('en-IN')} Paise
+                                        </p>
+                                        <div className="flex gap-1 mt-2">
+                                            <div className="w-6 h-1 bg-[#047C61] rounded-full" />
+                                            <div className="w-2 h-1 bg-[#BBE2D1] rounded-full" />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <ResponsiveContainer width="100%" height={360}>
-                                        <PieChart>
-                                            <defs>
-                                                {COLORS.map((color, i) => (
-                                                    <linearGradient key={`grad-${i}`} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={color} stopOpacity={0.9} />
-                                                        <stop offset="95%" stopColor={color} stopOpacity={1} />
-                                                    </linearGradient>
-                                                ))}
-                                            </defs>
-                                            <Pie
-                                                data={displayData}
-                                                innerRadius="62%"
-                                                outerRadius="82%"
-                                                paddingAngle={4}
-                                                dataKey="value"
-                                                stroke="none"
-                                                animationBegin={0}
-                                                animationDuration={800}
-                                                onMouseEnter={(_, index) => setActiveIndex(index)}
-                                                onMouseLeave={() => setActiveIndex(null)}
-                                            >
-                                                {displayData.map((_entry: any, index: number) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={`url(#grad-${index % COLORS.length})`}
-                                                        className="transition-all duration-300 cursor-pointer outline-none"
-                                                        style={{
-                                                            fillOpacity: activeIndex === null || activeIndex === index ? 1 : 0.5,
-                                                            transform: activeIndex === index ? 'scale(1.04)' : 'scale(1)',
-                                                            transformOrigin: 'center',
-                                                            stroke: activeIndex === index ? 'white' : 'none',
-                                                            strokeWidth: 2
-                                                        }}
-                                                    />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                wrapperStyle={{ zIndex: 1000 }}
-                                                content={({ active, payload }) => {
-                                                    if (active && payload && payload.length) {
-                                                        const val = Number(payload[0].value);
-                                                        return (
-                                                            <div className="bg-slate-900 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150">
-                                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{payload[0].name}</p>
-                                                                <p className="text-xl font-black text-white">₹{val.toLocaleString('en-IN')}</p>
-                                                                <p className="text-[11px] font-mono text-indigo-400">{(val * 100).toLocaleString('en-IN')} Paise</p>
-                                                                <p className="text-[10px] text-emerald-400 font-bold mt-1.5">
-                                                                    {(val / (totalSelectedRevenue || 1) * 100).toFixed(1)}% of total selection
-                                                                </p>
-                                                            </div>
-                                                        );
-                                                    }
-                                                    return null;
-                                                }}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Breakdown Summary Column */}
-                        <div className="lg:col-span-5 h-full flex flex-col justify-center space-y-3">
-                            <div className="flex items-center justify-between mb-1">
-                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                    Segment Contribution
-                                </h3>
-                                <Badge variant="outline" className="text-[10px] text-indigo-700 bg-indigo-50 border-indigo-200">
-                                    {displayData.length} Categories
-                                </Badge>
-                            </div>
-
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                {displayData.map((item: any, i: number) => {
-                                    const percentage = (Number(item.value) / (totalSelectedRevenue || 1) * 100);
-                                    const isFocused = activeIndex === i;
-                                    return (
-                                        <div
-                                            key={i}
-                                            onMouseEnter={() => setActiveIndex(i)}
+                                <ResponsiveContainer width="100%" height={350}>
+                                    <PieChart>
+                                        <defs>
+                                            {COLORS.map((color, i) => (
+                                                <linearGradient key={`grad-${i}`} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor={color} stopOpacity={0.9} />
+                                                    <stop offset="95%" stopColor={color} stopOpacity={1} />
+                                                </linearGradient>
+                                            ))}
+                                        </defs>
+                                        <Pie
+                                            data={displayData}
+                                            innerRadius="62%"
+                                            outerRadius="82%"
+                                            paddingAngle={4}
+                                            dataKey="value"
+                                            stroke="none"
+                                            animationBegin={0}
+                                            animationDuration={800}
+                                            onMouseEnter={(_, index) => setActiveIndex(index)}
                                             onMouseLeave={() => setActiveIndex(null)}
-                                            className={`p-3 rounded-xl transition-all duration-200 border cursor-pointer ${isFocused
-                                                ? 'bg-indigo-50/70 border-indigo-200 ring-1 ring-indigo-200'
-                                                : 'bg-slate-50/50 border-slate-100 hover:bg-slate-50'
-                                                }`}
                                         >
-                                            <div className="flex justify-between items-center text-xs mb-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                    <span className="font-bold text-slate-800">{item.name}</span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="font-mono font-bold text-slate-900">₹{Number(item.value).toLocaleString('en-IN')}</span>
-                                                    <span className="text-[10px] text-slate-400 font-mono ml-1.5">({percentage.toFixed(1)}%)</span>
-                                                </div>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-slate-200/60 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                            {displayData.map((_entry: any, index: number) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={`url(#grad-${index % COLORS.length})`}
+                                                    className="transition-all duration-300 cursor-pointer outline-none"
                                                     style={{
-                                                        width: `${percentage}%`,
-                                                        backgroundColor: COLORS[i % COLORS.length],
-                                                        opacity: activeIndex === null || isFocused ? 1 : 0.4
+                                                        fillOpacity: activeIndex === null || activeIndex === index ? 1 : 0.5,
+                                                        transform: activeIndex === index ? 'scale(1.04)' : 'scale(1)',
+                                                        transformOrigin: 'center',
+                                                        stroke: activeIndex === index ? 'white' : 'none',
+                                                        strokeWidth: 2
                                                     }}
                                                 />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            wrapperStyle={{ zIndex: 1000 }}
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    const val = Number(payload[0].value);
+                                                    return (
+                                                        <div className="bg-[#0E2420] text-white p-3.5 rounded-2xl shadow-xl border border-[#1E473D]">
+                                                            <p className="text-xs font-bold text-[#9CD3BF] uppercase tracking-wider mb-1">{payload[0].name}</p>
+                                                            <p className="text-xl font-black text-white">₹{val.toLocaleString('en-IN')}</p>
+                                                            <p className="text-[11px] font-mono text-[#6EE7B7]">{(val * 100).toLocaleString('en-IN')} Paise</p>
+                                                            <p className="text-[10px] text-[#E5A736] font-bold mt-1.5">
+                                                                {(val / (totalSelectedRevenue || 1) * 100).toFixed(1)}% of total selection
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
                             </div>
 
-                            <div className="pt-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={copySegmentReport}
-                                    className="w-full border-slate-200 text-slate-700 font-bold text-xs h-9 hover:bg-slate-50 rounded-xl"
-                                >
-                                    Copy Segment Breakdown
-                                </Button>
+                            {/* Inline Bars beside Chart */}
+                            <div className="lg:col-span-5 flex flex-col justify-center space-y-3">
+                                <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-2">
+                                    {displayData.map((item: any, i: number) => {
+                                        const percentage = (Number(item.value) / (totalSelectedRevenue || 1) * 100);
+                                        const isFocused = activeIndex === i;
+                                        return (
+                                            <div
+                                                key={i}
+                                                onMouseEnter={() => setActiveIndex(i)}
+                                                onMouseLeave={() => setActiveIndex(null)}
+                                                className={`p-3 rounded-xl transition-all duration-200 border cursor-pointer ${isFocused
+                                                    ? 'bg-[#EAF6F1] border-[#96C3B1]'
+                                                    : 'bg-[#F7FAF7] border-[#E4EDE7] hover:bg-[#EFF7F2]'
+                                                    }`}
+                                            >
+                                                <div className="flex justify-between items-center text-xs mb-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-xs" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                        <span className="font-bold text-[#0E2420]">{item.name}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-mono font-bold text-[#0E2420]">₹{Number(item.value).toLocaleString('en-IN')}</span>
+                                                        <span className="text-[10px] text-[#556C63] font-mono ml-1.5">({percentage.toFixed(1)}%)</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-[#DCE7DF] rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-500 ease-out"
+                                                        style={{
+                                                            width: `${percentage}%`,
+                                                            backgroundColor: COLORS[i % COLORS.length],
+                                                            opacity: activeIndex === null || isFocused ? 1 : 0.4
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </Card>
             </div>
 
             {/* --------------------------------------------------------- */}
             {/* GROUP INVENTORY & CENTRAL PROCUREMENT RADAR */}
             {/* --------------------------------------------------------- */}
-            <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 p-4 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
+            <div className="space-y-5">
+                <div className="jvk-admin-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:px-5">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <Package className="w-5 h-5 text-indigo-600" />
-                            Central Inventory & Stock Rebalancing Radar
+                        <h2 className="jvk-admin-serif text-xl font-bold text-[#0E2420] tracking-tight flex items-center gap-2">
+                            <Package className="w-5 h-5 text-[#047C61]" />
+                            <span>Central Inventory & Stock Rebalancing Radar</span>
                         </h2>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[#556C63] mt-0.5">
                             Aggregated multi-branch stock levels, low-supply alerts, and instant inter-clinic inventory transfers.
                         </p>
                     </div>
 
-                    <Button
+                    <button
+                        type="button"
                         onClick={() => setIsTransferModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-10 px-4 rounded-xl shadow-md shadow-indigo-600/20 gap-2"
+                        className="jvk-admin-primary-btn h-10 text-xs"
                     >
                         <ArrowRightLeft className="w-4 h-4" />
-                        Initiate Stock Transfer
-                    </Button>
+                        <span>Initiate Stock Transfer</span>
+                    </button>
                 </div>
 
                 {/* Radar Grid: Alerts & Available Transfers */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {/* Left 2 Cols: Low-Stock Shortage Radar */}
-                    <Card className="lg:col-span-2 glass-card border border-slate-200/80 p-5">
+                    <Card className="lg:col-span-2 jvk-admin-card border-0 p-5">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-rose-500" />
-                                    Branch Shortage Radar ({lowStockRadarItems.length})
+                                <h3 className="jvk-admin-serif font-bold text-[#0E2420] text-base flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-[#B9382C]" />
+                                    <span>Branch Shortage Radar ({lowStockRadarItems.length})</span>
                                 </h3>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-[#556C63] mt-0.5">
                                     Clinics operating below minimum safety threshold with automated surplus detection.
                                 </p>
                             </div>
-                            <Badge variant="outline" className="text-rose-700 bg-rose-50 border-rose-200 text-[10px] font-bold uppercase">
+                            <Badge variant="outline" className="text-[#B9382C] bg-[#FDF1EF] border-[#F2D2CF] text-[10px] font-bold uppercase">
                                 Action Required
                             </Badge>
                         </div>
 
                         <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                             {lowStockRadarItems.map((item: any, idx: number) => (
-                                <div key={idx} className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-indigo-200 transition-colors">
+                                <div key={idx} className="p-3.5 bg-[#FAFBF8] rounded-xl border border-[#E2ECE5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-[#96C3B1] transition-colors">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold text-slate-900 text-sm">{item.item_name}</p>
-                                            <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px] font-mono">
+                                            <p className="font-bold text-[#0E2420] text-sm">{item.item_name}</p>
+                                            <Badge variant="outline" className="bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF] text-[10px] font-mono">
                                                 {item.total_quantity} left
                                             </Badge>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-0.5">
-                                            Depleted Hub: <strong className="text-slate-800">{item.deficitClinicName}</strong> · Min Threshold: {item.threshold || 10}
+                                        <p className="text-xs text-[#556C63] mt-0.5">
+                                            Depleted Hub: <strong className="text-[#0E2420]">{item.deficitClinicName}</strong> · Min Threshold: {item.threshold || 10}
                                         </p>
                                         {item.surplusClinicName ? (
-                                            <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1 mt-1">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                            <p className="text-[11px] text-[#047C61] font-medium flex items-center gap-1 mt-1">
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-[#047C61]" />
                                                 Recommended source: <strong>{item.surplusClinicName}</strong> has {item.surplusQuantity} units in surplus
                                             </p>
                                         ) : (
-                                            <p className="text-[11px] text-amber-600 font-medium mt-1">
+                                            <p className="text-[11px] text-[#B45309] font-medium mt-1">
                                                 Network-wide shortage. Central vendor PO replenishment required.
                                             </p>
                                         )}
                                     </div>
 
-                                    <Button
-                                        size="sm"
+                                    <button
+                                        type="button"
                                         onClick={() => initiateTransferForRadarItem(item)}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 px-3.5 rounded-lg shrink-0 gap-1.5"
+                                        className="jvk-admin-primary-btn !min-h-8 !px-3.5 text-xs shrink-0"
                                     >
                                         <ArrowRightLeft className="w-3.5 h-3.5" />
-                                        Balance Stock
-                                    </Button>
+                                        <span>Balance Stock</span>
+                                    </button>
                                 </div>
                             ))}
 
                             {lowStockRadarItems.length === 0 && (
-                                <div className="text-center py-12 flex flex-col items-center gap-3">
-                                    <ShieldCheck className="w-12 h-12 text-emerald-500/80" />
+                                <div className="text-center py-8 flex flex-col items-center gap-2">
+                                    <img
+                                        src="/assets/admin/medicine-bottles.png"
+                                        alt=""
+                                        aria-hidden="true"
+                                        width={126}
+                                        height={126}
+                                        className="jvk-admin-artwork w-28 h-auto"
+                                    />
                                     <div>
-                                        <p className="font-bold text-slate-800 text-sm">All Branch Stocks Stable</p>
-                                        <p className="text-xs text-slate-500">Every clinic maintains inventory above designated safety buffers.</p>
+                                        <p className="jvk-admin-serif font-bold text-[#0E2420] text-base">All Branch Stocks Stable</p>
+                                        <p className="text-xs text-[#556C63] mt-0.5">Every clinic maintains inventory above designated safety buffers.</p>
                                     </div>
                                 </div>
                             )}
@@ -2002,153 +2078,262 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     </Card>
 
                     {/* Right Col: Group Inventory Catalog Overview */}
-                    <Card className="glass-card border border-slate-200/80 p-5 flex flex-col justify-between">
+                    <Card className="jvk-admin-card border-0 p-5 flex flex-col justify-between">
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                    <Package className="w-4 h-4 text-indigo-600" />
-                                    Group SKU Matrix
+                                <h3 className="jvk-admin-serif font-bold text-[#0E2420] text-base flex items-center gap-2">
+                                    <Package className="w-4 h-4 text-[#047C61]" />
+                                    <span>Group SKU Matrix</span>
                                 </h3>
-                                <Badge className="bg-slate-900 text-white text-[10px]">
+                                <Badge className="bg-[#047C61] text-white text-[10px]">
                                     {distinctItemNames.length} SKUs
                                 </Badge>
                             </div>
 
                             <div className="space-y-3 mb-4">
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
-                                    <span className="text-slate-500">Total Tracked Inventory</span>
-                                    <span className="font-bold text-slate-900 font-mono">{inventory.length} Records</span>
+                                <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
+                                    <span className="text-[#556C63]">Total Tracked Inventory</span>
+                                    <span className="font-bold text-[#0E2420] font-mono">{inventory.length} Records</span>
                                 </div>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
-                                    <span className="text-slate-500">Expiring in 30 Days</span>
-                                    <span className={`font-bold font-mono ${expiringItems.length > 0 ? 'text-amber-600' : 'text-slate-700'}`}>
+                                <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
+                                    <span className="text-[#556C63]">Expiring in 30 Days</span>
+                                    <span className={`font-bold font-mono ${expiringItems.length > 0 ? 'text-[#B45309]' : 'text-[#0E2420]'}`}>
                                         {expiringItems.length} Batches
                                     </span>
                                 </div>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
-                                    <span className="text-slate-500">Active Supply Channels</span>
-                                    <span className="font-bold text-emerald-600">Cloudflare D1 Synced</span>
+                                <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
+                                    <span className="text-[#556C63]">Active Supply Channels</span>
+                                    <span className="font-bold text-[#047C61]">Cloudflare D1 Synced</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 text-xs text-indigo-900 space-y-1">
-                            <p className="font-bold flex items-center gap-1.5">
-                                <Zap className="w-3.5 h-3.5 text-indigo-600" />
-                                Inter-Branch Rebalancer
+                        <div className="p-3.5 jvk-admin-card-sage text-xs text-[#0E2420] space-y-1">
+                            <p className="font-bold flex items-center gap-1.5 text-[#047C61]">
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Inter-Branch Rebalancer</span>
                             </p>
-                            <p className="text-[11px] text-indigo-700">
+                            <p className="text-[11px] text-[#3C544C] leading-relaxed">
                                 Transferring stock updates both source and destination inventories instantaneously with tamper-proof cryptographic audit tracking.
                             </p>
                         </div>
                     </Card>
                 </div>
 
+                {/* Segment Contribution + Multi-Clinic Network Summary */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <Card className="jvk-admin-card border-0 p-5 flex flex-col justify-between space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420] flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-[#047C61]" />
+                                <span>Segment Contribution</span>
+                            </h3>
+                            <Badge variant="outline" className="text-[11px] text-[#065F46] bg-[#DFF4ED] border-[#BBE2D1]">
+                                {displayData.length} Categories
+                            </Badge>
+                        </div>
+
+                        {displayData.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-4 text-center">
+                                <img
+                                    src="/assets/admin/segment-empty.png"
+                                    alt=""
+                                    aria-hidden="true"
+                                    width={136}
+                                    height={98}
+                                    className="jvk-admin-artwork w-36 h-auto mb-2"
+                                />
+                                <p className="jvk-admin-serif text-sm font-bold text-[#0E2420]">No segment data available</p>
+                                <p className="text-xs text-[#556C63] mt-0.5">
+                                    Once transactions are recorded, the segment breakdown will appear here.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2.5">
+                                {displayData.slice(0, 4).map((item: any, i: number) => {
+                                    const percentage = (Number(item.value) / (totalSelectedRevenue || 1) * 100);
+                                    return (
+                                        <div key={item.name + i} className="flex items-center justify-between rounded-xl border border-[#E2ECE5] bg-[#FAFBF8] px-3.5 py-2.5 text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                <span className="font-bold text-[#0E2420]">{item.name}</span>
+                                            </div>
+                                            <span className="font-mono font-bold text-[#0E2420] tabular-nums">
+                                                ₹{Number(item.value).toLocaleString('en-IN')} ({percentage.toFixed(1)}%)
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <div className="flex justify-center pt-1">
+                            <button
+                                type="button"
+                                onClick={copySegmentReport}
+                                className="jvk-admin-secondary-btn !min-h-9 text-xs"
+                            >
+                                <FileSpreadsheet className="w-3.5 h-3.5 text-[#047C61]" />
+                                <span>Copy Segment Breakdown</span>
+                            </button>
+                        </div>
+                    </Card>
+
+                    <Card className="jvk-admin-card border-0 p-5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420] flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-[#047C61]" />
+                                <span>Multi-Clinic Network Summary</span>
+                            </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                            <div className="sm:col-span-7 jvk-admin-table-region" tabIndex={0} role="region" aria-label="Multi-Clinic Network Summary">
+                                <table className="jvk-admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th className="text-right">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className="text-xs font-medium text-[#3C544C]">Total Clinics</td>
+                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">{clinics.length}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-xs font-medium text-[#3C544C]">Active IPD Beds</td>
+                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">{activeIPDCount}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-xs font-medium text-[#3C544C]">Total Inventory Value</td>
+                                            <td className="text-right font-bold text-[#047C61] tabular-nums">₹{paiseToRupeesString(totalInventoryValuePaise)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-xs font-medium text-[#3C544C]">Today's Revenue</td>
+                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">₹{paiseToRupeesString(Math.round(totalRevenuePaise))}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="sm:col-span-5 flex justify-center">
+                                <img
+                                    src="/assets/kiosk/kiosk-clinic-watercolor.png"
+                                    alt=""
+                                    aria-hidden="true"
+                                    width={170}
+                                    height={95}
+                                    className="jvk-admin-artwork w-40 h-auto"
+                                />
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
                 {/* HQ Central Rebalancing Telemetry Card */}
                 {hqRadar?.rebalancing && (
-                    <Card className="glass-card border border-indigo-200/80 p-5 bg-gradient-to-r from-indigo-50/60 via-white to-blue-50/50">
+                    <Card className="jvk-admin-card-sage border-0 p-5">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <Badge className="bg-indigo-600 text-white font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">
+                                    <Badge className="bg-[#047C61] text-white font-mono text-[10px] tracking-wide uppercase px-2 py-0.5">
                                         Cloudflare AI Rebalancing Engine
                                     </Badge>
-                                    <span className="text-xs text-slate-500 font-medium">Optimal Transfer Detected</span>
+                                    <span className="text-xs text-[#556C63] font-medium">Optimal Transfer Detected</span>
                                 </div>
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mt-1">
-                                    <Zap className="w-4 h-4 text-amber-500" />
-                                    Dispatch Recommendation: {hqRadar.rebalancing.recommendedTransferUnits} units from {hqRadar.rebalancing.sourceHub} to {hqRadar.rebalancing.targetClinic}
+                                <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420] flex items-center gap-2 mt-1">
+                                    <Zap className="w-4 h-4 text-[#D97706]" />
+                                    <span>Dispatch Recommendation: {hqRadar.rebalancing.recommendedTransferUnits} units from {hqRadar.rebalancing.sourceHub} to {hqRadar.rebalancing.targetClinic}</span>
                                 </h3>
-                                <p className="text-xs text-slate-600">
+                                <p className="text-xs text-[#3C544C]">
                                     Automated multi-clinic stock balancing algorithm identifies surplus inventory at central hub to replenish high-burn clinic stock. Estimated transit SLA: {hqRadar.rebalancing.estimatedTransitDays} business days.
                                 </p>
                             </div>
-                            <Button
-                                size="sm"
+                            <button
+                                type="button"
                                 onClick={() => initiateTransferForHqRadarItem(hqRadar.inventoryRadar?.[0] || { brand: 'Amoxicillin + Clavulanic Acid' })}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9 px-4 rounded-xl shadow-sm gap-2 shrink-0 font-semibold"
+                                className="jvk-admin-primary-btn text-xs h-9 px-4 shrink-0"
                             >
                                 <ArrowRightLeft className="w-4 h-4" />
-                                Open Transfer Wizard
-                            </Button>
+                                <span>Open Transfer Wizard</span>
+                            </button>
                         </div>
                     </Card>
                 )}
 
                 {/* Cross-Clinic Inventory Telemetry Table */}
                 {hqRadar?.inventoryRadar && hqRadar.inventoryRadar.length > 0 && (
-                    <Card className="glass-card border border-slate-200/80 p-5 overflow-hidden">
+                    <Card className="jvk-admin-card border-0 p-5 overflow-hidden">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                             <div>
-                                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                    <Database className="w-4 h-4 text-indigo-600" />
-                                    Central Depot vs Clinic Stock Telemetry ({hqRadar.inventoryRadar.length} Tracked Formulations)
+                                <h3 id="hq-radar-table-heading" className="jvk-admin-serif font-bold text-[#0E2420] text-sm flex items-center gap-2">
+                                    <Database className="w-4 h-4 text-[#047C61]" />
+                                    <span>Central Depot vs Clinic Stock Telemetry ({hqRadar.inventoryRadar.length} Tracked Formulations)</span>
                                 </h3>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-[#556C63]">
                                     Live synchronized Cloudflare D1 inventory metrics comparing clinic site buffers against central HQ reserves.
                                 </p>
                             </div>
-                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px] font-mono">
+                            <Badge variant="outline" className="bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1] text-[10px] font-mono">
                                 Central Depot: {hqRadar.hqGroupStockUnits || 1420} units in reserve
                             </Badge>
                         </div>
 
-                        <div className="overflow-x-auto rounded-xl border border-slate-100">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                        <div className="jvk-admin-table-region" tabIndex={0} role="region" aria-labelledby="hq-radar-table-heading">
+                            <table className="jvk-admin-table text-xs">
+                                <thead>
                                     <tr>
-                                        <th className="py-2.5 px-3">Formulation & Brand</th>
-                                        <th className="py-2.5 px-3">Strength</th>
-                                        <th className="py-2.5 px-3">Clinic Stock</th>
-                                        <th className="py-2.5 px-3">HQ Central Stock</th>
-                                        <th className="py-2.5 px-3">Reorder Point</th>
-                                        <th className="py-2.5 px-3">Status</th>
-                                        <th className="py-2.5 px-3 text-right">Action</th>
+                                        <th>Formulation & Brand</th>
+                                        <th>Strength</th>
+                                        <th>Clinic Stock</th>
+                                        <th>HQ Central Stock</th>
+                                        <th>Reorder Point</th>
+                                        <th>Status</th>
+                                        <th className="text-right">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white">
+                                <tbody>
                                     {hqRadar.inventoryRadar.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                                            <td className="py-2.5 px-3">
-                                                <div className="font-bold text-slate-900">{item.brand}</div>
-                                                <div className="text-[11px] text-slate-500">{item.salt}</div>
+                                        <tr key={idx}>
+                                            <td>
+                                                <div className="font-bold text-[#0E2420]">{item.brand}</div>
+                                                <div className="text-[11px] text-[#556C63]">{item.salt}</div>
                                             </td>
-                                            <td className="py-2.5 px-3 font-mono font-medium text-slate-700">
+                                            <td className="font-mono font-medium text-[#3C544C]">
                                                 {item.strengthMg} mg
                                             </td>
-                                            <td className="py-2.5 px-3 font-mono font-bold">
-                                                <span className={item.isLowStock ? 'text-rose-600' : 'text-slate-900'}>
+                                            <td className="font-mono font-bold">
+                                                <span className={item.isLowStock ? 'text-[#B9382C]' : 'text-[#0E2420]'}>
                                                     {item.clinicStock} units
                                                 </span>
                                             </td>
-                                            <td className="py-2.5 px-3 font-mono text-indigo-600 font-semibold">
+                                            <td className="font-mono text-[#047C61] font-semibold">
                                                 {item.hqGroupStock} units
                                             </td>
-                                            <td className="py-2.5 px-3 font-mono text-slate-500">
+                                            <td className="font-mono text-[#556C63]">
                                                 {item.reorderLevel} units
                                             </td>
-                                            <td className="py-2.5 px-3">
+                                            <td>
                                                 <Badge
                                                     variant="outline"
                                                     className={`text-[10px] font-bold ${
                                                         item.isLowStock
-                                                            ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            ? 'bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF]'
+                                                            : 'bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1]'
                                                     }`}
                                                 >
                                                     {item.status}
                                                 </Badge>
                                             </td>
-                                            <td className="py-2.5 px-3 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
+                                            <td className="text-right">
+                                                <button
+                                                    type="button"
                                                     onClick={() => initiateTransferForHqRadarItem(item)}
-                                                    className="h-7 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-semibold gap-1 px-2"
+                                                    className="jvk-admin-secondary-btn !min-h-7 !px-2.5 text-xs"
                                                 >
-                                                    <ArrowRightLeft className="w-3 h-3" />
-                                                    Rebalance
-                                                </Button>
+                                                    <ArrowRightLeft className="w-3 h-3 text-[#047C61]" />
+                                                    <span>Rebalance</span>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -2313,7 +2498,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <Button
                                 type="submit"
                                 disabled={transferLoading || availableSourceQuantity < transferQuantity || transferQuantity <= 0}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-11 rounded-xl shadow-lg shadow-indigo-600/20"
+                                className="jvk-admin-primary-btn w-full h-11"
                             >
                                 {transferLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
                                 Confirm & Execute Rebalance

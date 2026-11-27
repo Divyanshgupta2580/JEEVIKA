@@ -12,7 +12,7 @@ export function WebsiteLocalizationRuntime() {
   return null;
 }
 
-export function WebsiteLanguageSelect() {
+export function WebsiteLanguageSelect({ inline = false }: { inline?: boolean } = {}) {
   const [locale, setLocale] = useState<WebsiteLocale>(() => getWebsiteLocale());
   useEffect(() => {
     const update = (event: Event) => setLocale((event as CustomEvent<WebsiteLocale>).detail);
@@ -20,8 +20,12 @@ export function WebsiteLanguageSelect() {
     return () => document.removeEventListener("jeevika:locale-change", update);
   }, []);
 
+  const containerClass = inline
+    ? "inline-flex items-center gap-1.5 rounded-xl border border-[#CEDAD3] bg-[#FFFDF8] px-3 py-1.5 min-h-[38px] text-xs font-semibold text-[#0E2420] shadow-sm transition-colors hover:border-[#047C61]"
+    : "jvk-floating-locale fixed bottom-4 right-4 z-[100] flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur";
+
   return (
-    <label className="fixed bottom-4 right-4 z-[100] flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
+    <label className={containerClass}>
       <span className="sr-only">Language</span>
       <select
         data-website-locale

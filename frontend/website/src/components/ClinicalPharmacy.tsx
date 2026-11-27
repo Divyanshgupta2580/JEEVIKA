@@ -1,4 +1,20 @@
 import { useRef, useState, type FormEvent } from "react";
+import {
+  AlertTriangle,
+  BookOpen,
+  CalendarClock,
+  CheckCircle2,
+  FileCheck2,
+  Lock,
+  Package,
+  PackageCheck,
+  Pill,
+  RefreshCw,
+  Scale,
+  Search,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
 import type {
   Inventory,
   StockPlan,
@@ -415,65 +431,177 @@ export function ClinicStock({
         value.toLowerCase().includes(search.toLowerCase()),
       ),
   );
+  const allBatches = data?.batches ?? [];
+  const totalCount = allBatches.length;
+  const inStockCount = allBatches.filter((b) => b.available > 0 && b.expiry >= date).length;
+  const lowStockCount = allBatches.filter((b) => b.available > 0 && b.available <= 10 && b.expiry >= date).length;
+  const expiringCount = allBatches.filter((b) => b.expiry >= date && b.expiry <= cutoff).length;
+  const expiredCount = allBatches.filter((b) => b.expiry < date).length;
+
   return (
-    <section className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
-      <header className="flex flex-wrap justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Clinic inventory</h1>
-        <Button
-          variant="outline"
-          onClick={() => setRevision((value) => value + 1)}
-        >
-          Refresh stock
-        </Button>
-      </header>
-      <div>
-        <label htmlFor="clinic-stock-search">Search medicine or batch</label>
-        <Input
-          id="clinic-stock-search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
+    <section className="jvk-admin-page mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+      <div className="jvk-admin-card-hero p-5 sm:p-6 space-y-5">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+              <Package className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div>
+              <h1 className="jvk-admin-serif text-2xl sm:text-3xl font-bold text-[#0E2420]">
+                Clinic inventory
+              </h1>
+              <p className="text-sm text-[#556C63]">
+                Track clinic stock, expiry, and batches.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRevision((value) => value + 1)}
+            className="jvk-admin-secondary-btn"
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <span>Refresh stock</span>
+          </button>
+        </header>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 rounded-2xl border border-[#D4E6DA] bg-[#F2F8F4] p-3.5">
+          <div className="flex items-center gap-2.5 px-2 py-1">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#DFF4ED] text-[#047C61]">
+              <Pill className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-medium text-[#556C63]">Total items</p>
+              <p className="text-lg font-bold text-[#0E2420] tabular-nums">{totalCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 px-2 py-1 lg:border-l lg:border-[#DCE8E0]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#E4F4EA] text-[#059669]">
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-medium text-[#556C63]">In stock</p>
+              <p className="text-lg font-bold text-[#059669] tabular-nums">{inStockCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 px-2 py-1 lg:border-l lg:border-[#DCE8E0]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#FEF3DC] text-[#B45309]">
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-medium text-[#556C63]">Low stock</p>
+              <p className="text-lg font-bold text-[#B45309] tabular-nums">{lowStockCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 px-2 py-1 lg:border-l lg:border-[#DCE8E0]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#FDECEA] text-[#C2410C]">
+              <CalendarClock className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-medium text-[#556C63]">Expiring ≤ 90 days</p>
+              <p className="text-lg font-bold text-[#C2410C] tabular-nums">{expiringCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 px-2 py-1 lg:border-l lg:border-[#DCE8E0]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#FDF1EF] text-[#B9382C]">
+              <XCircle className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[11px] font-medium text-[#556C63]">Expired</p>
+              <p className="text-lg font-bold text-[#B9382C] tabular-nums">{expiredCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B847B]" aria-hidden="true" />
+            <label htmlFor="clinic-stock-search" className="sr-only">
+              Search medicine or batch
+            </label>
+            <Input
+              id="clinic-stock-search"
+              placeholder="Search medicine or batch"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-10 h-11 rounded-xl border-[#CEDAD3] bg-white text-[#0E2420]"
+            />
+          </div>
+          <label className="inline-flex items-center gap-2.5 rounded-xl border border-[#D4E2DA] bg-white/85 px-3.5 py-2.5 text-sm font-medium text-[#2A423A] cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={expiryOnly}
+              onChange={(event) => setExpiryOnly(event.target.checked)}
+              className="h-4 w-4 rounded border-[#B8CDC0] text-[#047C61]"
+            />
+            <span>Expires within 90 days or already expired</span>
+          </label>
+        </div>
       </div>
-      <label className="flex gap-2">
-        <input
-          type="checkbox"
-          checked={expiryOnly}
-          onChange={(event) => setExpiryOnly(event.target.checked)}
-        />
-        Expires within 90 days or already expired
-      </label>
+
       {error && <InlineBanner tone="critical" title={error} />}
-      {!data && !error && <p role="status">Loading clinic stock…</p>}
-      {data && batches.length === 0 && (
-        <EmptyState
-          title="No matching batches"
-          description="Stock received at this clinic appears here."
-        />
+      {!data && !error && (
+        <p role="status" className="text-sm text-[#556C63] px-1">
+          Loading clinic stock…
+        </p>
       )}
-      {canManageCatalog && <CatalogEntry />}
+      {data && batches.length === 0 && (
+        <div className="jvk-admin-card flex flex-col items-center justify-center px-6 py-10 text-center">
+          <img
+            src="/assets/admin/medicine-bottles.png"
+            alt=""
+            aria-hidden="true"
+            width={148}
+            height={148}
+            className="jvk-admin-artwork w-36 h-36 mb-3"
+          />
+          <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">No matching batches</h3>
+          <p className="mt-1.5 max-w-md text-sm text-[#556C63]">
+            Stock received at this clinic appears here.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRevision((value) => value + 1)}
+            className="jvk-admin-primary-btn mt-5"
+          >
+            <PackageCheck className="h-4 w-4" aria-hidden="true" />
+            <span>Refresh stock</span>
+          </button>
+        </div>
+      )}
       {!!batches.length && (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {batches.map((batch) => (
             <li
               key={batch.id}
-              className="space-y-2 rounded-lg border bg-card p-4"
+              className="jvk-admin-card-elevated jvk-admin-card-interactive space-y-2.5 p-5"
             >
-              <h2 className="font-semibold">
-                {batch.brand} · {batch.strengthMg} mg
-              </h2>
-              <p className="break-words">
-                Batch {batch.batchNo} · expires {batch.expiry}
-              </p>
-              <StatusChip tone={batch.expiry < date ? "warning" : "neutral"}>
-                {batch.expiry < date
-                  ? "Expired"
-                  : `${batch.available} available`}
-              </StatusChip>
-              <p>Unit price {money(batch.pricePaise)}</p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">
+                    {batch.brand} · {batch.strengthMg} mg
+                  </h2>
+                  <p className="break-words text-xs sm:text-sm text-[#556C63] mt-0.5">
+                    Batch {batch.batchNo} · expires {batch.expiry}
+                  </p>
+                </div>
+                <StatusChip tone={batch.expiry < date ? "warning" : batch.available <= 10 ? "warning" : "success"}>
+                  {batch.expiry < date
+                    ? "Expired"
+                    : `${batch.available} available`}
+                </StatusChip>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-[#E6EDE7] text-sm">
+                <span className="text-[#556C63]">{batch.salt}</span>
+                <span className="font-bold text-[#047C61] tabular-nums">
+                  Unit price {money(batch.pricePaise)}
+                </span>
+              </div>
             </li>
           ))}
         </ul>
       )}
+      {canManageCatalog && <CatalogEntry />}
     </section>
   );
 }
@@ -522,71 +650,84 @@ function CatalogEntry() {
     }
   }
   return (
-    <details className="rounded-lg border bg-card p-4">
-      <summary className="min-h-10 cursor-pointer font-semibold">
-        Add approved medicine to the hospital catalog
+    <details className="jvk-admin-card p-5">
+      <summary className="min-h-10 cursor-pointer flex items-center justify-between gap-3">
+        <div>
+          <span className="jvk-admin-serif text-base font-bold text-[#0E2420] block">
+            Add approved medicine to the hospital catalog
+          </span>
+          <span className="text-xs text-[#556C63]">
+            Link medicines from the master catalog to make them available for this clinic.
+          </span>
+        </div>
       </summary>
-      {result.error && <InlineBanner tone="critical" title={result.error} />}
-      {result.success && <InlineBanner tone="success" title={result.success} />}
-      <form
-        className="grid gap-3 sm:grid-cols-2"
-        onSubmit={(event) => void save(event)}
-      >
-        <label htmlFor="catalog-id">
-          Catalog identifier
-          <Input id="catalog-id" name="id" required maxLength={100} />
-        </label>
-        <label htmlFor="catalog-brand">
-          Brand
-          <Input id="catalog-brand" name="brand" required maxLength={120} />
-        </label>
-        <label htmlFor="catalog-salt">
-          Salt
-          <Input id="catalog-salt" name="salt" required maxLength={120} />
-        </label>
-        <label htmlFor="catalog-strength">
-          Strength (mg)
-          <Input
-            id="catalog-strength"
-            name="strength"
-            type="number"
-            min={1}
-            max={100000}
-            required
-          />
-        </label>
-        <label>
-          Form
-          <select name="form" className={selectStyle} required defaultValue="">
-            <option value="" disabled hidden>Choose a form</option>
-            <option value="tablet">Tablet</option>
-            <option value="capsule">Capsule</option>
-          </select>
-        </label>
-        <label htmlFor="catalog-gst">
-          GST rate (%)
-          <Input
-            id="catalog-gst"
-            name="gst"
-            type="number"
-            min={0}
-            max={100}
-            step="0.01"
-            required
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <input name="nti" type="checkbox" />
-          Narrow therapeutic index
-        </label>
-        <label className="flex items-center gap-2">
-          <input name="scheduleH" type="checkbox" />
-          Schedule H
-        </label>
-        <Button type="submit" disabled={result.pending}>
-          {result.pending ? "Saving…" : "Add catalog entry"}
-        </Button>
-      </form>
+      <div className="mt-4 space-y-4">
+        {result.error && <InlineBanner tone="critical" title={result.error} />}
+        {result.success && <InlineBanner tone="success" title={result.success} />}
+        <form
+          className="grid gap-3.5 sm:grid-cols-2"
+          onSubmit={(event) => void save(event)}
+        >
+          <label htmlFor="catalog-id" className="text-sm font-medium text-[#2A423A]">
+            Catalog identifier
+            <Input id="catalog-id" name="id" required maxLength={100} className="mt-1 bg-white" />
+          </label>
+          <label htmlFor="catalog-brand" className="text-sm font-medium text-[#2A423A]">
+            Brand
+            <Input id="catalog-brand" name="brand" required maxLength={120} className="mt-1 bg-white" />
+          </label>
+          <label htmlFor="catalog-salt" className="text-sm font-medium text-[#2A423A]">
+            Salt
+            <Input id="catalog-salt" name="salt" required maxLength={120} className="mt-1 bg-white" />
+          </label>
+          <label htmlFor="catalog-strength" className="text-sm font-medium text-[#2A423A]">
+            Strength (mg)
+            <Input
+              id="catalog-strength"
+              name="strength"
+              type="number"
+              min={1}
+              max={100000}
+              required
+              className="mt-1 bg-white"
+            />
+          </label>
+          <label className="text-sm font-medium text-[#2A423A]">
+            Form
+            <select name="form" className={`${selectStyle} mt-1`} required defaultValue="">
+              <option value="" disabled hidden>Choose a form</option>
+              <option value="tablet">Tablet</option>
+              <option value="capsule">Capsule</option>
+            </select>
+          </label>
+          <label htmlFor="catalog-gst" className="text-sm font-medium text-[#2A423A]">
+            GST rate (%)
+            <Input
+              id="catalog-gst"
+              name="gst"
+              type="number"
+              min={0}
+              max={100}
+              step="0.01"
+              required
+              className="mt-1 bg-white"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[#2A423A]">
+            <input name="nti" type="checkbox" className="h-4 w-4 rounded" />
+            Narrow therapeutic index
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[#2A423A]">
+            <input name="scheduleH" type="checkbox" className="h-4 w-4 rounded" />
+            Schedule H
+          </label>
+          <div className="sm:col-span-2 pt-1">
+            <button type="submit" disabled={result.pending} className="jvk-admin-primary-btn">
+              {result.pending ? "Saving…" : "Add catalog entry"}
+            </button>
+          </div>
+        </form>
+      </div>
     </details>
   );
 }
@@ -608,6 +749,7 @@ export function PostedFinance({ canManage }: { canManage: boolean }) {
   const [notice, setNotice] = useState("");
   const [failure, setFailure] = useState("");
   const [locking, setLocking] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("ALL");
   const { data, error } = useStaffData<Ledger>("/clinical/ledger", revision);
   async function lock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -638,74 +780,270 @@ export function PostedFinance({ canManage }: { canManage: boolean }) {
   const debits = (account: string) =>
     (balance(account)?.debitPaise ?? 0) - (balance(account)?.creditPaise ?? 0);
   const profit = -debits("revenue") - debits("cogs");
+  const totalDebitPaise = (data?.entries ?? []).reduce((sum, e) => sum + e.debitPaise, 0);
+  const totalCreditPaise = (data?.entries ?? []).reduce((sum, e) => sum + e.creditPaise, 0);
+  const balanceGapPaise = totalDebitPaise - totalCreditPaise;
+  const referenceTypes = Array.from(new Set((data?.entries ?? []).map((e) => e.referenceType))).sort();
+  const visibleEntries = (data?.entries ?? []).filter(
+    (entry) => typeFilter === "ALL" || entry.referenceType === typeFilter,
+  );
+
   return (
-    <section className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
-      <h1 className="text-2xl font-semibold">Posted financial records</h1>
+    <section className="jvk-admin-page mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+      <header className="jvk-admin-card-hero flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-5 overflow-hidden">
+        <div className="space-y-1.5 max-w-2xl z-10">
+          <h1 className="jvk-admin-serif text-3xl font-bold text-[#0E2420]">
+            Posted financial records
+          </h1>
+          <p className="text-sm text-[#556C63]">
+            {data
+              ? data.lockDate
+                ? `Periods locked through ${data.lockDate}`
+                : "No accounting period is locked."
+              : "Loading period lock and journal status…"}
+          </p>
+        </div>
+        <div className="hidden md:flex shrink-0 items-center justify-end">
+          <img
+            src="/assets/admin/finance-hero.png"
+            alt=""
+            aria-hidden="true"
+            width={220}
+            height={138}
+            className="jvk-admin-artwork w-48 lg:w-56 h-auto"
+          />
+        </div>
+      </header>
+
       {notice && <InlineBanner tone="success" title={notice} />}
       {(error || failure) && (
         <InlineBanner tone="critical" title={failure || error || ""} />
       )}
-      {!data && !error && <p role="status">Loading posted journals…</p>}
+      {!data && !error && (
+        <p role="status" className="text-sm text-[#556C63] px-1">
+          Loading posted journals…
+        </p>
+      )}
       {data && (
         <>
-          <p>
-            {data.lockDate
-              ? `Periods locked through ${data.lockDate}`
-              : "No accounting period is locked."}
-          </p>
-          {data.entries.length === 0 ? (
-            <EmptyState
-              title="No posted journals"
-              description="Completed transactions appear after their journal entries post."
-            />
-          ) : (
-            <>
-              <Card>
-                <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
-                  <p>Sales revenue {money(-debits("revenue"))}</p>
-                  <p>Cost of sales {money(debits("cogs"))}</p>
-                  <p>Gross profit {money(profit)}</p>
-                  <p>GST payable {money(-debits("gst_payable"))}</p>
-                </CardContent>
-              </Card>
-              <ul className="divide-y rounded-md border bg-card">
-                {data.entries.map((entry) => (
-                  <li className="p-4" key={entry.id}>
-                    <p className="font-semibold">
-                      {entry.referenceType} · {entry.date}
-                    </p>
-                    <p className="break-all text-sm">{entry.referenceId}</p>
-                    <p>
-                      Debit {money(entry.debitPaise)} · Credit{" "}
-                      {money(entry.creditPaise)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="jvk-admin-card p-5 flex items-start gap-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                <BookOpen className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#556C63]">Journals Posted</p>
+                <p className="mt-1 text-2xl font-bold text-[#0E2420] tabular-nums">
+                  {data.entries.length}
+                </p>
+                <p className="mt-1 text-xs text-[#6A8178]">Total across all periods</p>
+              </div>
+            </div>
+
+            <div className="jvk-admin-card p-5 flex items-start gap-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                <Lock className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#556C63]">Locked Periods</p>
+                <p className="mt-1 text-2xl font-bold text-[#0E2420] tabular-nums">
+                  {data.lockDate ? 1 : 0}
+                </p>
+                <p className="mt-1 text-xs text-[#6A8178]">
+                  {data.lockDate ? `Through ${data.lockDate}` : "No periods are locked"}
+                </p>
+              </div>
+            </div>
+
+            <div className="jvk-admin-card p-5 flex items-start gap-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                <Scale className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#556C63]">Debit-Credit Balance</p>
+                <p className="mt-1 text-2xl font-bold text-[#0E2420] tabular-nums">
+                  {money(balanceGapPaise)}
+                </p>
+                <p className="mt-1 text-xs text-[#047C61] font-medium">
+                  {balanceGapPaise === 0 ? "In balance" : "Out of balance"}
+                </p>
+              </div>
+            </div>
+
+            <div className="jvk-admin-card p-5 flex items-start gap-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-[#556C63]">Audit Status</p>
+                <div className="mt-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DFF4ED] border border-[#C3E5D6] px-2.5 py-0.5 text-xs font-semibold text-[#065F46]">
+                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>{balanceGapPaise === 0 ? "Reconciled" : "Review required"}</span>
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-[#6A8178]">
+                  {canManage ? "Period lock permissions enabled" : "All posted journals reconciled"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {data.entries.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="jvk-admin-card-sage px-4 py-3.5">
+                <p className="text-xs font-medium text-[#556C63]">Sales revenue</p>
+                <p className="text-lg font-bold text-[#0E2420] tabular-nums mt-0.5">
+                  {money(-debits("revenue"))}
+                </p>
+              </div>
+              <div className="jvk-admin-card-sage px-4 py-3.5">
+                <p className="text-xs font-medium text-[#556C63]">Cost of sales</p>
+                <p className="text-lg font-bold text-[#0E2420] tabular-nums mt-0.5">
+                  {money(debits("cogs"))}
+                </p>
+              </div>
+              <div className="jvk-admin-card-sage px-4 py-3.5">
+                <p className="text-xs font-medium text-[#556C63]">Gross profit</p>
+                <p className="text-lg font-bold text-[#047C61] tabular-nums mt-0.5">
+                  {money(profit)}
+                </p>
+              </div>
+              <div className="jvk-admin-card-sage px-4 py-3.5">
+                <p className="text-xs font-medium text-[#556C63]">GST payable</p>
+                <p className="text-lg font-bold text-[#0E2420] tabular-nums mt-0.5">
+                  {money(-debits("gst_payable"))}
+                </p>
+              </div>
+            </div>
           )}
+
+          <div className="jvk-admin-card p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                  <FileCheck2 className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 id="posted-journals-heading" className="jvk-admin-serif text-xl font-bold text-[#0E2420]">
+                    Posted Journals
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#556C63]">
+                    Completed transactions appear after their journal entries post.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {referenceTypes.length > 0 && (
+                  <label className="text-xs font-medium text-[#3C544C]">
+                    <span className="sr-only">Journal Type</span>
+                    <select
+                      aria-label="Journal Type"
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="h-9 rounded-lg border border-[#CEDAD3] bg-white px-3 text-xs font-semibold text-[#0E2420]"
+                    >
+                      <option value="ALL">All Types</option>
+                      {referenceTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {!canManage && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DFF4ED] border border-[#BBE2D1] px-3 py-1 text-xs font-semibold text-[#065F46]">
+                    <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Read-only (Accounting)</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {data.entries.length === 0 ? (
+              <div className="rounded-xl border border-[#E5ECE6] bg-[#FAFBF8] px-6 py-10 text-center">
+                <img
+                  src="/assets/admin/finance-hero.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={136}
+                  height={92}
+                  className="jvk-admin-artwork w-36 h-auto mx-auto mb-3 opacity-85"
+                />
+                <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420]">No posted journals</h3>
+                <p className="mt-1 max-w-md mx-auto text-sm text-[#556C63]">
+                  Completed transactions appear after their journal entries post.
+                </p>
+              </div>
+            ) : (
+              <div className="jvk-admin-table-region" tabIndex={0} role="region" aria-labelledby="posted-journals-heading">
+                <table className="jvk-admin-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Journal Type</th>
+                      <th>Reference</th>
+                      <th>Debit (₹)</th>
+                      <th>Credit (₹)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleEntries.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="whitespace-nowrap font-medium text-[#3C544C]">{entry.date}</td>
+                        <td>
+                          <span className="inline-flex items-center rounded-md bg-[#DFF4ED] px-2.5 py-0.5 text-xs font-semibold text-[#065F46]">
+                            {entry.referenceType}
+                          </span>
+                        </td>
+                        <td className="break-all font-mono text-xs text-[#3C544C]">{entry.referenceId}</td>
+                        <td className="font-semibold text-[#0E2420] tabular-nums whitespace-nowrap">{money(entry.debitPaise)}</td>
+                        <td className="font-semibold text-[#0E2420] tabular-nums whitespace-nowrap">{money(entry.creditPaise)}</td>
+                        <td>
+                          <StatusChip tone="success">Posted</StatusChip>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {canManage && (
             <form
               onSubmit={(event) => void lock(event)}
-              className="space-y-3 rounded-md border p-4"
+              className="jvk-admin-card space-y-4 p-5 sm:p-6"
             >
-              <h2 className="font-semibold">Lock accounting period</h2>
               <div>
-                <label htmlFor="financial-lock-date">Lock through date</label>
-                <Input
-                  id="financial-lock-date"
-                  name="lockDate"
-                  type="date"
-                  required
-                />
+                <h2 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">
+                  Lock accounting period
+                </h2>
+                <p className="text-xs text-[#556C63] mt-0.5">
+                  Locking prevents retroactive journal modifications prior to the selected cut-off date.
+                </p>
               </div>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" required />
-                Confirm closing this period.
-              </label>
-              <Button type="submit" variant="destructive" disabled={locking}>
-                Lock period
-              </Button>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="flex-1 max-w-xs">
+                  <label htmlFor="financial-lock-date" className="block text-sm font-medium text-[#2A423A]">
+                    Lock through date
+                  </label>
+                  <Input
+                    id="financial-lock-date"
+                    name="lockDate"
+                    type="date"
+                    required
+                    className="mt-1 bg-white"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-[#2A423A] pb-2">
+                  <input type="checkbox" required className="h-4 w-4 rounded" />
+                  <span>Confirm closing this period.</span>
+                </label>
+                <Button type="submit" variant="destructive" disabled={locking}>
+                  Lock period
+                </Button>
+              </div>
             </form>
           )}
         </>

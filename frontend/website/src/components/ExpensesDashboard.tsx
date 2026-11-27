@@ -40,6 +40,7 @@ export function ExpensesDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<'ALL' | 'ONE_TIME' | 'RECURRING'>('ALL');
+    const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -119,59 +120,84 @@ export function ExpensesDashboard() {
         }, { oneTime: 0, recurring: 0, total: 0 });
     }, [filteredExpenses]);
 
+    const categoryCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        for (const exp of expenses) {
+            counts.set(exp.category, (counts.get(exp.category) ?? 0) + 1);
+        }
+        return Array.from(counts.entries());
+    }, [expenses]);
+
+    const visibleExpenses = useMemo(() => {
+        if (selectedCategory === 'ALL') return filteredExpenses;
+        return filteredExpenses.filter((e) => e.category === selectedCategory);
+    }, [filteredExpenses, selectedCategory]);
+
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="jvk-admin-page mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Other Expenses</h1>
-                    <p className="text-slate-500 mt-1">Track utility bills, maintenance, and miscellaneous costs</p>
+            <header className="jvk-admin-card-hero flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 overflow-hidden">
+                <div className="space-y-1.5 z-10">
+                    <h1 className="jvk-admin-serif text-3xl font-bold text-[#0E2420] tracking-tight">Other Expenses</h1>
+                    <p className="text-sm text-[#556C63]">Track utility bills, maintenance, and miscellaneous costs.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="hidden md:flex shrink-0 items-center justify-center">
+                    <img
+                        src="/assets/admin/expenses-hero.png"
+                        alt=""
+                        aria-hidden="true"
+                        width={185}
+                        height={118}
+                        className="jvk-admin-artwork w-44 h-auto"
+                    />
+                </div>
+
+                <div className="flex items-center gap-3 z-10 shrink-0">
                     <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200">
-                                <Plus className="w-4 h-4 mr-2" /> Record Expense
-                            </Button>
+                            <button type="button" className="jvk-admin-primary-btn">
+                                <Plus className="w-4 h-4" />
+                                <span>Record Expense</span>
+                            </button>
                         </DialogTrigger>
-                        <DialogContent className="jvk-motion-dialog sm:max-w-[500px]">
+                        <DialogContent className="jvk-motion-dialog sm:max-w-[500px] bg-[#FFFDF8] border-[#DCE7DF]">
                             <DialogHeader>
-                                <DialogTitle>Record Other Expense</DialogTitle>
+                                <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Record Other Expense</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleAddExpense} className="space-y-4 pt-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Category</label>
+                                        <label className="text-sm font-medium text-[#2A423A]">Category</label>
                                         <input 
                                             name="category" 
                                             required 
                                             placeholder="e.g. Electricity"
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Amount (₹)</label>
+                                        <label className="text-sm font-medium text-[#2A423A]">Amount (₹)</label>
                                         <input 
                                             name="amount" 
                                             type="number" 
                                             step="0.01"
                                             required 
                                             placeholder="0.00"
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Tax % (Optional)</label>
+                                        <label className="text-sm font-medium text-[#2A423A]">Tax % (Optional)</label>
                                         <input 
                                             name="tax_percentage" 
                                             type="number" 
                                             step="0.01"
                                             placeholder="e.g. 18"
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none"
                                         />
                                     </div>
 
@@ -179,37 +205,37 @@ export function ExpensesDashboard() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Type</label>
-                                        <select name="expense_type" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                        <label className="text-sm font-medium text-[#2A423A]">Type</label>
+                                        <select name="expense_type" className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none">
                                             <option value="RECURRING">Recurring (Monthly/Bills)</option>
                                             <option value="ONE_TIME">One-Time (Purchase)</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Date</label>
+                                        <label className="text-sm font-medium text-[#2A423A]">Date</label>
                                         <input 
                                             name="expense_date" 
                                             type="date" 
                                             required 
                                             defaultValue={new Date().toISOString().split('T')[0]}
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Description (Optional)</label>
+                                    <label className="text-sm font-medium text-[#2A423A]">Description (Optional)</label>
                                     <textarea 
                                         name="description" 
                                         rows={2}
                                         placeholder="Note details about this expense..."
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Assign to Clinic (Optional)</label>
-                                    <select name="clinic_id" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <label className="text-sm font-medium text-[#2A423A]">Assign to Clinic (Optional)</label>
+                                    <select name="clinic_id" className="w-full px-3 py-2 bg-white border border-[#CEDAD3] rounded-lg focus:ring-2 focus:ring-[#047C61]/20 outline-none">
                                         <option value="">Hospital Wide / Global</option>
                                         {clinics.map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
@@ -219,151 +245,200 @@ export function ExpensesDashboard() {
 
                                 <div className="pt-4 flex justify-end gap-3">
                                     <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={isSubmitting} className="bg-blue-600 text-white">
+                                    <button type="submit" disabled={isSubmitting} className="jvk-admin-primary-btn">
                                         {isSubmitting ? 'Recording...' : 'Record Expense'}
-                                    </Button>
+                                    </button>
                                 </div>
                             </form>
                         </DialogContent>
                     </Dialog>
                 </div>
-            </div>
+            </header>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden group">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between pb-2">
-                            <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Expenses</h3>
-                            <TrendingDown className="w-5 h-5 text-red-500 bg-red-50 p-1 rounded-md" />
-                        </div>
-                        <div className="text-4xl font-bold text-slate-900 group-hover:scale-105 transition-transform origin-left">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="jvk-admin-card p-5 flex items-start gap-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+                        <TrendingDown className="w-5 h-5" />
+                    </span>
+                    <div>
+                        <p className="text-xs font-semibold text-[#556C63] uppercase tracking-wider">Total Expenses</p>
+                        <div className="mt-1 text-2xl sm:text-3xl font-bold text-[#0E2420] tabular-nums">
                             ₹{paiseToRupeesString(totalStats.total)}
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 font-medium">Aggregate of all categories</p>
-                    </CardContent>
-                </Card>
+                        <p className="text-xs text-[#6A8178] mt-1 font-medium">Aggregate of all categories</p>
+                    </div>
+                </div>
 
-                <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden group">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between pb-2">
-                            <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Recurring Bills</h3>
-                            <Calendar className="w-5 h-5 text-blue-500 bg-blue-50 p-1 rounded-md" />
-                        </div>
-                        <div className="text-4xl font-bold text-slate-900 text-blue-600 group-hover:scale-105 transition-transform origin-left">
+                <div className="jvk-admin-card p-5 flex items-start gap-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#EBF4FA] border border-[#CBE2F0] text-[#1D6FA5]">
+                        <Calendar className="w-5 h-5" />
+                    </span>
+                    <div>
+                        <p className="text-xs font-semibold text-[#556C63] uppercase tracking-wider">Recurring Bills</p>
+                        <div className="mt-1 text-2xl sm:text-3xl font-bold text-[#0E2420] tabular-nums">
                             ₹{paiseToRupeesString(totalStats.recurring)}
                         </div>
-                        <p className="text-xs text-blue-600/70 mt-2 font-medium">Maintenance & Utilities</p>
-                    </CardContent>
-                </Card>
+                        <p className="text-xs text-[#1D6FA5] mt-1 font-medium">Maintenance & Utilities</p>
+                    </div>
+                </div>
 
-                <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden group">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between pb-2">
-                            <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">One-Time Costs</h3>
-                            <Receipt className="w-5 h-5 text-purple-500 bg-purple-50 p-1 rounded-md" />
-                        </div>
-                        <div className="text-4xl font-bold text-slate-900 text-purple-600 group-hover:scale-105 transition-transform origin-left">
+                <div className="jvk-admin-card p-5 flex items-start gap-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#F3EFFC] border border-[#DECFF7] text-[#6D28D9]">
+                        <Receipt className="w-5 h-5" />
+                    </span>
+                    <div>
+                        <p className="text-xs font-semibold text-[#556C63] uppercase tracking-wider">One-Time Costs</p>
+                        <div className="mt-1 text-2xl sm:text-3xl font-bold text-[#0E2420] tabular-nums">
                             ₹{paiseToRupeesString(totalStats.oneTime)}
                         </div>
-                        <p className="text-xs text-purple-600/70 mt-2 font-medium">Asset purchases & repairs</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Filters and Search */}
-            <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="relative flex-1 w-full">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                        type="text"
-                        placeholder="Search categories or descriptions..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                </div>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Filter className="w-4 h-4 text-slate-400" />
-                    <div className="flex bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                        {(['ALL', 'RECURRING', 'ONE_TIME'] as const).map(type => (
-                            <button
-                                key={type}
-                                onClick={() => setFilterType(type)}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${filterType === type 
-                                    ? 'bg-blue-600 text-white shadow-sm' 
-                                    : 'text-slate-500 hover:bg-slate-50'}`}
-                            >
-                                {type.replace('_', ' ')}
-                            </button>
-                        ))}
+                        <p className="text-xs text-[#6D28D9] mt-1 font-medium">Asset purchases & repairs</p>
                     </div>
                 </div>
             </div>
 
+            {/* Filters and Search */}
+            <div className="space-y-3">
+                <div className="flex flex-col md:flex-row items-center gap-3 jvk-admin-card p-3.5">
+                    <div className="relative flex-1 w-full">
+                        <Search className="w-4 h-4 text-[#6B847B] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Search expenses by category or description..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-[#CEDAD3] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#047C61]/20"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                        <Filter className="w-4 h-4 text-[#6B847B] hidden sm:block" />
+                        <div className="jvk-admin-tablist jvk-admin-tablist-light">
+                            {(['ALL', 'RECURRING', 'ONE_TIME'] as const).map(type => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    aria-pressed={filterType === type}
+                                    data-active={filterType === type ? "true" : "false"}
+                                    onClick={() => setFilterType(type)}
+                                    className={`jvk-admin-tab !py-1.5 !px-3 text-xs ${
+                                        filterType === type ? '!bg-[#047C61] !text-white' : ''
+                                    }`}
+                                >
+                                    {type.replace('_', ' ')}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        aria-pressed={selectedCategory === 'ALL'}
+                        onClick={() => setSelectedCategory('ALL')}
+                        className="jvk-admin-pill-filter"
+                    >
+                        Categories ({categoryCounts.length})
+                    </button>
+                    {categoryCounts.map(([category, count]) => (
+                        <button
+                            key={category}
+                            type="button"
+                            aria-pressed={selectedCategory === category}
+                            onClick={() => setSelectedCategory(category)}
+                            className="jvk-admin-pill-filter"
+                        >
+                            {category} ({count})
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Ledger Table */}
-            <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
+            <div className="jvk-admin-card overflow-hidden">
+                <div className="jvk-admin-table-region border-0 rounded-none" tabIndex={0} role="region" aria-label="Expenses ledger">
+                    <table className="jvk-admin-table">
+                        <thead>
                             <tr>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Category</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Clinic</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Type</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider">Amount</th>
-                                <th className="px-6 py-4 font-semibold text-slate-600 uppercase tracking-wider text-right">Actions</th>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Clinic</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th className="text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                                    <td colSpan={6} className="px-6 py-12 text-center text-[#556C63]">
+                                        <Loader2 className="w-7 h-7 animate-spin mx-auto mb-2 text-[#047C61]" />
                                         Loading expenses...
                                     </td>
                                 </tr>
-                            ) : filteredExpenses.length === 0 ? (
+                            ) : visibleExpenses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                        <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                        No expenses found.
+                                    <td colSpan={6} className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <img
+                                                src="/assets/admin/expenses-hero.png"
+                                                alt=""
+                                                aria-hidden="true"
+                                                width={132}
+                                                height={86}
+                                                className="jvk-admin-artwork w-32 h-auto opacity-85 mb-3"
+                                            />
+                                            <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420]">No expenses recorded yet</h3>
+                                            <p className="text-xs sm:text-sm text-[#556C63] mt-1">
+                                                Start tracking utility bills, maintenance, and other costs.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddModalOpen(true)}
+                                                className="jvk-admin-primary-btn mt-4"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                <span>Record Your First Expense</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
-                                filteredExpenses.map((expense) => (
-                                    <tr key={expense.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4 text-slate-600">
+                                visibleExpenses.map((expense) => (
+                                    <tr key={expense.id}>
+                                        <td className="whitespace-nowrap text-[#3C544C]">
                                             {new Date(expense.expense_date).toLocaleDateString()}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-slate-900">{expense.category}</div>
-                                            <div className="text-xs text-slate-500 truncate max-w-[200px]">{expense.description}</div>
+                                        <td>
+                                            <div className="font-bold text-[#0E2420]">{expense.category}</div>
+                                            <div className="text-xs text-[#556C63] truncate max-w-[220px]">{expense.description}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600">
+                                        <td className="text-[#3C544C]">
                                             {clinics.find(c => c.id === expense.clinic_id)?.name || 'Global'}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                        <td>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${
                                                 expense.expense_type === 'RECURRING' 
-                                                ? 'bg-blue-100 text-blue-700' 
-                                                : 'bg-purple-100 text-purple-700'
+                                                ? 'bg-[#EBF4FA] text-[#1D6FA5]' 
+                                                : 'bg-[#F3EFFC] text-[#6D28D9]'
                                             }`}>
                                                 {expense.expense_type.replace('_', ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 font-mono font-bold text-slate-900 text-lg">
+                                        <td className="font-mono font-bold text-[#0E2420] tabular-nums">
                                             ₹{paiseToRupeesString(expense.amount_paise)}
                                             {expense.tax_paise > 0 && (
-                                                <div className="text-xs font-normal text-slate-500 mt-1">
+                                                <div className="text-xs font-sans font-normal text-[#556C63] mt-0.5">
                                                     incl. ₹{paiseToRupeesString(expense.tax_paise)} ({paiseToRupeesString(expense.tax_bps)}%) tax
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="text-right">
                                             <button 
+                                                type="button"
+                                                aria-label={`Delete ${expense.category} expense`}
                                                 onClick={() => handleDeleteExpense(expense.id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                className="p-2 text-[#556C63] hover:text-[#B9382C] hover:bg-[#FDF1EF] rounded-lg transition-colors"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -374,7 +449,7 @@ export function ExpensesDashboard() {
                         </tbody>
                     </table>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 }

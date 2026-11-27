@@ -284,41 +284,43 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                 </p>
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {title}
-            </Button>
+            <button type="submit" disabled={isSubmitting} className="jvk-admin-primary-btn w-full h-11">
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                <span>{title}</span>
+            </button>
         </form>
     )
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="jvk-admin-page space-y-6">
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-200/60 pb-8">
+            <div className="jvk-admin-card-hero flex flex-col md:flex-row md:items-center justify-between gap-6 px-6 py-5">
                 <div>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                            <SymbolIcon className="material-symbols-outlined text-[20px]">schedule</SymbolIcon>
+                        <div className="w-11 h-11 rounded-2xl bg-[#DFF4ED] border border-[#C3E5D6] flex items-center justify-center text-[#047C61]">
+                            <SymbolIcon className="material-symbols-outlined text-[22px]">schedule</SymbolIcon>
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Shift Operations</h2>
-                            <p className="text-sm text-slate-500 font-medium">Manage staff schedules and attendance windows</p>
+                            <h2 className="jvk-admin-serif text-2xl font-bold text-[#0E2420] tracking-tight">Shift Operations</h2>
+                            <p className="text-sm text-[#556C63]">Manage staff schedules and attendance windows</p>
                         </div>
                     </div>
                 </div>
 
                 {canManage && <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                     <DialogTrigger asChild>
-                        <Button
+                        <button
+                            type="button"
                             onClick={() => { resetForm(); setIsCreateOpen(true) }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white gap-2 h-10"
+                            className="jvk-admin-primary-btn"
                         >
-                            <Plus className="w-4 h-4" /> New Shift
-                        </Button>
+                            <Plus className="w-4 h-4" />
+                            <span>New Shift</span>
+                        </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[450px] bg-white border-slate-200">
+                    <DialogContent className="sm:max-w-[450px] bg-[#FFFDF8] border-[#DCE7DF]">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-slate-900">Create Shift Template</DialogTitle>
+                            <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Create Shift Template</DialogTitle>
                         </DialogHeader>
                         {renderShiftForm(handleCreate, "Create Shift")}
                     </DialogContent>
@@ -327,82 +329,89 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
             {/* SHIFT CARDS */}
             {shifts.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
-                    <Clock className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-slate-900">No Shifts Created</h3>
-                    <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                <div className="jvk-admin-card text-center py-16 px-6">
+                    <Clock className="w-12 h-12 text-[#88A399] mx-auto mb-4" />
+                    <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">No Shifts Created</h3>
+                    <p className="text-sm text-[#556C63] mt-1 max-w-sm mx-auto">
                         Create your first shift template to start managing staff schedules and enforcing attendance windows.
                     </p>
-                    <Button
+                    <button
+                        type="button"
                         onClick={() => { resetForm(); setIsCreateOpen(true) }}
-                        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                        className="jvk-admin-primary-btn mt-6"
                     >
-                        <Plus className="w-4 h-4" /> Create First Shift
-                    </Button>
+                        <Plus className="w-4 h-4" />
+                        <span>Create First Shift</span>
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {shifts.map(shift => (
                         <div
                             key={shift.id}
-                            className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all group"
+                            className="jvk-admin-card jvk-admin-card-interactive p-5 group"
                         >
                             {/* Card Header */}
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <div className="w-10 h-10 rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] flex items-center justify-center text-[#047C61] group-hover:bg-[#047C61] group-hover:text-white transition-colors">
                                         <Clock className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-slate-900">{shift.name}</h4>
-                                        <p className="text-xs text-slate-500">
+                                        <h4 className="jvk-admin-serif font-bold text-[#0E2420]">{shift.name}</h4>
+                                        <p className="text-xs text-[#556C63]">
                                             {formatTime(shift.start_time)} — {formatTime(shift.end_time)}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1">
                                     <button
+                                        type="button"
                                         disabled={!canManage}
                                         onClick={() => openEdit(shift)}
-                                        className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                                        className="p-2 hover:bg-[#EAF6F1] rounded-lg transition-colors text-[#556C63] hover:text-[#047C61]"
                                         title="Edit shift"
+                                        aria-label={`Edit ${shift.name}`}
                                     >
-                                        <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                                        <Pencil className="w-3.5 h-3.5" />
                                     </button>
                                     <button
+                                        type="button"
                                         disabled={!canManage}
                                         onClick={() => handleDelete(shift)}
-                                        className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 hover:bg-[#FDF1EF] rounded-lg transition-colors text-[#B9382C]"
                                         title="Delete shift"
+                                        aria-label={`Delete ${shift.name}`}
                                     >
-                                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
 
                             {/* Time Window */}
-                            <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl mb-3">
+                            <div className="flex items-center gap-2 p-3 bg-[#F4F9F5] border border-[#E4EDE7] rounded-xl mb-3">
                                 <div className="flex-1 text-center">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Grace</p>
-                                    <p className="text-sm font-bold text-emerald-600">{shift.grace_minutes}m early</p>
+                                    <p className="text-[11px] font-semibold text-[#556C63] uppercase">Grace</p>
+                                    <p className="text-sm font-bold text-[#047C61] tabular-nums">{shift.grace_minutes}m early</p>
                                 </div>
-                                <div className="w-px h-8 bg-slate-200" />
+                                <div className="w-px h-8 bg-[#DAE6DF]" />
                                 <div className="flex-1 text-center">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Late Cutoff</p>
-                                    <p className="text-sm font-bold text-orange-600">{shift.late_cutoff_minutes}m</p>
+                                    <p className="text-[11px] font-semibold text-[#556C63] uppercase">Late Cutoff</p>
+                                    <p className="text-sm font-bold text-[#B45309] tabular-nums">{shift.late_cutoff_minutes}m</p>
                                 </div>
                             </div>
 
                             {/* Assigned Staff Count */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    <Users className="w-3.5 h-3.5" />
-                                    <span className="font-bold">{shift.staff_count || 0}</span> staff assigned
+                            <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center gap-2 text-xs text-[#556C63]">
+                                    <Users className="w-3.5 h-3.5 text-[#047C61]" />
+                                    <span className="font-bold text-[#0E2420] tabular-nums">{shift.staff_count || 0}</span> staff assigned
                                 </div>
                                 <button
+                                    type="button"
                                     disabled={!canManage}
                                     onClick={() => openAssign(shift)}
-                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                                    className="text-xs font-bold text-[#047C61] hover:text-[#035E4A] transition-colors"
                                 >
                                     Manage →
                                 </button>
@@ -414,13 +423,13 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
             {/* UNASSIGNED STAFF WARNING */}
             {unassignedStaff.length > 0 && shifts.length > 0 && (
-                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="jvk-admin-card-amber flex items-start gap-3 p-4">
+                    <AlertTriangle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm font-bold text-amber-800">
+                        <p className="text-sm font-bold text-[#78350F]">
                             {unassignedStaff.length} staff member{unassignedStaff.length > 1 ? 's' : ''} without a shift
                         </p>
-                        <p className="text-xs text-amber-600 mt-0.5">
+                        <p className="text-xs text-[#92400E] mt-0.5">
                             {unassignedStaff.map(s => s.full_name).join(', ')} — punch-in will work without time restrictions
                         </p>
                     </div>
@@ -429,48 +438,48 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
             {/* STAFF ASSIGNMENT TABLE */}
             {shifts.length > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Users className="w-4 h-4 text-blue-600" />
+                <div className="jvk-admin-card overflow-hidden">
+                    <div className="p-5 border-b border-[#E5ECE6] bg-[#F6FAF7]">
+                        <h3 id="shift-assignments-heading" className="jvk-admin-serif text-lg font-bold text-[#0E2420] flex items-center gap-2">
+                            <Users className="w-4 h-4 text-[#047C61]" />
                             Staff Assignments
                         </h3>
-                        <p className="text-xs text-slate-500 mt-1">Assign each staff member to a shift for attendance enforcement</p>
+                        <p className="text-xs text-[#556C63] mt-1">Assign each staff member to a shift for attendance enforcement</p>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                    <div className="jvk-admin-table-region border-0 rounded-none" tabIndex={0} role="region" aria-labelledby="shift-assignments-heading">
+                        <table className="jvk-admin-table">
+                            <thead>
                                 <tr>
-                                    <th className="px-5 py-3 font-bold text-slate-500 uppercase tracking-wider text-xs">Staff</th>
-                                    <th className="px-5 py-3 font-bold text-slate-500 uppercase tracking-wider text-xs">Role</th>
-                                    <th className="px-5 py-3 font-bold text-slate-500 uppercase tracking-wider text-xs">Department</th>
-                                    {clinicId === 'all' && <th className="px-5 py-3 font-bold text-slate-500 uppercase tracking-wider text-xs">Clinic</th>}
-                                    <th className="px-5 py-3 font-bold text-slate-500 uppercase tracking-wider text-xs">Assigned Shift</th>
+                                    <th>Staff</th>
+                                    <th>Role</th>
+                                    <th>Department</th>
+                                    {clinicId === 'all' && <th>Clinic</th>}
+                                    <th>Assigned Shift</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody>
                                 {staffList.map(staff => (
-                                    <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-5 py-3.5">
+                                    <tr key={staff.id}>
+                                        <td>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                                                <div className="w-8 h-8 rounded-full bg-[#DFF4ED] text-[#065F46] flex items-center justify-center font-bold text-xs">
                                                     {staff.full_name[0]}
                                                 </div>
-                                                <span className="font-bold text-slate-900">{staff.full_name}</span>
+                                                <span className="font-bold text-[#0E2420]">{staff.full_name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-3.5 text-slate-600 font-medium text-xs">{staff.role?.replace('_', ' ')}</td>
-                                        <td className="px-5 py-3.5 text-slate-500 text-xs">{staff.department || '—'}</td>
+                                        <td className="text-[#3C544C] font-medium text-xs">{staff.role?.replace('_', ' ')}</td>
+                                        <td className="text-[#556C63] text-xs">{staff.department || '—'}</td>
                                         {clinicId === 'all' && (
-                                            <td className="px-5 py-3.5 text-slate-500 text-xs font-medium">
+                                            <td className="text-[#556C63] text-xs font-medium">
                                                 {staff.clinic_name || 'N/A'}
                                             </td>
                                         )}
-                                        <td className="px-5 py-3.5">
+                                        <td>
                                             <select
                                                 value={staff.shift_id || ''}
                                                 onChange={(e) => handleAssignStaff(staff.id, e.target.value || null)}
-                                                className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer min-w-[180px]"
+                                                className="h-9 px-3 rounded-lg text-sm font-medium min-w-[180px]"
                                             >
                                                 <option value="">No shift assigned</option>
                                                 {shifts.map(shift => (
@@ -490,9 +499,9 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
             {/* EDIT SHIFT DIALOG */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[450px] bg-white border-slate-200">
+                <DialogContent className="sm:max-w-[450px] bg-[#FFFDF8] border-[#DCE7DF]">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-slate-900">Edit Shift</DialogTitle>
+                        <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Edit Shift</DialogTitle>
                     </DialogHeader>
                     {renderShiftForm(handleEdit, "Save Changes")}
                 </DialogContent>
@@ -500,9 +509,9 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
 
             {/* ASSIGN STAFF DIALOG */}
             <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-                <DialogContent className="sm:max-w-[450px] bg-white border-slate-200">
+                <DialogContent className="sm:max-w-[450px] bg-[#FFFDF8] border-[#DCE7DF]">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-slate-900">
+                        <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">
                             Assign Staff to "{assigningShift?.name}"
                         </DialogTitle>
                     </DialogHeader>
@@ -510,25 +519,26 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                         {staffList.map(staff => {
                             const isAssigned = staff.shift_id === assigningShift?.id
                             return (
-                                <div
+                                <button
                                     key={staff.id}
-                                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isAssigned
-                                        ? 'bg-blue-50 border-blue-200'
-                                        : 'bg-white border-slate-100 hover:border-blue-200'
+                                    type="button"
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left cursor-pointer ${isAssigned
+                                        ? 'bg-[#DFF4ED] border-[#047C61]'
+                                        : 'bg-white border-[#E4EDE7] hover:border-[#8BC4AE]'
                                         }`}
                                     onClick={() => handleAssignStaff(staff.id, isAssigned ? null : assigningShift?.id || null)}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isAssigned ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isAssigned ? 'bg-[#047C61] text-white' : 'bg-[#EEF5F0] text-[#3C544C]'
                                             }`}>
                                             {staff.full_name[0]}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-sm text-slate-900">{staff.full_name}</p>
-                                            <p className="text-[10px] text-slate-500">{staff.role?.replace('_', ' ')}</p>
+                                            <p className="font-bold text-sm text-[#0E2420]">{staff.full_name}</p>
+                                            <p className="text-[11px] text-[#556C63]">{staff.role?.replace('_', ' ')}</p>
                                         </div>
                                     </div>
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isAssigned ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isAssigned ? 'border-[#047C61] bg-[#047C61]' : 'border-[#BFD4C8]'
                                         }`}>
                                         {isAssigned && (
                                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -536,7 +546,7 @@ export function ShiftManagement({ clinicId }: ShiftManagementProps) {
                                             </svg>
                                         )}
                                     </div>
-                                </div>
+                                </button>
                             )
                         })}
                     </div>

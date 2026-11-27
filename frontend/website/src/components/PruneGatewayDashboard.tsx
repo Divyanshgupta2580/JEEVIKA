@@ -1,6 +1,19 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Clock,
+  Coins,
+  Database,
+  RefreshCw,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Zap,
+} from "lucide-react";
+import {
   Button,
   Card,
   CardContent,
@@ -56,26 +69,75 @@ export function PruneGatewayDashboard({
   canManage: boolean;
 }) {
   return (
-    <section className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-      <h1 className="text-2xl font-bold">Prune AI Gateway</h1>
-      <nav aria-label="Gateway sections" className="flex flex-wrap gap-2">
-        {sections
-          .filter(({ route }) => canManage || route !== "/app/prune/redaction")
-          .map((item) => (
-            <Button
-              key={item.route}
-              variant={route === item.route ? "default" : "outline"}
-              asChild
-            >
-              <Link
-                to={item.route}
-                aria-current={route === item.route ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            </Button>
-          ))}
-      </nav>
+    <section className="jvk-admin-page mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+      <header className="space-y-4">
+        <div>
+          <h1 className="jvk-admin-serif text-3xl font-bold tracking-tight text-[#0E2420]">
+            Prune AI Gateway
+          </h1>
+          <p className="text-sm text-[#556C63] mt-1">
+            Secure, efficient, and cost-aware gateway for JEEVIKA’s clinical AI services.
+          </p>
+        </div>
+
+        <div className="jvk-admin-card-hero flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4 overflow-hidden">
+          <div className="flex items-start gap-3.5 max-w-2xl z-10">
+            <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#DFF4ED] border border-[#C3E5D6] text-[#047C61]">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-[#0E2420]">
+                Intelligent traffic control for clinical AI
+              </h2>
+              <p className="text-xs sm:text-sm text-[#556C63] mt-1 leading-relaxed">
+                Monitor requests, improve performance with semantic cache, and enforce safety with a robust firewall for trusted, cost-efficient AI use across JEEVIKA.
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:flex shrink-0 items-center justify-end">
+            <img
+              src="/assets/admin/prune-hero.png"
+              alt=""
+              aria-hidden="true"
+              width={210}
+              height={130}
+              className="jvk-admin-artwork w-48 lg:w-52 h-auto"
+            />
+          </div>
+        </div>
+
+        <nav aria-label="Gateway sections" className="jvk-admin-tablist jvk-admin-tablist-light">
+          {sections
+            .filter(({ route: itemRoute }) => canManage || itemRoute !== "/app/prune/redaction")
+            .map((item) => {
+              const selected = route === item.route;
+              const Icon =
+                item.route === "/app/prune/cache"
+                  ? Database
+                  : item.route === "/app/prune/waf"
+                    ? Shield
+                    : item.route === "/app/prune/redaction"
+                      ? ShieldAlert
+                      : BarChart3;
+              return (
+                <Link
+                  key={item.route}
+                  to={item.route}
+                  aria-current={selected ? "page" : undefined}
+                  className={`jvk-admin-tab ${
+                    selected
+                      ? "!bg-[#047C61] !text-white !border-[#047C61]"
+                      : "text-[#3C544C]"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+        </nav>
+      </header>
+
       {route === "/app/prune" && <GatewayOverview canManage={canManage} />}
       {route === "/app/prune/cache" && (
         <CacheManagement canManage={canManage} />
@@ -145,75 +207,207 @@ function GatewayOverview({ canManage }: { canManage: boolean }) {
     "/prune/status",
     action.revision,
   );
+  const metricCards = data
+    ? [
+        {
+          label: "Measured requests",
+          value: String(data.requests),
+          sublabel: "Total gateway requests recorded",
+          icon: Database,
+          tone: "mint" as const,
+        },
+        {
+          label: "Cache hit rate",
+          value: data.requests
+            ? `${((100 * data.cacheHits) / data.requests).toFixed(1)}%`
+            : "No requests recorded",
+          sublabel: data.requests
+            ? `${data.cacheHits} hits across ${data.requests} requests`
+            : "Awaiting first cached inference",
+          icon: Zap,
+          tone: "mint" as const,
+        },
+        {
+          label: "Firewall blocks",
+          value: String(data.wafBlocks),
+          sublabel: "Intercepted policy violations",
+          icon: Shield,
+          tone: data.wafBlocks > 0 ? ("rose" as const) : ("mint" as const),
+        },
+        {
+          label: "Average latency",
+          value:
+            data.averageLatencyMs === null
+              ? "Unavailable"
+              : `${data.averageLatencyMs} ms`,
+          sublabel: "Measured edge turnaround",
+          icon: Clock,
+          tone: "mint" as const,
+        },
+        {
+          label: "Measured savings",
+          value:
+            data.measuredSavingsPaise === null
+              ? "Unavailable"
+              : new Intl.NumberFormat("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                }).format(data.measuredSavingsPaise / 100),
+          sublabel: "Verified inference savings",
+          icon: Coins,
+          tone: "mint" as const,
+        },
+      ]
+    : [];
+
   return (
-    <div className="space-y-4">
-      <Button
-        variant="outline"
-        disabled={action.pending}
-        onClick={action.refresh}
-      >
-        Refresh
-      </Button>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {data && (
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                data.configured
+                  ? "bg-[#DFF4ED] border-[#BBE2D1] text-[#065F46]"
+                  : "bg-[#FDF3DC] border-[#EAD49F] text-[#855A10]"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  data.configured ? "bg-[#047C61]" : "bg-[#D97706]"
+                }`}
+                aria-hidden="true"
+              />
+              {data.configured ? "Provider configured" : "Provider unavailable"}
+            </span>
+          )}
+          <button
+            type="button"
+            disabled={action.pending}
+            onClick={action.refresh}
+            className="jvk-admin-secondary-btn !min-h-9"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        {data && canManage && (
+          <button
+            type="button"
+            disabled={action.pending || !data.configured}
+            onClick={() =>
+              void action.run(async () => {
+                const result = await staffApi<{ cached: boolean }>(
+                  "/prune/gateway/check",
+                  { method: "POST" },
+                );
+                return result.cached
+                  ? "Gateway check served from cache."
+                  : "Prune returned a response.";
+              })
+            }
+            className="jvk-admin-primary-btn"
+          >
+            <Activity className="h-4 w-4" aria-hidden="true" />
+            <span>{action.pending ? "Checking…" : "Run gateway check"}</span>
+          </button>
+        )}
+      </div>
+
       <OperationFeedback
         success={action.success}
         error={action.error || error || ""}
       />
-      {!data && !error && <p role="status">Loading gateway status…</p>}
+      {!data && !error && (
+        <p role="status" className="text-sm text-[#556C63]">
+          Loading gateway status…
+        </p>
+      )}
       {data && (
         <>
-          <StatusChip tone={data.configured ? "info" : "warning"}>
-            {data.configured ? "Provider configured" : "Provider unavailable"}
-          </StatusChip>
-          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              ["Measured requests", data.requests],
-              [
-                "Cache hit rate",
-                data.requests
-                  ? `${((100 * data.cacheHits) / data.requests).toFixed(1)}%`
-                  : "No requests recorded",
-              ],
-              ["Firewall blocks", data.wafBlocks],
-              [
-                "Average latency",
-                data.averageLatencyMs === null
-                  ? "Unavailable"
-                  : `${data.averageLatencyMs} ms`,
-              ],
-              [
-                "Measured savings",
-                data.measuredSavingsPaise === null
-                  ? "Unavailable"
-                  : new Intl.NumberFormat("en-IN", {
-                      style: "currency",
-                      currency: "INR",
-                    }).format(data.measuredSavingsPaise / 100),
-              ],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-lg border bg-card p-4">
-                <dt className="text-sm">{label}</dt>
-                <dd className="text-lg font-semibold">{value}</dd>
-              </div>
-            ))}
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {metricCards.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="jvk-admin-card flex items-start gap-3.5 p-5"
+                >
+                  <span
+                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border ${
+                      item.tone === "rose"
+                        ? "bg-[#FDF1EF] border-[#F2D2CF] text-[#B9382C]"
+                        : "bg-[#DFF4ED] border-[#C3E5D6] text-[#047C61]"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-[#556C63]">
+                      {item.label}
+                    </dt>
+                    <dd className="mt-1 text-xl font-bold text-[#0E2420] tabular-nums break-words">
+                      {item.value}
+                    </dd>
+                    <p className="mt-1 text-xs text-[#6A8178]">{item.sublabel}</p>
+                  </div>
+                </div>
+              );
+            })}
           </dl>
-          {canManage && (
-            <Button
-              disabled={action.pending || !data.configured}
-              onClick={() =>
-                void action.run(async () => {
-                  const result = await staffApi<{ cached: boolean }>(
-                    "/prune/gateway/check",
-                    { method: "POST" },
-                  );
-                  return result.cached
-                    ? "Gateway check served from cache."
-                    : "Prune returned a response.";
-                })
-              }
-            >
-              {action.pending ? "Checking…" : "Run gateway check"}
-            </Button>
-          )}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="jvk-admin-card p-5 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">
+                    Semantic Cache & Latency
+                  </h3>
+                  <p className="text-xs text-[#556C63]">
+                    Inspect cached organization responses and purge entries when needed.
+                  </p>
+                </div>
+                <Link
+                  to="/app/prune/cache"
+                  className="jvk-admin-secondary-btn !min-h-8 !px-3 text-xs shrink-0"
+                >
+                  <span>Open Cache</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+              <p className="text-sm text-[#3C544C]">
+                {data.requests > 0
+                  ? `${data.cacheHits} cached hits out of ${data.requests} requests.`
+                  : "No requests recorded in the gateway telemetry store."}
+              </p>
+            </div>
+
+            <div className="jvk-admin-card p-5 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="jvk-admin-serif text-lg font-bold text-[#0E2420]">
+                    Firewall Activity & Policies
+                  </h3>
+                  <p className="text-xs text-[#556C63]">
+                    Prompts and responses intercepted by configured clinical safety rules.
+                  </p>
+                </div>
+                <Link
+                  to="/app/prune/waf"
+                  className="jvk-admin-secondary-btn !min-h-8 !px-3 text-xs shrink-0"
+                >
+                  <span>View Firewall</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+              <p className="text-sm text-[#3C544C]">
+                {data.wafBlocks > 0
+                  ? `${data.wafBlocks} firewall block events logged.`
+                  : "Zero policy violations detected across inspected prompts."}
+              </p>
+            </div>
+          </div>
         </>
       )}
     </div>
@@ -226,31 +420,50 @@ function CacheManagement({ canManage }: { canManage: boolean }) {
   const { data, error } = useStaffData<Cache>("/prune/cache", action.revision);
   return (
     <div className="space-y-4">
-      <Button
-        variant="outline"
-        disabled={action.pending}
-        onClick={action.refresh}
-      >
-        Refresh
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          disabled={action.pending}
+          onClick={action.refresh}
+          className="jvk-admin-secondary-btn !min-h-9"
+        >
+          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>Refresh</span>
+        </button>
+        {canManage && !!data?.entries && (
+          <Button
+            variant="destructive"
+            disabled={action.pending}
+            onClick={() => setConfirm(true)}
+          >
+            Clear edge cache
+          </Button>
+        )}
+      </div>
       <OperationFeedback
         success={action.success}
         error={action.error || error || ""}
       />
-      {!data && !error && <p role="status">Loading cache…</p>}
+      {!data && !error && (
+        <p role="status" className="text-sm text-[#556C63]">
+          Loading cache…
+        </p>
+      )}
       {data?.entries === 0 && (
-        <EmptyState
-          title="Edge cache is empty"
-          description="Responses from gateway checks can be cached for this organization."
-        />
+        <div className="jvk-admin-card flex flex-col items-center justify-center px-6 py-10 text-center">
+          <h3 className="text-base font-bold text-[#0E2420]">Edge cache is empty</h3>
+          <p className="mt-1.5 max-w-md text-sm text-[#556C63]">
+            Responses from gateway checks can be cached for this organization.
+          </p>
+        </div>
       )}
       {!!data?.entries && (
-        <Card>
+        <Card className="jvk-admin-card border-0">
           <CardHeader>
-            <CardTitle>Organization edge cache</CardTitle>
+            <CardTitle className="jvk-admin-serif text-lg">Organization edge cache</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p>{data.entries} entries</p>
+          <CardContent className="space-y-1.5 text-sm text-[#3C544C]">
+            <p className="text-base font-bold text-[#0E2420] tabular-nums">{data.entries} entries</p>
             {data.lastCachedAt && (
               <p>
                 Most recent entry{" "}
@@ -261,15 +474,6 @@ function CacheManagement({ canManage }: { canManage: boolean }) {
             )}
           </CardContent>
         </Card>
-      )}
-      {canManage && !!data?.entries && (
-        <Button
-          variant="destructive"
-          disabled={action.pending}
-          onClick={() => setConfirm(true)}
-        >
-          Clear edge cache
-        </Button>
       )}
       {canManage && (
         <Dialog open={confirm} onOpenChange={setConfirm}>
@@ -310,79 +514,90 @@ function FirewallMonitoring({ canManage }: { canManage: boolean }) {
   const { data, error } = useStaffData<Firewall>("/prune/waf", action.revision);
   return (
     <div className="space-y-4">
-      <Button
-        variant="outline"
-        disabled={action.pending}
-        onClick={action.refresh}
-      >
-        Refresh
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          disabled={action.pending}
+          onClick={action.refresh}
+          className="jvk-admin-secondary-btn !min-h-9"
+        >
+          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>Refresh</span>
+        </button>
+        {canManage && data && (
+          <button
+            type="button"
+            disabled={action.pending}
+            onClick={() =>
+              void action.run(async () => {
+                const result = await staffApi<{ blocked: boolean }>(
+                  "/prune/firewall/simulate-injection",
+                  { method: "POST", body: "{}" },
+                );
+                return result.blocked
+                  ? "Firewall blocked the built-in test."
+                  : "The built-in test passed through the firewall.";
+              })
+            }
+            className="jvk-admin-primary-btn"
+          >
+            {action.pending
+              ? "Running check…"
+              : "Run built-in firewall check"}
+          </button>
+        )}
+      </div>
       <OperationFeedback
         success={action.success}
         error={action.error || error || ""}
       />
-      {!data && !error && <p role="status">Loading firewall events…</p>}
+      {!data && !error && (
+        <p role="status" className="text-sm text-[#556C63]">
+          Loading firewall events…
+        </p>
+      )}
       {data && (
         <>
-          <Card>
+          <Card className="jvk-admin-card border-0">
             <CardHeader>
-              <CardTitle>Active firewall rules</CardTitle>
+              <CardTitle className="jvk-admin-serif text-lg">Active firewall rules</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <ul className="flex flex-wrap gap-2">
                 {data.rules.map((rule) => (
                   <li key={rule}>
-                    <StatusChip>{rule}</StatusChip>
+                    <StatusChip tone="success">{rule}</StatusChip>
                   </li>
                 ))}
               </ul>
-              <p className="text-sm">
-                {data.fallback} Event records contain the classification and
-                timing.
+              <p className="text-sm text-[#556C63]">
+                {data.fallback} Event records contain the classification and timing.
               </p>
             </CardContent>
           </Card>
-          {canManage && (
-            <Button
-              disabled={action.pending}
-              onClick={() =>
-                void action.run(async () => {
-                  const result = await staffApi<{ blocked: boolean }>(
-                    "/prune/firewall/simulate-injection",
-                    { method: "POST", body: "{}" },
-                  );
-                  return result.blocked
-                    ? "Firewall blocked the built-in test."
-                    : "The built-in test passed through the firewall.";
-                })
-              }
-            >
-              {action.pending
-                ? "Running check…"
-                : "Run built-in firewall check"}
-            </Button>
-          )}
           {data.events.length === 0 ? (
-            <EmptyState
-              title="No firewall events"
-              description="Blocked requests and built-in check results appear here."
-            />
+            <div className="jvk-admin-card flex flex-col items-center justify-center px-6 py-10 text-center">
+              <h3 className="text-base font-bold text-[#0E2420]">No firewall events</h3>
+              <p className="mt-1.5 max-w-md text-sm text-[#556C63]">
+                Blocked requests and built-in check results appear here.
+              </p>
+            </div>
           ) : (
-            <ul className="divide-y rounded-lg border bg-card">
+            <ul className="jvk-admin-card divide-y divide-[#EAEFEA] overflow-hidden">
               {data.events.map((event) => (
                 <li
                   key={event.id}
-                  className="flex flex-wrap justify-between gap-2 p-4 text-sm"
+                  className="flex flex-wrap justify-between gap-2 px-5 py-4 text-sm hover:bg-[#F7FBF8] transition-colors"
                 >
                   <div>
-                    <p className="font-medium">{event.category}</p>
-                    <time dateTime={event.occurred_at}>
+                    <p className="font-semibold text-[#0E2420]">{event.category}</p>
+                    <time dateTime={event.occurred_at} className="text-xs text-[#556C63]">
                       {new Date(event.occurred_at).toLocaleString()}
                     </time>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>{event.latency_ms} ms</span>
-                    <StatusChip>
+                    <span className="text-xs font-medium text-[#556C63] tabular-nums">{event.latency_ms} ms</span>
+                    <StatusChip tone={event.simulated ? "neutral" : "critical"}>
                       {event.simulated ? "Simulation" : "Blocked request"}
                     </StatusChip>
                   </div>

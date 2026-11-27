@@ -12,6 +12,7 @@ import { LayoutGrid, PanelLeftClose, PanelLeftOpen, Play } from 'lucide-react'
 import { landingRoute, routeAccess, staffNavItems } from '@/lib/rbac'
 import { ShellEmergency } from '@/components/ShellEmergency'
 import { useOptionalOpdWorkspace } from '@/features/opd/opdContext'
+import { WebsiteLanguageSelect } from '@/components/WebsiteLanguageSelect'
 import '@/design-system/opd-cockpit.css'
 
 function ClinicianTooltip({
@@ -183,8 +184,15 @@ export function AppLayout({
     const isDoctorRole = verifiedRole === 'DOCTOR'
     const isClinicianOpdTheme = isDoctorRole && (view === 'doctor-consultation' || view === 'doctor-alerts')
     const isCareOrAyushTheme = view === 'ipd' || view === 'emergency-triage' || view === 'ayush-center'
-    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme
-    const isClinicianShell = isDoctorRole && isIvoryShellTheme
+    const ADMIN_SHELL_ROLES = new Set(['SUPER_ADMIN', 'OWNER', 'HOSPITAL_ADMIN', 'ADMIN', 'CLINIC_ADMIN'])
+    const ADMIN_SHELL_VIEWS = new Set(['admin', 'clinic-admin', 'inventory-dashboard', 'procurement', 'procurement-grn', 'shift-management', 'ca-suite', 'expenses', 'equipments', 'maritime-agents', 'prune-gateway', 'earnings', 'billing', 'settings', 'hospitals', 'audit_logs', 'medicine-migration'])
+    const isAdminShell = !isDoctorRole && view !== 'patient-kiosk' && (
+        ADMIN_SHELL_VIEWS.has(view) ||
+        (Boolean(verifiedRole && ADMIN_SHELL_ROLES.has(verifiedRole)) && (!isCareOrAyushTheme || view === 'ipd'))
+    )
+    const isIvoryShellTheme = isClinicianOpdTheme || isCareOrAyushTheme || isAdminShell
+    const isClinicianShell = isDoctorRole && (isClinicianOpdTheme || isCareOrAyushTheme)
+    const isRailShell = isClinicianShell || isAdminShell
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const mobileMenuButton = useRef<HTMLButtonElement>(null)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -247,7 +255,7 @@ export function AppLayout({
             <button
                 type="button"
                 id={id}
-                title={isClinicianShell && isCollapsed ? undefined : label}
+                title={isRailShell && isCollapsed ? undefined : label}
                 aria-label={badgeCount && badgeCount > 0 ? `${label} (${badgeCount} active)` : label}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => {
@@ -259,15 +267,15 @@ export function AppLayout({
                 disabled={disabled}
                 data-active={active ? 'true' : 'false'}
                 className={`ayu-workspace-nav-item relative w-full flex items-center gap-3 px-3 min-h-11 py-2.5 rounded-xl group
-                    ${isClinicianShell ? 'jvk-clinician-nav-item' : 'transition-colors'}
+                    ${isRailShell ? 'jvk-clinician-nav-item' : 'transition-colors'}
                     ${disabled ? 'opacity-50 cursor-not-allowed text-slate-400' :
                         active
-                            ? isClinicianShell
+                            ? isRailShell
                                 ? 'font-bold'
                                 : isIvoryShellTheme
                                     ? 'bg-[#E5F3EB] text-[#0E2420] font-bold border border-[#C6E1D1] shadow-xs'
                                     : 'bg-teal-50 text-teal-800 font-bold border border-teal-200/60 shadow-sm'
-                            : isClinicianShell
+                            : isRailShell
                                 ? ''
                                 : isIvoryShellTheme
                                     ? 'text-[#314A42] hover:bg-[#EEF6F1] hover:text-[#0E2420]'
@@ -275,7 +283,7 @@ export function AppLayout({
                     `}
             >
                 <SymbolIcon className={`jvk-sidebar-icon material-symbols-outlined shrink-0 text-[20px] ${
-                    isClinicianShell
+                    isRailShell
                         ? ''
                         : active
                             ? 'text-[#047C61]'
@@ -291,7 +299,7 @@ export function AppLayout({
                         {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                 )}
-                {isClinicianShell && isCollapsed && typeof badgeCount === 'number' && badgeCount > 0 && (
+                {isRailShell && isCollapsed && typeof badgeCount === 'number' && badgeCount > 0 && (
                     <span
                         aria-hidden="true"
                         className={`hidden lg:inline-flex absolute -top-1 -right-1 min-w-[17px] h-[17px] items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none shadow-xs ${
@@ -309,7 +317,7 @@ export function AppLayout({
         return (
             <ClinicianTooltip
                 label={badgeCount && badgeCount > 0 ? `${label} · ${badgeCount}` : label}
-                enabled={isClinicianShell && isCollapsed}
+                enabled={isRailShell && isCollapsed}
             >
                 {button}
             </ClinicianTooltip>
@@ -433,6 +441,11 @@ export function AppLayout({
                     onClose={() => setIsNotificationsOpen(false)}
                     onNavigate={setView}
                 />
+                {isAdminShell && (
+                    <div className="hidden sm:inline-flex shrink-0">
+                        <WebsiteLanguageSelect inline />
+                    </div>
+                )}
             </div>
         </>
     );
@@ -441,7 +454,7 @@ export function AppLayout({
         <button
             type="button"
             className={`ayu-workspace-menu ayu-workspace-menu-desktop ${
-                isClinicianShell
+                isRailShell
                     ? 'jvk-clinician-menu-btn'
                     : isIvoryShellTheme
                         ? '!border-[#E3DCCA] !bg-transparent !text-[#2C453D] hover:!bg-[#EEF6F0]'
@@ -450,11 +463,11 @@ export function AppLayout({
             aria-controls="workspace-menu"
             aria-expanded={!isCollapsed}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={isClinicianShell && isCollapsed ? undefined : isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isRailShell && isCollapsed ? undefined : isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             onClick={() => setIsCollapsed((collapsed) => !collapsed)}
         >
             {isIvoryShellTheme ? (
-                <LayoutGrid size={isClinicianShell ? 20 : 18} strokeWidth={1.7} aria-hidden="true" className="jvk-sidebar-icon shrink-0 text-[#4B665D]" />
+                <LayoutGrid size={isRailShell ? 20 : 18} strokeWidth={1.7} aria-hidden="true" className="jvk-sidebar-icon shrink-0 text-[#4B665D]" />
             ) : isCollapsed ? (
                 <PanelLeftOpen size={18} aria-hidden="true" />
             ) : (
@@ -469,7 +482,7 @@ export function AppLayout({
             ref={mobileMenuButton}
             type="button"
             className={
-                isClinicianShell
+                isRailShell
                     ? 'inline-flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-xl border border-[#DFD8C7] bg-white/95 hover:bg-white text-[#243B34] text-xs font-semibold shadow-xs transition-colors lg:hidden'
                     : 'ayu-workspace-menu ayu-workspace-menu-mobile'
             }
@@ -487,10 +500,10 @@ export function AppLayout({
         <button
             type="button"
             aria-label="Sign Out"
-            title={isClinicianShell && isCollapsed ? undefined : 'Sign Out'}
+            title={isRailShell && isCollapsed ? undefined : 'Sign Out'}
             onClick={onLogout}
             className={`ayu-workspace-sign-out ${
-                isClinicianShell
+                isRailShell
                     ? 'jvk-clinician-sign-out w-full justify-start'
                     : isIvoryShellTheme
                         ? '!border-[#EBCBC7] !bg-[#FDF5F4] !text-[#B9382C] hover:!bg-[#FAE7E5] w-full justify-start'
@@ -505,7 +518,7 @@ export function AppLayout({
     const sidebarElement = !isFullBleedPortal && (
         <aside
             aria-label="Workspace navigation"
-            className={`ayu-global-sidebar relative ${isClinicianShell ? 'jvk-clinician-sidebar' : 'overflow-hidden'} ${isIvoryShellTheme ? 'jvk-opd-sidebar' : ''}`}
+            className={`ayu-global-sidebar relative ${isRailShell ? 'jvk-clinician-sidebar' : 'overflow-hidden'} ${isIvoryShellTheme ? 'jvk-opd-sidebar' : ''}`}
             data-collapsed={isCollapsed}
             onKeyDown={(event) => {
                 if (event.key === 'Escape' && isMobileMenuOpen) {
@@ -515,7 +528,7 @@ export function AppLayout({
             }}
         >
             <div className="ayu-workspace-sidebar-top relative z-10">
-                {!isClinicianShell && (
+                {!isRailShell && (
                     <img
                         src="/assets/logo-jeevika.png"
                         alt="Jeevika"
@@ -525,14 +538,14 @@ export function AppLayout({
                         className="ayu-workspace-brand"
                     />
                 )}
-                {isClinicianShell ? (
+                {isRailShell ? (
                     <ClinicianTooltip label="Expand menu" enabled={isCollapsed}>
                         {desktopMenuToggleButton}
                     </ClinicianTooltip>
                 ) : (
                     desktopMenuToggleButton
                 )}
-                {!isClinicianShell && mobileMenuToggleButton}
+                {!isRailShell && mobileMenuToggleButton}
             </div>
 
             <nav id="workspace-menu" aria-label="Staff workspaces" className="ayu-workspace-nav relative z-10">
@@ -553,9 +566,21 @@ export function AppLayout({
                             }}
                         />
                     ))}
+
+                {isAdminShell && (!isCollapsed || isMobileMenuOpen) && (
+                    <div className="jvk-admin-sidebar-botanical" aria-hidden="true">
+                        <img
+                            src="/assets/admin/sidebar-botanical-mortar.png"
+                            alt=""
+                            aria-hidden="true"
+                            width={158}
+                            height={162}
+                        />
+                    </div>
+                )}
             </nav>
 
-            {isIvoryShellTheme && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
+            {isIvoryShellTheme && !isAdminShell && (!isCollapsed || (isClinicianShell && isMobileMenuOpen)) && (
                 <div className="jvk-sidebar-botanical-layer pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
                     <img
                         src="/assets/opd/sidebar-botanical-watercolor.png"
@@ -579,11 +604,16 @@ export function AppLayout({
                         {(sidebarDisplayName[0] || 'C').toUpperCase()}
                     </span>
                     <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-[#0E2420]">{sidebarDisplayName}</p>
-                        <p className="text-xs text-[#586C64]">{getBrandSubtitle()}</p>
+                        <p className="text-[11.5px] leading-tight font-bold text-[#0E2420] break-words">{sidebarDisplayName}</p>
+                        <p className="text-[11px] text-[#586C64]">{getBrandSubtitle()}</p>
                     </div>
                 </div>
-                {isClinicianShell ? (
+                {isAdminShell && (
+                    <div className="sm:hidden w-full">
+                        <WebsiteLanguageSelect inline />
+                    </div>
+                )}
+                {isRailShell ? (
                     <ClinicianTooltip label="Sign Out" enabled={isCollapsed}>
                         {signOutButton}
                     </ClinicianTooltip>
@@ -603,8 +633,8 @@ export function AppLayout({
                 isIvoryShellTheme ? 'jvk-opd-main' : 'bg-white'
             }`}
         >
-            {/* HEADER (non-clinician shell or non-ivory header) */}
-            {!isClinicianShell && view !== 'patient-kiosk' && (
+            {/* HEADER (non-rail shell or non-ivory header) */}
+            {!isRailShell && view !== 'patient-kiosk' && (
                 isIvoryShellTheme ? (
                     <header className="sticky top-0 z-30 shrink-0 bg-[#FEFBF6]/90 backdrop-blur-md border-b border-[#EDE6D8]/70 px-4 sm:px-6 lg:px-10 py-3 flex flex-wrap items-center justify-end gap-2.5 sm:gap-4">
                         <div className="flex-1 hidden sm:block" aria-hidden="true" />
@@ -710,14 +740,20 @@ export function AppLayout({
             </main>
     );
 
-    if (isClinicianShell) {
+    if (isRailShell) {
         return (
             <div
-                className="ayu-workspace-shell jvk-opd-shell jvk-clinician-shell bg-[#FEFBF6] text-[#0E2420] font-sans"
+                className={`ayu-workspace-shell jvk-opd-shell jvk-clinician-shell ${isAdminShell ? 'jvk-admin-shell' : ''} bg-[#FEFBF6] text-[#0E2420] font-sans`}
                 data-mobile-menu-open={isMobileMenuOpen}
+                onKeyDown={(event) => {
+                    if (event.key === 'Escape' && isMobileMenuOpen) {
+                        setIsMobileMenuOpen(false);
+                        mobileMenuButton.current?.focus();
+                    }
+                }}
             >
-                <header className="jvk-clinician-header sticky top-0 z-30 shrink-0">
-                    <ClinicianTooltip label="Home — OPD Cockpit" position="bottom" enabled>
+                <header className={`jvk-clinician-header ${isAdminShell ? 'jvk-admin-topbar' : ''} sticky top-0 z-30 shrink-0`}>
+                    <ClinicianTooltip label={isAdminShell ? 'Home — Command Center' : 'Home — OPD Cockpit'} position="bottom" enabled>
                         <Link
                             to={homeDestination}
                             aria-label="JEEVIKA — Go to dashboard"
@@ -737,27 +773,44 @@ export function AppLayout({
                                     });
                                 }
                             }}
-                            className="jvk-clinician-home-link"
+                            className="jvk-clinician-home-link jvk-clinician-header-brand"
                         >
                             <img
                                 src="/assets/logo-jeevika.png"
                                 alt=""
                                 aria-hidden="true"
-                                width={120}
-                                height={40}
-                                className="jvk-clinician-logo"
+                                width={128}
+                                height={42}
+                                className="jvk-clinician-logo jvk-clinician-brand-logo"
                             />
                         </Link>
                     </ClinicianTooltip>
 
+                    {isAdminShell && (
+                        <span className="hidden md:inline-block truncate text-sm sm:text-base font-bold text-[#0E2420] tracking-tight ml-3">
+                            {portalMeta.name}
+                        </span>
+                    )}
+
                     {mobileMenuToggleButton}
 
-                    <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 lg:ml-auto">
+                    <div className="jvk-clinician-header-actions flex flex-wrap items-center justify-end gap-2 sm:gap-3 lg:ml-auto">
                         {ivoryHeaderActions}
                     </div>
                 </header>
 
-                <div className="jvk-clinician-body">
+                <div className="jvk-clinician-body relative">
+                    {isMobileMenuOpen && (
+                        <button
+                            type="button"
+                            aria-label="Close workspace navigation overlay"
+                            onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                mobileMenuButton.current?.focus();
+                            }}
+                            className="fixed inset-0 z-30 bg-[#0E2420]/30 backdrop-blur-[1px] lg:hidden"
+                        />
+                    )}
                     {sidebarElement}
                     {mainElement}
                 </div>

@@ -6,6 +6,7 @@ import "./design-system/erp.css";
 import "./design-system/landing-public.css";
 import "./design-system/selects.css";
 import "./design-system/motion.css";
+import "./design-system/admin-workspace.css";
 
 const { hash, pathname, search } = window.location;
 if (!hash && /^\/(?:overview\/?|kiosk\/?|home\/(?:sign-in|register|reset-password)\/?|app(?:\/.*)?|login\/?|register\/?|reset-password\/?)$/.test(pathname)) {
