@@ -179,9 +179,10 @@ it("serves the authorized clinic's actual queue and patient directory without fa
       sku,
     )
     .run();
-  const signed = await post("/clinical/pharmacy/prescriptions", doctor, {
+  const draft = {
     encounterId: inClinic.id,
     note: "Synthetic Rx",
+    unavailableReason: "Synthetic test order without on-hand stock.",
     allergies: [],
     allergiesReviewed: true,
     pharmacyConsentConfirmed: true,
@@ -194,7 +195,11 @@ it("serves the authorized clinic's actual queue and patient directory without fa
         allowEquivalent: false,
       },
     ],
-  });
+  };
+  const preview = await post("/clinical/pharmacy/prescriptions/quote", doctor, draft);
+  expect(preview.status).toBe(200);
+  const { checkedAt, approval } = await preview.json() as { checkedAt: string; approval: string };
+  const signed = await post("/clinical/pharmacy/prescriptions", doctor, { draft, checkedAt, approval });
   expect(signed.status).toBe(201);
   const { id: rx } = (await signed.json()) as { id: string };
   expect(

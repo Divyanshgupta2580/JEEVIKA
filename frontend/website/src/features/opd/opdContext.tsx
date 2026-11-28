@@ -1,4 +1,7 @@
 import {
+  type SavedPrescriptionDraft,
+} from "../../../../../packages/shared/operations";
+import {
   createContext,
   useCallback,
   useContext,
@@ -24,6 +27,7 @@ import {
   type ClinicianAlert,
   type OpdOverviewMetrics,
   type OpdPrescriptionItem,
+  type OpdPrescriptionReview,
   type OpdQueueItem,
 } from "./opdMetricsAndAlerts";
 
@@ -39,6 +43,16 @@ export interface CardiacChecklistState {
   ecgVerified: boolean;
   troponinVerified: boolean;
   bleedRiskCleared: boolean;
+}
+
+function encounterVitals(review: Encounter["clinicalReview"]): OpdQueueItem["vitals"] {
+  const vitals = review?.vitals;
+  return {
+    bp: vitals?.bloodPressure ? `${vitals.bloodPressure} mmHg` : "Not recorded",
+    pulse: vitals?.pulse ?? 0,
+    spo2: vitals?.spo2 ?? 0,
+    temp: vitals?.temperatureF === undefined ? "Not recorded" : `${vitals.temperatureF}°F`,
+  };
 }
 
 const DEFAULT_CARDIAC_CHECKS: CardiacChecklistState = {
@@ -67,7 +81,10 @@ interface OpdWorkspaceContextValue {
     assessment: string;
     planItems: OpdPrescriptionItem[];
   }) => void;
-  markEncounterSoapSaved: (encounterId: string, note: string) => void;
+  updatePrescriptionReview: (encounterId: string, updates: OpdPrescriptionReview) => void;
+  restorePrescriptionDraft: (encounterId: string, draft: SavedPrescriptionDraft | null) => void;
+  markPrescriptionDraftSaved: (encounterId: string, revision: number) => void;
+  markEncounterSoapSaved: (encounterId: string, note: string, review?: Encounter["clinicalReview"]) => void;
   markEncounterPrescriptionSigned: (encounterId: string) => void;
 
   // Per-encounter isolated draft & verification states
@@ -77,10 +94,7 @@ interface OpdWorkspaceContextValue {
   setSoapSignOff: (value: boolean) => void;
   soapSaved: boolean;
   setSoapSaved: (value: boolean) => void;
-  hdiOverrideApproved: boolean;
-  setHdiOverrideApproved: (value: boolean) => void;
-  isGenericSwapped: boolean;
-  toggleGenericSubstitutionForActive: () => void;
+
   cardiacChecks: CardiacChecklistState;
   setCardiacCheck: (field: keyof CardiacChecklistState, value: boolean) => void;
 
@@ -128,8 +142,6 @@ export function OpdWorkspaceProvider({
   const [soapDrafts, setSoapDrafts] = useState<Record<string, string | null>>({});
   const [soapSignOffs, setSoapSignOffs] = useState<Record<string, boolean>>({});
   const [soapSavedMap, setSoapSavedMap] = useState<Record<string, boolean>>({});
-  const [hdiOverrides, setHdiOverrides] = useState<Record<string, boolean>>({});
-  const [genericSwaps, setGenericSwaps] = useState<Record<string, boolean>>({});
   const [cardiacChecksMap, setCardiacChecksMap] = useState<Record<string, CardiacChecklistState>>({});
 
   // CBC state
@@ -193,6 +205,7 @@ export function OpdWorkspaceProvider({
             outreachReviewRequested: record.outreachReviewRequested,
             consentActive: record.consentActive,
             savedSoapNote: record.reviewNote,
+            clinicalReview: record.clinicalReview,
             prescriptionStatus: record.prescriptionStatus,
             name: record.patientName,
             age: null,
@@ -208,7 +221,7 @@ export function OpdWorkspaceProvider({
             checkInTime: new Date(record.createdAt).toLocaleTimeString(),
             createdAtIso: record.createdAt,
             symptoms: [record.chiefComplaint],
-            vitals: { bp: "Not recorded", pulse: 0, spo2: 0, temp: "Not recorded" },
+            vitals: encounterVitals(record.clinicalReview),
             soap: {
               subjective: record.chiefComplaint,
               objective: "No measurements recorded.",
@@ -231,6 +244,8 @@ export function OpdWorkspaceProvider({
                           ? existing.token
                           : entry.token,
                       soap: existing.soap,
+                      prescriptionReview: existing.prescriptionReview,
+                      prescriptionDraftRevision: existing.prescriptionDraftRevision,
                     }
                   : entry;
               }),
@@ -324,6 +339,7 @@ export function OpdWorkspaceProvider({
           consentActive: enc.consentActive,
           outreachReviewRequested: enc.outreachReviewRequested,
           savedSoapNote: enc.reviewNote,
+          clinicalReview: enc.clinicalReview,
           prescriptionStatus: enc.prescriptionStatus,
           token,
           age: null,
@@ -339,7 +355,7 @@ export function OpdWorkspaceProvider({
           checkInTime: new Date(enc.createdAt).toLocaleTimeString(),
           createdAtIso: enc.createdAt,
           symptoms: [enc.chiefComplaint],
-          vitals: { bp: "Not recorded", pulse: 0, spo2: 0, temp: "Not recorded" },
+          vitals: encounterVitals(enc.clinicalReview),
           soap: {
             subjective: enc.chiefComplaint,
             objective: "No measurements recorded.",
@@ -425,11 +441,41 @@ export function OpdWorkspaceProvider({
     [activePatientKey],
   );
 
-  const markEncounterSoapSaved = useCallback((encounterId: string, note: string) => {
+  const updatePrescriptionReview = useCallback((encounterId: string, updates: OpdPrescriptionReview) => {
+    setQueue((current) => current.map((row) =>
+      row.encounterId === encounterId
+        ? { ...row, prescriptionReview: { ...row.prescriptionReview, ...updates } }
+        : row,
+    ));
+  }, []);
+
+  const restorePrescriptionDraft = useCallback((encounterId: string, draft: SavedPrescriptionDraft | null) => {
+    setQueue((current) => current.map((row) => {
+      if (row.encounterId !== encounterId || row.prescriptionDraftRevision !== undefined) return row;
+      if (!draft) return { ...row, prescriptionDraftRevision: 0 };
+      const localItems = row.soap.plan.filter((item) =>
+        !draft.plan.some((saved) => saved.drug === item.drug && saved.dosage === item.dosage),
+      );
+      return {
+        ...row,
+        soap: { ...row.soap, plan: [...draft.plan, ...localItems] },
+        prescriptionReview: draft.review,
+        prescriptionDraftRevision: draft.revision,
+      };
+    }));
+  }, []);
+
+  const markPrescriptionDraftSaved = useCallback((encounterId: string, revision: number) => {
+    setQueue((current) => current.map((row) =>
+      row.encounterId === encounterId ? { ...row, prescriptionDraftRevision: revision } : row,
+    ));
+  }, []);
+
+  const markEncounterSoapSaved = useCallback((encounterId: string, note: string, review?: Encounter["clinicalReview"]) => {
     setQueue((current) =>
       current.map((row) =>
         opdQueueIdentity(row) === encounterId || row.encounterId === encounterId
-          ? { ...row, status: "IN_CONSULT", savedSoapNote: note }
+          ? { ...row, status: "IN_CONSULT", savedSoapNote: note, clinicalReview: review ?? row.clinicalReview, vitals: review ? encounterVitals(review) : row.vitals }
           : row,
       ),
     );
@@ -472,42 +518,6 @@ export function OpdWorkspaceProvider({
     [activePatientKey],
   );
 
-  const hdiOverrideApproved = activePatientKey ? Boolean(hdiOverrides[activePatientKey]) : false;
-  const setHdiOverrideApproved = useCallback(
-    (value: boolean) => {
-      if (!activePatientKey) return;
-      setHdiOverrides((prev) => ({ ...prev, [activePatientKey]: value }));
-    },
-    [activePatientKey],
-  );
-
-  const isGenericSwapped = activePatientKey ? Boolean(genericSwaps[activePatientKey]) : false;
-  const toggleGenericSubstitutionForActive = useCallback(() => {
-    if (!activePatient || !activePatientKey) return;
-    const willSubstitute = !genericSwaps[activePatientKey];
-    setGenericSwaps((prev) => ({ ...prev, [activePatientKey]: willSubstitute }));
-    setQueue((prev) =>
-      prev.map((patient) => {
-        if (opdQueueIdentity(patient) !== activePatientKey) return patient;
-        return {
-          ...patient,
-          soap: {
-            ...patient.soap,
-            plan: patient.soap.plan.map((item) => ({
-              ...item,
-              drug: willSubstitute
-                ? item.genericName || item.drug
-                : item.brandName
-                  ? `${item.brandName} (${item.genericName || item.dosage})`
-                  : item.drug,
-              isGenericSubstituted: willSubstitute,
-            })),
-          },
-        };
-      }),
-    );
-  }, [activePatient, activePatientKey, genericSwaps]);
-
   const cardiacChecks = activePatientKey
     ? (cardiacChecksMap[activePatientKey] ?? DEFAULT_CARDIAC_CHECKS)
     : DEFAULT_CARDIAC_CHECKS;
@@ -532,11 +542,10 @@ export function OpdWorkspaceProvider({
         distressEvents,
         casualtyEncounters,
         casualtyAdmissions,
-        hdiOverrides,
         cbcConnected: Boolean(cbcSession),
         cbcEncounterIds,
       }),
-    [queue, distressEvents, casualtyEncounters, casualtyAdmissions, hdiOverrides, cbcSession, cbcEncounterIds],
+    [queue, distressEvents, casualtyEncounters, casualtyAdmissions, cbcSession, cbcEncounterIds],
   );
 
   const metrics = useMemo(
@@ -593,6 +602,9 @@ export function OpdWorkspaceProvider({
       refreshQueue,
       selectPatient,
       updatePatientPlan,
+      updatePrescriptionReview,
+      restorePrescriptionDraft,
+      markPrescriptionDraftSaved,
       applyScribeDraftToActive,
       markEncounterSoapSaved,
       markEncounterPrescriptionSigned,
@@ -602,10 +614,7 @@ export function OpdWorkspaceProvider({
       setSoapSignOff,
       soapSaved,
       setSoapSaved,
-      hdiOverrideApproved,
-      setHdiOverrideApproved,
-      isGenericSwapped,
-      toggleGenericSubstitutionForActive,
+
       cardiacChecks,
       setCardiacCheck,
       cbcSession,
@@ -633,6 +642,9 @@ export function OpdWorkspaceProvider({
       refreshQueue,
       selectPatient,
       updatePatientPlan,
+      updatePrescriptionReview,
+      restorePrescriptionDraft,
+      markPrescriptionDraftSaved,
       applyScribeDraftToActive,
       markEncounterSoapSaved,
       markEncounterPrescriptionSigned,
@@ -642,10 +654,7 @@ export function OpdWorkspaceProvider({
       setSoapSignOff,
       soapSaved,
       setSoapSaved,
-      hdiOverrideApproved,
-      setHdiOverrideApproved,
-      isGenericSwapped,
-      toggleGenericSubstitutionForActive,
+
       cardiacChecks,
       setCardiacCheck,
       cbcSession,

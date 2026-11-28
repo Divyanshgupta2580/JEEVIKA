@@ -7,7 +7,6 @@ import {
   FileCheck2,
   Lock,
   Package,
-  PackageCheck,
   Pill,
   RefreshCw,
   Scale,
@@ -17,8 +16,12 @@ import {
 } from "lucide-react";
 import type {
   Inventory,
+  PrescriptionDraft,
+  PrescriptionQuote,
   StockPlan,
 } from "../../../../packages/shared/operations";
+import { prescriptionQuoteSchema, signPrescriptionSchema } from "../../../../packages/shared/operations";
+import type { OpdPrescriptionItem, OpdPrescriptionReview } from "@/features/opd/opdMetricsAndAlerts";
 import { Button, Card, CardContent, Input } from "@/components/ui/basic";
 import {
   Drawer,
@@ -35,183 +38,244 @@ const money = (paise: number) => `₹${paiseToRupeesString(paise)}`;
 const selectStyle =
   "min-h-11 w-full rounded-lg border border-[#CEDAD3] bg-white pl-3.5 pr-4 py-2 text-sm font-medium text-[#0E2420]";
 
+type CatalogChoice = {
+  id: string;
+  brand: string;
+  salt: string;
+  strengthMg: number;
+  form: string;
+  nti: number;
+  scheduleH: number;
+};
+
 export function SignPrescription({
   encounterId,
+  plan,
+  review,
+  updatePlan,
+  updateReview,
+  saveDraft,
   close,
   onSigned,
 }: {
   encounterId: string;
+  plan: OpdPrescriptionItem[];
+  review: OpdPrescriptionReview;
+  updatePlan: (plan: OpdPrescriptionItem[]) => void;
+  updateReview: (updates: OpdPrescriptionReview) => void;
+  saveDraft: () => Promise<void>;
   close: () => void;
   onSigned: () => void;
 }) {
-  const { data, error } = useStaffData<{
-    items: Array<{
-      id: string;
-      brand: string;
-      strengthMg: number;
-      form: string;
-    }>;
-  }>(`${pharmacy}/catalog`);
-  const [rows, setRows] = useState([0]);
+  const { data, error } = useStaffData<{ items: CatalogChoice[] }>(`${pharmacy}/catalog`);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState("");
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending) return;
-    const fields = new FormData(event.currentTarget);
-    const lines = rows.map((index) => ({
-      skuId: fields.get(`sku-${index}`),
-      units: Number(fields.get(`units-${index}`)),
-      courseEnd: fields.get(`course-${index}`),
-      directions: fields.get(`directions-${index}`),
-      allowEquivalent: false,
-    }));
+  const [saved, setSaved] = useState(false);
+  const [checked, setChecked] = useState<{ draft: PrescriptionDraft; quote: PrescriptionQuote }>();
+  const emptyLine: OpdPrescriptionItem = { drug: "", dosage: "", frequency: "", duration: "", availableInClinic: false };
+  const rows = plan.length ? plan : [emptyLine];
+  const medicines = data?.items ?? [];
+  const directions = (line: OpdPrescriptionItem) => line.directions ??
+    [line.dosage, line.frequency, line.duration, line.instructions].filter(Boolean).join(" · ");
+
+  function changeLine(index: number, updates: Partial<OpdPrescriptionItem>) {
+    setChecked(undefined);
+    setSaved(false);
+    updatePlan(rows.map((line, position) => position === index ? { ...line, ...updates } : line));
+  }
+
+  function changeReview(updates: OpdPrescriptionReview) {
+    setChecked(undefined);
+    setSaved(false);
+    updateReview(updates);
+  }
+
+  async function persistDraft() {
     setPending(true);
     setFailure("");
     try {
-      await staffApi(`${pharmacy}/prescriptions`, {
-        method: "POST",
-        body: JSON.stringify({
-          encounterId,
-          note: fields.get("note"),
-          allergiesReviewed: fields.has("reviewed"),
-          pharmacyConsentConfirmed: fields.has("consent"),
-          allergies: String(fields.get("allergies") ?? "")
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean),
-          lines,
-        }),
-      });
-      onSigned();
+      await saveDraft();
+      setSaved(true);
     } catch (error) {
-      setFailure(
-        error instanceof Error
-          ? error.message
-          : "Prescription could not be signed.",
-      );
+      setFailure(error instanceof Error ? error.message : "Prescription draft unavailable");
     } finally {
       setPending(false);
     }
   }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const draft = signPrescriptionSchema.safeParse({
+      encounterId,
+      note: review.note,
+      allergiesReviewed: review.allergiesReviewed,
+      pharmacyConsentConfirmed: review.pharmacyConsentConfirmed,
+      allergies: (review.allergies ?? "").split("\n").map((line) => line.trim()).filter(Boolean),
+      unavailableReason: review.unavailableReason?.trim() || undefined,
+      lines: rows.map((line) => ({
+        skuId: line.skuId,
+        units: line.units,
+        courseEnd: line.courseEnd,
+        directions: directions(line),
+        allowEquivalent: false,
+        approvedSubstituteSkuId: line.approvedSubstituteSkuId,
+      })),
+    });
+    if (!draft.success) {
+      setFailure("Complete every medicine line and confirm that you reviewed allergies and pharmacy consent.");
+      return;
+    }
+    setPending(true);
+    setFailure("");
+    try {
+      if (checked?.quote.approval && JSON.stringify(checked.draft) === JSON.stringify(draft.data)) {
+        await staffApi(`${pharmacy}/prescriptions`, {
+          method: "POST",
+          body: JSON.stringify({ draft: draft.data, checkedAt: checked.quote.checkedAt, approval: checked.quote.approval }),
+        });
+        onSigned();
+      } else {
+        const result = await staffApi<unknown>(`${pharmacy}/prescriptions/quote`, {
+          method: "POST", body: JSON.stringify(draft.data),
+        });
+        setChecked({ draft: draft.data, quote: prescriptionQuoteSchema.parse(result) });
+      }
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "Prescription review could not be completed.");
+      setChecked(undefined);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  const checkedAt = checked?.quote.checkedAt;
+  const needsAvailabilityReason = checked?.quote.lines.some((line) => !line.blocked && line.reason);
   return (
     <Drawer
-      open
-      onClose={close}
+      open onClose={close}
       title="Sign prescription for pharmacy"
-      description="Use the clinic catalog and confirm patient authorization."
+      description="Review this encounter’s medicines against the clinic catalogue and current stock."
     >
-      {(error || failure) && (
-        <InlineBanner tone="critical" title={failure || error || ""} />
-      )}
+      {(error || failure) && <InlineBanner tone="critical" title={failure || error || ""} />}
       {!data && !error && <p role="status">Loading catalog…</p>}
-      {data?.items.length === 0 && (
-        <EmptyState
-          title="No catalog items"
-          description="A clinic medicine catalog is needed before signing."
-        />
+      {data && !medicines.length && (
+        <EmptyState title="No catalog items" description="A clinic medicine catalog is needed before signing." />
       )}
-      {data && data.items.length > 0 && (
+      {medicines.length > 0 && (
         <form className="space-y-4" onSubmit={(event) => void submit(event)}>
-          <div>
-            <label htmlFor="rx-note">Prescription note</label>
-            <Input
-              id="rx-note"
-              name="note"
-              minLength={3}
-              maxLength={4000}
-              required
-            />
-          </div>
-          <label className="block">
-            Known allergies, one per line
-            <textarea
-              name="allergies"
-              className="block w-full rounded-md border p-2"
-              rows={2}
-            />
-          </label>
-          {rows.map((index) => (
-            <fieldset key={index} className="space-y-3 rounded-md border p-3">
-              <legend>Medicine {index + 1}</legend>
-              <label className="block">
-                Catalog item
-                <select
-                  name={`sku-${index}`}
-                  className={selectStyle}
-                  required
-                  defaultValue=""
-                >
-                  <option value="" disabled hidden>Choose medicine</option>
-                  {data.items.map(({ id, brand, strengthMg, form }) => (
-                    <option key={id} value={id}>
-                      {brand} · {strengthMg} mg {form}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div>
-                <label htmlFor={`rx-units-${index}`}>Units</label>
-                <Input
-                  id={`rx-units-${index}`}
-                  name={`units-${index}`}
-                  type="number"
-                  min={1}
-                  max={1000}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor={`rx-end-${index}`}>Course end</label>
-                <Input
-                  id={`rx-end-${index}`}
-                  name={`course-${index}`}
-                  type="date"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor={`rx-directions-${index}`}>Directions</label>
-                <Input
-                  id={`rx-directions-${index}`}
-                  name={`directions-${index}`}
-                  required
-                  minLength={3}
-                  maxLength={1000}
-                />
-              </div>
-            </fieldset>
-          ))}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={rows.length >= 8}
-              onClick={() => setRows([...rows, rows.length])}
-            >
-              Add medicine
-            </Button>
-            {rows.length > 1 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setRows(rows.slice(0, -1))}
-              >
-                Remove last medicine
-              </Button>
+          <fieldset disabled={pending} className="space-y-4">
+            <div>
+              <label htmlFor="rx-note">Prescription note</label>
+              <Input id="rx-note" value={review.note ?? ""} minLength={3} maxLength={4000} required
+                onChange={(event) => changeReview({ note: event.target.value })} />
+            </div>
+            <label className="block">
+              Additional allergies, one per line
+              <textarea className="block w-full rounded-md border p-2" rows={2}
+                value={review.allergies ?? ""} onChange={(event) => changeReview({ allergies: event.target.value })} />
+            </label>
+            {rows.map((line, index) => {
+              const item = medicines.find((medicine) => medicine.id === line.skuId);
+              const equivalents = item && !item.nti ? medicines.filter((candidate) =>
+                candidate.id !== item.id && !candidate.nti &&
+                candidate.salt.toLowerCase() === item.salt.toLowerCase() &&
+                candidate.strengthMg === item.strengthMg && candidate.form === item.form &&
+                candidate.scheduleH === item.scheduleH,
+              ) : [];
+              const quote = checked?.quote.lines[index];
+              return (
+                <fieldset key={index} className="space-y-3 rounded-md border p-3">
+                  <legend>Medicine {index + 1}{line.drug ? ` · ${line.drug}` : ""}</legend>
+                  <label className="block">
+                    Catalog item
+                    <select className={selectStyle} value={line.skuId ?? ""} required
+                      onChange={(event) => {
+                        const selected = medicines.find(({ id }) => id === event.target.value);
+                        changeLine(index, {
+                          skuId: selected?.id, approvedSubstituteSkuId: undefined,
+                          drug: line.drug || selected?.brand || "",
+                        });
+                      }}>
+                      <option value="">Choose medicine</option>
+                      {medicines.map(({ id, brand, salt, strengthMg, form }) => (
+                        <option key={id} value={id}>{brand} · {salt} {strengthMg} mg {form}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {equivalents.length > 0 && (
+                    <label className="block">
+                      Approve a specific equivalent
+                      <select className={selectStyle} value={line.approvedSubstituteSkuId ?? ""}
+                        onChange={(event) => changeLine(index, { approvedSubstituteSkuId: event.target.value || undefined })}>
+                        <option value="">Keep selected catalog item</option>
+                        {equivalents.map(({ id, brand }) => <option key={id} value={id}>{brand}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  <div>
+                    <label htmlFor={`rx-units-${index}`}>Units</label>
+                    <Input id={`rx-units-${index}`} type="number" min={1} max={1000} value={line.units ?? ""} required
+                      onChange={(event) => changeLine(index, { units: Number(event.target.value) || undefined })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`rx-end-${index}`}>Course end</label>
+                    <Input id={`rx-end-${index}`} type="date" value={line.courseEnd ?? ""} required
+                      onChange={(event) => changeLine(index, { courseEnd: event.target.value })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`rx-directions-${index}`}>Directions</label>
+                    <Input id={`rx-directions-${index}`} minLength={3} maxLength={1000} value={directions(line)} required
+                      onChange={(event) => changeLine(index, { directions: event.target.value })} />
+                  </div>
+                  {quote && (
+                    <div role={quote.blocked ? "alert" : "status"} className="rounded-md bg-[#EDF7F2] p-2 text-sm">
+                      <strong>{quote.finalSku.brand}</strong> · {quote.eligibleUnits} eligible / {quote.units} requested
+                      <div>{quote.reason ?? `Quoted course price ${money(quote.quotedTotalPaise ?? 0)}`}</div>
+                      {quote.finalSku.id !== quote.prescribedSku.id && quote.originalTotalPaise !== null && quote.quotedTotalPaise !== null && (
+                        <div>Original course {money(quote.originalTotalPaise)} · Approved course {money(quote.quotedTotalPaise)}</div>
+                      )}
+                    </div>
+                  )}
+                </fieldset>
+              );
+            })}
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" disabled={rows.length >= 20}
+                onClick={() => { setChecked(undefined); setSaved(false); updatePlan([...rows, emptyLine]); }}>Add medicine</Button>
+              {rows.length > 1 && <Button type="button" variant="outline"
+                onClick={() => { setChecked(undefined); setSaved(false); updatePlan(rows.slice(0, -1)); }}>Remove last medicine</Button>}
+            </div>
+            {checkedAt && (
+              <p role="status">Checked {new Date(checkedAt).toLocaleString("en-IN")}. Stock is checked again at checkout.</p>
             )}
+            {checked?.quote.allergies.length ? <p role="status">Allergies used for this check · {checked.quote.allergies.join(", ")}</p> : null}
+            {checked?.quote.warnings.map((warning) => <InlineBanner key={warning} tone="critical" title={warning} />)}
+            {(needsAvailabilityReason || review.unavailableReason !== undefined) && (
+              <label className="block">
+                Clinical reason to prescribe despite unavailable stock
+                <Input value={review.unavailableReason ?? ""} minLength={10} maxLength={1000}
+                  onChange={(event) => changeReview({ unavailableReason: event.target.value })} />
+              </label>
+            )}
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={review.allergiesReviewed ?? false} required
+                onChange={(event) => changeReview({ allergiesReviewed: event.target.checked })} />
+              I reviewed the patient’s allergies.
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={review.pharmacyConsentConfirmed ?? false} required
+                onChange={(event) => changeReview({ pharmacyConsentConfirmed: event.target.checked })} />
+              The patient authorized pharmacy sharing.
+            </label>
+          </fieldset>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" disabled={pending} onClick={() => void persistDraft()}>Save prescription draft</Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Working…" : checked?.quote.approval ? "Sign and send to pharmacy" : "Check clinic stock"}
+            </Button>
           </div>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="reviewed" required />I reviewed the
-            patient’s allergies.
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="consent" required />
-            The patient authorized pharmacy sharing.
-          </label>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Signing…" : "Sign and send to pharmacy"}
-          </Button>
+          {saved && <p role="status">Prescription draft saved.</p>}
         </form>
       )}
     </Drawer>
@@ -222,7 +286,8 @@ type Sale = { id: string; totalPaise: number; createdAt: string };
 export function PharmacyInflow() {
   const [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState("");
-  const [receipt, setReceipt] = useState<Sale>();
+  const [receipt, setReceipt] = useState<{ sale: Sale; retrieved?: boolean }>();
+  const [showReceiptLookup, setShowReceiptLookup] = useState(false);
   const { data, error } = useStaffData<{
     prescriptions: Array<{ id: string; patientName: string }>;
   }>(`${pharmacy}/inflow`, revision);
@@ -238,19 +303,24 @@ export function PharmacyInflow() {
             Pharmacy POS
           </h1>
         </div>
-        <button
-          type="button"
-          disabled={isRefreshing}
-          aria-busy={isRefreshing}
-          onClick={() => setRevision((value) => value + 1)}
-          className="jvk-admin-secondary-btn shrink-0"
-        >
-          <RefreshCw
-            className={`h-4 w-4 text-[#087466] ${isRefreshing ? "animate-spin" : ""}`}
-            aria-hidden="true"
-          />
-          <span>Refresh inflow</span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="jvk-admin-secondary-btn" onClick={() => setShowReceiptLookup(true)}>
+            Find cash receipt
+          </button>
+          <button
+            type="button"
+            disabled={isRefreshing}
+            aria-busy={isRefreshing}
+            onClick={() => setRevision((value) => value + 1)}
+            className="jvk-admin-secondary-btn shrink-0"
+          >
+            <RefreshCw
+              className={`h-4 w-4 text-[#087466] ${isRefreshing ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
+            <span>Refresh inflow</span>
+          </button>
+        </div>
       </header>
       {error && <InlineBanner tone="critical" title={error} />}
       {!data && !error && (
@@ -265,19 +335,19 @@ export function PharmacyInflow() {
         <Card className="jvk-clinic-ops-card print:border-none">
           <CardContent className="space-y-2.5 p-5 sm:p-6">
             <h2 className="jvk-clinic-ops-serif text-lg font-bold text-[#103B32]">
-              Cash sale recorded
+              {receipt.retrieved ? "Cash receipt" : "Cash sale recorded"}
             </h2>
             <p className="text-base font-bold text-[#087466] tabular-nums">
-              Total {money(receipt.totalPaise)}
+              Total {money(receipt.sale.totalPaise)}
             </p>
             <p className="break-all text-xs font-mono text-[#52685F]">
-              Receipt {receipt.id}
+              Receipt {receipt.sale.id}
             </p>
             <time
-              dateTime={receipt.createdAt}
+              dateTime={receipt.sale.createdAt}
               className="block text-xs text-[#52685F]"
             >
-              {new Date(receipt.createdAt).toLocaleString("en-IN")}
+              {new Date(receipt.sale.createdAt).toLocaleString("en-IN")}
             </time>
             <div className="pt-1 print:hidden">
               <button
@@ -341,13 +411,52 @@ export function PharmacyInflow() {
           key={selected}
           id={selected}
           onSale={(sale) => {
-            setReceipt(sale);
+            setReceipt({ sale });
             setSelected("");
             setRevision((value) => value + 1);
           }}
         />
       )}
+      {showReceiptLookup && (
+        <CashReceiptLookup
+          close={() => setShowReceiptLookup(false)}
+          onFound={(sale) => {
+            setReceipt({ sale, retrieved: true });
+            setShowReceiptLookup(false);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function CashReceiptLookup({ close, onFound }: { close: () => void; onFound: (sale: Sale) => void }) {
+  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState("");
+  async function lookup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const id = String(new FormData(event.currentTarget).get("receipt") ?? "").trim();
+    setPending(true);
+    setFailure("");
+    try {
+      onFound(await staffApi<Sale>(`${pharmacy}/receipts/${encodeURIComponent(id)}`));
+    } catch (err) {
+      setFailure(err instanceof Error ? err.message : "Cash receipt unavailable.");
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <Drawer open onClose={close} title="Find cash receipt" description="Enter the reference printed on the cash receipt.">
+      {failure && <InlineBanner tone="critical" title={failure} />}
+      <form className="space-y-3" onSubmit={(event) => void lookup(event)}>
+        <label className="block">Receipt reference
+          <Input name="receipt" minLength={36} maxLength={36} required />
+        </label>
+        <Button type="submit" disabled={pending}>Open receipt</Button>
+      </form>
+    </Drawer>
   );
 }
 
@@ -491,16 +600,22 @@ function Checkout({
   );
 }
 
+type PublicBatch = Omit<Inventory["batches"][number], "costPaise">;
+
 export function ClinicStock({
   canManageCatalog,
+  canAdjustStock,
 }: {
   canManageCatalog: boolean;
+  canAdjustStock: boolean;
 }) {
   const [revision, setRevision] = useState(0);
   const [search, setSearch] = useState("");
   const [expiryOnly, setExpiryOnly] = useState(false);
+  const [adjusting, setAdjusting] = useState<PublicBatch>();
+  const [adjustment, setAdjustment] = useState<string>();
   const { data, error } = useStaffData<{
-    batches: Array<Omit<Inventory["batches"][number], "costPaise">>;
+    batches: PublicBatch[];
   }>(`${pharmacy}/inventory`, revision);
   const date = new Date().toISOString().slice(0, 10);
   const cutoff = new Date(Date.now() + 90 * 86_400_000)
@@ -633,6 +748,7 @@ export function ClinicStock({
       )}
 
       {error && <InlineBanner tone="critical" title={error} />}
+      {adjustment && <InlineBanner tone="success" title={adjustment} />}
       {!data && !error && (
         <div
           role="status"
@@ -701,12 +817,91 @@ export function ClinicStock({
                   Unit price {money(batch.pricePaise)}
                 </span>
               </div>
+              {canAdjustStock && (
+                <Button type="button" variant="outline" onClick={() => setAdjusting(batch)}>
+                  Batch adjustments
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
       {canManageCatalog && <CatalogEntry />}
+      {canAdjustStock && adjusting && (
+        <BatchWriteoff
+          key={adjusting.id}
+          batch={adjusting}
+          close={() => setAdjusting(undefined)}
+          onSaved={({ id, remaining }) => {
+            setAdjusting(undefined);
+            setRevision((value) => value + 1);
+            setAdjustment(`Stock adjustment ${id} recorded. ${remaining} units remain.`);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function BatchWriteoff({ batch, close, onSaved }: {
+  batch: PublicBatch;
+  close: () => void;
+  onSaved: (result: { id: string; remaining: number }) => void;
+}) {
+  const path = `${pharmacy}/inventory/batches/${encodeURIComponent(batch.id)}/writeoffs`;
+  const { data, error } = useStaffData<{
+    entries: { id: string; actorId: string; recordedAt: string; units: number; reason: string }[];
+  }>(path);
+  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState("");
+  const attempt = useRef<{ body: string; key: string }>();
+  async function writeOff(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const fields = new FormData(event.currentTarget);
+    const body = JSON.stringify({
+      units: Number(fields.get("units")), expectedQuantity: batch.quantity, reason: fields.get("reason"),
+    });
+    if (attempt.current?.body !== body) attempt.current = { body, key: crypto.randomUUID() };
+    setPending(true);
+    setFailure("");
+    try {
+      const result = await staffApi<{ id: string; remaining: number }>(path, {
+        method: "POST", body, headers: { "Idempotency-Key": attempt.current.key },
+      });
+      onSaved(result);
+    } catch (err) {
+      setFailure(err instanceof Error ? err.message : "Stock adjustment unavailable.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <Drawer open onClose={close} title="Batch adjustments" description={`${batch.brand} · Batch ${batch.batchNo}`}>
+      {failure && <InlineBanner tone="critical" title={failure} />}
+      <p className="text-sm">{batch.available} unreserved units can be written off.</p>
+      {batch.available > 0 && (
+        <form className="my-4 space-y-3" onSubmit={(event) => void writeOff(event)}>
+          <label className="block">Units to write off
+            <Input name="units" type="number" min={1} max={batch.available} required />
+          </label>
+          <label className="block">Reason
+            <Input name="reason" minLength={3} maxLength={400} required />
+          </label>
+          <Button type="submit" disabled={pending}>Record stock write-off</Button>
+        </form>
+      )}
+      <h3 className="font-semibold">Recent write-offs</h3>
+      {error && <p role="alert">{error}</p>}
+      {!data && !error && <p role="status">Loading adjustment history…</p>}
+      {data?.entries.length === 0 && <p>No recorded write-offs.</p>}
+      {data?.entries.map((entry) => (
+        <p key={entry.id} className="my-1 break-words text-sm">
+          {entry.units} units · {entry.reason} · {entry.actorId} · {new Date(entry.recordedAt).toLocaleString("en-IN")}
+        </p>
+      ))}
+    </Drawer>
   );
 }
 

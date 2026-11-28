@@ -5,6 +5,9 @@ import { z } from "zod";
 import { dispensingPlan } from "../../../../packages/engine/dispensing";
 import {
   roundDivide,
+  prescriptionApprovalSchema,
+  prescriptionQuoteSchema,
+  savedPrescriptionDraftSchema,
   signPrescriptionSchema,
   skuSchema,
   type Inventory,
@@ -12,19 +15,18 @@ import {
 } from "../../../../packages/shared/operations";
 import type { IntegrationContext } from "../../context";
 import { tenantDb } from "../../database";
-import { tokenHash } from "../../security";
+import { equalHash, tokenHash } from "../../security";
 import { staffAccess, staffBody } from "../../staff-access";
+import { clinicalDay, profileAllergies, recordedAllergies, reviewPrescription } from "./prescription-review";
+import { stockWriteoffs } from "./stock-writeoffs";
 
 type Repo = ReturnType<typeof tenantDb>;
-type Batch = Inventory["batches"][number] & { gstBps: number };
+type Batch = Inventory["batches"][number] & { gstBps: number; nti: boolean };
 type RxHeader = Omit<
   Prescription,
   "lines" | "allergies" | "reservationId" | "reservationExpiresAt" | "saleId"
-> & { allergiesJson: string };
-const today = () =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(
-    new Date(),
-  );
+> & { allergiesJson: string; profileAllergiesJson: string | null; reviewedAllergiesJson: string | null };
+const today = clinicalDay;
 const posRoles = staffAccess("CASHIER", "CLINIC_ADMIN");
 const cashierCheckout = z.strictObject({
   prescriptionId: z.uuid(),
@@ -34,23 +36,30 @@ const cashierCheckout = z.strictObject({
 });
 
 export const clinicalPharmacyRouter = new Hono<IntegrationContext>();
+clinicalPharmacyRouter.route("/inventory", stockWriteoffs);
 
-async function batches(db: Repo, clinicId: string) {
+async function batches(db: Repo, clinicId: string, skuIds?: string[]) {
   const { results } = await db
     .statement(
       `SELECT b.id,b.sku_id AS skuId,s.brand,s.salt,s.strength_mg AS strengthMg,
-    s.form,s.gst_bps AS gstBps,b.clinic_id AS clinicId,b.batch_no AS batchNo,b.expiry,b.qty_units AS quantity,
+    s.form,s.gst_bps AS gstBps,s.nti,b.clinic_id AS clinicId,b.batch_no AS batchNo,b.expiry,b.qty_units AS quantity,
     b.reserved_units AS reserved,b.qty_units-b.reserved_units AS available,b.price_paise AS pricePaise,b.cost_paise AS costPaise
     FROM inventory_batches b JOIN sku s ON s.org_id=b.org_id AND s.id=b.sku_id
-    WHERE b.org_id=:org AND b.clinic_id=? ORDER BY b.expiry,b.id LIMIT 5000`,
+    WHERE b.org_id=:org AND b.clinic_id=?
+    ${skuIds ? "AND b.sku_id IN (SELECT value FROM json_each(?))" : ""}
+    ORDER BY b.expiry,b.id${skuIds ? "" : " LIMIT 5000"}`,
       clinicId,
+      ...(skuIds ? [JSON.stringify(skuIds)] : []),
     )
-    .all<Batch>();
-  return results;
+    .all<Omit<Batch, "nti"> & { nti: number }>();
+  return results.map((batch) => ({ ...batch, nti: Boolean(batch.nti) }));
 }
 
 const availableRx = `SELECT r.id,r.encounter_id AS encounterId,e.patient_id AS patientId,p.name AS patientName,r.clinic_id AS clinicId,
- r.signed_by AS signedBy,r.signed_at AS signedAt,r.signature_hash AS signatureHash,r.note,r.allergies_json AS allergiesJson
+ r.signed_by AS signedBy,r.signed_at AS signedAt,r.signature_hash AS signatureHash,r.note,
+ r.allergies_json AS allergiesJson,p.allergies_json AS profileAllergiesJson,
+ (SELECT json_extract(cr.details_json,'$.allergies') FROM clinical_reviews cr
+  WHERE cr.org_id=e.org_id AND cr.encounter_id=e.id ORDER BY cr.revision DESC LIMIT 1) AS reviewedAllergiesJson
  FROM signed_prescriptions r JOIN encounters e ON e.org_id=r.org_id AND e.clinic_id=r.clinic_id AND e.id=r.encounter_id
  JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
  JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care' AND c.revoked_at IS NULL
@@ -78,13 +87,19 @@ async function prescription(
     .all<Prescription["lines"][number]>();
   return {
     ...row,
-    allergies: z.array(z.string()).parse(JSON.parse(row.allergiesJson)),
+    allergies: recordedAllergies(
+      profileAllergies(row.allergiesJson),
+      profileAllergies(row.profileAllergiesJson),
+      profileAllergies(row.reviewedAllergiesJson),
+    ),
     reservationId: null,
     reservationExpiresAt: null,
     saleId: null,
     lines: results.map((line) => ({
       ...line,
-      allowEquivalent: Boolean(line.allowEquivalent),
+      // Clinical dispensing uses the exact signed SKU. Legacy broad flags
+      // do not identify an individually approved alternative.
+      allowEquivalent: false,
       nti: Boolean(line.nti),
       scheduleH: Boolean(line.scheduleH),
     })),
@@ -95,7 +110,7 @@ clinicalPharmacyRouter.get("/catalog", staffAccess("DOCTOR"), async (c) => {
   const p = c.get("principal");
   const { results } = await tenantDb({ db: c.env.DB, orgId: p.orgId })
     .statement(
-      "SELECT id,brand,salt,strength_mg AS strengthMg,form FROM sku WHERE org_id=:org ORDER BY brand LIMIT 1000",
+      "SELECT id,brand,salt,strength_mg AS strengthMg,form,nti,schedule_h AS scheduleH FROM sku WHERE org_id=:org ORDER BY brand,id LIMIT 1000",
     )
     .all();
   return c.json({ items: results });
@@ -135,72 +150,112 @@ clinicalPharmacyRouter.post(
   },
 );
 
+const editableEncounter = `FROM encounters e JOIN consents c ON c.org_id=e.org_id
+  AND c.encounter_id=e.id AND c.purpose='care' AND c.revoked_at IS NULL
+  WHERE e.org_id=:org AND e.clinic_id=? AND e.id=? AND e.status<>'emergency'
+  AND NOT EXISTS (SELECT 1 FROM signed_prescriptions r WHERE r.org_id=e.org_id AND r.encounter_id=e.id)`;
+
+clinicalPharmacyRouter.get("/prescriptions/draft/:id", staffAccess("DOCTOR"), async (c) => {
+  const p = c.get("principal");
+  const id = z.uuid().parse(c.req.param("id"));
+  const row = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+    `SELECT (SELECT draft_json FROM clinician_prescription_drafts d
+     WHERE d.org_id=e.org_id AND d.encounter_id=e.id AND d.actor_id=?) AS draft
+     ${editableEncounter}`,
+    p.userId, p.clinicId, id,
+  ).first<{ draft: string | null }>();
+  if (!row) throw new HTTPException(404, { message: "Draft encounter unavailable" });
+  return c.json(row.draft ? savedPrescriptionDraftSchema.parse(JSON.parse(row.draft)) : null);
+});
+
+clinicalPharmacyRouter.put("/prescriptions/draft/:id", staffAccess("DOCTOR"), async (c) => {
+  const p = c.get("principal");
+  const id = z.uuid().parse(c.req.param("id"));
+  const draft = await staffBody(c.req.raw, savedPrescriptionDraftSchema);
+  const saved = { ...draft, revision: draft.revision + 1 };
+  const row = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+    `INSERT INTO clinician_prescription_drafts(org_id,encounter_id,actor_id,revision,draft_json)
+     SELECT e.org_id,e.id,?,?,? ${editableEncounter}
+       AND (?=0 OR EXISTS (SELECT 1 FROM clinician_prescription_drafts d WHERE d.org_id=e.org_id AND d.encounter_id=e.id AND d.actor_id=?))
+     ON CONFLICT(org_id,encounter_id,actor_id) DO UPDATE SET revision=excluded.revision,draft_json=excluded.draft_json
+     WHERE clinician_prescription_drafts.revision=?
+     RETURNING revision`,
+    p.userId, saved.revision, JSON.stringify(saved), p.clinicId, id, draft.revision, p.userId, draft.revision,
+  ).first();
+  if (!row) throw new HTTPException(409, { message: "Draft encounter or revision changed" });
+  return c.json(saved);
+});
+
+clinicalPharmacyRouter.post(
+  "/prescriptions/quote",
+  staffAccess("DOCTOR"),
+  async (c) => {
+    const p = c.get("principal");
+    const draft = await staffBody(c.req.raw, signPrescriptionSchema);
+    const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+    const checkedAt = new Date().toISOString();
+    const { snapshot, approval } = await reviewPrescription(
+      db, p, draft, checkedAt, (ids) => batches(db, p.clinicId, ids),
+    );
+    return c.json(prescriptionQuoteSchema.parse({
+      checkedAt, approval, allergies: snapshot.allergies, lines: snapshot.lines, warnings: snapshot.warnings,
+    }));
+  },
+);
+
 clinicalPharmacyRouter.post(
   "/prescriptions",
   staffAccess("DOCTOR"),
   async (c) => {
     const p = c.get("principal");
-    const body = await staffBody(c.req.raw, signPrescriptionSchema);
-    if (
-      new Set(body.lines.map(({ skuId }) => skuId)).size !==
-        body.lines.length ||
-      body.lines.some(({ courseEnd }) => courseEnd < today())
-    )
-      throw new HTTPException(400, {
-        message: "Check the treatment dates and medicine lines",
-      });
+    const { draft, checkedAt, approval } = await staffBody(c.req.raw, prescriptionApprovalSchema);
     const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
-    const eligibility = await db
-      .statement(
-        `SELECT e.id FROM encounters e JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id
-    AND c.purpose='care' AND c.revoked_at IS NULL
-    WHERE e.org_id=:org AND e.clinic_id=? AND e.id=? AND e.status='reviewed'
-    AND NOT ${kioskPurposeDenied("e", "pharmacy")}`,
-        p.clinicId,
-        body.encounterId,
-      )
-      .first();
-    if (!eligibility)
-      throw new HTTPException(404, {
-        message: "Reviewed encounter or pharmacy consent unavailable",
-      });
+    const age = Date.now() - Date.parse(checkedAt);
+    if (age < 0 || age > 5 * 60_000 || today(new Date(checkedAt)) !== today())
+      throw new HTTPException(409, { message: "Stock review expired. Check availability again." });
+    const review = await reviewPrescription(
+      db, p, draft, checkedAt, (ids) => batches(db, p.clinicId, ids),
+    );
+    if (!review.approval || !equalHash(approval, review.approval))
+      throw new HTTPException(409, { message: "The prescription or eligibility changed. Review a fresh quote." });
+    const { snapshot } = review;
     const id = crypto.randomUUID();
     const at = new Date().toISOString();
     const signatureHash = await tokenHash(
-      JSON.stringify({ org: p.orgId, signer: p.userId, at, body }),
+      JSON.stringify({ org: p.orgId, signer: p.userId, at, snapshot }),
     );
     try {
       await db.batch([
         db.statement(
           `INSERT INTO encounter_permissions(org_id,encounter_id,purpose,granted_at,actor_id)
          VALUES(:org,?,'pharmacy',?,?) ON CONFLICT(org_id,encounter_id,purpose) DO NOTHING`,
-          body.encounterId,
+          draft.encounterId,
           at,
           p.userId,
         ),
         db.statement(
-          `INSERT INTO signed_prescriptions(org_id,id,encounter_id,clinic_id,signed_by,signed_at,signature_hash,note,allergies_json)
-         VALUES(:org,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO signed_prescriptions(org_id,id,encounter_id,clinic_id,signed_by,signed_at,signature_hash,note,allergies_json,clinical_snapshot_json)
+         VALUES(:org,?,?,?,?,?,?,?,?,?)`,
           id,
-          body.encounterId,
+          draft.encounterId,
           p.clinicId,
           p.userId,
           at,
           signatureHash,
-          body.note,
-          JSON.stringify(body.allergies),
+          draft.note,
+          JSON.stringify(snapshot.allergies),
+          JSON.stringify(snapshot),
         ),
-        ...body.lines.map((line) =>
+        ...draft.lines.map((line, index) =>
           db.statement(
             `INSERT INTO prescription_lines(org_id,id,prescription_id,sku_id,units,course_end,directions,allow_equivalent)
-         VALUES(:org,?,?,?,?,?,?,?)`,
+         VALUES(:org,?,?,?,?,?,?,0)`,
             crypto.randomUUID(),
             id,
-            line.skuId,
+            snapshot.lines[index]!.finalSku.id,
             line.units,
             line.courseEnd,
             line.directions,
-            Number(line.allowEquivalent),
           ),
         ),
       ]);
@@ -228,6 +283,38 @@ clinicalPharmacyRouter.get("/inflow", posRoles, async (c) => {
   });
 });
 
+clinicalPharmacyRouter.get("/prescriptions/encounter/:id", staffAccess("DOCTOR"), async (c) => {
+  const p = c.get("principal");
+  const { id } = z.object({ id: z.uuid() }).parse(c.req.param());
+  const record = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+    `SELECT rx.id, rx.clinical_snapshot_json AS snapshot
+     FROM signed_prescriptions rx
+     JOIN consents c ON c.org_id=rx.org_id AND c.encounter_id=rx.encounter_id AND c.purpose='care' AND c.revoked_at IS NULL
+     WHERE rx.org_id=:org AND rx.clinic_id=? AND rx.encounter_id=?`,
+    p.clinicId, id,
+  ).first<{ id: string; snapshot: string | null }>();
+  if (!record) throw new HTTPException(404, { message: "Signed prescription unavailable" });
+  if (!record.snapshot) {
+    const { results } = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+      `SELECT s.brand,s.salt,s.strength_mg AS strengthMg,s.form,l.units,l.course_end AS courseEnd,l.directions
+       FROM prescription_lines l JOIN sku s ON s.org_id=l.org_id AND s.id=l.sku_id
+       WHERE l.org_id=:org AND l.prescription_id=? ORDER BY l.id`,
+      record.id,
+    ).all();
+    return c.json({ id: record.id, lines: results, quote: null });
+  }
+  const snapshot = JSON.parse(record.snapshot);
+  const draft = signPrescriptionSchema.parse(snapshot.draft);
+  const quote = prescriptionQuoteSchema.parse({ ...snapshot, approval: null });
+  return c.json({
+    id: record.id, quote,
+    lines: draft.lines.map((line, index) => ({
+      ...quote.lines[index]!.finalSku,
+      units: line.units, courseEnd: line.courseEnd, directions: line.directions,
+    })),
+  });
+});
+
 clinicalPharmacyRouter.get("/inflow/:id/quote", posRoles, async (c) => {
   const p = c.get("principal");
   const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
@@ -237,6 +324,22 @@ clinicalPharmacyRouter.get("/inflow/:id/quote", posRoles, async (c) => {
   return c.json(
     dispensingPlan(rx, { batches: await batches(db, p.clinicId) }, today()),
   );
+});
+
+clinicalPharmacyRouter.get("/receipts/:id", posRoles, async (c) => {
+  const p = c.get("principal");
+  const id = z.uuid().parse(c.req.param("id"));
+  const receipt = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+    `SELECT s.id,s.created_at AS createdAt,s.total_paise AS totalPaise,
+       s.net_paise AS netPaise,s.tax_paise AS taxPaise,p.method,p.amount_paise AS amountPaise,
+       r.prescription_id AS prescriptionId
+     FROM sales s JOIN reservations r ON r.org_id=s.org_id AND r.id=s.reservation_id
+     JOIN sale_payments p ON p.org_id=s.org_id AND p.sale_id=s.id AND p.method='cash'
+     WHERE s.org_id=:org AND s.clinic_id=? AND s.id=? AND s.status='completed'`,
+    p.clinicId, id,
+  ).first();
+  if (!receipt) throw new HTTPException(404, { message: "Cash receipt unavailable" });
+  return c.json(receipt);
 });
 
 clinicalPharmacyRouter.get(

@@ -361,8 +361,8 @@ it("posts received stock, dispenses one signed prescription, and balances the le
       ).status,
     ).toBe(200);
   }
-  const sign = (token: string, encounterId: string) =>
-    post(`${pharmacy}/prescriptions`, token, {
+  const sign = async (token: string, encounterId: string) => {
+    const draft = {
       encounterId,
       note: "Synthetic prescription",
       allergies: [],
@@ -377,7 +377,17 @@ it("posts received stock, dispenses one signed prescription, and balances the le
           allowEquivalent: false,
         },
       ],
-    });
+    };
+    const quote = await post(`${pharmacy}/prescriptions/quote`, token, draft);
+    if (!quote.ok) {
+      expect((await post(`${pharmacy}/prescriptions`, token, {
+        draft, checkedAt: new Date().toISOString(), approval: "0".repeat(64),
+      })).status).toBe(quote.status);
+      return quote;
+    }
+    const { checkedAt, approval } = await quote.json() as { checkedAt: string; approval: string };
+    return post(`${pharmacy}/prescriptions`, token, { draft, checkedAt, approval });
+  };
   expect((await sign(doctor, deniedEncounter)).status).toBe(404);
   expect((await sign(eastDoctor, patientEncounter)).status).toBe(404);
   expect((await sign(cashier, patientEncounter)).status).toBe(403);

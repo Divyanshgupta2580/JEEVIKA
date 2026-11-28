@@ -53,6 +53,26 @@ export const intakeSchema = z
       });
     }
   });
+export const clinicalReviewDetailsSchema = z.strictObject({
+  icd11: z.strictObject({
+    code: z.string().trim().min(1).max(48),
+    system: z.literal("ICD-11 MMS"),
+    provenance: z.literal("clinician-entered"),
+  }).optional(),
+  guideline: z.strictObject({
+    reference: z.string().trim().min(1).max(400),
+    provenance: z.literal("clinician-entered"),
+  }).optional(),
+  history: z.string().trim().min(1).max(1000).optional(),
+  vitals: z.strictObject({
+    bloodPressure: z.string().trim().regex(/^[1-9][0-9]{1,2}\/[1-9][0-9]{1,2}$/).optional(),
+    pulse: z.number().int().positive().max(300).optional(),
+    spo2: z.number().int().positive().max(100).optional(),
+    temperatureF: z.number().min(70).max(120).optional(),
+  }).optional(),
+  allergies: z.array(z.string().trim().min(1).max(100)).max(30).optional(),
+  complementaryMedicines: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
+});
 export const encounterSchema = z.object({
   id: z.string(),
   patientId: z.string(),
@@ -68,6 +88,7 @@ export const encounterSchema = z.object({
   reviewedBy: z.string().nullable(),
   reviewedAt: z.iso.datetime().nullable(),
   reviewNote: z.string().nullable(),
+  clinicalReview: clinicalReviewDetailsSchema.extend({ revision: z.number().int().positive() }).optional(),
   consentActive: z.boolean(),
   tokenNumber: z.string().optional(),
   documentReview: z.string().optional(),
@@ -79,7 +100,11 @@ export const encounterListSchema = z.object({
   encounters: z.array(encounterSchema),
 });
 export const reviewSchema = z
-  .object({ note: z.string().trim().min(3).max(4000) })
+  .object({
+    note: z.string().trim().min(3).max(4000),
+    expectedRevision: z.number().int().positive().optional(),
+    details: clinicalReviewDetailsSchema.optional(),
+  })
   .strict();
 export const capabilitySchema = z.object({
   mode: z.literal("synthetic-integration"),

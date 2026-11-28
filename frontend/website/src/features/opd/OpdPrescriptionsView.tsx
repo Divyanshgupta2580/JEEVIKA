@@ -14,6 +14,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import {
+  savedPrescriptionDraftSchema,
+  type PrescriptionQuote,
+  type SavedPrescriptionDraft,
+} from "../../../../../packages/shared/operations";
+import { staffApi } from "@/lib/staffApi";
+import { paiseToRupeesString } from "@/lib/utils";
 import { SignPrescription } from "@/components/ClinicalPharmacy";
 import { PatientVernacularGuide } from "@/components/PatientVernacularGuide";
 import { checkHerbDrugInteractions } from "@/lib/herbDrugInteractions";
@@ -24,16 +31,18 @@ import { WESTERN_CLINICAL_RECOMMENDATIONS } from "./westernClinicalRecommendatio
 
 const INITIAL_NEW_MED: OpdPrescriptionItem = {
   drug: "",
-  dosage: "500mg",
-  frequency: "1-0-1",
-  duration: "5 Days",
-  availableInClinic: true,
-  instructions: "After food",
-  shelfLocation: "Dispensary Shelf B-01",
+  dosage: "",
+  frequency: "",
+  duration: "",
+  availableInClinic: false,
+  instructions: "",
   brandName: "",
-  brandPrice: 85,
   genericName: "",
-  genericPrice: 15,
+};
+
+type SignedOrder = {
+  lines: Array<{ brand: string; salt: string; strengthMg: number; form: string; units: number; courseEnd: string; directions: string }>;
+  quote: PrescriptionQuote | null;
 };
 
 export function OpdPrescriptionsView() {
@@ -43,10 +52,9 @@ export function OpdPrescriptionsView() {
     clinicalEncounterId,
     updatePatientPlan,
     markEncounterPrescriptionSigned,
-    hdiOverrideApproved,
-    setHdiOverrideApproved,
-    isGenericSwapped,
-    toggleGenericSubstitutionForActive,
+    updatePrescriptionReview,
+    restorePrescriptionDraft,
+    markPrescriptionDraftSaved,
     cardiacChecks,
     setCardiacCheck,
   } = useOpdWorkspace();
@@ -56,6 +64,55 @@ export function OpdPrescriptionsView() {
   const [showVernacularGuide, setShowVernacularGuide] = useState(false);
   const [newMed, setNewMed] = useState<OpdPrescriptionItem>(INITIAL_NEW_MED);
 
+  const [signedOrder, setSignedOrder] = useState<{ encounterId: string; order?: SignedOrder; error?: string }>();
+  const prescriptionStatus = activePatient?.prescriptionStatus;
+  const draftRevision = activePatient?.prescriptionDraftRevision;
+  const draftPath = clinicalEncounterId ? `/clinical/pharmacy/prescriptions/draft/${clinicalEncounterId}` : undefined;
+  const draftAvailable = activePatient?.consentActive && activePatient.status !== "STAT_ALERT" && !prescriptionStatus;
+  const [draftLoadError, setDraftLoadError] = useState<{ encounterId: string; message: string }>();
+  useEffect(() => {
+    if (!clinicalEncounterId || !draftPath || !draftAvailable || draftRevision !== undefined) return;
+    const controller = new AbortController();
+    staffApi<unknown>(draftPath, { signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) {
+          restorePrescriptionDraft(clinicalEncounterId, savedPrescriptionDraftSchema.nullable().parse(result));
+        }
+      })
+      .catch((error: Error) => {
+        if (!controller.signal.aborted) setDraftLoadError({ encounterId: clinicalEncounterId, message: error.message });
+      });
+    return () => controller.abort();
+  }, [clinicalEncounterId, draftPath, draftAvailable, draftRevision, restorePrescriptionDraft]);
+
+  async function saveDraft() {
+    if (!draftPath || !clinicalEncounterId || !activePatient || draftRevision === undefined) {
+      throw new Error("Wait for the saved prescription draft to load.");
+    }
+    const saved = await staffApi<SavedPrescriptionDraft>(draftPath, {
+      method: "PUT",
+      body: JSON.stringify({
+        revision: draftRevision,
+        plan: activePatient.soap.plan.map((item) => ({
+          ...item, availableInClinic: false,
+        })),
+        review: activePatient.prescriptionReview ?? {},
+      }),
+    });
+    markPrescriptionDraftSaved(clinicalEncounterId, saved.revision);
+  }
+
+  useEffect(() => {
+    if (!clinicalEncounterId || !prescriptionStatus) return;
+    const controller = new AbortController();
+    staffApi<SignedOrder>(`/clinical/pharmacy/prescriptions/encounter/${clinicalEncounterId}`, { signal: controller.signal })
+      .then((order) => setSignedOrder({ encounterId: clinicalEncounterId, order }))
+      .catch((error: Error) => {
+        if (!controller.signal.aborted) setSignedOrder({ encounterId: clinicalEncounterId, error: error.message });
+      });
+    return () => controller.abort();
+  }, [clinicalEncounterId, prescriptionStatus]);
+
   // Reset transient modal/form inputs cleanly when active encounter changes
   useEffect(() => {
     setShowAddMedModal(false);
@@ -64,24 +121,23 @@ export function OpdPrescriptionsView() {
     setNewMed(INITIAL_NEW_MED);
   }, [activePatientKey]);
 
-  const activeInteractions = useMemo(() => {
-    const plan = activePatient?.soap.plan ?? [];
-    const complementaryFormulations = [
-      { drug: "Triphala Guggulu" },
-      { drug: "Ashwagandha Churna" },
-      { drug: "Lasuna (Garlic Extract)" },
-    ];
-    return checkHerbDrugInteractions(plan, complementaryFormulations);
-  }, [activePatient?.soap.plan]);
+  const activeInteractions = useMemo(() => checkHerbDrugInteractions(
+    activePatient?.soap.plan.filter((line) => line.drug.trim()) ?? [],
+    activePatient?.clinicalReview?.complementaryMedicines ?? [],
+  ), [activePatient?.soap.plan, activePatient?.clinicalReview]);
 
-  const priceMetrics = useMemo(() => {
-    const plan = activePatient?.soap.plan ?? [];
-    const brandedTotal = plan.reduce((sum, item) => sum + (item.brandPrice || 80), 0);
-    const genericTotal = plan.reduce((sum, item) => sum + (item.genericPrice || 15), 0);
-    const savings = Math.max(0, brandedTotal - genericTotal);
-    const percent = brandedTotal > 0 ? Math.round((savings / brandedTotal) * 100) : 0;
-    return { brandedTotal, genericTotal, savings, percent };
-  }, [activePatient?.soap.plan]);
+  const record = signedOrder?.encounterId === clinicalEncounterId ? signedOrder : undefined;
+  const finalLines = record?.order?.lines;
+  const signedQuote = record?.order?.quote;
+  const priceLines = signedQuote?.lines ?? [];
+  const hasComparablePrices = priceLines.some((line) => line.finalSku.id !== line.prescribedSku.id) &&
+    priceLines.every((line) => line.originalTotalPaise !== null && line.quotedTotalPaise !== null);
+  const originalTotal = hasComparablePrices
+    ? priceLines.reduce((sum, line) => sum + (line.originalTotalPaise ?? 0), 0) : null;
+  const finalTotal = hasComparablePrices
+    ? priceLines.reduce((sum, line) => sum + (line.quotedTotalPaise ?? 0), 0) : null;
+  const savings = originalTotal !== null && finalTotal !== null ? Math.max(0, originalTotal - finalTotal) : null;
+  const price = (paise: number | null) => paise === null ? "Unavailable" : `₹${paiseToRupeesString(paise)}`;
 
   if (!activePatient) {
     return (
@@ -118,7 +174,6 @@ export function OpdPrescriptionsView() {
       ...newMed,
       brandName: newMed.brandName || newMed.drug,
       genericName: newMed.genericName || newMed.drug,
-      isGenericSubstituted: isGenericSwapped,
     };
     updatePatientPlan(activePatientKey, [...activePatient.soap.plan, itemToAdd]);
     setNewMed(INITIAL_NEW_MED);
@@ -142,7 +197,7 @@ export function OpdPrescriptionsView() {
     if (isDuplicate) return;
     updatePatientPlan(activePatientKey, [
       ...activePatient.soap.plan,
-      { ...item, isGenericSubstituted: isGenericSwapped },
+      item,
     ]);
   };
 
@@ -152,14 +207,14 @@ export function OpdPrescriptionsView() {
     cardiacChecks.bleedRiskCleared;
 
   const hasSevereUnoverriddenHdi =
-    activeInteractions.some((i) => i.severity === "CONTRAINDICATED") && !hdiOverrideApproved;
+    activeInteractions.some((i) => i.severity === "CONTRAINDICATED" || i.severity === "HIGH_RISK");
 
   const canSignPrescription =
     Boolean(clinicalEncounterId) &&
+    draftRevision !== undefined &&
     Boolean(activePatient.savedSoapNote) &&
     Boolean(activePatient.consentActive) &&
-    !activePatient.prescriptionStatus &&
-    !hasSevereUnoverriddenHdi;
+    !activePatient.prescriptionStatus;
 
   const recommendations = WESTERN_CLINICAL_RECOMMENDATIONS[activePatient.patientId] ?? [];
 
@@ -172,13 +227,20 @@ export function OpdPrescriptionsView() {
       />
 
       <OpdPatientSummary patient={activePatient} encounterId={clinicalEncounterId ?? null} />
+      {draftAvailable && draftRevision === undefined && (
+        draftLoadError?.encounterId === clinicalEncounterId && draftLoadError ? (
+          <p role="alert">Saved prescription draft unavailable. {draftLoadError.message}</p>
+        ) : <p role="status">Loading prescription draft…</p>
+      )}
 
       {/* Contextual Allergy & Blocking Safety Reminders */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-rose-900">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" aria-hidden="true" />
           <span>
-            Allergies: Not recorded — verify before prescribing or signing
+            {signedQuote?.allergies.length
+              ? `Allergies checked · ${signedQuote.allergies.join(", ")}`
+              : "Verify recorded allergies before prescribing or signing"}
           </span>
         </div>
         {activePatient.prescriptionStatus && (
@@ -199,6 +261,7 @@ export function OpdPrescriptionsView() {
             <button
               type="button"
               onClick={() => setShowAddMedModal(true)}
+              disabled={Boolean(prescriptionStatus)}
               className="jvk-opd-primary-btn inline-flex min-h-10 items-center gap-1.5 px-3.5 py-2 text-xs font-bold"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
@@ -243,7 +306,7 @@ export function OpdPrescriptionsView() {
                       <button
                         type="button"
                         onClick={() => handleQuickAddRecommendation(rec)}
-                        disabled={isAlreadyAdded}
+                        disabled={isAlreadyAdded || Boolean(prescriptionStatus)}
                         className={`shrink-0 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
                           isAlreadyAdded
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
@@ -269,9 +332,21 @@ export function OpdPrescriptionsView() {
             </div>
           )}
 
-          <h4 className="jvk-opd-panel-title">Draft Medications ({activePatient.soap.plan.length})</h4>
+          <h4 className="jvk-opd-panel-title">{finalLines ? `Signed Medications (${finalLines.length})` : `Draft Medications (${activePatient.soap.plan.length})`}</h4>
           {/* Medication List */}
-          {activePatient.soap.plan.length === 0 ? (
+          {activePatient.prescriptionStatus ? (
+            <div className="space-y-2.5">
+              {record?.error && <p role="alert">{record.error}</p>}
+              {!record && <p role="status">Loading signed medicines…</p>}
+              {finalLines?.map((line, index) => (
+                <div key={index} className="rounded-xl border border-[#E3DDD0] bg-white p-3.5 text-sm">
+                  <strong>{line.brand} · {line.salt} {line.strengthMg} mg {line.form}</strong>
+                  <div>{line.units} units · Course end {line.courseEnd}</div>
+                  <div className="break-words">{line.directions}</div>
+                </div>
+              ))}
+            </div>
+          ) : activePatient.soap.plan.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#D6CFC0] bg-[#FAF7F0] p-6 text-center text-sm text-[#586C64]">
               No draft medications added yet. Use <strong>Add Medication</strong> above or complete the authorized catalog form in <strong>Sign prescription for pharmacy</strong>.
             </div>
@@ -297,23 +372,19 @@ export function OpdPrescriptionsView() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-[#586C64]">
                       <span>
-                        Schedule: <strong className="text-[#0E2420]">{med.frequency}</strong>
+                        Schedule: <strong className="text-[#0E2420]">{med.frequency || "Pending"}</strong>
                       </span>
                       <span>•</span>
                       <span>
-                        Duration: <strong className="text-[#0E2420]">{med.duration}</strong>
+                        Duration: <strong className="text-[#0E2420]">{med.duration || "Pending"}</strong>
                       </span>
                       <span>•</span>
-                      <span className="italic">{med.instructions || "After meals"}</span>
+                      <span className="italic">{med.directions || med.instructions || "Instructions pending"}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {med.shelfLocation && (
-                      <span className="rounded-full border border-[#DBE5DA] bg-[#F2F7F0] px-2.5 py-0.5 text-xs text-[#354E45]">
-                        Draft shelf: {med.shelfLocation}
-                      </span>
-                    )}
+
                     <button
                       type="button"
                       aria-label={`Remove ${med.drug}`}
@@ -372,22 +443,9 @@ export function OpdPrescriptionsView() {
                     </div>
                   ))}
 
-                  <div className="pt-2 border-t border-rose-200 flex flex-wrap items-center justify-between gap-2">
-                    <label className="flex items-center gap-2.5 text-xs font-bold text-rose-950 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={hdiOverrideApproved}
-                        onChange={(e) => setHdiOverrideApproved(e.target.checked)}
-                        className="h-4 w-4 rounded accent-rose-700"
-                      />
-                      <span>
-                        Clinical Override Documented: Verified herb suspension / monitoring with patient before signing.
-                      </span>
-                    </label>
-                    <span className="font-mono text-[11px] text-rose-800">
-                      ICD-11 TM2 / CDSCO Safety Standard
-                    </span>
-                  </div>
+                  <p className="border-t border-rose-200 pt-2 text-xs font-bold text-rose-950">
+                    Verify the interaction against the selected catalogue medicine and the reviewed clinical record.
+                  </p>
                 </div>
               )}
 
@@ -486,46 +544,36 @@ export function OpdPrescriptionsView() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                disabled={activePatient.soap.plan.length === 0}
-                onClick={toggleGenericSubstitutionForActive}
-                className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white transition disabled:opacity-50 ${
-                  isGenericSwapped ? "bg-[#065745]" : "bg-[#047C61] hover:bg-[#036450]"
-                }`}
-              >
+              <button type="button" disabled={!canSignPrescription} onClick={() => setShowSignPrescription(true)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#047C61] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
-                <span>
-                  {isGenericSwapped
-                    ? "Swapped to Jan Aushadhi Generic"
-                    : "1-Click Switch to Jan Aushadhi Generic"}
-                </span>
+                Choose an equivalent
               </button>
             </div>
 
             <div className="jvk-opd-savings-grid">
               <div className="rounded-xl border border-[#DCE8DF] bg-white p-3">
                 <span className="block text-[11px] font-bold uppercase text-[#586C64]">
-                  Branded Formulation
+                  Original course price
                 </span>
                 <span className="mt-1 block text-lg font-bold text-[#354E45] line-through">
-                  ₹{priceMetrics.brandedTotal}
+                  {price(originalTotal)}
                 </span>
               </div>
               <div className="rounded-xl border border-[#DCE8DF] bg-white p-3">
                 <span className="block text-[11px] font-bold uppercase text-[#047C61]">
-                  Jan Aushadhi Generic
+                  Approved course price
                 </span>
                 <span className="mt-1 block text-lg font-bold text-[#0E2420]">
-                  ₹{priceMetrics.genericTotal}
+                  {price(finalTotal)}
                 </span>
               </div>
               <div className="rounded-xl bg-[#047C61] p-3 text-white shadow-xs">
                 <span className="block text-[11px] font-bold uppercase text-emerald-100">
-                  Estimated Patient Savings
+                  Savings at signing
                 </span>
                 <span className="mt-1 block text-lg font-bold">
-                  ₹{priceMetrics.savings} ({priceMetrics.percent}% Saved)
+                  {price(savings)}
                 </span>
               </div>
             </div>
@@ -558,7 +606,7 @@ export function OpdPrescriptionsView() {
                 {!activePatient.savedSoapNote
                   ? "Prerequisite: Complete and save signed SOAP note in Consultation before signing prescription."
                   : hasSevereUnoverriddenHdi
-                    ? "Prerequisite: Document Herb-Drug Contraindication override before signing prescription."
+                    ? "Review the recorded interaction before signing a matching medicine."
                     : !activePatient.consentActive
                       ? "Prerequisite: Active patient care consent is required before pharmacy transmission."
                       : isCardiacAcuity && !allCardiacVerified
@@ -581,6 +629,7 @@ export function OpdPrescriptionsView() {
           <button
             type="button"
             onClick={() => setShowVernacularGuide(true)}
+            disabled={!finalLines?.length}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#BFE0CE] bg-[#EDF7F2] hover:bg-[#E1F2E8] px-4 py-2.5 text-xs font-bold text-[#0E2420] transition-colors"
             title="मरीज सचित्र खुराक निर्देशिका - Hindi pictographic audio timetable for patient"
           >
@@ -603,7 +652,13 @@ export function OpdPrescriptionsView() {
       {/* Sign Prescription Drawer */}
       {showSignPrescription && clinicalEncounterId && (
         <SignPrescription
+          key={clinicalEncounterId}
           encounterId={clinicalEncounterId}
+          plan={activePatient.soap.plan}
+          review={activePatient.prescriptionReview ?? {}}
+          updatePlan={(plan) => updatePatientPlan(activePatientKey, plan)}
+          updateReview={(review) => updatePrescriptionReview(clinicalEncounterId, review)}
+          saveDraft={saveDraft}
           close={() => setShowSignPrescription(false)}
           onSigned={() => {
             markEncounterPrescriptionSigned(clinicalEncounterId);
@@ -671,6 +726,7 @@ export function OpdPrescriptionsView() {
                     <option value="1-0-0">1-0-0 (Morning)</option>
                     <option value="0-1-0">0-1-0 (Afternoon)</option>
                     <option value="0-0-1">0-0-1 (Night)</option>
+                    <option value="">Choose frequency</option>
                     <option value="1-0-1">1-0-1 (Twice Daily)</option>
                     <option value="1-1-1">1-1-1 (Thrice Daily)</option>
                     <option value="STAT">STAT (Immediately)</option>
@@ -702,26 +758,7 @@ export function OpdPrescriptionsView() {
                 </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block font-bold text-[#354E45]">
-                  Branded Est. Price (₹)
-                  <input
-                    type="number"
-                    value={newMed.brandPrice}
-                    onChange={(e) => setNewMed({ ...newMed, brandPrice: Number(e.target.value) })}
-                    className="mt-1 w-full rounded-xl border border-[#DCD5C5] bg-white p-2.5 text-sm text-[#0E2420]"
-                  />
-                </label>
-                <label className="block font-bold text-[#354E45]">
-                  Jan Aushadhi Price (₹)
-                  <input
-                    type="number"
-                    value={newMed.genericPrice}
-                    onChange={(e) => setNewMed({ ...newMed, genericPrice: Number(e.target.value) })}
-                    className="mt-1 w-full rounded-xl border border-[#DCD5C5] bg-white p-2.5 text-sm text-[#0E2420]"
-                  />
-                </label>
-              </div>
+
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-[#EAE3D4]">
@@ -745,7 +782,7 @@ export function OpdPrescriptionsView() {
       )}
 
       {/* Vernacular Medication Guide Modal */}
-      {showVernacularGuide && (
+      {showVernacularGuide && finalLines && (
         <PatientVernacularGuide
           isOpen={showVernacularGuide}
           onClose={() => setShowVernacularGuide(false)}
@@ -753,7 +790,11 @@ export function OpdPrescriptionsView() {
           patientAge={activePatient.age ?? undefined}
           patientGender={activePatient.gender}
           patientToken={activePatient.token}
-          prescriptionItems={activePatient.soap.plan}
+          signedDirectionsOnly
+          prescriptionItems={finalLines.map((line) => ({
+            drug: line.brand, genericName: line.salt, dosage: `${line.strengthMg} mg ${line.form}`,
+            frequency: "", duration: line.courseEnd, instructions: line.directions, availableInClinic: false,
+          }))}
         />
       )}
     </div>

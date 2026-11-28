@@ -20,6 +20,7 @@ export const signPrescriptionSchema = z
     allergiesReviewed: z.literal(true),
     pharmacyConsentConfirmed: z.literal(true),
     allergies: z.array(z.string().trim().min(1).max(100)).max(30),
+    unavailableReason: z.string().trim().min(10).max(1000).optional(),
     lines: z
       .array(
         z
@@ -28,7 +29,8 @@ export const signPrescriptionSchema = z
             units: z.number().int().min(1).max(1000),
             courseEnd: z.iso.date(),
             directions: z.string().trim().min(3).max(1000),
-            allowEquivalent: z.boolean(),
+            allowEquivalent: z.literal(false),
+            approvedSubstituteSkuId: id.optional(),
           })
           .strict(),
       )
@@ -36,6 +38,48 @@ export const signPrescriptionSchema = z
       .max(20),
   })
   .strict();
+export type PrescriptionDraft = z.infer<typeof signPrescriptionSchema>;
+const draftText = z.string().max(1000);
+export const savedPrescriptionDraftSchema = z.strictObject({
+  revision: z.number().int().nonnegative(),
+  plan: z.array(z.object({
+    drug: draftText, dosage: draftText, frequency: draftText, duration: draftText,
+    availableInClinic: z.boolean(),
+    instructions: draftText.optional(),
+    skuId: id.optional(), approvedSubstituteSkuId: id.optional(),
+    units: z.number().int().min(1).max(1000).optional(),
+    courseEnd: z.union([z.literal(""), z.iso.date()]).optional(),
+    directions: draftText.optional(),
+  })).max(20),
+  review: z.strictObject({
+    note: z.string().max(4000).optional(), allergies: draftText.optional(),
+    allergiesReviewed: z.boolean().optional(), pharmacyConsentConfirmed: z.boolean().optional(),
+    unavailableReason: draftText.optional(),
+  }),
+});
+export type SavedPrescriptionDraft = z.infer<typeof savedPrescriptionDraftSchema>;
+export const prescriptionApprovalSchema = z.strictObject({
+  draft: signPrescriptionSchema,
+  checkedAt: z.iso.datetime(),
+  approval: z.string().regex(/^[0-9a-f]{64}$/),
+});
+export const prescriptionQuoteSchema = z.object({
+  checkedAt: z.iso.datetime(),
+  approval: z.string().nullable(),
+  allergies: z.array(z.string()),
+  warnings: z.array(z.string()),
+  lines: z.array(z.object({
+    prescribedSku: skuSchema,
+    finalSku: skuSchema,
+    units: z.number().int().positive(),
+    eligibleUnits: z.number().int().nonnegative(),
+    reason: z.string().nullable(),
+    blocked: z.boolean(),
+    quotedTotalPaise: paiseSchema.nullable(),
+    originalTotalPaise: paiseSchema.nullable(),
+  })),
+});
+export type PrescriptionQuote = z.infer<typeof prescriptionQuoteSchema>;
 export const prescriptionLineSchema = z.object({
   id: z.uuid(),
   skuId: id,

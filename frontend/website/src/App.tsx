@@ -302,7 +302,12 @@ function AppContent() {
                     )}
 
                     {/* Inventory Dashboard */}
-                    {(view === 'inventory-dashboard' || (view === 'medicine-migration' && verifiedRole === 'CLINIC_ADMIN')) && routeAccess('/app/inventory', verifiedRole) !== 'None' && <ClinicStock canManageCatalog={verifiedRole === "HOSPITAL_ADMIN"} />}
+                    {(view === 'inventory-dashboard' || (view === 'medicine-migration' && verifiedRole === 'CLINIC_ADMIN')) && routeAccess('/app/inventory', verifiedRole) !== 'None' && (
+                        <ClinicStock
+                            canManageCatalog={verifiedRole === "HOSPITAL_ADMIN"}
+                            canAdjustStock={verifiedRole === "HOSPITAL_ADMIN" || verifiedRole === "CLINIC_ADMIN"}
+                        />
+                    )}
 
                     {/* HOSPITALS REGISTRY & DETAILS */}
                     {view === 'hospitals' && (

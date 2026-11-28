@@ -2,13 +2,30 @@ import type { Inventory, Prescription, StockPlan } from "../shared/operations";
 import { stockPlanSchema } from "../shared/operations";
 import { rxToShelf } from "./index";
 
+export function hasRecordedMedicineAllergy(
+  allergies: readonly string[],
+  medicine: { salt: string; brand: string },
+) {
+  return allergies.some((entry) => {
+    const name = entry.trim().toLowerCase();
+    return name === medicine.salt.trim().toLowerCase() ||
+      name === medicine.brand.trim().toLowerCase();
+  });
+}
+
+export function courseExpiryCutoff(courseEnd: string) {
+  const cutoff = new Date(`${courseEnd}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() + 14);
+  return cutoff.toISOString().slice(0, 10);
+}
+
 /** A clinician chooses composition and substitution scope. Among feasible brands,
  * choose the lowest total FEFO course cost; within a brand consume earliest expiry.
  * A mixed-brand FEFO fallback requires the same explicit substitution approval.
  */
 export function dispensingPlan(
   prescription: Prescription,
-  inventory: Inventory,
+  inventory: { batches: (Inventory["batches"][number] & { nti?: boolean })[] },
   today: string,
 ): StockPlan {
   const allocation: StockPlan["allocation"] = [],
@@ -21,12 +38,18 @@ export function dispensingPlan(
       });
       continue;
     }
+    if (hasRecordedMedicineAllergy(prescription.allergies, line)) {
+      issues.push({ lineId: line.id, reason: "Recorded medicine allergy: clinician review required" });
+      continue;
+    }
     const equivalent = inventory.batches.filter(
       (batch) =>
+        batch.clinicId === prescription.clinicId &&
         batch.salt.toLowerCase() === line.salt.toLowerCase() &&
         batch.strengthMg === line.strengthMg &&
         batch.form === line.form &&
-        (batch.skuId === line.skuId || (line.allowEquivalent && !line.nti)),
+        !hasRecordedMedicineAllergy(prescription.allergies, batch) &&
+        (batch.skuId === line.skuId || (line.allowEquivalent && !line.nti && !batch.nti)),
     );
     if (equivalent.length > 200) {
       issues.push({
@@ -54,7 +77,8 @@ export function dispensingPlan(
         pricePaise: batch.pricePaise,
         expiry: batch.expiry,
       })),
-      allergies: prescription.allergies,
+      // Recorded allergies were checked for the target and all candidates above.
+      allergies: [],
       homeClinic: prescription.clinicId,
       transferPaise: 0,
     });
@@ -67,11 +91,10 @@ export function dispensingPlan(
       });
       continue;
     }
-    const cutoff = new Date(`${line.courseEnd}T00:00:00Z`);
-    cutoff.setUTCDate(cutoff.getUTCDate() + 14);
+    const cutoff = courseExpiryCutoff(line.courseEnd);
     const eligible = equivalent.filter(
       (batch) =>
-        batch.expiry >= cutoff.toISOString().slice(0, 10) &&
+        batch.expiry >= cutoff &&
         batch.available > 0,
     );
     function fefo(batches: Inventory["batches"]) {

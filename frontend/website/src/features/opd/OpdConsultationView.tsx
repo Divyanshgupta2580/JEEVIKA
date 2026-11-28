@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { clinicalReviewDetailsSchema, type Encounter } from "../../../../../packages/shared/integration";
 import {
   Activity,
   AlertTriangle,
@@ -29,6 +30,20 @@ import {
 import { useOpdWorkspace } from "./opdContext";
 import { evaluatePatientVital } from "./opdMetricsAndAlerts";
 
+type ReviewFields = Record<"icd11" | "guideline" | "history" | "allergies" | "herbs" | "bp" | "pulse" | "spo2" | "temp", string>;
+
+const reviewInputs: { field: keyof ReviewFields; label: string; maxLength: number }[] = [
+  { field: "icd11", label: "ICD-11 MMS code", maxLength: 48 },
+  { field: "guideline", label: "Guideline title and version or source", maxLength: 400 },
+  { field: "history", label: "Reviewed clinical history", maxLength: 1000 },
+  { field: "allergies", label: "Reviewed allergies (comma-separated)", maxLength: 1000 },
+  { field: "herbs", label: "Current complementary medicines (comma-separated)", maxLength: 1000 },
+  { field: "bp", label: "Measured blood pressure (mmHg)", maxLength: 7 },
+  { field: "pulse", label: "Measured pulse (bpm)", maxLength: 3 },
+  { field: "spo2", label: "Measured SpO₂ (%)", maxLength: 3 },
+  { field: "temp", label: "Measured temperature (°F)", maxLength: 6 },
+];
+
 export function OpdConsultationView({
   onAdmitToIpd,
   onAssignBay,
@@ -55,6 +70,8 @@ export function OpdConsultationView({
   const [activeCitationId, setActiveCitationId] = useState<number | null>(null);
   const [soapPending, setSoapPending] = useState(false);
   const [clinicalError, setClinicalError] = useState("");
+  const [editing, setEditing] = useState<{ encounterId: string; revision: number }>();
+  const [draftFields, setDraftFields] = useState<{ encounterId: string; fields: ReviewFields }>();
 
   if (!activePatient) {
     return (
@@ -98,6 +115,20 @@ export function OpdConsultationView({
     }
   };
 
+  const savedReview = activePatient.clinicalReview;
+  const isEditing = Boolean(clinicalEncounterId && editing?.encounterId === clinicalEncounterId);
+  const fields = draftFields?.encounterId === clinicalEncounterId && draftFields ? draftFields.fields : {
+    icd11: savedReview?.icd11?.code ?? "",
+    guideline: savedReview?.guideline?.reference ?? "",
+    history: savedReview?.history ?? "",
+    allergies: savedReview?.allergies?.join(", ") ?? "",
+    herbs: savedReview?.complementaryMedicines?.join(", ") ?? "",
+    bp: savedReview?.vitals?.bloodPressure ?? "",
+    pulse: savedReview?.vitals?.pulse?.toString() ?? "",
+    spo2: savedReview?.vitals?.spo2?.toString() ?? "",
+    temp: savedReview?.vitals?.temperatureF?.toString() ?? "",
+  };
+
   const noteToSign =
     soapDraft ??
     [
@@ -124,12 +155,31 @@ export function OpdConsultationView({
     setSoapPending(true);
     setClinicalError("");
     try {
-      await staffApi(`/encounters/${clinicalEncounterId}/review`, {
+      const items = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
+      const number = (value: string) => value.trim() ? Number(value) : undefined;
+      const details = clinicalReviewDetailsSchema.safeParse({
+        icd11: fields.icd11.trim() ? { code: fields.icd11, system: "ICD-11 MMS", provenance: "clinician-entered" } : undefined,
+        guideline: fields.guideline.trim() ? { reference: fields.guideline, provenance: "clinician-entered" } : undefined,
+        history: fields.history.trim() || undefined,
+        allergies: items(fields.allergies),
+        complementaryMedicines: items(fields.herbs),
+        vitals: {
+          bloodPressure: fields.bp.trim() || undefined,
+          pulse: number(fields.pulse), spo2: number(fields.spo2), temperatureF: number(fields.temp),
+        },
+      });
+      if (!details.success) {
+        setClinicalError("Check the review fields and measurement units before signing.");
+        return;
+      }
+      const result = await staffApi<{ clinicalReview: Encounter["clinicalReview"] }>(`/encounters/${clinicalEncounterId}/review`, {
         method: "POST",
-        body: JSON.stringify({ note: noteToSign }),
+        body: JSON.stringify({ note: noteToSign, expectedRevision: isEditing ? editing?.revision : undefined, details: details.data }),
       });
       setSoapSaved(true);
-      markEncounterSoapSaved(clinicalEncounterId, noteToSign);
+      markEncounterSoapSaved(clinicalEncounterId, noteToSign, result.clinicalReview);
+      setEditing(undefined);
+      setDraftFields(undefined);
     } catch (error) {
       setClinicalError(error instanceof Error ? error.message : "SOAP note could not be saved.");
     } finally {
@@ -207,7 +257,7 @@ export function OpdConsultationView({
             </h3>
           </div>
           <span className="rounded-lg border border-[#CFE3D6] bg-[#EDF6F0] px-2.5 py-1 text-[11px] font-semibold text-[#175B4B]">
-            {isRealBackendEncounter ? "Intake Telemetry Stream" : "Demo Measurements"}
+            {isRealBackendEncounter ? "Encounter measurements" : "Demo Measurements"}
           </span>
         </div>
 
@@ -267,12 +317,24 @@ export function OpdConsultationView({
 
           {/* Sign-off & Save SOAP Note Box */}
           <div className="rounded-xl border border-[#DFD8C7] bg-white p-4 space-y-3">
-            {activePatient.savedSoapNote ? (
+            {activePatient.savedSoapNote && !isEditing ? (
               <div>
-                <h5 className="text-sm font-bold text-[#0E2420]">Signed SOAP note</h5>
+                <h5 className="text-sm font-bold text-[#0E2420]">Signed SOAP note{savedReview ? ` · Revision ${savedReview.revision}` : ""}</h5>
                 <p className="mt-1 whitespace-pre-wrap break-words text-sm text-[#243B34]">
                   {activePatient.savedSoapNote}
                 </p>
+                {savedReview?.history && <p className="mt-2 whitespace-pre-wrap text-sm">Reviewed history · {savedReview.history}</p>}
+                {savedReview && activePatient.consentActive && clinicalEncounterId && (
+                  <button type="button" className="jvk-opd-primary-btn mt-3 min-h-10 px-3 text-sm"
+                    onClick={() => {
+                      setEditing({ encounterId: clinicalEncounterId, revision: savedReview.revision });
+                      setSoapDraft(activePatient.savedSoapNote ?? "");
+                      setSoapSignOff(false);
+                      setSoapSaved(false);
+                    }}>
+                    Add signed revision
+                  </button>
+                )}
               </div>
             ) : clinicalEncounterId && activePatient.consentActive && activePatient.status !== "STAT_ALERT" ? (
               <>
@@ -290,6 +352,22 @@ export function OpdConsultationView({
                     setSoapSignOff(false);
                   }}
                 />
+                <details className="rounded-xl border border-[#CEDAD3] p-3 text-sm">
+                  <summary className="cursor-pointer font-bold">Clinical history, coding and measurements</summary>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {reviewInputs.map(({ field, label, maxLength }) => (
+                      <label key={field} className="block min-w-0">
+                        {label}
+                        <input className="mt-1 w-full rounded-lg border border-[#CEDAD3] px-2 py-1"
+                          value={fields[field]} maxLength={maxLength}
+                          onChange={(event) => {
+                            setDraftFields({ encounterId: clinicalEncounterId, fields: { ...fields, [field]: event.target.value } });
+                            setSoapSignOff(false);
+                          }} />
+                      </label>
+                    ))}
+                  </div>
+                </details>
                 <label className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -501,11 +579,11 @@ export function OpdConsultationView({
                     WHO ICD-11 Standard Code:
                   </span>
                   <span className="rounded bg-[#EEF5F0] px-1.5 py-0.5 text-[10px] font-bold text-[#175B4B]">
-                    MMS R4
+                    {savedReview?.icd11 ? "Clinician-entered" : "MMS"}
                   </span>
                 </div>
                 <div className="font-mono text-xs font-bold text-[#0E2420]">
-                  {activePatient.soap.icd11Code || "Not coded yet"}
+                  {savedReview?.icd11?.code || activePatient.soap.icd11Code || "Not coded yet"}
                 </div>
                 {activePatient.soap.icd11Description && (
                   <div className="text-xs text-[#586C64]">{activePatient.soap.icd11Description}</div>
@@ -518,11 +596,11 @@ export function OpdConsultationView({
                     Evidence-Based Clinical Guideline:
                   </span>
                   <span className="rounded bg-[#E8F4F2] px-1.5 py-0.5 text-[10px] font-bold text-[#087F72]">
-                    Western CDS Standard
+                    {savedReview?.guideline ? "Clinician-entered reference" : "Guideline reference"}
                   </span>
                 </div>
                 <div className="font-mono text-xs font-bold text-[#0E2420]">
-                  {activePatient.soap.namasteCode || "Pending guideline selection"}
+                  {savedReview?.guideline?.reference || activePatient.soap.namasteCode || "Pending guideline selection"}
                 </div>
                 {activePatient.soap.namasteDescription && (
                   <div className="text-xs text-[#586C64]">{activePatient.soap.namasteDescription}</div>
@@ -605,10 +683,15 @@ export function OpdConsultationView({
 
       {showAmbientScribe && (
         <AmbientClinicalScribe
+          key={clinicalEncounterId ?? activePatient.patientId}
           activePatientName={activePatient.name}
           isOpen={showAmbientScribe}
           onClose={() => setShowAmbientScribe(false)}
-          onApplyDraft={applyScribeDraftToActive}
+          onApplyDraft={(draft) => {
+            applyScribeDraftToActive(draft);
+            if (soapDraft !== null) setSoapDraft(`${soapDraft}\n\nConsultation transcript: ${draft.subjective}`);
+            setSoapSignOff(false);
+          }}
         />
       )}
     </div>

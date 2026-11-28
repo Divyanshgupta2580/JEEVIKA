@@ -26,7 +26,20 @@ export interface OpdPrescriptionItem {
   genericName?: string;
   genericPrice?: number;
   isGenericSubstituted?: boolean;
+  skuId?: string;
+  approvedSubstituteSkuId?: string;
+  units?: number;
+  courseEnd?: string;
+  directions?: string;
 }
+
+export type OpdPrescriptionReview = {
+  note?: string;
+  allergies?: string;
+  allergiesReviewed?: boolean;
+  pharmacyConsentConfirmed?: boolean;
+  unavailableReason?: string;
+};
 
 export interface OpdQueueItem {
   cbcEncounterId?: string;
@@ -35,6 +48,9 @@ export interface OpdQueueItem {
   outreachReviewRequested?: boolean;
   consentActive?: boolean;
   savedSoapNote?: string | null;
+  clinicalReview?: import("../../../../../packages/shared/integration").Encounter["clinicalReview"];
+  prescriptionReview?: OpdPrescriptionReview;
+  prescriptionDraftRevision?: number;
   prescriptionStatus?: "signed" | "dispensed";
   encounterId?: string;
   token: string;
@@ -138,7 +154,7 @@ export function evaluatePatientVital(
     if (p < 60) {
       return { status: "warning", tag: "Bradycardia", border: "border-amber-300 bg-amber-50 text-amber-800", displayValue: `${p} bpm` };
     }
-    return { status: "normal", tag: "Normal Sinus", border: "border-emerald-200 bg-emerald-50/70 text-emerald-900", displayValue: `${p} bpm` };
+    return { status: "normal", tag: "Within range", border: "border-emerald-200 bg-emerald-50/70 text-emerald-900", displayValue: `${p} bpm` };
   }
 
   if (type === "spo2") {
@@ -416,7 +432,7 @@ export function buildClinicianAlerts(input: BuildAlertsInput): ClinicianAlert[] 
     if (patient.soap.plan.length > 0 && isActiveCare) {
       const interactions: HerbDrugInteraction[] = checkHerbDrugInteractions(
         patient.soap.plan,
-        COMPLEMENTARY_AYUSH_CHECK,
+        patient.kioskIntake ? patient.clinicalReview?.complementaryMedicines ?? [] : COMPLEMENTARY_AYUSH_CHECK,
       );
       for (const hdi of interactions) {
         const overridden = Boolean(input.hdiOverrides?.[pKey]);

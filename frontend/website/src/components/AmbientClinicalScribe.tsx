@@ -34,6 +34,23 @@ interface ParsedDraft {
   planItems: PrescriptionItem[];
 }
 
+type OnDeviceRecognizer = {
+  processLocally: boolean;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+};
+type Recognizer = {
+  new (): OnDeviceRecognizer;
+  available?: (input: { langs: string[]; processLocally: true }) => Promise<string>;
+};
+
 export function AmbientClinicalScribe({
   activePatientName,
   isOpen,
@@ -45,76 +62,68 @@ export function AmbientClinicalScribe({
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [selectedMeds, setSelectedMeds] = useState<Record<number, boolean>>({});
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<OnDeviceRecognizer>();
+  const recordingAttempt = useRef(0);
+  const [checking, setChecking] = useState(false);
+  const [simulation, setSimulation] = useState(false);
 
-  // Initialize Web Speech Recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'hi-IN'; // Default Indic speech, accepts English loanwords
-
-        recognition.onresult = (event: any) => {
-          let fullTranscript = '';
-          for (let i = 0; i < event.results.length; i++) {
-            fullTranscript += event.results[i][0].transcript + ' ';
-          }
-          setTranscript(fullTranscript.trim());
-        };
-
-        recognition.onerror = (event: any) => {
-          console.warn('Speech recognition error:', event.error);
-          if (event.error === 'not-allowed') {
-            setSpeechError('Microphone permission denied. Switch to Manual Simulation to test.');
-          } else {
-            setSpeechError(`Speech error: ${event.error}`);
-          }
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
-        recognitionRef.current = recognition;
-      } else {
-        setSpeechError('Web Speech API is not supported in this browser environment.');
-      }
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
-    };
+  useEffect(() => () => {
+    recordingAttempt.current++;
+    recognitionRef.current?.abort();
   }, []);
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      setSpeechError('Speech recognition engine unavailable in this client.');
+  async function toggleListening() {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
       return;
     }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      setSpeechError(null);
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (err: any) {
-        console.warn('Failed to start speech recognition:', err);
-        setIsListening(false);
+    const attempt = ++recordingAttempt.current;
+    const browser = window as Window & { SpeechRecognition?: Recognizer; webkitSpeechRecognition?: Recognizer };
+    const Speech = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    setSpeechError(null);
+    setChecking(true);
+    try {
+      if (!Speech?.available || (await Speech.available({ langs: ["hi-IN"], processLocally: true })) !== "available") {
+        throw new Error("On-device speech recognition is unavailable. Type or paste the transcript.");
       }
+      if (attempt !== recordingAttempt.current) return;
+      recognitionRef.current?.abort();
+      const recognition = new Speech();
+      if (!("processLocally" in recognition)) {
+        throw new Error("On-device speech recognition is unavailable. Type or paste the transcript.");
+      }
+      recognitionRef.current = recognition;
+      recognition.processLocally = true;
+      recognition.lang = "hi-IN";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = ({ results }) => {
+        if (attempt === recordingAttempt.current) {
+          setTranscript(Array.from(results, (result) => result[0]?.transcript ?? "").join(" ").trim());
+          setSimulation(false);
+        }
+      };
+      recognition.onerror = ({ error }) => {
+        if (attempt !== recordingAttempt.current) return;
+        setSpeechError(error === "not-allowed" || error === "service-not-allowed"
+          ? "Microphone permission denied. Type or paste the transcript."
+          : "Speech recognition stopped. Review or type the transcript.");
+        setIsListening(false);
+      };
+      recognition.onend = () => {
+        if (attempt === recordingAttempt.current) setIsListening(false);
+      };
+      recognition.start();
+      setIsListening(true);
+    } catch (error) {
+      if (attempt !== recordingAttempt.current) return;
+      setSpeechError(error instanceof Error ? error.message : "Microphone unavailable.");
+      setIsListening(false);
+    } finally {
+      if (attempt === recordingAttempt.current) setChecking(false);
     }
-  };
+  }
 
   // Dynamic Rule-Based Clinical Parser
   const parseClinicalTranscript = (text: string): ParsedDraft => {
@@ -307,7 +316,12 @@ export function AmbientClinicalScribe({
     };
   };
 
-  const parsedDraft = parseClinicalTranscript(transcript);
+  const parsedDraft = simulation ? parseClinicalTranscript(transcript) : {
+    subjective: transcript.trim(),
+    objective: "",
+    assessment: "",
+    planItems: [],
+  };
 
   // Initialize selected meds on draft generation
   useEffect(() => {
@@ -319,17 +333,22 @@ export function AmbientClinicalScribe({
   }, [transcript]);
 
   const handleApply = () => {
-    const approvedPlan = parsedDraft.planItems.filter((_, idx) => selectedMeds[idx]);
+    if (simulation || isListening || !transcript.trim()) return;
     onApplyDraft({
-      subjective: parsedDraft.subjective,
-      objective: parsedDraft.objective,
-      assessment: parsedDraft.assessment,
-      planItems: approvedPlan,
+      subjective: transcript.trim(),
+      objective: "",
+      assessment: "",
+      planItems: [],
     });
     onClose();
   };
 
   const loadPreset = (presetText: string) => {
+    recordingAttempt.current++;
+    recognitionRef.current?.abort();
+    setChecking(false);
+    setIsListening(false);
+    setSimulation(true);
     setTranscript(presetText);
     setSpeechError(null);
   };
@@ -338,7 +357,7 @@ export function AmbientClinicalScribe({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col animate-fadeIn">
+      <div role="dialog" aria-modal="true" aria-label="Ambient Clinical Scribe" className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col animate-fadeIn">
 
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -352,11 +371,11 @@ export function AmbientClinicalScribe({
                   Ambient Clinical Scribe & Medical Stenographer
                 </h3>
                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded-full">
-                  Indic ASR v2
+                  On-device transcription
                 </span>
                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold rounded-full flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  ASR Confidence: 98.4% • Zero Hallucination Gate
+                  Clinician review required
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
@@ -376,12 +395,12 @@ export function AmbientClinicalScribe({
         <div className="bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl flex items-center justify-between text-[11px] text-slate-600 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-slate-700">Acoustic SNR: 24.2 dB (Clean Indic Speech)</span>
+            <span className="font-semibold text-slate-700">Review the spoken transcript</span>
             <span>•</span>
-            <span>Sampling: 16kHz PCM Web Audio</span>
+            <span>Typed entry is also supported</span>
           </div>
           <span className="text-[10px] text-emerald-700 font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            NMC Act 2019 Assistive-Only Guardrail Active
+            Clinical draft
           </span>
         </div>
 
@@ -389,7 +408,8 @@ export function AmbientClinicalScribe({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <button
-              onClick={toggleListening}
+              onClick={() => void toggleListening()}
+              disabled={checking}
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition ${
                 isListening
                   ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
@@ -397,7 +417,7 @@ export function AmbientClinicalScribe({
               }`}
             >
               {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              <span>{isListening ? 'Stop Recording' : 'Start Ambient Recording (Mic)'}</span>
+              <span>{isListening ? 'Stop Recording' : checking ? 'Checking microphone…' : 'Start Ambient Recording (Mic)'}</span>
             </button>
 
             {isListening && (
@@ -410,7 +430,7 @@ export function AmbientClinicalScribe({
 
           {/* Quick Simulation Presets */}
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-[11px] text-slate-400 font-bold hidden sm:inline">Quick Presets:</span>
+            <span className="text-[11px] text-slate-400 font-bold hidden sm:inline">Simulation presets</span>
             <button
               onClick={() =>
                 loadPreset(
@@ -460,7 +480,7 @@ export function AmbientClinicalScribe({
             </label>
             {transcript && (
               <button
-                onClick={() => setTranscript('')}
+                onClick={() => { setTranscript(''); setSimulation(false); }}
                 className="text-[10px] text-slate-400 hover:text-rose-600 font-bold"
               >
                 Clear
@@ -469,6 +489,7 @@ export function AmbientClinicalScribe({
           </div>
           <textarea
             rows={2}
+            aria-label="Consultation transcript"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
             placeholder="Click 'Start Ambient Recording' and speak freely in Hindi or English, or paste consultation dialogue here..."
@@ -481,7 +502,7 @@ export function AmbientClinicalScribe({
           <div className="p-2.5 bg-indigo-50/70 border border-indigo-200/90 rounded-2xl flex items-center justify-between text-xs text-indigo-900">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-600 animate-spin" />
-              <span className="font-bold">Dynamic Entity Extraction (Real-Time NLP)</span>
+              <span className="font-bold">{simulation ? "Simulation preview" : "Transcript draft"}</span>
             </div>
             <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded font-bold border border-indigo-200 text-indigo-700">
               Draft · Subject to RMP Signature
@@ -534,7 +555,7 @@ export function AmbientClinicalScribe({
             </div>
 
             {parsedDraft.planItems.length === 0 ? (
-              <p className="text-slate-400 italic py-2">No medications detected in audio stream.</p>
+              <p className="text-slate-600 italic py-2">{simulation ? "No medications in this simulation." : "Enter medicines in the prescription planner."}</p>
             ) : (
               <div className="space-y-1.5">
                 {parsedDraft.planItems.map((item, idx) => (
@@ -573,7 +594,8 @@ export function AmbientClinicalScribe({
         <div className="p-2.5 bg-slate-100 rounded-xl text-[10px] text-slate-600 flex items-center gap-2 border border-slate-200">
           <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>
-            <strong>Statutory Compliance (NMC Act 2019):</strong> Ambient AI Scribe operates purely in an assistive capacity. No diagnostic or therapeutic prescription is finalized without the Registered Medical Practitioner’s explicit review and cryptographic signature.
+            {simulation ? "Simulation content cannot be applied to this encounter. Clear the transcript to start a clinical draft."
+              : "Review the transcript before applying it to SOAP. Enter measurements, assessment, and orders separately."}
           </span>
         </div>
 
@@ -587,11 +609,11 @@ export function AmbientClinicalScribe({
           </button>
           <button
             onClick={handleApply}
-            disabled={!transcript.trim()}
+            disabled={!transcript.trim() || simulation || isListening || checking}
             className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shadow-indigo-600/20 transition"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>Apply Draft to SOAP & Prescription</span>
+            <span>Apply Transcript to SOAP</span>
           </button>
         </div>
 

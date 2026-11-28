@@ -166,8 +166,15 @@ test("signs an OPD note and prescription, then completes the authorized POS hand
 
   await cashierPage.setViewportSize({ width: 390, height: 844 });
   await cashierPage.goto("/erp.html#/app/procurement/grn");
+  const invoice = cashierPage.getByLabel("Invoice reference");
+  await expect
+    .poll(() =>
+      invoice.evaluate((element) => element.closest("[inert]") === null),
+    )
+    .toBe(true);
   await cashierPage.getByLabel("Issued order line").selectOption({ index: 1 });
-  await cashierPage.getByLabel("Invoice reference").fill("SYN-BROWSER-INVOICE");
+  await invoice.fill("SYN-BROWSER-INVOICE");
+  await expect(invoice).toHaveValue("SYN-BROWSER-INVOICE");
   await cashierPage.getByLabel("Batch number").fill("SYN-BROWSER-BATCH");
   await cashierPage.getByLabel("Expiry").fill("2099-12-31");
   await cashierPage.getByLabel("Received units").fill("5");
@@ -191,20 +198,92 @@ test("signs an OPD note and prescription, then completes the authorized POS hand
     synthetic: true,
   });
   expect(intake.status()).toBe(201);
+  await page.addInitScript(() => {
+    let attempt = 0;
+    class SyntheticLocalSpeech {
+      static async available({ processLocally }: { processLocally: boolean }) {
+        return processLocally ? "available" : "unavailable";
+      }
+      processLocally = false;
+      onerror?: (event: { error: string }) => void;
+      onend?: () => void;
+      onresult?: (event: { results: { transcript: string }[][] }) => void;
+      start() {
+        const current = ++attempt;
+        setTimeout(() => {
+          if (current === 1 || !this.processLocally)
+            this.onerror?.({ error: "not-allowed" });
+          else
+            this.onresult?.({
+              results: [
+                [
+                  {
+                    transcript: "Synthetic transcript pending clinical review.",
+                  },
+                ],
+              ],
+            });
+        }, 10);
+      }
+      stop() {
+        this.onend?.();
+      }
+      abort() {
+        this.onend?.();
+      }
+    }
+    Object.defineProperty(window, "SpeechRecognition", {
+      value: SyntheticLocalSpeech,
+    });
+  });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/erp.html#/app/doctor");
+  await page.goto("/erp.html#/app/doctor/queue");
   await page
     .getByText("Synthetic OPD Handoff", { exact: true })
     .first()
     .click();
   await page
+    .getByRole("button", { name: /Ambient Scribe \(Doctor Mic\)/ })
+    .click();
+  const scribe = page.getByRole("dialog", { name: "Ambient Clinical Scribe" });
+  await scribe.getByRole("button", { name: /Start Ambient Recording/ }).click();
+  await expect(scribe.getByText(/Microphone permission denied/)).toBeVisible();
+  await scribe.getByRole("button", { name: /Acute STEMI/ }).click();
+  await expect(
+    scribe.getByRole("button", { name: "Apply Transcript to SOAP" }),
+  ).toBeDisabled();
+  await scribe.getByRole("button", { name: "Clear", exact: true }).click();
+  await scribe.getByRole("button", { name: /Start Ambient Recording/ }).click();
+  await expect(scribe.getByLabel("Consultation transcript")).toHaveValue(
+    "Synthetic transcript pending clinical review.",
+  );
+  await expect(
+    scribe.getByRole("button", { name: "Apply Transcript to SOAP" }),
+  ).toBeDisabled();
+  await scribe.getByRole("button", { name: "Stop Recording" }).click();
+  await scribe
+    .getByRole("button", { name: "Apply Transcript to SOAP" })
+    .click();
+  await expect(page.getByLabel("SOAP note", { exact: true })).toHaveValue(
+    /Synthetic transcript pending clinical review/,
+  );
+  await page
     .getByLabel("SOAP note", { exact: true })
     .fill("Synthetic signed clinical note.");
+  await page
+    .getByText("Clinical history, coding and measurements", { exact: true })
+    .click();
+  await page.getByLabel("ICD-11 MMS code").fill("SYNTHETIC");
+  await page
+    .getByLabel("Guideline title and version or source")
+    .fill("Synthetic reference, revision 1");
+  await page.getByLabel("Measured pulse (bpm)").fill("78");
   await page.getByLabel("Clinician sign-off for SOAP note").check();
   await page.getByRole("button", { name: "Sign and save SOAP" }).click();
   await expect(
     page.getByText("Synthetic signed clinical note.", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: /Open Prescriptions/ }).click();
   await page
     .getByRole("button", { name: "Sign prescription for pharmacy" })
     .click();
@@ -220,6 +299,40 @@ test("signs an OPD note and prescription, then completes the authorized POS hand
   await drawer.getByLabel("Directions").fill("Synthetic directions.");
   await drawer.getByLabel("I reviewed the patient’s allergies.").check();
   await drawer.getByLabel("The patient authorized pharmacy sharing.").check();
+  await drawer.getByRole("button", { name: "Save prescription draft" }).click();
+  await expect(drawer.getByText("Prescription draft saved.")).toBeVisible();
+
+  const reopened = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  await session(reopened, "doctor");
+  await reopened.goto("/erp.html#/app/doctor/queue");
+  await reopened
+    .getByText("Synthetic OPD Handoff", { exact: true })
+    .first()
+    .click();
+  await expect(reopened.getByText("SYNTHETIC", { exact: true })).toBeVisible();
+  await expect(reopened.getByText("78 bpm", { exact: true })).toBeVisible();
+  await reopened.getByRole("button", { name: /Open Prescriptions/ }).click();
+  await reopened
+    .getByRole("button", { name: "Sign prescription for pharmacy" })
+    .click();
+  const restored = reopened.getByRole("dialog", {
+    name: "Sign prescription for pharmacy",
+  });
+  await expect(restored.getByLabel("Catalog item")).toHaveValue(item.id);
+  await expect(restored.getByLabel("Units", { exact: true })).toHaveValue("2");
+  await expect(restored.getByLabel("Course end")).toHaveValue("2099-11-30");
+  await expect(restored.getByLabel("Directions")).toHaveValue(
+    "Synthetic directions.",
+  );
+  await expect(restored.getByLabel("Prescription note")).toHaveValue(
+    "Synthetic pharmacy handoff.",
+  );
+  await reopened.close();
+
+  await drawer.getByRole("button", { name: "Check clinic stock" }).click();
+  await expect(drawer.getByText(/5 eligible \/ 2 requested/)).toBeVisible();
   await drawer
     .getByRole("button", { name: "Sign and send to pharmacy" })
     .click();
@@ -244,9 +357,93 @@ test("signs an OPD note and prescription, then completes the authorized POS hand
   await expect(
     cashierPage.getByText("Total ₹5.00", { exact: true }),
   ).toBeVisible();
+  const receiptReference = await cashierPage
+    .getByText(/^Receipt [0-9a-f-]{36}$/)
+    .textContent();
+  expect(receiptReference).toMatch(/^Receipt [0-9a-f-]{36}$/);
   expect(
     await cashierPage.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
+
+  const receiptPage = await browser.newPage();
+  await session(receiptPage, "cashier");
+  await receiptPage.addInitScript(() => {
+    window.print = () =>
+      document.body.setAttribute("data-receipt-printed", "true");
+  });
+  await receiptPage.goto("/erp.html#/app/pos");
+  await receiptPage.getByRole("button", { name: "Find cash receipt" }).click();
+  const lookup = receiptPage.getByRole("dialog", { name: "Find cash receipt" });
+  await lookup
+    .getByLabel("Receipt reference")
+    .fill(receiptReference!.slice("Receipt ".length));
+  await lookup.getByRole("button", { name: "Open receipt" }).click();
+  await expect(
+    receiptPage.getByRole("heading", { name: "Cash receipt", exact: true }),
+  ).toBeVisible();
+  await expect(
+    receiptPage.getByText("Total ₹5.00", { exact: true }),
+  ).toBeVisible();
+  await receiptPage.getByRole("button", { name: "Print receipt" }).click();
+  await expect(receiptPage.locator("body")).toHaveAttribute(
+    "data-receipt-printed",
+    "true",
+  );
+  await receiptPage.goto("/erp.html#/app/inventory");
+  await expect(
+    receiptPage.getByText("3 available", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    receiptPage.getByRole("button", { name: "Batch adjustments" }),
+  ).toHaveCount(0);
+  await receiptPage
+    .getByLabel("Expires within 90 days or already expired")
+    .check();
+  await expect(
+    receiptPage.getByRole("heading", { name: "No matching batches" }),
+  ).toBeVisible();
+  await receiptPage.getByRole("button", { name: "Clear filters" }).click();
+  await expect(
+    receiptPage.getByText("3 available", { exact: true }),
+  ).toBeVisible();
+  await receiptPage.close();
+
+  await adminPage.goto("/erp.html#/app/inventory");
+  const batchCard = adminPage
+    .getByRole("listitem")
+    .filter({ hasText: "SYN-BROWSER-BATCH" });
+  await batchCard.getByRole("button", { name: "Batch adjustments" }).click();
+  const adjustment = adminPage.getByRole("dialog", {
+    name: "Batch adjustments",
+  });
+  await adjustment.getByLabel("Units to write off").fill("1");
+  await adjustment.getByLabel("Reason").fill("Synthetic damaged unit");
+  await adjustment
+    .getByRole("button", { name: "Record stock write-off" })
+    .click();
+  await expect(
+    batchCard.getByText("2 available", { exact: true }),
+  ).toBeVisible();
+  await batchCard.getByRole("button", { name: "Batch adjustments" }).click();
+  await expect(adjustment.getByText(/Synthetic damaged unit/)).toBeVisible();
+
+  await page.reload();
+  await page.goto("/erp.html#/app/doctor/queue");
+  await page
+    .getByText("Synthetic OPD Handoff", { exact: true })
+    .first()
+    .click();
+  await page.getByRole("button", { name: /Open Prescriptions/ }).click();
+  await expect(
+    page.getByText("Prescription dispensed.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Vernacular Guide/ }).click();
+  await expect(
+    page.getByText("Synthetic directions.", { exact: true }).last(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Course end 2099-11-30", { exact: true }),
+  ).toBeVisible();
   await adminPage.close();
   await cashierPage.close();
 });

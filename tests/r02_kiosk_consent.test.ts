@@ -120,10 +120,14 @@ it("hides an existing prescription from pharmacy immediately on scoped withdrawa
   expect((await post(`/encounters/${encounter.encounter_id}/review`, doctor.token, { note: "Synthetic reviewed note" })).status).toBe(200);
   const draft = {
     encounterId: encounter.encounter_id, note: "Synthetic order", allergies: [],
-    allergiesReviewed: true, pharmacyConsentConfirmed: true,
+    allergiesReviewed: true, pharmacyConsentConfirmed: true, unavailableReason: "Synthetic unavailable but appropriate order.",
     lines: [{ skuId: "r02-test-sku", units: 1, courseEnd: "2099-12-01", directions: "Synthetic directions", allowEquivalent: false }],
   };
-  const signed = await post("/clinical/pharmacy/prescriptions", doctor.token, draft);
+  const preview = await post("/clinical/pharmacy/prescriptions/quote", doctor.token, draft);
+  expect(preview.status).toBe(200);
+  const { checkedAt, approval } = await preview.json() as { checkedAt: string; approval: string };
+  const approved = { draft, checkedAt, approval };
+  const signed = await post("/clinical/pharmacy/prescriptions", doctor.token, approved);
   expect(signed.status).toBe(201);
   const { id } = await signed.json() as { id: string };
   const quote = () => fixture.request(`/clinical/pharmacy/inflow/${id}/quote`, { token: cashier.token });
@@ -131,7 +135,7 @@ it("hides an existing prescription from pharmacy immediately on scoped withdrawa
   expect((await post(`/encounters/${encounter.encounter_id}/revoke/pharmacy`, doctor.token, {})).status).toBe(200);
   expect((await quote()).status).toBe(404);
   expect(await (await fixture.request("/clinical/pharmacy/inflow", { token: cashier.token })).json()).toEqual({ prescriptions: [] });
-  expect((await post("/clinical/pharmacy/prescriptions", doctor.token, draft)).status).toBe(404);
+  expect((await post("/clinical/pharmacy/prescriptions", doctor.token, approved)).status).toBe(404);
   expect(fixture.db.raw.prepare("SELECT COUNT(*) AS count FROM signed_prescriptions").get()).toEqual({ count: 1 });
 });
 

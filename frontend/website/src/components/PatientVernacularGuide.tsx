@@ -22,6 +22,7 @@ interface PatientVernacularGuideProps {
   patientGender?: string;
   patientToken?: string;
   prescriptionItems: PrescriptionItem[];
+  signedDirectionsOnly?: boolean;
 }
 
 interface ParsedScheduleItem {
@@ -43,16 +44,18 @@ export function PatientVernacularGuide({
   isOpen,
   onClose,
   patientName,
-  patientAge = 52,
-  patientGender = 'Male',
-  patientToken = 'OPD-01',
+  patientAge,
+  patientGender,
+  patientToken,
   prescriptionItems,
+  signedDirectionsOnly = false,
 }: PatientVernacularGuideProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en' | 'te' | 'ta'>('hi');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioError, setAudioError] = useState("");
 
   // Convert raw prescription items dynamically into Vernacular visual schedules
-  const parsedSchedule: ParsedScheduleItem[] = prescriptionItems.map((item, idx) => {
+  const parsedSchedule: ParsedScheduleItem[] = signedDirectionsOnly ? [] : prescriptionItems.map((item, idx) => {
     const drugLower = item.drug.toLowerCase();
     const freq = (item.frequency || '1-0-1').toUpperCase();
     const instructions = (item.instructions || '').toLowerCase();
@@ -159,6 +162,7 @@ export function PatientVernacularGuide({
 
   // Browser Speech Synthesis for Hindi vernacular guidance
   const speakSchedule = () => {
+    setAudioError("");
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       alert('Speech Synthesis is not supported in this browser.');
       return;
@@ -172,11 +176,23 @@ export function PatientVernacularGuide({
 
     window.speechSynthesis.cancel();
     const introText = `नमस्ते ${patientName} जी। डॉक्टर द्वारा निर्धारित आपकी दवाइयों की खुराक इस प्रकार है। कृपया ध्यान से सुनें। `;
-    const fullText = introText + parsedSchedule.map((s) => s.audioPrompt).join(' ');
+    const fullText = signedDirectionsOnly
+      ? prescriptionItems.map((line) => [line.drug, line.dosage, line.instructions].filter(Boolean).join('. ')).join('. ')
+      : introText + parsedSchedule.map((s) => s.audioPrompt).join(' ');
 
     const utterance = new SpeechSynthesisUtterance(fullText);
-    utterance.lang = 'hi-IN';
+    utterance.lang = signedDirectionsOnly && selectedLanguage === 'en' ? 'en-IN' : 'hi-IN';
     utterance.rate = 0.9;
+    if (signedDirectionsOnly) {
+      const localVoice = window.speechSynthesis.getVoices().find((voice) =>
+        voice.localService && voice.lang.toLowerCase().startsWith(utterance.lang.slice(0, 2)),
+      );
+      if (!localVoice) {
+        setAudioError("No on-device voice is available for this language.");
+        return;
+      }
+      utterance.voice = localVoice;
+    }
 
     utterance.onstart = () => {
       setIsPlayingAudio(true);
@@ -225,15 +241,19 @@ export function PatientVernacularGuide({
                 <span className="text-xs text-slate-500 font-bold hidden sm:inline">
                   (Patient Pictographic Medication Guide)
                 </span>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                {!signedDirectionsOnly && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
                   ABHA Compliant
-                </span>
+                </span>}
                 <span className="px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200 text-[10px] font-bold rounded-full hidden sm:inline">
                   Pure Software Vernacular TTS
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                मरीज: <strong className="text-slate-800">{patientName}</strong> ({patientGender}, {patientAge}y) • टोकन: <strong className="text-indigo-700">{patientToken}</strong>
+                मरीज: <strong className="text-slate-800">{patientName}</strong>{" "}
+                {signedDirectionsOnly
+                  ? `${patientGender && patientGender !== "UNRECORDED" ? ` · ${patientGender}` : ""}${patientAge !== undefined ? ` · ${patientAge}y` : ""}`
+                  : `(${patientGender ?? "Male"}, ${patientAge ?? 52}y)`}
+                {" "}• टोकन: <strong className="text-indigo-700">{patientToken ?? (signedDirectionsOnly ? "—" : "OPD-01")}</strong>
               </p>
             </div>
           </div>
@@ -268,10 +288,10 @@ export function PatientVernacularGuide({
               }`}
             >
               {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              <span>{isPlayingAudio ? 'आवाज़ बंद करें (Stop)' : 'पूरी खुराक बोलकर सुनें (Listen Hindi Audio)'}</span>
+              <span>{isPlayingAudio ? 'आवाज़ बंद करें (Stop)' : signedDirectionsOnly ? 'निर्देश सुनें (Listen to signed directions)' : 'पूरी खुराक बोलकर सुनें (Listen Hindi Audio)'}</span>
             </button>
             <span className="text-[11px] text-slate-600 font-medium">
-              अनपढ़ या बुजुर्ग मरीजों के लिए हिंदी में स्पष्ट ऑडियो निर्देश।
+              {signedDirectionsOnly ? "Audio reads the directions as written." : "अनपढ़ या बुजुर्ग मरीजों के लिए हिंदी में स्पष्ट ऑडियो निर्देश।"}
             </span>
           </div>
 
@@ -297,8 +317,15 @@ export function PatientVernacularGuide({
         </div>
 
         {/* Pictographic Medication Cards */}
+        {audioError && <p role="status" className="text-sm text-slate-600">{audioError}</p>}
         <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-          {parsedSchedule.length === 0 ? (
+          {signedDirectionsOnly ? prescriptionItems.map((item, index) => (
+            <div key={index} className="rounded-2xl border-2 border-slate-200 bg-white p-4">
+              <h4 className="font-black text-slate-900">{item.drug} · {item.dosage}</h4>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm">{item.instructions}</p>
+              <p className="mt-1 text-xs text-slate-600">Course end {item.duration}</p>
+            </div>
+          )) : parsedSchedule.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <Pill className="w-10 h-10 mx-auto text-slate-300 mb-2" />
               <p className="text-sm font-medium">कोई दवा निर्धारित नहीं है।</p>

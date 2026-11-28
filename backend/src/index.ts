@@ -256,11 +256,14 @@ type EncounterRow = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   review_note: string | null;
+  clinical_revision?: number | null;
+  clinical_details?: string | null;
   revoked_at: string | null;
   prescription_status?: "signed" | "dispensed" | null;
 };
 
 const encounterSelect = `SELECT e.*, p.name, p.language, c.revoked_at,
+ cr.revision AS clinical_revision,cr.details_json AS clinical_details,
  (SELECT CASE WHEN EXISTS(
    SELECT 1 FROM reservations v WHERE v.org_id=r.org_id AND v.prescription_id=r.id AND v.status='dispensed'
   ) THEN 'dispensed' ELSE 'signed' END FROM signed_prescriptions r
@@ -268,6 +271,8 @@ const encounterSelect = `SELECT e.*, p.name, p.language, c.revoked_at,
  FROM encounters e
  JOIN patients p ON p.org_id=e.org_id AND p.id=e.patient_id
  JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care'
+ LEFT JOIN clinical_reviews cr ON cr.org_id=e.org_id AND cr.encounter_id=e.id
+  AND cr.revision=(SELECT MAX(r.revision) FROM clinical_reviews r WHERE r.org_id=e.org_id AND r.encounter_id=e.id)
  WHERE e.org_id = :org AND e.clinic_id = ?`;
 
 function mapEncounter(row: EncounterRow) {
@@ -286,6 +291,9 @@ function mapEncounter(row: EncounterRow) {
     reviewedBy: row.reviewed_by,
     reviewedAt: row.reviewed_at,
     reviewNote: row.review_note,
+    clinicalReview: row.clinical_revision && row.clinical_details
+      ? { ...JSON.parse(row.clinical_details), revision: row.clinical_revision }
+      : undefined,
     consentActive: row.revoked_at === null,
     prescriptionStatus: row.prescription_status ?? undefined,
   });
@@ -629,6 +637,7 @@ export function createIntegrationApp() {
         ...mapEncounter({ ...row, chief_complaint: row.complaint_text ? `${row.chief_complaint} · ${row.complaint_text}` : row.chief_complaint }),
         tokenNumber: row.token_number,
         prescriptionStatus: rows.get(row.id)?.prescriptionStatus,
+        clinicalReview: rows.get(row.id)?.clinicalReview,
         documentReview: row.revoked_at ? undefined : row.document_text ?? undefined,
       });
     }
@@ -669,23 +678,32 @@ export function createIntegrationApp() {
     const db = integrationTenantDb({ db: c.env.DB, orgId: p.orgId });
     const result = await db
       .statement(
-        `UPDATE encounters SET status='reviewed',reviewed_by=?,reviewed_at=?,review_note=?
-      WHERE org_id = :org AND clinic_id = ? AND id = ? AND status='waiting'
-      AND EXISTS (SELECT 1 FROM consents c WHERE c.org_id=encounters.org_id AND c.encounter_id=encounters.id AND c.revoked_at IS NULL)
-      RETURNING id`,
+        `INSERT INTO clinical_reviews(org_id,encounter_id,revision,actor_id,reviewed_at,note,details_json)
+      SELECT e.org_id,e.id,?,?,?, ?,COALESCE(?,last.details_json,'{}')
+      FROM encounters e
+      JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care' AND c.revoked_at IS NULL
+      LEFT JOIN clinical_reviews last ON last.org_id=e.org_id AND last.encounter_id=e.id
+        AND last.revision=(SELECT MAX(r.revision) FROM clinical_reviews r WHERE r.org_id=e.org_id AND r.encounter_id=e.id)
+      WHERE e.org_id=:org AND e.clinic_id=? AND e.id=?
+        AND ((e.status='waiting' AND last.revision IS NULL) OR e.status='reviewed')
+        AND last.revision IS ?
+      RETURNING revision,details_json`,
+        (input.expectedRevision ?? 0) + 1,
         p.userId,
         new Date().toISOString(),
         input.note,
+        input.details ? JSON.stringify(input.details) : null,
         p.clinicId,
         z.string().uuid().parse(c.req.param("id")),
+        input.expectedRevision ?? null,
       )
-      .first<{ id: string }>();
+      .first<{ revision: number; details_json: string }>();
     if (!result)
       throw new HTTPException(409, {
         message:
-          "Encounter cannot be reviewed: emergency, already reviewed, unavailable or revoked",
+          "Encounter cannot be reviewed: emergency, review revision changed, unavailable or revoked",
       });
-    return c.json({ reviewed: true });
+    return c.json({ reviewed: true, clinicalReview: { ...JSON.parse(result.details_json), revision: result.revision } });
   });
   integrationApp.post("/api/v1/encounters/:id/revoke", async (c) => {
     const p = c.get("principal");

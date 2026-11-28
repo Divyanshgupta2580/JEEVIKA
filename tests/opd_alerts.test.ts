@@ -62,6 +62,7 @@ describe("OPD vitals, metrics, alerts, and RBAC isolation", () => {
       name: "Emergency Case",
       status: "STAT_ALERT",
       symptoms: ["Chest pain"],
+      clinicalReview: { revision: 1, complementaryMedicines: ["Triphala Guggulu"] },
       soap: {
         subjective: "Chest pain",
         objective: "Recorded",
