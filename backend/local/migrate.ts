@@ -79,6 +79,7 @@ export const clinicalMigrationPaths = [
   "backend/migrations/0014_durable_accounts.sql",
   "backend/migrations/0015_kiosk_consent_withdrawals.sql",
   "backend/migrations/0016_clinical_prescription_review.sql",
+  "backend/migrations/0017_hq_command_data.sql",
 ] as const;
 
 export function migrationScripts() {

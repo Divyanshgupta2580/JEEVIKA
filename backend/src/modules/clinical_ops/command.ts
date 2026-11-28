@@ -6,8 +6,10 @@ import type { IntegrationContext } from "../../context";
 import { tenantDb } from "../../database";
 import { staffAccess, staffBody } from "../../staff-access";
 import { roundDivide } from "../../../../packages/shared/operations";
+import { hqRouter } from "./hq";
 
 export const commandRouter = new Hono<IntegrationContext>();
+commandRouter.route("/hq", hqRouter);
 const hospitalAccess = staffAccess("HOSPITAL_ADMIN");
 const rosterAccess = staffAccess("HOSPITAL_ADMIN", "CLINIC_ADMIN");
 const safeId = z.string().min(1).max(100);
@@ -330,8 +332,19 @@ commandRouter.get(
               .all()
           ).results
         : [];
+    const transfers = await db.statement(
+      `SELECT t.id,'INTER_CLINIC_STOCK_TRANSFER' AS action,'INFO' AS status,t.created_at,
+         t.actor_id AS performed_by,t.units || ' units · ' || s.brand || ' · Batch ' || t.batch_no
+           || ' · ' || source.name || ' → ' || destination.name || ' · ' || t.reason AS details
+       FROM command_stock_transfers t
+       JOIN clinics source ON source.org_id=t.org_id AND source.id=t.source_clinic_id
+       JOIN clinics destination ON destination.org_id=t.org_id AND destination.id=t.destination_clinic_id
+       JOIN sku s ON s.org_id=t.org_id AND s.id=t.sku_id
+       WHERE t.org_id=:org ORDER BY t.created_at DESC,t.id LIMIT 100`,
+    ).all<{ id: string; action: string; status: string; created_at: string; performed_by: string; details: string }>();
     return c.json({
       logs,
+      transfers: transfers.results,
       lockedThrough: lock?.date ?? null,
       verificationAvailable: false,
     });

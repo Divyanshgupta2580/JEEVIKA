@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import { Card, CardContent, Button, Input, Label, Badge, Skeleton } from '@/components/ui/basic'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
@@ -29,14 +29,14 @@ import {
     Eye,
     EyeOff
 } from 'lucide-react'
-import { dataService as db } from '@/lib/dataService'
-import { authService as auth } from '@/lib/authService'
+import { staffApi, useStaffData } from '@/lib/staffApi'
+import type { HqFinance, HqFleet, HqGroup, HqPeriod, HqStock, HqTransfer } from '../../../../packages/shared/hq-command'
+import { Link } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
-import { useHospital } from '@/context/HospitalContext'
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { getStartOfTodayIST, paiseToRupeesString } from '@/lib/utils'
+import { paiseToRupeesString } from '@/lib/utils'
 import {
     Select,
     SelectContent,
@@ -52,425 +52,147 @@ interface HospitalDashboardProps {
 }
 
 export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
-    const { toast } = useToast()
-    const {
-        inventory,
-        hospital,
-        clinics,
-        profile,
-        billing,
-        updateClinicProfile,
-        revenueSummary,
-        expiringItems,
-        activeIPDCount,
-        refreshData,
-        updateInventoryItem
-    } = useHospital()
+    const { toast } = useToast();
+    const [revision, setRevision] = useState(0);
+    const { data: fleet, error: fleetError } = useStaffData<HqFleet>('/clinical/command/hq/fleet', revision);
+    const { data: stock, error: stockError } = useStaffData<HqStock>('/clinical/command/hq/stock', revision);
+    const clinics = fleet?.clinics ?? [];
+    const inventory = stock?.batches ?? [];
+    const refreshGroup = () => setRevision((value) => value + 1);
+    const threshold = 10;
+    const stockDay = stock?.day ?? "";
+    const expiringItems = useMemo(() => {
+        if (!stock) return [];
+        const cutoff = new Date(`${stock.day}T00:00:00Z`);
+        cutoff.setUTCDate(cutoff.getUTCDate() + 90);
+        const end = cutoff.toISOString().slice(0, 10);
+        return stock.batches
+            .filter(batch => batch.quantity > 0 && batch.expiry <= end)
+            .map(batch => ({
+                ...batch, expiry_date: batch.expiry, clinic_id: batch.clinicId,
+                item_name: stock.items.find(item => item.id === batch.skuId)?.brand ?? batch.skuId,
+                clinics: { name: fleet?.clinics.find(clinic => clinic.id === batch.clinicId)?.name },
+            }));
+    }, [stock, fleet]);
 
-    // Live Backend HQ Group Ledger & Central Inventory Radar
-    const [hqLedger, setHqLedger] = useState<{
-        revenuePaise?: number;
-        cogsPaise?: number;
-        operatingExpensesPaise?: number;
-        netProfitPaise?: number;
-        debitPaise?: number;
-        creditPaise?: number;
-        isBalanced?: boolean;
-        journalsCount?: number;
-        explanation?: string;
-        clinicBreakdown?: Array<{
-            clinicId: string;
-            name: string;
-            revenuePaise: number;
-            profitPaise: number;
-        }>;
-        liveSalesRecorded?: number;
-    } | null>(null);
-
-    const [hqRadar, setHqRadar] = useState<{
-        clinicId?: string;
-        clinicStockUnits?: number;
-        hqGroupStockUnits?: number;
-        expiringBatches?: any[];
-        lowStockItems?: string[];
-        totalSkus?: number;
-        inventoryRadar?: Array<{
-            salt: string;
-            brand: string;
-            strengthMg: number;
-            clinicStock: number;
-            hqGroupStock: number;
-            reorderLevel: number;
-            isLowStock: boolean;
-            status: string;
-        }>;
-        rebalancing?: {
-            sourceHub: string;
-            targetClinic: string;
-            recommendedTransferUnits: number;
-            estimatedTransitDays: number;
-        };
-    } | null>(null);
-
-    const fetchHqTelemetry = async () => {
-        try {
-            const [ledgerRes, radarRes] = await Promise.all([
-                db.getOpsLedgerSummary ? db.getOpsLedgerSummary() : Promise.resolve(null),
-                db.getInventoryRadar ? db.getInventoryRadar() : Promise.resolve(null)
-            ]);
-            if (ledgerRes) setHqLedger(ledgerRes);
-            if (radarRes) setHqRadar(radarRes);
-        } catch (e) {
-            console.warn('HQ Telemetry fetch notice:', e);
+    const matrix = useMemo(() => {
+        if (!stock || !fleet) return [];
+        const quantities = new Map<string, Map<string, number>>();
+        const recorded = new Set<string>();
+        for (const batch of stock.batches) {
+            recorded.add(batch.skuId);
+            if (batch.expiry < stock.day) continue;
+            const byClinic = quantities.get(batch.skuId) ?? new Map<string, number>();
+            byClinic.set(batch.clinicId, (byClinic.get(batch.clinicId) ?? 0) + batch.available);
+            quantities.set(batch.skuId, byClinic);
         }
-    };
-
-    useEffect(() => {
-        fetchHqTelemetry();
-    }, []);
-
-    // ---------------------------------------------------------
-    // 2. INVENTORY CALCULATIONS & DERIVED DATA
-    // ---------------------------------------------------------
-    const aggregatedInventory = useMemo(() => {
-        const groups = new Map();
-        inventory.forEach(item => {
-            const name = item.item_name?.trim();
-            const clinicId = item.clinic_id;
-            if (!name || !clinicId) return;
-
-            const key = `${name}-${clinicId}`;
-            if (!groups.has(key)) {
-                groups.set(key, { ...item, total_quantity: 0 });
-            }
-            const record = groups.get(key);
-            record.total_quantity += (item.quantity || 0);
+        return stock.items.filter(item => recorded.has(item.id)).map(item => {
+            const branches = fleet.clinics.map(clinic => ({
+                id: clinic.id, name: clinic.name, status: clinic.status,
+                units: quantities.get(item.id)?.get(clinic.id) ?? 0,
+            }));
+            return { ...item, branches, units: branches.reduce((sum, branch) => sum + branch.units, 0) };
         });
-        return Array.from(groups.values());
-    }, [inventory]);
+    }, [stock, fleet]);
 
-    const lowStock = useMemo(() => {
-        return aggregatedInventory.filter((i: any) => {
-            const threshold = i.threshold || hospital?.settings?.global_low_stock_threshold || 10;
-            const packsAvailable = i.total_quantity / (i.units_per_pack || 1);
-            return packsAvailable < threshold;
-        });
-    }, [aggregatedInventory, hospital]);
+    const lowStockRadarItems = matrix.flatMap(item => item.branches.flatMap(branch => {
+        if (branch.status !== 'active' || branch.units >= threshold) return [];
+        const donor = item.branches
+            .filter(other => other.id !== branch.id && other.status === 'active' && other.units > threshold)
+            .sort((left, right) => right.units - left.units)[0];
+        return [{
+            skuId: item.id, item_name: item.brand, clinic_id: branch.id, total_quantity: branch.units,
+            threshold, deficitClinicName: branch.name, surplusClinicId: donor?.id,
+            surplusClinicName: donor?.name, surplusQuantity: donor ? donor.units - threshold : 0,
+        }];
+    }));
+    const lowStock = lowStockRadarItems;
+    const activeClinicsCount = clinics.filter(clinic => clinic.status === 'active').length;
+    const pausedClinicsCount = clinics.filter(clinic => clinic.status === 'paused').length;
+    const activeIPDCount = clinics.reduce((sum, clinic) => sum + clinic.activeAdmissions, 0);
+    const totalRevenuePaise = clinics.reduce((sum, clinic) => sum + clinic.grossPaise, 0);
+    const totalInventoryValuePaise = inventory.reduce((sum, batch) => sum + batch.quantity * batch.costPaise, 0);
+    const totalGroupAvailable = matrix.reduce((sum, item) => sum + item.units, 0);
+    const money = (paise: number | undefined) => paise === undefined ? 'Unavailable' : `₹${paiseToRupeesString(paise)}`;
+    const revenueSummary = clinics.map(clinic => ({
+        clinic_id: clinic.id, clinic_name: clinic.name, grossPaise: clinic.grossPaise,
+        transaction_count: clinic.saleCount,
+    }));
+    const topClinic = revenueSummary.filter(clinic => clinic.transaction_count > 0)
+        .sort((left, right) => right.grossPaise - left.grossPaise)[0];
 
-    const distinctItemNames = useMemo(() => {
-        const names = new Set<string>();
-        inventory.forEach(i => {
-            if (i.item_name?.trim()) names.add(i.item_name.trim());
-        });
-        return Array.from(names).sort();
-    }, [inventory]);
-
-    // Group inventory deficit items with network surplus discovery
-    const lowStockRadarItems = useMemo(() => {
-        return lowStock.map((deficitItem: any) => {
-            const itemName = deficitItem.item_name?.trim();
-            const deficitClinic = clinics.find(c => c.id === deficitItem.clinic_id);
-            const surplusOptions = inventory.filter(i =>
-                i.item_name?.trim().toLowerCase() === itemName?.toLowerCase() &&
-                i.clinic_id !== deficitItem.clinic_id &&
-                i.quantity > (i.threshold || 10)
-            );
-            const bestSurplus = surplusOptions.sort((a, b) => b.quantity - a.quantity)[0];
-            const surplusClinic = bestSurplus ? clinics.find(c => c.id === bestSurplus.clinic_id) : null;
-
-            return {
-                ...deficitItem,
-                deficitClinicName: deficitClinic?.name || 'Unknown Hub',
-                surplusClinicId: bestSurplus?.clinic_id || null,
-                surplusClinicName: surplusClinic?.name || null,
-                surplusQuantity: bestSurplus?.quantity || 0
-            };
-        });
-    }, [lowStock, clinics, inventory]);
-
-    // ---------------------------------------------------------
-    // 3. CLINIC GRID & SEARCH/FILTER STATE
-    // ---------------------------------------------------------
     const [clinicSearch, setClinicSearch] = useState('');
     const [clinicStatusFilter, setClinicStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
     const [clinicSortBy, setClinicSortBy] = useState<'revenue' | 'patients' | 'name'>('revenue');
     const [clinicViewMode, setClinicViewMode] = useState<'grid' | 'table'>('grid');
+    const filteredClinics = clinics.filter(clinic => {
+        const query = clinicSearch.trim().toLowerCase();
+        return (clinicStatusFilter === 'all' || clinic.status === clinicStatusFilter) &&
+            [clinic.name, clinic.address, clinic.code, clinic.managerName].some(value => value?.toLowerCase().includes(query));
+    }).sort((a, b) => clinicSortBy === 'revenue' ? b.grossPaise - a.grossPaise :
+        clinicSortBy === 'patients' ? b.patientCount - a.patientCount : a.name.localeCompare(b.name));
 
-    const clinicCardsData = useMemo(() => {
-        return clinics.map(clinic => {
-            const revData = revenueSummary.find((r: any) => r.clinic_id === clinic.id);
-            const backendClinicStats = hqLedger?.clinicBreakdown?.find(b => b.clinicId === clinic.id);
-            const backendRevInr = backendClinicStats ? Math.round(backendClinicStats.revenuePaise / 100) : 0;
-            const clinicInventory = inventory.filter(i => i.clinic_id === clinic.id);
-            const lowStockCount = clinicInventory.filter(i => {
-                const threshold = i.threshold || hospital?.settings?.global_low_stock_threshold || 10;
-                const packs = i.quantity / (i.units_per_pack || 1);
-                return packs < threshold;
-            }).length;
-
-            const revenueInr = Math.max(revData?.total_revenue || 0, backendRevInr);
-            const revenuePaise = revenueInr * 100;
-            const patientCount = revData?.transaction_count || (backendClinicStats ? 12 : 0);
-            const opdRev = revData?.opd_revenue || Math.round(revenueInr * 0.6);
-            const ipdRev = revData?.ipd_revenue || 0;
-            const pharmaRev = revData?.pharma_revenue || Math.round(revenueInr * 0.4);
-
-            const hubCode = clinic.settings?.code || `HUB-${clinic.name.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'CLI'}-01`;
-            const managerName = clinic.settings?.manager_name || 'Dr. Medical Superintendent';
-            const managerEmail = clinic.settings?.manager_email || `${clinic.name.toLowerCase().replace(/[^a-z]/g, '')}@jeevika.network`;
-            const bedCapacity = clinic.settings?.bed_capacity || 10;
-
-            return {
-                ...clinic,
-                hubCode,
-                managerName,
-                managerEmail,
-                bedCapacity,
-                revenueInr,
-                revenuePaise,
-                patientCount,
-                opdRev,
-                ipdRev,
-                pharmaRev,
-                lowStockCount,
-                totalStockItems: clinicInventory.length,
-                backendProfitPaise: backendClinicStats?.profitPaise
-            };
-        });
-    }, [clinics, revenueSummary, inventory, hospital, hqLedger]);
-
-    const filteredClinics = useMemo(() => {
-        return clinicCardsData
-            .filter(c => {
-                if (clinicStatusFilter === 'active' && c.status === 'paused') return false;
-                if (clinicStatusFilter === 'paused' && c.status !== 'paused') return false;
-                if (clinicSearch.trim()) {
-                    const q = clinicSearch.toLowerCase();
-                    const matchesName = c.name?.toLowerCase().includes(q);
-                    const matchesAddr = c.address?.toLowerCase().includes(q);
-                    const matchesCode = c.hubCode?.toLowerCase().includes(q);
-                    const matchesManager = c.managerName?.toLowerCase().includes(q);
-                    return matchesName || matchesAddr || matchesCode || matchesManager;
-                }
-                return true;
-            })
-            .sort((a, b) => {
-                if (clinicSortBy === 'revenue') return b.revenueInr - a.revenueInr;
-                if (clinicSortBy === 'patients') return b.patientCount - a.patientCount;
-                return a.name.localeCompare(b.name);
-            });
-    }, [clinicCardsData, clinicStatusFilter, clinicSearch, clinicSortBy]);
-
-    const activeClinicsCount = clinics.filter(c => c.status !== 'paused').length;
-    const pausedClinicsCount = clinics.filter(c => c.status === 'paused').length;
-
-    // ---------------------------------------------------------
-    // 4. INTER-CLINIC STOCK TRANSFER STATE & HANDLER
-    // ---------------------------------------------------------
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
     const [transferLoading, setTransferLoading] = useState(false);
-    const [transferItemName, setTransferItemName] = useState('');
+    const [transferSku, setTransferSku] = useState('');
+    const [transferBatch, setTransferBatch] = useState('');
     const [transferSourceClinic, setTransferSourceClinic] = useState('');
     const [transferDestClinic, setTransferDestClinic] = useState('');
-    const [transferQuantity, setTransferQuantity] = useState<number>(10);
-    const [transferReason, setTransferReason] = useState('Urgent OPD low-stock rebalance');
+    const [transferQuantity, setTransferQuantity] = useState(1);
+    const [transferReason, setTransferReason] = useState('');
+    const transferAttempt = useRef<{ body: string; key: string }>();
+    const transferOptions = inventory.filter(batch => batch.skuId === transferSku && batch.clinicId === transferSourceClinic
+        && batch.expiry >= stockDay && batch.available > 0);
+    const selectedBatch = transferOptions.find(batch => batch.id === transferBatch);
+    const availableSourceQuantity = selectedBatch?.available ?? 0;
+    const availableDestQuantity = selectedBatch ? inventory.find(batch =>
+        batch.clinicId === transferDestClinic && batch.skuId === transferSku && batch.batchNo === selectedBatch.batchNo
+    )?.quantity ?? 0 : 0;
+    const canTransfer = Boolean(selectedBatch && transferDestClinic && transferReason.trim() &&
+        Number.isInteger(transferQuantity) && transferQuantity > 0 && availableSourceQuantity >= transferQuantity);
 
-    const availableSourceQuantity = useMemo(() => {
-        if (!transferSourceClinic || !transferItemName) return 0;
-        const item = inventory.find(i =>
-            i.clinic_id === transferSourceClinic &&
-            i.item_name?.trim().toLowerCase() === transferItemName.trim().toLowerCase()
-        );
-        return item?.quantity || 0;
-    }, [inventory, transferSourceClinic, transferItemName]);
-
-    const availableDestQuantity = useMemo(() => {
-        if (!transferDestClinic || !transferItemName) return 0;
-        const item = inventory.find(i =>
-            i.clinic_id === transferDestClinic &&
-            i.item_name?.trim().toLowerCase() === transferItemName.trim().toLowerCase()
-        );
-        return item?.quantity || 0;
-    }, [inventory, transferDestClinic, transferItemName]);
-
-    const initiateTransferForRadarItem = (item: any) => {
-        setTransferItemName(item.item_name);
+    const initiateTransferForRadarItem = (item: typeof lowStockRadarItems[number]) => {
+        setTransferSku(item.skuId);
+        setTransferBatch('');
         setTransferDestClinic(item.clinic_id);
-        if (item.surplusClinicId) {
-            setTransferSourceClinic(item.surplusClinicId);
-            const suggestedQty = Math.min(
-                Math.floor((item.surplusQuantity || 20) / 2),
-                Math.max(10, ((item.threshold || 10) - (item.total_quantity || 0)) * (item.units_per_pack || 1))
-            );
-            setTransferQuantity(suggestedQty > 0 ? suggestedQty : 10);
-        } else {
-            const candidate = inventory.find(i =>
-                i.item_name?.trim().toLowerCase() === item.item_name?.trim().toLowerCase() &&
-                i.clinic_id !== item.clinic_id &&
-                i.quantity > 0
-            );
-            if (candidate) {
-                setTransferSourceClinic(candidate.clinic_id);
-                setTransferQuantity(Math.min(candidate.quantity, 10));
-            }
-        }
+        setTransferSourceClinic(item.surplusClinicId ?? '');
+        setTransferQuantity(Math.max(1, Math.min(threshold - item.total_quantity, item.surplusQuantity)));
         setIsTransferModalOpen(true);
     };
 
-    const initiateTransferForHqRadarItem = (radarItem: any) => {
-        const itemMatch = distinctItemNames.find(n =>
-            n.toLowerCase().includes(radarItem.brand?.toLowerCase() || '') ||
-            n.toLowerCase().includes(radarItem.salt?.toLowerCase() || '')
-        ) || distinctItemNames[0] || radarItem.brand || radarItem.salt || '';
-
-        setTransferItemName(itemMatch);
-
-        if (hqRadar?.rebalancing) {
-            const source = clinics.find(c =>
-                c.name.toLowerCase().includes(hqRadar.rebalancing?.sourceHub.toLowerCase() || '') ||
-                c.id === hqRadar.rebalancing?.sourceHub
-            );
-            const target = clinics.find(c =>
-                c.name.toLowerCase().includes(hqRadar.rebalancing?.targetClinic.toLowerCase() || '') ||
-                c.id === hqRadar.rebalancing?.targetClinic
-            );
-            if (source) setTransferSourceClinic(source.id);
-            if (target) setTransferDestClinic(target.id);
-            if (hqRadar.rebalancing.recommendedTransferUnits) {
-                setTransferQuantity(hqRadar.rebalancing.recommendedTransferUnits);
-            }
-        } else {
-            const source = clinics.find(c => c.status !== 'paused');
-            const dest = clinics.find(c => c.id !== source?.id && c.status !== 'paused');
-            if (source) setTransferSourceClinic(source.id);
-            if (dest) setTransferDestClinic(dest.id);
-            setTransferQuantity(15);
-        }
-        setIsTransferModalOpen(true);
-    };
-
-    const handleStockTransferSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!transferSourceClinic || !transferDestClinic || !transferItemName || transferQuantity <= 0) {
-            toast({
-                title: "Invalid Transfer Parameters",
-                description: "Please specify source, destination, item, and a valid quantity.",
-                variant: "destructive"
-            });
-            return;
-        }
-        if (transferSourceClinic === transferDestClinic) {
-            toast({
-                title: "Identical Clinics",
-                description: "Source and destination clinics must be different.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        const sourceItem = inventory.find(i =>
-            i.clinic_id === transferSourceClinic &&
-            i.item_name?.trim().toLowerCase() === transferItemName.trim().toLowerCase()
-        );
-
-        if (!sourceItem || sourceItem.quantity < transferQuantity) {
-            toast({
-                title: "Insufficient Stock at Source",
-                description: `Source clinic only holds ${sourceItem?.quantity || 0} units of ${transferItemName}.`,
-                variant: "destructive"
-            });
-            return;
-        }
-
+    async function handleStockTransferSubmit(event: React.FormEvent) {
+        event.preventDefault();
+        if (!canTransfer || !selectedBatch || transferLoading) return;
+        const body = JSON.stringify({
+            sourceClinicId: transferSourceClinic, destinationClinicId: transferDestClinic,
+            skuId: transferSku, batchId: selectedBatch.id, units: transferQuantity, reason: transferReason,
+        });
+        if (transferAttempt.current?.body !== body) transferAttempt.current = { body, key: crypto.randomUUID() };
         setTransferLoading(true);
         try {
-            // 1. Deduct from source
-            const newSourceQty = Math.max(0, sourceItem.quantity - transferQuantity);
-            await updateInventoryItem(sourceItem.id, { quantity: newSourceQty });
-
-            // 2. Add to destination
-            const destItem = inventory.find(i =>
-                i.clinic_id === transferDestClinic &&
-                i.item_name?.trim().toLowerCase() === transferItemName.trim().toLowerCase()
-            );
-
-            if (destItem) {
-                await updateInventoryItem(destItem.id, { quantity: destItem.quantity + transferQuantity });
-            } else {
-                await db.create('inventory', {
-                    hospital_id: profile?.hospital_id,
-                    clinic_id: transferDestClinic,
-                    item_name: sourceItem.item_name,
-                    quantity: transferQuantity,
-                    mrp: sourceItem.mrp || 100,
-                    units_per_pack: sourceItem.units_per_pack || 1,
-                    threshold: sourceItem.threshold || 10,
-                    expiry_date: sourceItem.expiry_date,
-                    batch_number: sourceItem.batch_number
-                });
-            }
-
-            // 3. Log transfer event in Cloudflare D1
-            await db.create('stock_transfers', {
-                hospital_id: profile?.hospital_id,
-                source_clinic_id: transferSourceClinic,
-                dest_clinic_id: transferDestClinic,
-                item_name: transferItemName,
-                quantity: transferQuantity,
-                reason: transferReason || 'Central Procurement Rebalance',
-                transferred_at: new Date().toISOString(),
-                status: 'COMPLETED'
+            const result = await staffApi<HqTransfer>('/clinical/command/hq/transfers', {
+                method: 'POST', body, headers: { 'Idempotency-Key': transferAttempt.current.key },
             });
-
-            // 4. Log audit event
-            await db.create('audit_events', {
-                org_id: profile?.hospital_id,
-                actor_id: profile?.id,
-                action: 'INTER_CLINIC_STOCK_TRANSFER',
-                target_type: 'inventory',
-                details_json: JSON.stringify({
-                    source: clinics.find(c => c.id === transferSourceClinic)?.name,
-                    destination: clinics.find(c => c.id === transferDestClinic)?.name,
-                    item: transferItemName,
-                    units: transferQuantity,
-                    reason: transferReason
-                })
-            });
-
-            await refreshData();
-
-            const srcName = clinics.find(c => c.id === transferSourceClinic)?.name || 'Source';
-            const dstName = clinics.find(c => c.id === transferDestClinic)?.name || 'Destination';
-
-            toast({
-                title: "Stock Rebalance Executed",
-                description: `Successfully transferred ${transferQuantity} units of ${transferItemName} from ${srcName} to ${dstName}. Cryptographic audit event logged.`,
-                className: "bg-emerald-50 border-emerald-200 text-emerald-950 font-medium"
-            });
-
+            transferAttempt.current = undefined;
             setIsTransferModalOpen(false);
-            setTransferItemName('');
+            setTransferSku('');
+            setTransferBatch('');
             setTransferSourceClinic('');
             setTransferDestClinic('');
-        } catch (err: any) {
-            console.error("Stock Transfer Error:", err);
-            toast({
-                title: "Transfer Failed",
-                description: err?.message || "Could not complete stock transfer.",
-                variant: "destructive"
-            });
+            setTransferReason('');
+            refreshGroup();
+            toast({ title: 'Stock transfer recorded', description: `${result.units} units · Batch ${result.batchNo} · Reference ${result.id}` });
+        } catch (error) {
+            toast({ title: 'Transfer unavailable', description: error instanceof Error ? error.message : undefined, variant: 'destructive' });
+            refreshGroup();
         } finally {
             setTransferLoading(false);
         }
-    };
+    }
 
-    // ---------------------------------------------------------
-    // 5. ADD / REGISTER CLINIC WIZARD
-    // ---------------------------------------------------------
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [registerLoading, setRegisterLoading] = useState(false);
     const [clinicNameInput, setClinicNameInput] = useState('');
-    const [generatedCode, setGeneratedCode] = useState('');
     const [clinicAddressInput, setClinicAddressInput] = useState('');
     const [clinicTier, setClinicTier] = useState('General Practice & OPD');
     const [staffNameInput, setStaffNameInput] = useState('');
@@ -478,288 +200,95 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
     const [staffPasswordInput, setStaffPasswordInput] = useState('');
     const [bedCapacityInput, setBedCapacityInput] = useState(10);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [codeSuffix, setCodeSuffix] = useState(() => crypto.randomUUID().slice(0, 6).toUpperCase());
+    const registerAttempt = useRef<{ identity: string; key: string }>();
+    const initials = clinicNameInput.trim().split(/\s+/).map(word => word[0] ?? '').join('').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 4);
+    const generatedCode = clinicNameInput.trim() ? `HUB-${initials || 'CLI'}-${codeSuffix}` : '';
+    const generateStrongPassword = () => setStaffPasswordInput(crypto.randomUUID().replace(/-/g, ''));
 
-    useEffect(() => {
-        if (!clinicNameInput.trim()) {
-            setGeneratedCode('');
-            return;
-        }
-        const initials = clinicNameInput
-            .trim()
-            .split(/\s+/)
-            .map(word => word[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 4);
-        const randomNum = Math.floor(10 + Math.random() * 89);
-        setGeneratedCode(`HUB-${initials || 'CLI'}-${randomNum}`);
-    }, [clinicNameInput]);
-
-    const generateStrongPassword = () => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
-        let pass = '';
-        for (let i = 0; i < 10; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        setStaffPasswordInput(pass);
-    };
-
-    async function handleRegisterClinic(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-
-        if (billing?.isAtLimit('clinics_count')) {
-            toast({
-                title: 'Plan Limit Reached',
-                description: `Your current tier permits up to ${billing.getLimit('clinics_count')} clinics. Please upgrade your plan in billing settings to onboard additional branches.`,
-                variant: 'destructive'
-            });
-            setIsRegisterOpen(false);
-            return;
-        }
-
+    async function handleRegisterClinic(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (registerLoading) return;
+        const branch = {
+            name: clinicNameInput, address: clinicAddressInput, tier: clinicTier,
+            code: generatedCode, bedCapacity: bedCapacityInput,
+            manager: { name: staffNameInput, email: staffEmailInput },
+        };
+        const identity = JSON.stringify(branch);
+        if (registerAttempt.current?.identity !== identity) registerAttempt.current = { identity, key: crypto.randomUUID() };
         setRegisterLoading(true);
-
-        const clinicName = clinicNameInput.trim();
-        const staffEmail = staffEmailInput.trim();
-        const staffPassword = staffPasswordInput;
-        const staffName = staffNameInput.trim();
-        const location = clinicAddressInput.trim();
-        const code = generatedCode || `HUB-${clinicName.slice(0, 3).toUpperCase()}-01`;
-
         try {
-            toast({ title: 'Onboarding Clinic Hub', description: 'Provisioning Cloudflare D1 partition & credentials...', duration: 3000 });
-
-            // 1. Sign up the branch manager
-            const newUser = await auth.signUp(staffEmail, staffPassword);
-            if (!newUser) throw new Error("Could not initialize branch manager account.");
-
-            // 2. Call RPC or direct create
-            const rpcParams = {
-                p_clinic_name: clinicName,
-                p_clinic_address: location,
-                p_staff_user_id: newUser.id,
-                p_staff_name: staffName,
-                p_hospital_id: profile?.hospital_id
-            };
-
-            await db.callRpc('admin_create_clinic_and_staff', rpcParams).catch(() => null);
-
-            // Ensure clinic is created in Cloudflare D1 store
-            await db.create('clinics', {
-                hospital_id: profile?.hospital_id,
-                name: clinicName,
-                address: location,
-                status: 'active',
-                settings: {
-                    code: code,
-                    manager_name: staffName,
-                    manager_email: staffEmail,
-                    tier: clinicTier,
-                    bed_capacity: bedCapacityInput
-                }
+            await staffApi('/clinical/command/hq/branches', {
+                method: 'POST', body: JSON.stringify({ ...branch, manager: { ...branch.manager, password: staffPasswordInput } }),
+                headers: { 'Idempotency-Key': registerAttempt.current.key },
             });
-
-            // Record audit event
-            await db.create('audit_events', {
-                org_id: profile?.hospital_id,
-                actor_id: profile?.id,
-                action: 'CLINIC_REGISTERED',
-                target_type: 'clinics',
-                details_json: JSON.stringify({
-                    clinic_name: clinicName,
-                    hub_code: code,
-                    manager: staffName,
-                    location
-                })
-            });
-
-            toast({
-                title: 'Clinic Hub Provisioned',
-                description: `Registered ${clinicName} (${code}) with manager ${staffName}.`,
-                className: 'bg-emerald-50 border-emerald-200 text-emerald-950 font-medium'
-            });
-
+            registerAttempt.current = undefined;
             setIsRegisterOpen(false);
             setClinicNameInput('');
             setStaffEmailInput('');
             setStaffPasswordInput('');
             setStaffNameInput('');
             setClinicAddressInput('');
-
-            await refreshData();
-        } catch (err: any) {
-            console.error('Registration failed:', err);
-            toast({
-                title: 'Registration Failed',
-                description: err.message || 'Could not register clinic.',
-                variant: 'destructive'
-            });
+            setCodeSuffix(crypto.randomUUID().slice(0, 6).toUpperCase());
+            refreshGroup();
+            toast({ title: 'Clinic hub provisioned', description: `${branch.name} · ${branch.code}` });
+        } catch (error) {
+            toast({ title: 'Registration unavailable', description: error instanceof Error ? error.message : undefined, variant: 'destructive' });
         } finally {
             setRegisterLoading(false);
         }
     }
 
-    // ---------------------------------------------------------
-    // 6. CLINIC PAUSE / UNPAUSE HANDLERS
-    // ---------------------------------------------------------
-    const handleUnpause = async (clinicId: string) => {
-        if (billing?.isAtLimit('clinics_count')) {
-            toast({
-                title: 'Limit Reached',
-                description: `Your current plan allows a maximum of ${billing.getLimit('clinics_count')} clinics. Please upgrade to unpause more clinics.`,
-                variant: 'destructive'
-            });
-            return;
-        }
-
+    async function setBranchStatus(clinicId: string, status: 'active' | 'paused') {
         try {
-            await updateClinicProfile(clinicId, {
-                status: 'active',
-                scheduled_deletion_date: null
+            await staffApi(`/clinical/command/hq/branches/${encodeURIComponent(clinicId)}/status`, {
+                method: 'PATCH', body: JSON.stringify({ status }),
             });
-            toast({
-                title: "Clinic Unpaused",
-                description: "The clinic hub is now active and routing clinical traffic.",
-            });
+            refreshGroup();
+            toast({ title: status === 'active' ? 'Clinic reactivated' : 'Clinic paused for stock transfers' });
         } catch (error) {
-            console.error("Error unpausing clinic:", error);
-            toast({
-                title: "Error",
-                description: "Failed to unpause clinic. Please try again.",
-                variant: "destructive"
-            });
+            toast({ title: 'Clinic status could not be saved', description: error instanceof Error ? error.message : undefined, variant: 'destructive' });
         }
-    };
+    }
 
-    const handlePause = async (clinicId: string) => {
-        try {
-            await updateClinicProfile(clinicId, {
-                status: 'paused',
-                scheduled_deletion_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            });
-            toast({
-                title: "Clinic Paused",
-                description: "The clinic hub has been paused and access is temporarily restricted.",
-            });
-        } catch (error) {
-            console.error("Error pausing clinic:", error);
-            toast({
-                title: "Error",
-                description: "Failed to pause clinic. Please try again.",
-                variant: "destructive"
-            });
-        }
-    };
-
-    // ---------------------------------------------------------
-    // 7. FINANCIAL & OPERATIONAL ANALYTICS
-    // ---------------------------------------------------------
-    const [salesData, setSalesData] = useState<any[]>([])
-    const [dateFilter, setDateFilter] = useState('today')
-    const [groupBy, setGroupBy] = useState<'clinic_id' | 'payment_mode' | 'sale_type'>('clinic_id')
-    const [filters, setFilters] = useState({
-        clinic: 'all',
-        payment: 'all',
-        type: 'all'
-    })
-    const [analyticsLoading, setAnalyticsLoading] = useState(true)
-    const [activeIndex, setActiveIndex] = useState<number | null>(null)
-
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            if (!profile?.hospital_id) return;
-            setAnalyticsLoading(true);
-
-            try {
-                const analyticsFilters: any[] = [
-                    { field: 'hospital_id', operator: '==', value: profile.hospital_id }
-                ];
-
-                const now = new Date();
-                if (dateFilter === 'today') {
-                    const startOfToday = getStartOfTodayIST();
-                    analyticsFilters.push({ field: 'timestamp', operator: '>=', value: startOfToday });
-                } else if (dateFilter === 'week') {
-                    const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                    analyticsFilters.push({ field: 'timestamp', operator: '>=', value: weekAgo.toISOString() });
-                } else if (dateFilter === 'month') {
-                    const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
-                    analyticsFilters.push({ field: 'timestamp', operator: '>=', value: monthAgo.toISOString() });
-                }
-
-                if (filters.clinic !== 'all') analyticsFilters.push({ column: 'clinic_id', operator: '==', value: filters.clinic });
-                if (filters.payment !== 'all') analyticsFilters.push({ column: 'payment_mode', operator: '==', value: filters.payment });
-                if (filters.type !== 'all') analyticsFilters.push({ column: 'sale_type', operator: '==', value: filters.type });
-
-                const data = await db.list('sales', { filters: analyticsFilters });
-                setSalesData(data);
-            } catch (err) {
-                console.error('Analytics Fetch Error:', err);
-            } finally {
-                setAnalyticsLoading(false);
-            }
-        };
-
-        fetchAnalytics();
-    }, [profile, dateFilter, filters]);
-
-    const displayData = useMemo(() => {
-        const aggregated = salesData.reduce((acc: any, curr: any) => {
-            let label = curr[groupBy];
-            if (groupBy === 'clinic_id') {
-                const clinic = clinics.find((c: any) => c.id === curr.clinic_id);
-                label = clinic ? clinic.name : 'Unknown';
-            }
-            acc[label] = (acc[label] || 0) + Number(curr.amount);
-            return acc;
-        }, {});
-
-        return Object.entries(aggregated)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a: any, b: any) => (b.value as number) - (a.value as number));
-    }, [salesData, groupBy, clinics]);
-
-    const totalSelectedRevenue = useMemo(() =>
-        displayData.reduce((acc: number, curr: any) => acc + (curr.value as number), 0),
-        [displayData]);
-
-    const totalSelectedPaise = totalSelectedRevenue * 100;
-
+    const [dateFilter, setDateFilter] = useState<HqPeriod>('today');
+    const [groupBy, setGroupBy] = useState<HqGroup>('clinic_id');
+    const [filters, setFilters] = useState({ clinic: 'all', payment: 'all', type: 'all' });
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const parameters = new URLSearchParams({ period: dateFilter, group: groupBy });
+    if (filters.clinic !== 'all') parameters.set('clinic', filters.clinic);
+    if (filters.payment !== 'all') parameters.set('payment', filters.payment.toLowerCase());
+    if (filters.type !== 'all') parameters.set('service', filters.type);
+    const { data: hqLedger, error: financeError } = useStaffData<HqFinance>(`/clinical/command/hq/finance?${parameters}`, revision);
+    const analyticsLoading = !hqLedger && !financeError;
+    const displayData = (hqLedger?.segments ?? []).map(segment => ({ ...segment, value: segment.paise / 100 }));
+    const totalSelectedPaise = hqLedger?.selectedGrossPaise ?? 0;
+    const totalSelectedRevenue = totalSelectedPaise / 100;
+    const reconciled = Boolean(hqLedger && hqLedger.journalCount > 0 &&
+        hqLedger.debitPaise === hqLedger.creditPaise && hqLedger.unreconciledSales === 0);
     const COLORS = ['#047C61', '#149A7A', '#E5A736', '#2B7A9B', '#6D9F71', '#C87D32', '#0D9488', '#4F7768'];
 
-    const totalInventoryValuePaise = useMemo(() => {
-        return inventory.reduce((sum, item: any) => {
-            const unitsPerPack = item.units_per_pack && item.units_per_pack > 0 ? item.units_per_pack : 1;
-            const unitPaise = Math.round((Number(item.mrp || 0) * 100) / unitsPerPack);
-            return sum + Math.round(Number(item.quantity || 0)) * unitPaise;
-        }, 0);
-    }, [inventory]);
-
-    const totalRevenue = useMemo(() => {
-        return revenueSummary.reduce((acc: number, curr: any) => acc + (curr.total_revenue || 0), 0);
-    }, [revenueSummary]);
-    const totalRevenuePaise = totalRevenue * 100;
-
-    const topClinic = useMemo(() => {
-        return revenueSummary.reduce((prev: any, current: any) =>
-            (prev.total_revenue > current.total_revenue) ? prev : current,
-            { clinic_name: clinics[0]?.name || 'Apex Central Hub', total_revenue: 0, transaction_count: 0 }
-        );
-    }, [revenueSummary, clinics]);
-
-    const copySegmentReport = () => {
-        const report = `JEEVIKA Health Network Financial Summary\n` +
-            `Total Revenue: ₹${totalSelectedRevenue.toLocaleString('en-IN')} (${totalSelectedPaise.toLocaleString('en-IN')} Paise)\n` +
-            `Breakdown by ${groupBy.replace('_', ' ').toUpperCase()}:\n` +
-            displayData.map(d => ` - ${d.name}: ₹${Number(d.value).toLocaleString('en-IN')} (${(Number(d.value) / (totalSelectedRevenue || 1) * 100).toFixed(1)}%)`).join('\n');
-        navigator.clipboard.writeText(report);
-        toast({ title: "Report Copied", description: "Segment financial summary copied to clipboard." });
-    };
+    async function copySegmentReport() {
+        if (!hqLedger) return;
+        const report = [
+            `${fleet?.organization?.name ?? 'JEEVIKA'} · Financial Summary`,
+            `Period ${hqLedger.from ?? 'all dates'} through ${hqLedger.through}`,
+            `Filters · ${filters.clinic === 'all' ? 'All branches' : clinics.find(clinic => clinic.id === filters.clinic)?.name ?? filters.clinic} · ${filters.payment} · ${filters.type}`,
+            `Selected gross receipts ${money(hqLedger.selectedGrossPaise)} (${hqLedger.selectedGrossPaise} paise)`,
+            ...hqLedger.segments.map(segment => `${segment.name} · ${money(segment.paise)} (${segment.paise} paise)`),
+        ].join('\n');
+        try {
+            await navigator.clipboard.writeText(report);
+            toast({ title: 'Report copied' });
+        } catch {
+            toast({ title: 'Clipboard unavailable', variant: 'destructive' });
+        }
+    }
 
     return (
         <div className="jvk-admin-page ayu-headquarters space-y-6 max-w-[1600px] mx-auto pb-12">
             {/* --------------------------------------------------------- */}
-            {/* PLATFORM INTEGRITY HUD: Cryptographic Audit & D1 Tenant */}
+            {/* Audit link */}
             {/* --------------------------------------------------------- */}
             <div>
                 <a href="#/app/ca/audit" className="jvk-admin-secondary-btn !min-h-10 !px-4 text-xs sm:text-sm">
@@ -767,6 +296,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 </a>
             </div>
 
+            {fleetError && <p role="alert">Branch fleet unavailable. {fleetError}</p>}
+            {stockError && <p role="alert">Group stock unavailable. {stockError}</p>}
+            {financeError && <p role="alert">Financial analytics unavailable. {financeError}</p>}
             {/* --------------------------------------------------------- */}
             {/* EXECUTIVE MULTI-CLINIC COMMAND CENTER HEADER */}
             {/* --------------------------------------------------------- */}
@@ -779,14 +311,14 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
                                 <h1 className="jvk-admin-serif text-2xl sm:text-3xl font-bold text-[#0E2420] tracking-tight">
-                                    {hospital?.name || "Apex Health Network"}
+                                    {fleet?.organization?.name ?? 'Headquarters Command Center'}
                                 </h1>
                                 <Badge variant="outline" className="bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1] font-bold text-[10px] uppercase">
                                     Group HQ Command
                                 </Badge>
                             </div>
                             <p className="text-xs sm:text-sm text-[#556C63] font-medium mt-0.5">
-                                Central Headquarters Portal · Orchestrating {clinics.length} Network Branches across India
+                                {fleet ? `Central Headquarters Portal · ${clinics.length} network branches` : 'Loading headquarters data…'}
                             </p>
                         </div>
                     </div>
@@ -808,12 +340,16 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     <button
                         type="button"
                         onClick={() => setIsTransferModalOpen(true)}
+                        disabled={!stock || !fleet}
                         className="jvk-admin-secondary-btn h-11"
                     >
                         <ArrowRightLeft className="w-4 h-4 text-[#047C61]" />
                         <span>Central Stock Transfer</span>
                     </button>
 
+                    {fleet && !fleet.organization && (
+                        <Link to="/app/command/setup" className="jvk-admin-secondary-btn h-11">Set up organization</Link>
+                    )}
                     {/* Add/Register Clinic Wizard */}
                     <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
                         <DialogTrigger asChild>
@@ -842,11 +378,11 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <form onSubmit={handleRegisterClinic} className="space-y-4 pt-2">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-slate-300">Clinic Branch Name</Label>
+                                        <Label htmlFor="branch-name" className="text-xs font-semibold text-slate-300">Clinic Branch Name</Label>
                                         <Input
                                             name="clinic_name"
                                             required
-                                            value={clinicNameInput}
+                                            id="branch-name" value={clinicNameInput}
                                             onChange={(e) => setClinicNameInput(e.target.value)}
                                             placeholder="e.g. JEEVIKA Downtown Care"
                                             className="bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 h-11 text-sm rounded-xl focus:ring-2 focus:ring-blue-500"
@@ -868,11 +404,11 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-slate-300">Physical Location Address</Label>
+                                    <Label htmlFor="branch-address" className="text-xs font-semibold text-slate-300">Physical Location Address</Label>
                                     <Input
                                         name="location"
                                         required
-                                        value={clinicAddressInput}
+                                        id="branch-address" value={clinicAddressInput}
                                         onChange={(e) => setClinicAddressInput(e.target.value)}
                                         placeholder="Full address, City, State, PIN"
                                         className="bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 h-11 text-sm rounded-xl focus:ring-2 focus:ring-blue-500"
@@ -894,12 +430,12 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-slate-300">Bed Allocation (IPD)</Label>
+                                        <Label htmlFor="branch-beds" className="text-xs font-semibold text-slate-300">Bed Allocation (IPD)</Label>
                                         <Input
                                             type="number"
                                             min={0}
                                             max={100}
-                                            value={bedCapacityInput}
+                                            id="branch-beds" value={bedCapacityInput}
                                             onChange={(e) => setBedCapacityInput(Number(e.target.value))}
                                             className="bg-slate-900 border-slate-800 text-white h-11 text-sm rounded-xl"
                                         />
@@ -911,23 +447,23 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
-                                                <Label className="text-xs font-semibold text-slate-300">Medical Director / Staff Name</Label>
+                                                <Label htmlFor="branch-manager" className="text-xs font-semibold text-slate-300">Medical Director / Staff Name</Label>
                                                 <Input
                                                     name="staff_name"
                                                     required
-                                                    value={staffNameInput}
+                                                    id="branch-manager" value={staffNameInput}
                                                     onChange={(e) => setStaffNameInput(e.target.value)}
                                                     placeholder="Dr. Rajesh Varma"
                                                     className="bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 h-11 text-sm rounded-xl focus:ring-2 focus:ring-blue-500"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <Label className="text-xs font-semibold text-slate-300">Official Staff Email</Label>
+                                                <Label htmlFor="branch-email" className="text-xs font-semibold text-slate-300">Official Staff Email</Label>
                                                 <Input
                                                     name="staff_email"
                                                     type="email"
                                                     required
-                                                    value={staffEmailInput}
+                                                    id="branch-email" value={staffEmailInput}
                                                     onChange={(e) => setStaffEmailInput(e.target.value)}
                                                     placeholder="rajesh@jeevika.network"
                                                     className="bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 h-11 text-sm rounded-xl focus:ring-2 focus:ring-blue-500"
@@ -937,7 +473,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                                         <div className="space-y-1.5">
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-xs font-semibold text-slate-300">Initial Secure Password</Label>
+                                                <Label htmlFor="branch-password" className="text-xs font-semibold text-slate-300">Initial Secure Password</Label>
                                                 <button
                                                     type="button"
                                                     onClick={generateStrongPassword}
@@ -952,7 +488,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                     type={isPasswordVisible ? "text" : "password"}
                                                     required
                                                     minLength={6}
-                                                    value={staffPasswordInput}
+                                                    id="branch-password" value={staffPasswordInput}
                                                     onChange={(e) => setStaffPasswordInput(e.target.value)}
                                                     placeholder="••••••••"
                                                     className="bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 h-11 text-sm rounded-xl pr-10 focus:ring-2 focus:ring-blue-500"
@@ -975,7 +511,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         <Sparkles className="w-4 h-4 text-blue-400" />
                                         <div>
                                             <p className="text-white font-bold">{clinicNameInput || 'Clinic Hub Name'}</p>
-                                            <p className="text-slate-400 text-[10px] font-mono">D1 Partition: org_{profile?.hospital_id?.slice(0, 8) || 'jeevika'}::{generatedCode || 'HUB-01'}</p>
+                                            <p className="text-slate-400 text-[10px] font-mono">Branch code {generatedCode || 'Pending'}</p>
                                         </div>
                                     </div>
                                     <Badge className="bg-blue-600 text-white font-mono text-[10px]">
@@ -1015,12 +551,12 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
-                                    ₹{totalRevenue.toLocaleString('en-IN')}
+                                    {money(fleet ? totalRevenuePaise : undefined)}
                                 </div>
                                 <div className="text-[11px] font-mono text-[#047C61] font-semibold flex items-center gap-1.5 mt-1.5">
-                                    <span>{totalRevenuePaise.toLocaleString('en-IN')} Paise</span>
+                                    <span>{fleet ? `${totalRevenuePaise.toLocaleString('en-IN')} paise` : 'Fleet unavailable'}</span>
                                     <span className="text-[#9AB5AA]">•</span>
-                                    <span className="text-[#556C63] font-sans">Zero Float Precision</span>
+                                    <span className="text-[#556C63] font-sans">Posted pharmacy sales</span>
                                 </div>
                                 <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Consolidated Gross</span>
@@ -1035,7 +571,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <DialogHeader>
                             <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Network Revenue Breakdown</DialogTitle>
                             <DialogDescription className="text-xs text-[#556C63]">
-                                Real-time gross performance across {revenueSummary.length} active reporting branches.
+                                Posted pharmacy receipts for {revenueSummary.length} branches.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-3 py-3 max-h-[60vh] overflow-y-auto pr-1">
@@ -1051,20 +587,20 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                 <p className="text-[11px] text-[#556C63]">{c.transaction_count} Transactions Today</p>
                                             </div>
                                         </div>
-                                        <p className="font-mono font-bold text-[#047C61] text-base">₹{c.total_revenue?.toLocaleString('en-IN')}</p>
+                                        <p className="font-mono font-bold text-[#047C61] text-base">{money(c.grossPaise)}</p>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#DCE8E0] text-center">
                                         <div>
                                             <p className="text-[9px] text-[#6A8178] font-bold uppercase">OPD</p>
-                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.opd_revenue || 0).toLocaleString('en-IN')}</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">Unconfigured</p>
                                         </div>
                                         <div className="border-x border-[#DCE8E0]">
                                             <p className="text-[9px] text-[#6A8178] font-bold uppercase">IPD</p>
-                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.ipd_revenue || 0).toLocaleString('en-IN')}</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">Unconfigured</p>
                                         </div>
                                         <div>
                                             <p className="text-[9px] text-[#6A8178] font-bold uppercase">Pharma</p>
-                                            <p className="text-xs font-bold text-[#0E2420]">₹{(c.pharma_revenue || 0).toLocaleString('en-IN')}</p>
+                                            <p className="text-xs font-bold text-[#0E2420]">{money(c.grossPaise)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1086,14 +622,14 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </div>
                         </div>
                         <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
-                            {activeIPDCount}
+                            {fleet ? activeIPDCount : 'Unavailable'}
                         </div>
                         <div className="text-[11px] text-[#556C63] font-medium mt-1.5 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#047C61]" />
                             <span>Currently Admitted across Network</span>
                         </div>
                         <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
-                            <span>Bed Census Live</span>
+                            <span>Active bed admissions</span>
                             <span className="text-[#047C61] font-semibold">{activeClinicsCount} Active Hubs</span>
                         </div>
                     </CardContent>
@@ -1111,10 +647,10 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </div>
                                 </div>
                                 <div className="jvk-admin-serif text-xl sm:text-2xl font-bold text-[#0E2420] tracking-tight truncate">
-                                    {topClinic.clinic_name}
+                                    {topClinic?.clinic_name ?? 'No posted sales today'}
                                 </div>
                                 <p className="text-[11px] text-[#556C63] font-medium mt-1.5">
-                                    ₹{topClinic.total_revenue?.toLocaleString('en-IN')} revenue today
+                                    {money(topClinic?.grossPaise)} revenue today
                                 </p>
                                 <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Top Volume</span>
@@ -1129,7 +665,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <DialogHeader>
                             <DialogTitle className="jvk-admin-serif text-xl font-bold text-[#0E2420]">Branch Excellence Metrics</DialogTitle>
                             <DialogDescription className="text-xs text-[#556C63]">
-                                Detailed operational performance for {topClinic.clinic_name}.
+                                Detailed operational performance for {topClinic?.clinic_name ?? 'No posted sales today'}.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-4 space-y-4 text-center">
@@ -1137,17 +673,17 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 <Building2 className="w-8 h-8" />
                             </div>
                             <div>
-                                <h4 className="text-3xl font-black text-[#0E2420]">₹{topClinic.total_revenue?.toLocaleString('en-IN')}</h4>
+                                <h4 className="text-3xl font-black text-[#0E2420]">{money(topClinic?.grossPaise)}</h4>
                                 <p className="text-xs text-[#556C63] font-medium mt-1">Today's Gross Billing</p>
                             </div>
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <div className="p-3 bg-[#F5FAF7] rounded-xl border border-[#DCE8E0]">
-                                    <p className="text-xl font-bold text-[#0E2420]">{topClinic.transaction_count}</p>
+                                    <p className="text-xl font-bold text-[#0E2420]">{topClinic?.transaction_count ?? '—'}</p>
                                     <p className="text-[10px] text-[#6A8178] font-bold uppercase">Patient Invoices</p>
                                 </div>
                                 <div className="p-3 bg-[#F5FAF7] rounded-xl border border-[#DCE8E0]">
                                     <p className="text-xl font-bold text-[#0E2420]">
-                                        ₹{(Number(topClinic.total_revenue) / (topClinic.transaction_count || 1)).toFixed(0)}
+                                        {money(topClinic ? Math.round(topClinic.grossPaise / topClinic.transaction_count) : undefined)}
                                     </p>
                                     <p className="text-[10px] text-[#6A8178] font-bold uppercase">Avg Ticket Size</p>
                                 </div>
@@ -1174,10 +710,10 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-[#0E2420] tracking-tight tabular-nums">
-                                    {lowStock.length + expiringItems.length}
+                                    {stock && fleet ? lowStock.length + expiringItems.length : 'Unavailable'}
                                 </div>
                                 <p className="text-[11px] text-[#556C63] font-medium mt-1.5">
-                                    {lowStock.length} Depleted Branches · {expiringItems.length} Expiring Batches
+                                    {stock && fleet ? `${lowStock.length} branch SKU shortages · ${expiringItems.length} expiring batches` : 'Stock counts unavailable'}
                                 </p>
                                 <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#E6EDE7] text-[11px] text-[#556C63]">
                                     <span>Procurement Status</span>
@@ -1195,7 +731,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 Network Supply & Inventory Alerts
                             </DialogTitle>
                             <DialogDescription className="text-xs text-slate-500">
-                                Automated inventory threshold violations across all connected clinical hubs.
+                                Active branch quantities below the configured display threshold.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="py-3 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
@@ -1205,7 +741,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         <h4 className="text-xs font-black text-rose-700 uppercase tracking-wider">Low Stock Shortages</h4>
                                         <span className="text-[10px] text-slate-400">{lowStockRadarItems.length} items critical</span>
                                     </div>
-                                    {lowStockRadarItems.map((item: any, idx: number) => (
+                                    {lowStockRadarItems.map((item, idx) => (
                                         <div key={idx} className="p-3 bg-rose-50/60 rounded-xl border border-rose-100 flex items-center justify-between">
                                             <div>
                                                 <p className="font-bold text-slate-900 text-sm">{item.item_name}</p>
@@ -1238,12 +774,12 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                             {expiringItems.length > 0 && (
                                 <div className="space-y-2 pt-2 border-t border-slate-100">
-                                    <h4 className="text-xs font-black text-amber-700 uppercase tracking-wider">Expiring Batches (Next 30 Days)</h4>
-                                    {expiringItems.map((item: any, idx: number) => (
+                                    <h4 className="text-xs font-black text-amber-700 uppercase tracking-wider">Expired or Expiring Within 90 Days</h4>
+                                    {expiringItems.map((item, idx) => (
                                         <div key={idx} className="p-3 bg-amber-50/60 rounded-xl border border-amber-100 flex justify-between items-center">
                                             <div>
                                                 <p className="font-bold text-slate-900 text-sm">{item.item_name}</p>
-                                                <p className="text-[11px] text-slate-500">{item.clinic_name}</p>
+                                                <p className="text-[11px] text-slate-500">{item.clinics.name ?? 'Clinic unavailable'}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-mono font-bold text-amber-700 text-sm">{new Date(item.expiry_date).toLocaleDateString()}</p>
@@ -1256,7 +792,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                             {lowStock.length === 0 && expiringItems.length === 0 && (
                                 <div className="text-center py-8 text-slate-400 text-sm italic">
-                                    All branch inventory levels are within normal safety thresholds.
+                                    {stockError || fleetError ? 'Group stock unavailable.' : !stock || !fleet ? 'Loading group stock…' : !inventory.length ? 'No stock batches recorded.' : 'No active branch shortages or expiring batches for tracked stock.'}
                                 </div>
                             )}
                         </div>
@@ -1284,6 +820,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <div className="relative flex-1 min-w-[145px] xl:w-[172px] xl:flex-none">
                             <Search className="w-4 h-4 text-[#6B847B] absolute left-3 top-1/2 -translate-y-1/2" />
                             <Input
+                                aria-label="Search clinic fleet"
                                 value={clinicSearch}
                                 onChange={(e) => setClinicSearch(e.target.value)}
                                 placeholder="Search clinic, code..."
@@ -1298,6 +835,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     key={st}
                                     type="button"
                                     onClick={() => setClinicStatusFilter(st)}
+                                    aria-pressed={clinicStatusFilter === st}
                                     className={`px-2 py-1.5 rounded-lg text-[11.5px] font-semibold capitalize transition-all whitespace-nowrap ${clinicStatusFilter === st
                                         ? 'bg-white text-[#047C61] shadow-xs'
                                         : 'text-[#556C63] hover:text-[#0E2420]'
@@ -1309,7 +847,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </div>
 
                         {/* Sort Selector */}
-                        <Select value={clinicSortBy} onValueChange={(v: any) => setClinicSortBy(v)}>
+                        <Select value={clinicSortBy} onValueChange={(value: typeof clinicSortBy) => setClinicSortBy(value)}>
                             <SelectTrigger className="w-[138px] h-9 text-[11.5px] bg-white border-[#CEDAD3] rounded-xl shrink-0">
                                 <SelectValue />
                             </SelectTrigger>
@@ -1390,11 +928,13 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 </div>
                             </div>
                         ) : (
-                        filteredClinics.map((clinic: any, index: number) => {
+                        filteredClinics.map((clinic, index) => {
                             const isPaused = clinic.status === 'paused';
                             return (
                                 <div
                                     key={clinic.id}
+                                    role="group"
+                                    aria-label={clinic.name}
                                     id={index === 0 ? "tour-clinic-management-toggle" : undefined}
                                     className={`rounded-2xl border p-5 transition-all duration-300 relative flex flex-col justify-between group ${isPaused
                                         ? 'bg-[#F5F7F5] border-[#DCE5DF] opacity-85'
@@ -1417,10 +957,10 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                     </h3>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Badge variant="outline" className="font-mono text-[10px] text-[#047C61] bg-[#DFF4ED] border-[#BBE2D1] px-1.5 py-0">
-                                                            {clinic.hubCode}
+                                                            {clinic.code ?? 'Unassigned'}
                                                         </Badge>
                                                         <span className="text-[11px] text-[#556C63] font-medium">
-                                                            {clinic.settings?.tier || 'General OPD'}
+                                                            {clinic.tier ?? 'Tier unrecorded'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1447,7 +987,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                             </div>
                                             <div className="flex items-center gap-2 truncate">
                                                 <Users className="w-3.5 h-3.5 text-[#6B847B] shrink-0" />
-                                                <span className="truncate">Staff Lead: <strong className="text-[#0E2420]">{clinic.managerName}</strong></span>
+                                                <span className="truncate">Staff Lead: <strong className="text-[#0E2420]">{clinic.managerName ?? 'Unassigned'}</strong></span>
                                             </div>
                                         </div>
 
@@ -1456,24 +996,24 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                             <div>
                                                 <p className="text-[10px] text-[#556C63] font-bold uppercase tracking-wider">Today's Revenue</p>
                                                 <p className="text-lg font-black text-[#0E2420] font-mono tabular-nums">
-                                                    ₹{clinic.revenueInr.toLocaleString('en-IN')}
+                                                    {money(clinic.grossPaise)}
                                                 </p>
-                                                <p className="text-[10px] text-[#556C63] font-mono">{clinic.revenuePaise.toLocaleString('en-IN')}p</p>
+                                                <p className="text-[10px] text-[#556C63] font-mono">{clinic.grossPaise.toLocaleString('en-IN')}p</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] text-[#556C63] font-bold uppercase tracking-wider">Patient Volume</p>
                                                 <p className="text-lg font-black text-[#0E2420] tabular-nums">
-                                                    {clinic.patientCount} <span className="text-xs font-medium text-[#556C63]">Visits</span>
+                                                    {clinic.patientCount} <span className="text-xs font-medium text-[#556C63]">Patients</span>
                                                 </p>
-                                                <p className="text-[10px] text-[#556C63]">{clinic.bedCapacity} Total Beds</p>
+                                                <p className="text-[10px] text-[#556C63]">{clinic.bedCapacity === null ? 'Beds unrecorded' : `${clinic.bedCapacity} total beds`}</p>
                                             </div>
                                         </div>
 
                                         {/* Mini Sub-Revenue Pill */}
                                         <div className="flex items-center justify-between text-[11px] text-[#556C63] px-1 mb-4">
-                                            <span>OPD: <strong className="text-[#0E2420]">₹{clinic.opdRev}</strong></span>
-                                            <span>IPD: <strong className="text-[#0E2420]">₹{clinic.ipdRev}</strong></span>
-                                            <span>Rx: <strong className="text-[#0E2420]">₹{clinic.pharmaRev}</strong></span>
+                                            <span>OPD: <strong className="text-[#0E2420]">Unconfigured</strong></span>
+                                            <span>IPD: <strong className="text-[#0E2420]">Unconfigured</strong></span>
+                                            <span>Rx: <strong className="text-[#0E2420]">{money(clinic.grossPaise)}</strong></span>
                                         </div>
                                     </div>
 
@@ -1492,7 +1032,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleUnpause(clinic.id)}
+                                                onClick={() => void setBranchStatus(clinic.id, 'active')}
                                                 className="border-[#BBE2D1] text-[#047C61] hover:bg-[#DFF4ED] h-9 px-3 rounded-xl text-xs font-semibold"
                                             >
                                                 Unpause
@@ -1501,7 +1041,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handlePause(clinic.id)}
+                                                onClick={() => void setBranchStatus(clinic.id, 'paused')}
                                                 className="border-[#F2D2CF] text-[#B9382C] hover:bg-[#FDF1EF] h-9 px-3 rounded-xl text-xs font-semibold"
                                             >
                                                 Pause
@@ -1533,19 +1073,19 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredClinics.map((clinic: any) => (
+                                    {filteredClinics.map((clinic) => (
                                         <tr key={clinic.id}>
                                             <td className="font-bold text-[#0E2420]">
                                                 {clinic.name}
                                             </td>
                                             <td className="font-mono text-xs text-[#047C61] font-bold">
-                                                {clinic.hubCode}
+                                                {clinic.code ?? 'Unassigned'}
                                             </td>
                                             <td className="text-[#556C63] text-xs">
                                                 {clinic.address || 'N/A'}
                                             </td>
                                             <td className="text-[#0E2420] text-xs font-medium">
-                                                {clinic.managerName}
+                                                {clinic.managerName ?? 'Unassigned'}
                                             </td>
                                             <td>
                                                 {clinic.status === 'paused' ? (
@@ -1559,7 +1099,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                 )}
                                             </td>
                                             <td className="font-mono font-bold text-[#0E2420] tabular-nums">
-                                                ₹{clinic.revenueInr.toLocaleString('en-IN')}
+                                                {money(clinic.grossPaise)}
                                             </td>
                                             <td className="text-[#3C544C] font-medium tabular-nums">
                                                 {clinic.patientCount}
@@ -1576,7 +1116,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={() => handleUnpause(clinic.id)}
+                                                        onClick={() => void setBranchStatus(clinic.id, 'active')}
                                                         className="text-xs h-8 px-2.5 text-[#047C61] border-[#BBE2D1]"
                                                     >
                                                         Unpause
@@ -1585,7 +1125,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={() => handlePause(clinic.id)}
+                                                        onClick={() => void setBranchStatus(clinic.id, 'paused')}
                                                         className="text-xs h-8 px-2.5 text-[#B9382C] border-[#F2D2CF]"
                                                     >
                                                         Pause
@@ -1624,8 +1164,8 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Select value={dateFilter} onValueChange={setDateFilter}>
-                            <SelectTrigger className="w-[140px] bg-white border-[#CEDAD3] rounded-xl font-medium text-xs h-10">
+                        <Select value={dateFilter} onValueChange={(value: HqPeriod) => setDateFilter(value)}>
+                            <SelectTrigger aria-label="Reporting period" className="w-[140px] bg-white border-[#CEDAD3] rounded-xl font-medium text-xs h-10">
                                 <SelectValue placeholder="Date Range" />
                             </SelectTrigger>
                             <SelectContent className="bg-white">
@@ -1638,7 +1178,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
 
                         <button
                             type="button"
-                            onClick={copySegmentReport}
+                            onClick={() => void copySegmentReport()} disabled={!hqLedger}
                             className="jvk-admin-secondary-btn h-10 text-xs"
                         >
                             <FileSpreadsheet className="w-4 h-4 text-[#047C61]" />
@@ -1658,15 +1198,15 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </div>
                         <div className="mt-2">
                             <div className="text-2xl font-black text-[#0E2420] tabular-nums">
-                                ₹{((hqLedger?.revenuePaise !== undefined ? hqLedger.revenuePaise : totalRevenue * 100) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                {money(hqLedger?.grossPaise)}
                             </div>
                             <div className="text-[11px] font-mono text-[#047C61] font-semibold mt-0.5">
-                                {(hqLedger?.revenuePaise !== undefined ? hqLedger.revenuePaise : totalRevenue * 100).toLocaleString('en-IN')} Paise
+                                {hqLedger ? `${hqLedger.grossPaise.toLocaleString('en-IN')} paise` : '—'}
                             </div>
                         </div>
                         <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
-                            <span>Double-entry Cr: Revenue</span>
-                            <span className="font-semibold text-[#0E2420]">Live D1 Rollup</span>
+                            <span>Gross receipts including tax</span>
+                            <span className="font-semibold text-[#0E2420]">Posted sales</span>
                         </div>
                     </Card>
 
@@ -1679,10 +1219,10 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </div>
                         <div className="mt-2">
                             <div className="text-2xl font-black text-[#0E2420] tabular-nums">
-                                ₹{((hqLedger?.cogsPaise ?? 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                {money(hqLedger?.cogsPaise)}
                             </div>
                             <div className="text-[11px] font-mono text-[#B45309] font-semibold mt-0.5">
-                                {(hqLedger?.cogsPaise ?? 0).toLocaleString('en-IN')} Paise
+                                {hqLedger ? `${hqLedger.cogsPaise.toLocaleString('en-IN')} paise` : '—'}
                             </div>
                         </div>
                         <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
@@ -1700,17 +1240,17 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </div>
                         <div className="mt-2">
                             <div className="text-2xl font-black text-[#0E2420] tabular-nums">
-                                ₹{((hqLedger?.netProfitPaise !== undefined ? hqLedger.netProfitPaise : totalRevenue * 100) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                {money(hqLedger?.operatingProfitPaise)}
                             </div>
                             <div className="text-[11px] font-mono text-[#047C61] font-semibold mt-0.5">
-                                {(hqLedger?.netProfitPaise !== undefined ? hqLedger.netProfitPaise : totalRevenue * 100).toLocaleString('en-IN')} Paise
+                                {hqLedger ? `${hqLedger.operatingProfitPaise.toLocaleString('en-IN')} paise` : '—'}
                             </div>
                         </div>
                         <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
                             <span>{(() => {
-                                const revPaise = hqLedger?.revenuePaise ?? totalRevenue * 100;
-                                const profitPaise = hqLedger?.netProfitPaise ?? totalRevenue * 100;
-                                return `Margin: ${revPaise > 0 ? ((profitPaise / revPaise) * 100).toFixed(1) : '0.0'}%`;
+                                const revPaise = hqLedger?.revenuePaise ?? 0;
+                                const profitPaise = hqLedger?.operatingProfitPaise ?? 0;
+                                return revPaise > 0 ? `Margin: ${((profitPaise / revPaise) * 100).toFixed(1)}%` : 'Margin unavailable';
                             })()}</span>
                             <span className="font-semibold text-[#0E2420]">OPEX Factored</span>
                         </div>
@@ -1719,30 +1259,51 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     <Card className="jvk-admin-card border-0 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-[#556C63] uppercase tracking-wider">Double-Entry Consensus</span>
-                            <span className={`p-2 rounded-xl ${hqLedger?.isBalanced !== false ? 'bg-[#DFF4ED] text-[#047C61]' : 'bg-[#FDF1EF] text-[#B9382C]'}`}>
+                            <span className={`p-2 rounded-xl ${reconciled ? 'bg-[#DFF4ED] text-[#047C61]' : 'bg-[#FDF1EF] text-[#B9382C]'}`}>
                                 <ShieldCheck className="w-4 h-4" />
                             </span>
                         </div>
                         <div className="mt-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-lg font-black text-[#0E2420]">
-                                    {hqLedger?.isBalanced !== false ? 'Balanced & Locked' : 'Variance Detected'}
+                                    {reconciled ? 'Reconciled' : !hqLedger ? 'Ledger unavailable' : hqLedger.journalCount === 0 && !hqLedger.unreconciledSales ? 'No posted journals' : 'Variance detected'}
                                 </span>
-                                <Badge variant="outline" className={`text-[10px] font-bold ${hqLedger?.isBalanced !== false ? 'bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1]' : 'bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF]'}`}>
-                                    {hqLedger?.isBalanced !== false ? 'Audit Ready' : 'Review'}
+                                <Badge variant="outline" className={`text-[10px] font-bold ${reconciled ? 'bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1]' : 'bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF]'}`}>
+                                    {reconciled ? 'Balanced' : hqLedger && (hqLedger.journalCount || hqLedger.unreconciledSales) ? 'Review' : '—'}
                                 </Badge>
                             </div>
                             <div className="text-[11px] font-mono text-[#556C63] mt-1">
-                                Σ Debit = Σ Credit: ₹{((hqLedger?.debitPaise ?? 0) / 100).toLocaleString('en-IN')}
+                                Debit {money(hqLedger?.debitPaise)} · Credit {money(hqLedger?.creditPaise)}
                             </div>
                         </div>
                         <div className="text-[10px] text-[#556C63] mt-2 flex items-center justify-between border-t border-[#E6EDE7] pt-2">
-                            <span>{hqLedger?.journalsCount ?? 0} Journals Posted</span>
-                            <span className="font-semibold text-[#047C61]">Zero Leakage</span>
+                            <span>{hqLedger ? `${hqLedger.journalCount} journals posted · ${hqLedger.lockDate ? `Locked through ${hqLedger.lockDate}` : 'Period unlocked'}` : 'Period status unavailable'}</span>
+                            <span className="font-semibold text-[#047C61]">Posted ledger</span>
                         </div>
                     </Card>
                 </div>
 
+                {hqLedger && (
+                    <details className="jvk-admin-card border-0 p-4">
+                        <summary className="cursor-pointer text-sm font-bold text-[#103B32]">Posted branch ledgers</summary>
+                        <p className="mt-2 text-xs">Operating profit is net posted pharmacy revenue less COGS, active command expenses excluding tax, and posted stock write-offs. Central operating expenses: {money(hqLedger.centralExpensesPaise)}.</p>
+                        <div className="jvk-admin-table-region mt-2" tabIndex={0} role="region" aria-label="Posted branch ledgers">
+                            <table className="jvk-admin-table text-xs">
+                                <thead><tr><th>Branch</th><th>Gross receipts</th><th>Net revenue</th><th>COGS</th><th>Operating expenses</th><th>Operating profit</th></tr></thead>
+                                <tbody>
+                                    {hqLedger.branches.map(branch => (
+                                        <tr key={branch.clinicId}>
+                                            <td>{clinics.find(clinic => clinic.id === branch.clinicId)?.name ?? branch.clinicId}</td>
+                                            <td>{money(branch.grossPaise)}</td><td>{money(branch.revenuePaise)}</td>
+                                            <td>{money(branch.cogsPaise)}</td><td>{money(branch.operatingExpensesPaise)}</td>
+                                            <td>{money(branch.profitPaise)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                )}
                 <Card className="jvk-admin-card border-0 overflow-hidden p-5 sm:p-6">
                     {/* Dimension Selector & Filters */}
                     <div className="flex flex-col lg:flex-row gap-5 mb-6 border-b border-[#E6EDE7] pb-5 justify-between">
@@ -1762,7 +1323,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         type="button"
                                         role="tab"
                                         aria-selected={groupBy === tab.value}
-                                        onClick={() => setGroupBy(tab.value as any)}
+                                        onClick={() => setGroupBy(tab.value as HqGroup)}
                                         className="jvk-admin-tab text-xs"
                                     >
                                         {tab.label}
@@ -1775,13 +1336,13 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <div className="space-y-1.5">
                                 <Label className="text-[11px] font-bold text-[#556C63]">Clinic Node</Label>
                                 <Select value={filters.clinic} onValueChange={(v) => setFilters(f => ({ ...f, clinic: v }))}>
-                                    <SelectTrigger className="w-[160px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
+                                    <SelectTrigger aria-label="Clinic node" className="w-[160px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         <SelectItem value="all">All Network Hubs</SelectItem>
-                                        {clinics.map((c: any) => (
-                                            <SelectItem key={c.id} value={c.id} disabled={c.status === 'paused'}>
+                                        {clinics.map(c => (
+                                            <SelectItem key={c.id} value={c.id}>
                                                 {c.name} {c.status === 'paused' ? '(Paused)' : ''}
                                             </SelectItem>
                                         ))}
@@ -1792,7 +1353,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <div className="space-y-1.5">
                                 <Label className="text-[11px] font-bold text-[#556C63]">Payment Mode</Label>
                                 <Select value={filters.payment} onValueChange={(v) => setFilters(f => ({ ...f, payment: v }))}>
-                                    <SelectTrigger className="w-[130px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
+                                    <SelectTrigger aria-label="Payment mode" className="w-[130px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -1800,6 +1361,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         <SelectItem value="Cash">Cash</SelectItem>
                                         <SelectItem value="UPI">UPI Instant</SelectItem>
                                         <SelectItem value="CARD">Debit/Credit Card</SelectItem>
+                                        <SelectItem value="CREDIT">Credit</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1807,16 +1369,16 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <div className="space-y-1.5">
                                 <Label className="text-[11px] font-bold text-[#556C63]">Service Line</Label>
                                 <Select value={filters.type} onValueChange={(v) => setFilters(f => ({ ...f, type: v }))}>
-                                    <SelectTrigger className="w-[140px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
+                                    <SelectTrigger aria-label="Service line" className="w-[140px] bg-white border-[#CEDAD3] rounded-xl h-9 text-xs font-medium text-[#0E2420]">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
                                         <SelectItem value="all">All Services</SelectItem>
                                         <SelectItem value="CONSULTATION">OPD Consultation</SelectItem>
                                         <SelectItem value="PHARMACY">Pharmacy Sales</SelectItem>
-                                        <SelectItem value="IPD_ADMISSION_ADVANCE">IPD Advance</SelectItem>
-                                        <SelectItem value="IPD_SETTLEMENT">IPD Settlement</SelectItem>
-                                        <SelectItem value="SERVICE">General Procedures</SelectItem>
+                                        <SelectItem value="IPD_ADMISSION_ADVANCE" disabled>IPD Advance</SelectItem>
+                                        <SelectItem value="IPD">IPD</SelectItem>
+                                        <SelectItem value="SERVICE" disabled>General Procedures</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1824,7 +1386,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                     </div>
 
                     {/* Chart & Breakdown Layout */}
-                    {analyticsLoading ? (
+                    {financeError ? <p role="alert">Finance unavailable.</p> : analyticsLoading ? (
                         <div className="flex flex-col items-center justify-center py-12 space-y-4">
                             <div className="w-48 h-48 rounded-full border-[18px] border-[#E4EDE7] animate-pulse flex items-center justify-center">
                                 <div className="w-20 h-20 rounded-full bg-[#F2F7F4] animate-pulse" />
@@ -1860,10 +1422,10 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     <div className="bg-[#FFFDF9]/95 backdrop-blur-md px-5 py-3.5 rounded-3xl border border-[#DCE7DF] shadow-md flex flex-col items-center">
                                         <p className="text-[10px] font-bold text-[#556C63] uppercase tracking-widest">Selected Aggregate</p>
                                         <h3 className="text-2xl md:text-3xl font-black text-[#0E2420] mt-0.5 tabular-nums">
-                                            ₹{totalSelectedRevenue.toLocaleString('en-IN')}
+                                            {money(hqLedger?.selectedGrossPaise)}
                                         </h3>
                                         <p className="text-[10px] font-mono font-semibold text-[#047C61] mt-0.5">
-                                            {totalSelectedPaise.toLocaleString('en-IN')} Paise
+                                            {hqLedger ? `${totalSelectedPaise.toLocaleString('en-IN')} paise` : '—'}
                                         </p>
                                         <div className="flex gap-1 mt-2">
                                             <div className="w-6 h-1 bg-[#047C61] rounded-full" />
@@ -1917,7 +1479,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                     return (
                                                         <div className="bg-[#0E2420] text-white p-3.5 rounded-2xl shadow-xl border border-[#1E473D]">
                                                             <p className="text-xs font-bold text-[#9CD3BF] uppercase tracking-wider mb-1">{payload[0].name}</p>
-                                                            <p className="text-xl font-black text-white">₹{val.toLocaleString('en-IN')}</p>
+                                                            <p className="text-xl font-black text-white">₹{val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                                             <p className="text-[11px] font-mono text-[#6EE7B7]">{(val * 100).toLocaleString('en-IN')} Paise</p>
                                                             <p className="text-[10px] text-[#E5A736] font-bold mt-1.5">
                                                                 {(val / (totalSelectedRevenue || 1) * 100).toFixed(1)}% of total selection
@@ -1954,7 +1516,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                         <span className="font-bold text-[#0E2420]">{item.name}</span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="font-mono font-bold text-[#0E2420]">₹{Number(item.value).toLocaleString('en-IN')}</span>
+                                                        <span className="font-mono font-bold text-[#0E2420]">{money(item.paise)}</span>
                                                         <span className="text-[10px] text-[#556C63] font-mono ml-1.5">({percentage.toFixed(1)}%)</span>
                                                     </div>
                                                 </div>
@@ -1989,13 +1551,14 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <span>Central Inventory & Stock Rebalancing Radar</span>
                         </h2>
                         <p className="text-xs text-[#556C63] mt-0.5">
-                            Aggregated multi-branch stock levels, low-supply alerts, and instant inter-clinic inventory transfers.
+                            Group inventory, current branch shortages, and recorded stock transfers.
                         </p>
                     </div>
 
                     <button
                         type="button"
                         onClick={() => setIsTransferModalOpen(true)}
+                        disabled={!stock || !fleet}
                         className="jvk-admin-primary-btn h-10 text-xs"
                     >
                         <ArrowRightLeft className="w-4 h-4" />
@@ -2014,16 +1577,16 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     <span>Branch Shortage Radar ({lowStockRadarItems.length})</span>
                                 </h3>
                                 <p className="text-xs text-[#556C63] mt-0.5">
-                                    Clinics operating below minimum safety threshold with automated surplus detection.
+                                    Active branches below 10 available units for tracked formulations.
                                 </p>
                             </div>
                             <Badge variant="outline" className="text-[#B9382C] bg-[#FDF1EF] border-[#F2D2CF] text-[10px] font-bold uppercase">
-                                Action Required
+                                Inventory review
                             </Badge>
                         </div>
 
                         <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                            {lowStockRadarItems.map((item: any, idx: number) => (
+                            {lowStockRadarItems.map((item, idx) => (
                                 <div key={idx} className="p-3.5 bg-[#FAFBF8] rounded-xl border border-[#E2ECE5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:border-[#96C3B1] transition-colors">
                                     <div>
                                         <div className="flex items-center gap-2">
@@ -2069,8 +1632,8 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         className="jvk-admin-artwork w-28 h-auto"
                                     />
                                     <div>
-                                        <p className="jvk-admin-serif font-bold text-[#0E2420] text-base">All Branch Stocks Stable</p>
-                                        <p className="text-xs text-[#556C63] mt-0.5">Every clinic maintains inventory above designated safety buffers.</p>
+                                        <p className="jvk-admin-serif font-bold text-[#0E2420] text-base">Tracked stock status</p>
+                                        <p className="text-xs text-[#556C63] mt-0.5">{stockError || fleetError ? 'Group stock unavailable.' : !stock || !fleet ? 'Loading group stock…' : !inventory.length ? 'No stock batches recorded.' : 'No active branch below the tracked stock threshold.'}</p>
                                     </div>
                                 </div>
                             )}
@@ -2086,24 +1649,24 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     <span>Group SKU Matrix</span>
                                 </h3>
                                 <Badge className="bg-[#047C61] text-white text-[10px]">
-                                    {distinctItemNames.length} SKUs
+                                    {stock ? `${stock.items.length} SKUs` : 'Unavailable'}
                                 </Badge>
                             </div>
 
                             <div className="space-y-3 mb-4">
                                 <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
                                     <span className="text-[#556C63]">Total Tracked Inventory</span>
-                                    <span className="font-bold text-[#0E2420] font-mono">{inventory.length} Records</span>
+                                    <span className="font-bold text-[#0E2420] font-mono">{stock ? `${inventory.length} records` : 'Unavailable'}</span>
                                 </div>
                                 <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
-                                    <span className="text-[#556C63]">Expiring in 30 Days</span>
+                                    <span className="text-[#556C63]">Expired or expiring within 90 days</span>
                                     <span className={`font-bold font-mono ${expiringItems.length > 0 ? 'text-[#B45309]' : 'text-[#0E2420]'}`}>
-                                        {expiringItems.length} Batches
+                                        {stock ? `${expiringItems.length} batches` : 'Unavailable'}
                                     </span>
                                 </div>
                                 <div className="p-3 bg-[#F6FAF7] rounded-xl border border-[#E2ECE5] flex justify-between items-center text-xs">
                                     <span className="text-[#556C63]">Active Supply Channels</span>
-                                    <span className="font-bold text-[#047C61]">Cloudflare D1 Synced</span>
+                                    <span className="font-bold text-[#047C61]">{stock ? 'D1 inventory records' : 'Stock unavailable'}</span>
                                 </div>
                             </div>
                         </div>
@@ -2114,7 +1677,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 <span>Inter-Branch Rebalancer</span>
                             </p>
                             <p className="text-[11px] text-[#3C544C] leading-relaxed">
-                                Transferring stock updates both source and destination inventories instantaneously with tamper-proof cryptographic audit tracking.
+                                A committed transfer updates both batches and records an immutable audit entry.
                             </p>
                         </div>
                     </Card>
@@ -2159,7 +1722,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                 <span className="font-bold text-[#0E2420]">{item.name}</span>
                                             </div>
                                             <span className="font-mono font-bold text-[#0E2420] tabular-nums">
-                                                ₹{Number(item.value).toLocaleString('en-IN')} ({percentage.toFixed(1)}%)
+                                                {money(item.paise)} ({percentage.toFixed(1)}%)
                                             </span>
                                         </div>
                                     );
@@ -2170,7 +1733,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <div className="flex justify-center pt-1">
                             <button
                                 type="button"
-                                onClick={copySegmentReport}
+                                onClick={() => void copySegmentReport()} disabled={!hqLedger}
                                 className="jvk-admin-secondary-btn !min-h-9 text-xs"
                             >
                                 <FileSpreadsheet className="w-3.5 h-3.5 text-[#047C61]" />
@@ -2203,15 +1766,15 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         </tr>
                                         <tr>
                                             <td className="text-xs font-medium text-[#3C544C]">Active IPD Beds</td>
-                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">{activeIPDCount}</td>
+                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">{fleet ? activeIPDCount : 'Unavailable'}</td>
                                         </tr>
                                         <tr>
-                                            <td className="text-xs font-medium text-[#3C544C]">Total Inventory Value</td>
-                                            <td className="text-right font-bold text-[#047C61] tabular-nums">₹{paiseToRupeesString(totalInventoryValuePaise)}</td>
+                                            <td className="text-xs font-medium text-[#3C544C]">Inventory value at batch cost</td>
+                                            <td className="text-right font-bold text-[#047C61] tabular-nums">{money(stock ? totalInventoryValuePaise : undefined)}</td>
                                         </tr>
                                         <tr>
                                             <td className="text-xs font-medium text-[#3C544C]">Today's Revenue</td>
-                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">₹{paiseToRupeesString(Math.round(totalRevenuePaise))}</td>
+                                            <td className="text-right font-bold text-[#0E2420] tabular-nums">{money(fleet ? totalRevenuePaise : undefined)}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -2231,7 +1794,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 </div>
 
                 {/* HQ Central Rebalancing Telemetry Card */}
-                {hqRadar?.rebalancing && (
+                {lowStockRadarItems.some(item => item.surplusClinicId) && (
                     <Card className="jvk-admin-card-sage border-0 p-5">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div className="space-y-1">
@@ -2243,15 +1806,18 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                 </div>
                                 <h3 className="jvk-admin-serif text-base font-bold text-[#0E2420] flex items-center gap-2 mt-1">
                                     <Zap className="w-4 h-4 text-[#D97706]" />
-                                    <span>Dispatch Recommendation: {hqRadar.rebalancing.recommendedTransferUnits} units from {hqRadar.rebalancing.sourceHub} to {hqRadar.rebalancing.targetClinic}</span>
+                                    <span>Dispatch Recommendation: {lowStockRadarItems.find(item => item.surplusClinicId)?.item_name}</span>
                                 </h3>
                                 <p className="text-xs text-[#3C544C]">
-                                    Automated multi-clinic stock balancing algorithm identifies surplus inventory at central hub to replenish high-burn clinic stock. Estimated transit SLA: {hqRadar.rebalancing.estimatedTransitDays} business days.
+                                    Available stock at another active branch can replenish this shortage.
                                 </p>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => initiateTransferForHqRadarItem(hqRadar.inventoryRadar?.[0] || { brand: 'Amoxicillin + Clavulanic Acid' })}
+                                onClick={() => {
+                                    const suggestion = lowStockRadarItems.find(item => item.surplusClinicId);
+                                    if (suggestion) initiateTransferForRadarItem(suggestion);
+                                }}
                                 className="jvk-admin-primary-btn text-xs h-9 px-4 shrink-0"
                             >
                                 <ArrowRightLeft className="w-4 h-4" />
@@ -2262,20 +1828,20 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                 )}
 
                 {/* Cross-Clinic Inventory Telemetry Table */}
-                {hqRadar?.inventoryRadar && hqRadar.inventoryRadar.length > 0 && (
+                {matrix.length > 0 && (
                     <Card className="jvk-admin-card border-0 p-5 overflow-hidden">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                             <div>
                                 <h3 id="hq-radar-table-heading" className="jvk-admin-serif font-bold text-[#0E2420] text-sm flex items-center gap-2">
                                     <Database className="w-4 h-4 text-[#047C61]" />
-                                    <span>Central Depot vs Clinic Stock Telemetry ({hqRadar.inventoryRadar.length} Tracked Formulations)</span>
+                                    <span>Group SKU Matrix ({matrix.length} Tracked Formulations)</span>
                                 </h3>
                                 <p className="text-xs text-[#556C63]">
-                                    Live synchronized Cloudflare D1 inventory metrics comparing clinic site buffers against central HQ reserves.
+                                    Available unexpired units by branch. Group quantities include all recorded branches.
                                 </p>
                             </div>
                             <Badge variant="outline" className="bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1] text-[10px] font-mono">
-                                Central Depot: {hqRadar.hqGroupStockUnits || 1420} units in reserve
+                                Group available: {totalGroupAvailable} units
                             </Badge>
                         </div>
 
@@ -2285,15 +1851,15 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     <tr>
                                         <th>Formulation & Brand</th>
                                         <th>Strength</th>
-                                        <th>Clinic Stock</th>
-                                        <th>HQ Central Stock</th>
+                                        <th>Available by branch</th>
+                                        <th>Group available</th>
                                         <th>Reorder Point</th>
                                         <th>Status</th>
                                         <th className="text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {hqRadar.inventoryRadar.map((item, idx) => (
+                                    {matrix.map((item, idx) => (
                                         <tr key={idx}>
                                             <td>
                                                 <div className="font-bold text-[#0E2420]">{item.brand}</div>
@@ -2303,32 +1869,28 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                                 {item.strengthMg} mg
                                             </td>
                                             <td className="font-mono font-bold">
-                                                <span className={item.isLowStock ? 'text-[#B9382C]' : 'text-[#0E2420]'}>
-                                                    {item.clinicStock} units
-                                                </span>
+                                                {item.branches.map(branch => (
+                                                    <div key={branch.id} className="text-xs">{branch.name}: {branch.units} units</div>
+                                                ))}
                                             </td>
-                                            <td className="font-mono text-[#047C61] font-semibold">
-                                                {item.hqGroupStock} units
-                                            </td>
-                                            <td className="font-mono text-[#556C63]">
-                                                {item.reorderLevel} units
-                                            </td>
-                                            <td>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={`text-[10px] font-bold ${
-                                                        item.isLowStock
-                                                            ? 'bg-[#FDF1EF] text-[#B9382C] border-[#F2D2CF]'
-                                                            : 'bg-[#DFF4ED] text-[#065F46] border-[#BBE2D1]'
-                                                    }`}
-                                                >
-                                                    {item.status}
-                                                </Badge>
-                                            </td>
+                                            <td className="font-mono text-[#047C61] font-semibold">{item.units} units</td>
+                                            <td className="font-mono text-[#556C63]">{threshold} units</td>
+                                            <td><Badge variant="outline">
+                                                {item.branches.some(branch => branch.status === 'active' && branch.units < threshold)
+                                                    ? 'Active branch shortage' : 'Above threshold'}
+                                            </Badge></td>
                                             <td className="text-right">
                                                 <button
                                                     type="button"
-                                                    onClick={() => initiateTransferForHqRadarItem(item)}
+                                                    onClick={() => {
+                                                        const shortage = lowStockRadarItems.find(row => row.skuId === item.id);
+                                                        if (shortage) initiateTransferForRadarItem(shortage);
+                                                        else {
+                                                            setTransferSku(item.id);
+                                                            setTransferBatch('');
+                                                            setIsTransferModalOpen(true);
+                                                        }
+                                                    }}
                                                     className="jvk-admin-secondary-btn !min-h-7 !px-2.5 text-xs"
                                                 >
                                                     <ArrowRightLeft className="w-3 h-3 text-[#047C61]" />
@@ -2357,7 +1919,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             <DialogTitle className="text-xl font-bold text-slate-900">Inter-Clinic Stock Rebalancer</DialogTitle>
                         </div>
                         <DialogDescription className="text-xs text-slate-500">
-                            Transfer stock units between network clinics. Instantly reconciles Cloudflare D1 inventory matrices.
+                            Transfer stock units between network clinics. The selected lot and both stock movements appear in the transfer audit.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -2365,13 +1927,13 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         {/* Select Item */}
                         <div className="space-y-1.5">
                             <Label className="text-xs font-bold text-slate-700">Select Medicine / Item</Label>
-                            <Select value={transferItemName} onValueChange={setTransferItemName}>
-                                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl h-11 text-sm font-medium">
+                            <Select value={transferSku} onValueChange={value => { setTransferSku(value); setTransferBatch(''); }}>
+                                <SelectTrigger aria-label="Medicine" className="bg-slate-50 border-slate-200 rounded-xl h-11 text-sm font-medium">
                                     <SelectValue placeholder="Choose medicine to transfer..." />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white max-h-60">
-                                    {distinctItemNames.map(name => (
-                                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                                    {stock?.items.map(item => (
+                                        <SelectItem key={item.id} value={item.id}>{item.brand} · {item.strengthMg} mg {item.form}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -2388,8 +1950,8 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                         </span>
                                     )}
                                 </div>
-                                <Select value={transferSourceClinic} onValueChange={setTransferSourceClinic}>
-                                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl h-11 text-xs">
+                                <Select value={transferSourceClinic} onValueChange={value => { setTransferSourceClinic(value); setTransferBatch(''); }}>
+                                    <SelectTrigger aria-label="Source clinic" className="bg-slate-50 border-slate-200 rounded-xl h-11 text-xs">
                                         <SelectValue placeholder="Select donor clinic..." />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -2412,7 +1974,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     )}
                                 </div>
                                 <Select value={transferDestClinic} onValueChange={setTransferDestClinic}>
-                                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl h-11 text-xs">
+                                    <SelectTrigger aria-label="Destination clinic" className="bg-slate-50 border-slate-200 rounded-xl h-11 text-xs">
                                         <SelectValue placeholder="Select receiving clinic..." />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white">
@@ -2424,6 +1986,23 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-slate-700">Source Batch</Label>
+                            <Select value={transferBatch} onValueChange={setTransferBatch} disabled={!transferOptions.length}>
+                                <SelectTrigger aria-label="Source batch" className="bg-slate-50 border-slate-200 rounded-xl h-11 text-xs">
+                                    <SelectValue placeholder={transferSourceClinic && transferSku ? "Choose an eligible batch" : "Select medicine and source first"} />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                    {transferOptions.map(batch => (
+                                        <SelectItem key={batch.id} value={batch.id}>
+                                            {batch.batchNo} · {batch.available} available · expiry {batch.expiry}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {transferSourceClinic && transferSku && !transferOptions.length && <p className="text-xs">No available batches at the source clinic.</p>}
                         </div>
 
                         {/* Transfer Quantity and Quick Helpers */}
@@ -2456,8 +2035,9 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                             </div>
                             <Input
                                 type="number"
+                                aria-label="Transfer quantity"
                                 min={1}
-                                max={availableSourceQuantity || 1000}
+                                max={availableSourceQuantity || 1}
                                 value={transferQuantity}
                                 onChange={(e) => setTransferQuantity(Number(e.target.value))}
                                 className="bg-slate-50 border-slate-200 h-11 text-sm rounded-xl font-mono"
@@ -2468,7 +2048,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <div className="space-y-1.5">
                             <Label className="text-xs font-bold text-slate-700">Rebalance Note / Reason</Label>
                             <Input
-                                value={transferReason}
+                                aria-label="Transfer reason" value={transferReason}
                                 onChange={(e) => setTransferReason(e.target.value)}
                                 placeholder="e.g. Urgent OPD replenishment, Batch reallocation"
                                 className="bg-slate-50 border-slate-200 h-10 text-xs rounded-xl"
@@ -2476,7 +2056,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         </div>
 
                         {/* Summary Before/After Preview */}
-                        {transferSourceClinic && transferDestClinic && transferItemName && (
+                        {transferSourceClinic && transferDestClinic && selectedBatch && (
                             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
                                 <p className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Rebalance Preview</p>
                                 <div className="flex justify-between items-center text-slate-600">
@@ -2497,7 +2077,7 @@ export function HospitalDashboard({ onSelectClinic }: HospitalDashboardProps) {
                         <DialogFooter className="pt-2">
                             <Button
                                 type="submit"
-                                disabled={transferLoading || availableSourceQuantity < transferQuantity || transferQuantity <= 0}
+                                disabled={transferLoading || !canTransfer}
                                 className="jvk-admin-primary-btn w-full h-11"
                             >
                                 {transferLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}

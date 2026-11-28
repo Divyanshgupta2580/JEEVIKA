@@ -1,133 +1,77 @@
-import React, { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import React, { useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/basic'
 import { Button, Input, Label } from '@/components/ui/basic'
 import { Building2, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
-import { dataService as db } from '@/lib/dataService'
+import { staffApi, useStaffData } from '@/lib/staffApi'
+import type { HqFleet, HqOrganization } from '../../../../packages/shared/hq-command'
 import { useToast } from '@/components/ui/use-toast'
 
-export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onComplete: () => void }) {
-    const [searchParams] = useSearchParams()
-    const { toast } = useToast()
-    const [loading, setLoading] = useState(false)
+export function AdminSetup({ onComplete }: { onComplete: () => void }) {
+    const { toast } = useToast();
+    const { data: fleet, error } = useStaffData<HqFleet>('/clinical/command/hq/fleet');
+    const [created, setCreated] = useState<HqOrganization>();
+    const [loading, setLoading] = useState(false);
+    const [hospitalName, setHospitalName] = useState('');
+    const [hospitalSlug, setHospitalSlug] = useState('');
+    const [hospitalAdminEmail, setHospitalAdminEmail] = useState('');
+    const branchAttempt = useRef<{ body: string; key: string }>();
 
-    // Get plan from URL (primary) or user metadata (fallback)
-    const urlPlan = searchParams.get('plan')
-    const urlBilling = searchParams.get('billing')
-    const metaPlan = userProfile?.user_metadata?.onboarding_plan
-    const metaBilling = userProfile?.user_metadata?.onboarding_billing
-
-    const selectedPlan = urlPlan || metaPlan || 'free'
-    const selectedBilling = urlBilling || metaBilling || 'monthly'
-
-    // If user has no hospital_id, start at 'hospital' step, otherwise 'clinic'
-    const [step, setStep] = useState<'hospital' | 'clinic'>(userProfile?.hospital_id ? 'clinic' : 'hospital')
-    const [localHospitalId, setLocalHospitalId] = useState<string | null>(userProfile?.hospital_id || null)
-
-    // Ensure user role is HOSPITAL_ADMIN for self-service
-    useEffect(() => {
-        const fixRole = async () => {
-            if (userProfile && userProfile.role !== 'HOSPITAL_ADMIN' && userProfile.role !== 'SUPER_ADMIN') {
-                await db.update('profiles', userProfile.id, { role: 'HOSPITAL_ADMIN' });
-            }
-        };
-        fixRole();
-    }, [userProfile]);
-
-    const [hospitalName, setHospitalName] = useState('')
-    const [hospitalSlug, setHospitalSlug] = useState('')
-    const [hospitalAdminEmail, setHospitalAdminEmail] = useState(userProfile?.email || '')
-
-    // Helper to generate a clean slug from name
-    const slugify = (text: string) => {
-        return text
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '') // Remove non-word chars (except space and hyphen)
-            .replace(/\s+/g, '-')     // Replace spaces with hyphens
-            .replace(/-+/g, '-')      // Replace multiple hyphens with single hyphen
-            .trim();                  // Trim from both ends
+    function handleNameChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const name = event.target.value;
+        setHospitalName(name);
+        setHospitalSlug(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60));
     }
 
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newName = e.target.value;
-        setHospitalName(newName);
-        setHospitalSlug(slugify(newName));
-    }
-
-    async function handleHospitalSetup(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault()
-        setLoading(true)
-        const formData = new FormData(e.currentTarget)
-        const name = formData.get('name') as string
-        const slug = formData.get('slug') as string
-        const color = formData.get('branding_color') as string
-
+    async function handleHospitalSetup(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (loading) return;
+        const form = new FormData(event.currentTarget);
+        setLoading(true);
         try {
-            // Use the secure RPC to initialize the hospital onboarding
-            // This bypasses RLS for the initial setup and ensures atomicity
-            const planSlug = selectedPlan === 'free' ? 'testing' : selectedPlan;
-
-            const hospitalId = await db.callRpc('initialize_hospital_onboarding', {
-                p_name: name,
-                p_slug: slug,
-                p_branding_color: color,
-                p_owner_id: userProfile.id,
-                p_plan_slug: planSlug,
-                p_billing_cycle: selectedBilling,
-                p_admin_email: formData.get('admin_email') as string
+            const organization = await staffApi<HqOrganization>('/clinical/command/hq/organization', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: form.get('name'), slug: form.get('slug'),
+                    brandingColor: form.get('branding_color'), adminEmail: form.get('admin_email'),
+                }),
             });
-
-            // 3. Update Local State & Prepare to Move Next
-            userProfile.hospital_id = hospitalId
-            setLocalHospitalId(hospitalId)
-            setStep('clinic')
-            toast({ title: 'Hospital Created', description: 'Now let\'s set up your first clinic.' })
-
-            // Force refresh to clear SETUP mode from parent
-            window.location.reload()
-
-        } catch (err: any) {
-            console.error(err)
-            toast({ title: 'Error', description: err.message, variant: 'destructive' })
+            setCreated(organization);
+            toast({ title: 'Organization registered' });
+        } catch (failure) {
+            toast({ title: 'Organization unavailable', description: failure instanceof Error ? failure.message : undefined, variant: 'destructive' });
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
-    async function handleFirstClinic(e: React.FormEvent<HTMLFormElement>) {
-        e.preventDefault()
-        if (!localHospitalId) {
-            toast({ title: 'Error', description: 'Hospital ID missing. Please refresh.', variant: 'destructive' })
-            return
-        }
-
-        setLoading(true)
-        const formData = new FormData(e.currentTarget)
-        const clinicName = formData.get('clinic_name') as string
-        const location = formData.get('location') as string
-
+    async function handleFirstClinic(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (loading) return;
+        const form = new FormData(event.currentTarget);
+        const body = JSON.stringify({ name: form.get('clinic_name'), address: form.get('location') });
+        if (branchAttempt.current?.body !== body) branchAttempt.current = { body, key: crypto.randomUUID() };
+        setLoading(true);
         try {
-            // Create Clinic
-            await db.create('clinics', {
-                name: clinicName,
-                location: location,
-                hospital_id: localHospitalId
-            })
-
-            toast({ title: 'Success', description: 'Headquarters registered successfully.' })
-            // Trigger completion callback
-            onComplete()
-
-        } catch (err: any) {
-            console.error(err)
-            toast({ title: 'Error', description: err.message, variant: 'destructive' })
+            await staffApi('/clinical/command/hq/branches', {
+                method: 'POST', body, headers: { 'Idempotency-Key': branchAttempt.current.key },
+            });
+            toast({ title: 'Clinic registered' });
+            onComplete();
+        } catch (failure) {
+            toast({ title: 'Clinic registration unavailable', description: failure instanceof Error ? failure.message : undefined, variant: 'destructive' });
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
+
+    if (!fleet) return (
+        <p className="jvk-admin-card p-5" role={error ? "alert" : "status"}>
+            {error ? `Organization unavailable. ${error}` : "Loading organization…"}
+        </p>
+    );
 
     // --- RENDER HOSPITAL FORM ---
-    if (step === 'hospital') {
+    if (!created && !fleet.organization) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
                 <Card className="w-full max-w-lg glass-card shadow-xl border-blue-100">
@@ -143,9 +87,9 @@ export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onCo
                     <CardContent className="pt-8">
                         <form onSubmit={handleHospitalSetup} className="space-y-6">
                             <div className="space-y-2">
-                                <Label>Hospital Entity Name</Label>
+                                <Label htmlFor="setup-name">Hospital Entity Name</Label>
                                 <Input
-                                    name="name"
+                                    id="setup-name" name="name"
                                     placeholder="e.g. City General Hospital"
                                     required
                                     className="h-12 text-lg"
@@ -154,21 +98,21 @@ export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onCo
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Unique Slug (ID)</Label>
+                                <Label htmlFor="setup-slug">Unique Slug (ID)</Label>
                                 <Input
-                                    name="slug"
+                                    id="setup-slug" name="slug"
                                     placeholder="e.g. city-general-ny"
                                     required
                                     className="h-12 text-lg font-mono"
                                     value={hospitalSlug}
                                     onChange={(e) => setHospitalSlug(e.target.value)}
                                 />
-                                <p className="text-xs text-slate-400">Used for URL identification. Must be unique.</p>
+                                <p className="text-xs text-slate-400">Unique organization reference.</p>
                             </div>
                             <div className="space-y-2">
-                                <Label>Administrative Email</Label>
+                                <Label htmlFor="setup-admin_email">Administrative Email</Label>
                                 <Input
-                                    name="admin_email"
+                                    id="setup-admin_email" name="admin_email"
                                     type="email"
                                     placeholder="admin@hospital.com"
                                     required
@@ -176,12 +120,12 @@ export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onCo
                                     value={hospitalAdminEmail}
                                     onChange={(e) => setHospitalAdminEmail(e.target.value)}
                                 />
-                                <p className="text-xs text-slate-400">Primary contact for billing and verification links.</p>
+                                <p className="text-xs text-slate-400">Administrative contact for this organization.</p>
                             </div>
                             <div className="space-y-2">
-                                <Label>Branding Color</Label>
+                                <Label htmlFor="setup-branding_color">Branding Color</Label>
                                 <div className="flex gap-2">
-                                    <Input name="branding_color" type="color" defaultValue="#2563eb" className="w-20 h-12 p-1 cursor-pointer" />
+                                    <Input id="setup-branding_color" name="branding_color" type="color" defaultValue="#2563eb" className="w-20 h-12 p-1 cursor-pointer" />
                                     <div className="flex-1 flex items-center text-sm text-slate-500 italic px-2">
                                         Choose your primary brand color
                                     </div>
@@ -210,20 +154,20 @@ export function AdminSetup({ userProfile, onComplete }: { userProfile: any, onCo
                     <div className="mx-auto w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
                         <CheckCircle2 className="w-8 h-8 text-green-600" />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-slate-900">Hospital Registered!</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-slate-900">{created?.name ?? fleet.organization?.name}</CardTitle>
                     <CardDescription className="text-lg mt-2">
-                        Now, let's set up your first clinic location.
+                        Register a clinic in this organization.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8">
                     <form onSubmit={handleFirstClinic} className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Clinic / Branch Name</Label>
-                            <Input name="clinic_name" placeholder="e.g. Main Street HQ" required className="h-12 text-lg" />
+                            <Label htmlFor="setup-clinic_name">Clinic / Branch Name</Label>
+                            <Input id="setup-clinic_name" name="clinic_name" placeholder="e.g. Main Street HQ" required className="h-12 text-lg" />
                         </div>
                         <div className="space-y-2">
-                            <Label>Address / Location</Label>
-                            <Input name="location" placeholder="e.g. 123 Health Blvd, NY" required className="h-12 text-lg" />
+                            <Label htmlFor="setup-location">Address / Location</Label>
+                            <Input id="setup-location" name="location" placeholder="e.g. 123 Health Blvd, NY" required className="h-12 text-lg" />
                         </div>
 
                         <Button type="submit" disabled={loading} className="w-full h-12 text-lg font-medium bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/20">

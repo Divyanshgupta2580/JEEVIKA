@@ -1,3 +1,4 @@
+import type { HqFinance, HqStock } from "../../../../packages/shared/hq-command";
 import { CLOUDFLARE_API_BASE } from './api';
 import { authService } from './authService';
 import { staffApi } from './staffApi';
@@ -509,91 +510,74 @@ class CloudflareDataService implements DataService {
         return serverResult || localSale;
     }
 
-    async getInventoryRadar(_options?: { clinicId?: string; stock?: number }): Promise<any> {
+    async getInventoryRadar(options?: { clinicId?: string; stock?: number }) {
+        const session = await authService.getSession();
+        const staff = session?.user;
+        if (!staff) return null;
+        const clinicId = options?.clinicId ?? staff.clinicId;
+        const hasGroupScope = ['HOSPITAL_ADMIN', 'SUPER_ADMIN', 'OWNER'].includes(staff.role);
+        if (!hasGroupScope && (clinicId !== staff.clinicId || !['CLINIC_ADMIN', 'CASHIER'].includes(staff.role))) return null;
         try {
-            const session = await authService.getSession();
-            if (!session?.user || !['HOSPITAL_ADMIN', 'CLINIC_ADMIN', 'CASHIER'].includes(session.user.role)) {
-                return null;
-            }
-            const data = await staffApi<{
-                batches?: Array<{
-                    salt: string;
-                    brand: string;
-                    strengthMg: number;
-                    quantity: number;
-                    available: number;
-                    expiry: string;
-                }>;
-            }>('/clinical/pharmacy/inventory');
-            const batches = data?.batches ?? [];
-            const cutoff = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
-            const expiringBatches = batches.filter((b) => b.expiry <= cutoff);
-            const hqGroupStockUnits = batches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
-            const inventoryRadar = batches.map((b) => {
-                const available = Number(b.available ?? b.quantity ?? 0);
+            if (hasGroupScope) {
+                const { items, batches, day } = await staffApi<HqStock>('/clinical/command/hq/stock');
+                const available = batches.filter(batch => batch.expiry >= day);
                 return {
-                    salt: b.salt,
-                    brand: b.brand,
-                    strengthMg: b.strengthMg,
-                    clinicStock: available,
-                    hqGroupStock: Number(b.quantity || 0),
-                    reorderLevel: 20,
-                    isLowStock: available < 20,
-                    status: available < 20 ? 'LOW' : 'OK',
+                    clinicId,
+                    clinicStockUnits: available.filter(batch => batch.clinicId === clinicId).reduce((sum, batch) => sum + batch.available, 0),
+                    hqGroupStockUnits: available.reduce((sum, batch) => sum + batch.available, 0),
+                    expiringBatches: batches.filter(batch => batch.clinicId === clinicId && batch.expiry <= radarCutoff()),
+                    totalSkus: items.length,
+                    inventoryRadar: items.map(item => {
+                        const scoped = available.filter(batch => batch.skuId === item.id);
+                        const clinicStock = scoped.filter(batch => batch.clinicId === clinicId).reduce((sum, batch) => sum + batch.available, 0);
+                        return { ...item, clinicStock, hqGroupStock: scoped.reduce((sum, batch) => sum + batch.available, 0),
+                            reorderLevel: 10, isLowStock: clinicStock < 10, status: clinicStock < 10 ? 'LOW' : 'OK' };
+                    }),
                 };
-            });
+            }
+            const { batches } = await staffApi<{
+                batches: { skuId: string; brand: string; salt: string; strengthMg: number; available: number; expiry: string }[];
+            }>('/clinical/pharmacy/inventory');
+            const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+            const items = new Map<string, typeof batches[number]>();
+            for (const batch of batches) {
+                const current = items.get(batch.skuId);
+                items.set(batch.skuId, { ...batch, available: (current?.available ?? 0) + (batch.expiry >= day ? batch.available : 0) });
+            }
             return {
-                hqGroupStockUnits,
-                expiringBatches,
-                lowStockItems: inventoryRadar.filter((item) => item.isLowStock).map((item) => item.brand),
-                totalSkus: batches.length,
-                inventoryRadar,
+                clinicId,
+                expiringBatches: batches.filter(batch => batch.expiry <= radarCutoff()),
+                clinicStockUnits: [...items.values()].reduce((sum, item) => sum + item.available, 0),
+                totalSkus: items.size,
+                inventoryRadar: [...items.values()].map(item => ({
+                    ...item, clinicStock: item.available, reorderLevel: 10,
+                    isLowStock: item.available < 10, status: item.available < 10 ? 'LOW' : 'OK',
+                })),
             };
-        } catch (e) {
-            console.warn('Backend inventory radar notice:', e);
+        } catch {
             return null;
         }
     }
 
-    async getOpsLedgerSummary(_options?: { clinicId?: string }): Promise<any> {
+    async getOpsLedgerSummary(options?: { clinicId?: string }) {
         try {
-            const session = await authService.getSession();
-            if (!session?.user || !['HOSPITAL_ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-                return null;
-            }
-            const data = await staffApi<{
-                accounts?: Array<{ account: string; debitPaise: number; creditPaise: number }>;
-                entries?: Array<unknown>;
-            }>('/clinical/ledger');
-            const accounts = data?.accounts ?? [];
-            const entries = data?.entries ?? [];
-            let debitPaise = 0;
-            let creditPaise = 0;
-            let revenuePaise = 0;
-            let cogsPaise = 0;
-            for (const row of accounts) {
-                const d = Number(row.debitPaise || 0);
-                const c = Number(row.creditPaise || 0);
-                debitPaise += d;
-                creditPaise += c;
-                if (row.account === 'revenue') revenuePaise += c - d;
-                if (row.account === 'cogs') cogsPaise += d - c;
-            }
+            const query = new URLSearchParams({ period: 'all' });
+            if (options?.clinicId) query.set('clinic', options.clinicId);
+            const summary = await staffApi<HqFinance>(`/clinical/command/hq/finance?${query}`);
             return {
-                revenuePaise,
-                cogsPaise,
-                netProfitPaise: revenuePaise - cogsPaise,
-                debitPaise,
-                creditPaise,
-                isBalanced: debitPaise === creditPaise,
-                journalsCount: entries.length,
+                ...summary,
+                netProfitPaise: summary.operatingProfitPaise,
+                journalsCount: summary.journalCount,
+                salesCount: summary.saleCount,
+                isBalanced: summary.journalCount > 0 && summary.debitPaise === summary.creditPaise && !summary.unreconciledSales,
             };
-        } catch (e) {
-            console.warn('Backend ops ledger summary notice:', e);
+        } catch {
             return null;
         }
     }
 }
+
+const radarCutoff = () => new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
 
 export const dataService: DataService = new CloudflareDataService();
 

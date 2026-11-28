@@ -9,6 +9,7 @@ type AuditRecord = { id: string; action: string; status: string; created_at: str
 export function AuditLogs({ readOnly }: { readOnly: boolean }) {
     const { toast } = useToast()
     const [logs, setLogs] = useState<AuditRecord[]>([])
+    const [transfers, setTransfers] = useState<AuditRecord[]>([])
     const [lockedThrough, setLockedThrough] = useState<string | null>(null)
     const [failure, setFailure] = useState("")
     const [loading, setLoading] = useState(true)
@@ -27,8 +28,9 @@ export function AuditLogs({ readOnly }: { readOnly: boolean }) {
         try {
             setLoading(true)
             setFailure("")
-            const data = await staffApi<{ logs: AuditRecord[]; lockedThrough: string | null }>('/clinical/command/audit')
-            setLogs(data.logs)
+            const data = await staffApi<{ logs: AuditRecord[]; transfers: AuditRecord[]; lockedThrough: string | null }>('/clinical/command/audit')
+            setTransfers(data.transfers)
+            setLogs([...data.logs, ...data.transfers].sort((a, b) => b.created_at.localeCompare(a.created_at)))
             setLockedThrough(data.lockedThrough)
         } catch (error) {
             setFailure(error instanceof Error ? error.message : "Audit information unavailable.")
@@ -65,6 +67,21 @@ export function AuditLogs({ readOnly }: { readOnly: boolean }) {
             {loading ? <p role="status">Loading audit status…</p>
                 : failure ? <p role="alert">{failure}</p>
                 : <p>{lockedThrough ? `Accounting periods locked through ${lockedThrough}.` : "No accounting period is locked."}</p>}
+            {!loading && !failure && (
+                <div className="space-y-2">
+                    <h2 className="font-semibold">Recent stock transfers</h2>
+                    {transfers.length === 0 ? <p>No stock transfers recorded.</p> : (
+                        <ul className="space-y-2">
+                            {transfers.map(record => (
+                                <li key={record.id} className="rounded-lg border p-3 text-sm break-words">
+                                    <p>{record.details}</p>
+                                    <p className="text-xs text-slate-600">{record.id} · {record.performed_by} · {new Date(record.created_at).toLocaleString('en-IN')}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
         </section>
     )
 

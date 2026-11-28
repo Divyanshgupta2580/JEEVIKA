@@ -1,5 +1,5 @@
 import { SymbolIcon } from "@/components/ui/SymbolIcon";
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
     RefreshCw,
     Search,
@@ -22,6 +22,8 @@ import {
     UserCheck,
     Radio
 } from 'lucide-react'
+import { staffApi } from '@/lib/staffApi'
+import type { HqClinic, HqFinance, HqSale, HqStock } from '../../../../packages/shared/hq-command'
 import { dataService as db } from '@/lib/dataService'
 import { getStartOfTodayIST } from '@/lib/utils'
 import { useHospital } from '@/context/HospitalContext'
@@ -47,6 +49,7 @@ type View = 'selection' | 'staff' | 'admin' | 'inventory-dashboard' | 'setup' | 
 interface ClinicAdminDashboardProps {
     clinicId: string;
     onBack?: () => void;
+    hqBranch?: boolean;
     onNavigate?: (view: View) => void;
 }
 
@@ -59,16 +62,31 @@ const PAYMENT_COLOR_MAP: Record<string, { fill: string; gradStart: string; gradE
     OTHER: { fill: '#64748b', gradStart: '#94a3b8', gradEnd: '#475569', badge: 'bg-[#f3f4ef] text-[#4b635b] border-[#dfdfd2]' }
 };
 
-export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdminDashboardProps) {
-    const { inventory, managedClinic, setPendingRestockId, clinics } = useHospital()
+const postedSale = (sale: HqSale) => ({
+    id: sale.id, clinic_id: sale.clinicId, timestamp: sale.recordedAt,
+    amount: sale.grossPaise / 100, grossPaise: sale.grossPaise, tax: sale.taxPaise / 100,
+    sale_type: 'PHARMACY', payment_mode: sale.payments.map(payment => payment.method.toUpperCase()).join(' + '),
+});
+
+export function ClinicAdminDashboard({ clinicId, onBack, onNavigate, hqBranch = false }: ClinicAdminDashboardProps) {
+    const { inventory: legacyInventory, managedClinic, setPendingRestockId, clinics } = useHospital();
+    const [branchInventory, setBranchInventory] = useState<{
+        id: string; item_name: string; quantity: number; mrp: number;
+        clinic_id: string; threshold: number; units_per_pack: number;
+        expiry_date: string; batch_number: string;
+    }[]>([]);
+    const inventory = hqBranch ? branchInventory : legacyInventory;
+    const [branchError, setBranchError] = useState('');
+    const [receiptError, setReceiptError] = useState('');
+    const branchRequest = useRef(0);
     const [stats, setStats] = useState({ revenue: 0, transactions: 0, staffCount: 0 })
     const [dailySales, setDailySales] = useState<any[]>([])
     const [weeklyData, setWeeklyData] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
-    const [clinicData, setClinicData] = useState<any>(managedClinic || null)
+    const [clinicData, setClinicData] = useState<any>(hqBranch ? null : managedClinic || null)
     const [managerName, setManagerName] = useState<string>('Unassigned')
-    const [lastSyncTime, setLastSyncTime] = useState<string>('Just now')
+    const [lastSyncTime, setLastSyncTime] = useState<string>(hqBranch ? 'Awaiting data' : 'Just now')
 
     // Live Backend Ops & Radar Telemetry States
     const [opsRadar, setOpsRadar] = useState<{
@@ -283,6 +301,10 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
     }, [dailySales, searchQuery, selectedSaleType, selectedPaymentMode]);
 
     useEffect(() => {
+        if (hqBranch) {
+            void fetchData();
+            return () => { branchRequest.current++; };
+        }
         // Reset or immediately populate clinic data on clinicId switch
         const matched = clinics?.find((c: any) => c.id === clinicId) || (managedClinic?.id === clinicId ? managedClinic : null);
         if (matched) {
@@ -298,13 +320,59 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
         }, '*');
 
         return () => unsubscribe();
-    }, [clinicId, managedClinic, clinics, dateRange]);
+    }, [clinicId, managedClinic, clinics, dateRange, hqBranch]);
 
     const fetchData = async (isBackground = false) => {
+        const current = hqBranch ? ++branchRequest.current : 0;
         if (!isBackground) setLoading(true);
         else setRefreshing(true);
 
         try {
+            if (hqBranch) {
+                setBranchError('');
+                const scope = encodeURIComponent(clinicId);
+                const [branch, today, period, canonicalStock, roster] = await Promise.all([
+                    staffApi<{ clinic: HqClinic; day: string }>(`/clinical/command/hq/branches/${scope}`),
+                    staffApi<HqFinance>(`/clinical/command/hq/finance?clinic=${scope}&period=today`),
+                    staffApi<HqFinance>(`/clinical/command/hq/finance?clinic=${scope}&period=${dateRange}`),
+                    staffApi<HqStock>(`/clinical/command/hq/stock?clinic=${scope}`),
+                    staffApi<{ staff: { id: string }[] }>(`/clinical/command/roster/${scope}`),
+                ]);
+                if (branchRequest.current !== current) return;
+                setClinicData(branch.clinic);
+                setManagerName(branch.clinic.managerName ?? 'Unassigned');
+                setDailySales(today.sales.map(postedSale));
+                setStats({ revenue: today.grossPaise / 100, transactions: today.saleCount, staffCount: roster.staff.length });
+                const day = new Date(`${period.through}T00:00:00.000Z`);
+                const days = dateRange === 'week' ? 7 : 30;
+                setWeeklyData(Array.from({ length: days }, (_, index) => {
+                    const value = new Date(day);
+                    value.setUTCDate(value.getUTCDate() - days + index + 1);
+                    const date = value.toISOString().slice(0, 10);
+                    const record = period.daily.find(entry => entry.date === date);
+                    return {
+                        name: value.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+                        fullDate: value.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }),
+                        visits: record?.saleCount ?? 0,
+                        revenue: (record?.grossPaise ?? 0) / 100,
+                    };
+                }));
+                const catalogue = new Map(canonicalStock.items.map(item => [item.id, item.brand]));
+                setBranchInventory(canonicalStock.batches.filter(batch => batch.clinicId === clinicId && batch.expiry >= canonicalStock.day)
+                    .map(batch => ({ id: batch.id, item_name: catalogue.get(batch.skuId) ?? batch.skuId, quantity: batch.available,
+                        mrp: batch.pricePaise / 100, clinic_id: clinicId, threshold: 10, units_per_pack: 1,
+                        expiry_date: batch.expiry, batch_number: batch.batchNo })));
+                setLedgerSummary({
+                    revenuePaise: today.revenuePaise, cogsPaise: today.cogsPaise,
+                    operatingExpensesPaise: today.operatingExpensesPaise, netProfitPaise: today.operatingProfitPaise,
+                    debitPaise: today.debitPaise, creditPaise: today.creditPaise,
+                    isBalanced: today.journalCount > 0 && today.debitPaise === today.creditPaise && !today.unreconciledSales,
+                    journalsCount: today.journalCount, salesCount: today.saleCount,
+                });
+                setLastSyncTime(new Date().toLocaleTimeString('en-IN'));
+                if (today.salesTruncated) setBranchError('Showing the latest 500 receipts. Financial totals include all posted sales.');
+                return;
+            }
             // 1. Clinic Metadata: Match from shared hospital context or fetch from D1
             const matchedClinic = clinics?.find((c: any) => c.id === clinicId) || (managedClinic?.id === clinicId ? managedClinic : null);
             if (matchedClinic) {
@@ -414,19 +482,36 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
             setLastSyncTime(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
 
         } catch (err) {
-            console.error("Dashboard Telemetry Error:", err);
+            if (hqBranch) {
+                if (branchRequest.current !== current) return;
+                setBranchError(err instanceof Error ? err.message : "Branch data unavailable.");
+                setClinicData(null);
+            } else {
+                console.error("Dashboard Telemetry Error:", err);
+            }
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            if (!hqBranch || branchRequest.current === current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     };
 
     // 1-Click Tax Receipt Modal Handler
     const openReceipt = async (sale: any) => {
-        setSelectedReceiptSale(sale);
+        setReceiptError('');
+        if (!hqBranch) setSelectedReceiptSale(sale);
         setSelectedReceiptItems([]);
         setIsReceiptLoading(true);
         try {
+            if (hqBranch) {
+                const receipt = await staffApi<{ lines: { brand: string; units: number; unitPricePaise: number }[] }>(
+                    `/clinical/command/hq/finance/branches/${encodeURIComponent(clinicId)}/receipts/${encodeURIComponent(sale.id)}`,
+                );
+                setSelectedReceiptItems(receipt.lines.map(line => ({ item_name: line.brand, quantity: line.units, price: line.unitPricePaise / 100 })));
+                setSelectedReceiptSale(sale);
+                return;
+            }
             const itemsData = await db.list('sale_items', {
                 filters: [{ column: 'sale_id', operator: '==', value: sale.id }]
             });
@@ -448,7 +533,8 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                 setSelectedReceiptItems(formattedItems);
             }
         } catch (error) {
-            console.error('Error fetching receipt items:', error);
+            if (hqBranch) setReceiptError(error instanceof Error ? error.message : 'Receipt unavailable.');
+            else console.error('Error fetching receipt items:', error);
         } finally {
             setIsReceiptLoading(false);
         }
@@ -540,10 +626,18 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
     const totalPeriodVisits = weeklyData.reduce((sum, d) => sum + (d.visits || 0), 0);
     const totalBreakdownAmount = paymentBreakdown.reduce((sum, p) => sum + p.value, 0);
     const hasActiveFilters = Boolean(searchQuery.trim() || selectedSaleType !== 'all' || selectedPaymentMode !== 'all');
-    const displayedRevenue = ledgerSummary?.revenuePaise ? Math.round(ledgerSummary.revenuePaise / 100) : stats.revenue;
+    const displayedRevenue = hqBranch ? stats.revenue : ledgerSummary?.revenuePaise ? Math.round(ledgerSummary.revenuePaise / 100) : stats.revenue;
+    if (hqBranch && !loading && !clinicData && branchError) return (
+        <section className="jvk-clinic-hub-card p-5">
+            <button type="button" onClick={onBack} className="jvk-admin-secondary-btn">HQ Network</button>
+            <p role="alert">Branch unavailable. {branchError}</p>
+        </section>
+    );
 
     return (
         <div className="jvk-admin-page jvk-clinic-ops-page jvk-clinic-hub-page space-y-6 animate-in fade-in duration-300 max-w-[1600px] mx-auto pb-12">
+            {hqBranch && branchError && <p role="status">{branchError}</p>}
+            {receiptError && <p role="alert">{receiptError}</p>}
             {/* 1. CLINIC OPERATIONS HUB IDENTITY HEADER */}
             <div className="jvk-clinic-hub-card p-5 lg:p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
@@ -552,6 +646,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                             <button
                                 type="button"
                                 onClick={onBack}
+                                aria-label="Back to HQ Network"
                                 className="group inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FAF7F0] hover:bg-[#E8F1E5] active:scale-95 text-[#103B32] border border-[#E4E5DA] transition-all font-semibold text-xs shrink-0"
                                 title="Back to Jeevika Central Hospital Network (HQ)"
                             >
@@ -577,7 +672,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                 </h1>
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E5F1E3] text-[#087466] border border-[#C6DFC9]">
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-                                    Operational
+                                    {hqBranch && clinicData?.status === 'paused' ? 'Paused' : 'Operational'}
                                 </span>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-[#FAF7F0] text-[#556D65] border border-[#E4E5DA]">
                                     ID: {clinicId.slice(0, 8)}
@@ -586,7 +681,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#556D65] font-medium mt-1.5">
                                 <span className="inline-flex items-center gap-1.5 text-[#103B32] font-semibold">
                                     <MapPin className="w-3.5 h-3.5 text-[#087466] shrink-0" />
-                                    {clinicData?.location || clinicData?.address || 'Main Health Facility'}
+                                    {clinicData?.location || clinicData?.address || (hqBranch ? 'Address unrecorded' : 'Main Health Facility')}
                                 </span>
                                 <span className="text-[#D2D6C8]" aria-hidden="true">|</span>
                                 <span className="inline-flex items-center gap-1.5 text-[#556D65]">
@@ -1002,7 +1097,7 @@ export function ClinicAdminDashboard({ clinicId, onBack, onNavigate }: ClinicAdm
                                     <h2 className="text-base sm:text-lg font-bold text-[#103B32] tracking-tight">Revenue & Patient Flow Trajectory</h2>
                                 </div>
                                 <p className="text-xs text-[#556D65] mt-1 tabular-nums">
-                                    Consolidated telemetry over selected timeframe • {totalPeriodVisits} visits logged
+                                    Posted activity for the selected period · {totalPeriodVisits} {hqBranch ? 'transactions' : 'visits'}
                                 </p>
                             </div>
 

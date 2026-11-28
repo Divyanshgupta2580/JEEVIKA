@@ -271,7 +271,7 @@ function AppContent() {
                             {(['HOSPITAL_ADMIN', 'ADMIN'].includes(verifiedRole ?? '')) && (
                                 selectedClinicId ? (
                                     // Showing Clinic View (Drill Down)
-                                    <ClinicAdminDashboard clinicId={selectedClinicId} onBack={() => setSelectedClinicId(null)} onNavigate={setView} />
+                                    <ClinicAdminDashboard hqBranch clinicId={selectedClinicId} onBack={() => setSelectedClinicId(null)} onNavigate={setView} />
                                 ) : (
                                     // Showing Hospital HQ
                                     <HospitalDashboard onSelectClinic={setSelectedClinicId} />
@@ -298,7 +298,7 @@ function AppContent() {
 
                     {/* SETUP VIEW (Onboarding) */}
                     {view === 'setup' && (
-                        <AdminSetup userProfile={profile} onComplete={() => window.location.reload()} />
+                        <AdminSetup onComplete={() => navigate("/app/command", { replace: true })} />
                     )}
 
                     {/* Inventory Dashboard */}
@@ -354,6 +354,7 @@ function AppContent() {
                     {view === 'clinic-admin' && (
                         clinicId ? (
                             <ClinicAdminDashboard
+                                hqBranch={verifiedRole === "HOSPITAL_ADMIN"}
                                 clinicId={clinicId}
                                 onBack={() => {
                                     setSelectedClinicId(null);
