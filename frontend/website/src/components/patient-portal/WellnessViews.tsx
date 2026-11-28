@@ -1,3 +1,4 @@
+import { WellnessShareControls } from "./WellnessShareControls";
 import { useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -405,6 +406,7 @@ export function VitalisView() {
           )
         }
       </PortalLoaded>
+      {result.data?.consent && <WellnessShareControls kind="vitalis" consent={result.data.consent} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { releaseStaleRefills } from "../continuity/refills";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -55,6 +56,7 @@ stockWriteoffs.post("/batches/:id/writeoffs", managesStock, async (c) => {
   }
   const prior = await find();
   if (prior) return replay(prior);
+  await releaseStaleRefills(db, principal.clinicId);
   const batch = await db.statement(
     "SELECT id FROM inventory_batches WHERE org_id=:org AND clinic_id=? AND id=?",
     principal.clinicId, id,

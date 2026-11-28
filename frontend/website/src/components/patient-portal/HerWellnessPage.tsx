@@ -1,3 +1,4 @@
+import { WellnessShareControls } from "./WellnessShareControls";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouteEntrance } from "@/lib/transitions";
 import { Link } from "react-router-dom";
@@ -594,6 +595,7 @@ export function HerWellnessPage({
             />
           </div>
         )}
+        {result.data?.consent && <WellnessShareControls kind="her" consent={result.data.consent} />}
       </main>
 
       {/* Decorative Green & Gold Curved Wave + Botanical Leaf */}

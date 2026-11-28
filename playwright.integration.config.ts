@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = process.env.INTEGRATION_E2E_PORT ?? "8790";
 const baseURL = `http://127.0.0.1:${port}`;
+const database = process.env.JEEVIKA_INTEGRATION_E2E_DB ??= `.local/integration-e2e-${process.pid}.sqlite`;
 
 export default defineConfig({
   testDir: "tests/integration-browser",
@@ -9,7 +10,7 @@ export default defineConfig({
   webServer: {
     env: {
       INTEGRATION_PORT: port,
-      INTEGRATION_DB: `.local/integration-e2e-${process.pid}.sqlite`,
+      INTEGRATION_DB: database,
       INTEGRATION_ASSETS_DIR: `.local/integration-e2e-assets-${process.pid}`,
       INTEGRATION_E2E_CLINICAL: process.env.INTEGRATION_E2E_CLINICAL ?? "1",
       VITE_API_URL: "/api/v1",

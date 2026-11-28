@@ -1,3 +1,4 @@
+import { releaseStaleRefills } from "../continuity/refills";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -200,6 +201,7 @@ hqRouter.get("/stock", branchAccess, async (c) => {
   const clinicId = (p.role === "CLINIC_ADMIN" ? p.clinicId : requested) ?? null;
   if (clinicId && !(await db.statement("SELECT id FROM clinics WHERE org_id=:org AND id=?", clinicId).first()))
     throw missingClinic();
+  await releaseStaleRefills(db, clinicId);
   const [items, batches] = await Promise.all([
     db.statement(
       `SELECT s.id,s.brand,s.salt,s.strength_mg AS strengthMg,s.form FROM sku s WHERE s.org_id=:org
@@ -235,6 +237,7 @@ hqRouter.post("/transfers", managesHq, async (c) => {
   if (!commandKey.success) throw new HTTPException(400, { message: "Transfer reference required" });
   const hash = await tokenHash(JSON.stringify(input));
   const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+  await releaseStaleRefills(db, input.sourceClinicId);
   const find = () => db.statement(
     `SELECT ${transferFields},request_hash AS requestHash FROM command_stock_transfers
      WHERE org_id=:org AND actor_id=? AND command_key=?`,

@@ -22,6 +22,7 @@ import type {
 } from "../../../../packages/shared/operations";
 import { prescriptionQuoteSchema, signPrescriptionSchema } from "../../../../packages/shared/operations";
 import type { ClinicalReceipt } from "../../../../packages/shared/clinical-receipt";
+import { PharmacyRefillReview } from "@/components/PharmacyRefillReview";
 import { ClinicalReceiptDetails } from "@/components/ui/ClinicalReceiptDetails";
 import { useHospital } from "@/context/HospitalContext";
 import type { OpdPrescriptionItem, OpdPrescriptionReview } from "@/features/opd/opdMetricsAndAlerts";
@@ -392,6 +393,7 @@ export function PharmacyInflow() {
           }}
         />
       )}
+      <PharmacyRefillReview revision={revision} onChanged={() => setRevision(value => value + 1)} />
       {showReceiptLookup && (
         <CashReceiptLookup
           close={() => setShowReceiptLookup(false)}

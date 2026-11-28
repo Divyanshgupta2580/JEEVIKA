@@ -1,3 +1,5 @@
+import { SharedWellnessSummaries } from "./SharedWellnessSummaries";
+import { ContinuityApprovals } from "./ContinuityApprovals";
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -648,6 +650,13 @@ export function OpdPrescriptionsView() {
           </button>
         </div>
       </section>
+
+      {clinicalEncounterId && (
+        <div key={clinicalEncounterId} className="space-y-3">
+          <ContinuityApprovals encounterId={clinicalEncounterId} />
+          <SharedWellnessSummaries encounterId={clinicalEncounterId} />
+        </div>
+      )}
 
       {/* Sign Prescription Drawer */}
       {showSignPrescription && clinicalEncounterId && (

@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { IntegrationContext } from "../../context";
 import { tenantDb } from "../../database";
 import { staffAccess, staffBody } from "../../staff-access";
+import { acknowledgeRecoveryCall, closeRecoveryCall, openRecoveryCalls } from "../continuity/recovery";
 
 export const wardRouter = new Hono<IntegrationContext>();
 export const bedsRouter = new Hono<IntegrationContext>();
@@ -422,31 +423,43 @@ const outreachItems = `SELECT a.id AS admissionId, p.name AS patientName, i.day 
 export const outreachRouter = new Hono<IntegrationContext>();
 outreachRouter.get("/", staffAccess("NURSE"), async (c) => {
   const p = c.get("principal");
-  const { results } = await tenantDb({ db: c.env.DB, orgId: p.orgId })
-    .statement(
-      `${outreachItems} ORDER BY priority DESC,day,admissionId LIMIT 50`,
-      p.clinicId,
-    )
-    .all();
-  return c.json({ items: results });
+  const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+  const [postDischarge, recovery] = await Promise.all([
+    db.statement(outreachItems, p.clinicId)
+      .all<{ admissionId: string; patientName: string; day: string; priority: "urgent" | "review" }>(),
+    openRecoveryCalls(db, p.clinicId),
+  ]);
+  const items = [...postDischarge.results, ...recovery].sort((a, b) =>
+    Number(b.priority === "urgent") - Number(a.priority === "urgent") ||
+    a.day.localeCompare(b.day) ||
+    ("taskId" in a ? a.taskId : a.admissionId).localeCompare("taskId" in b ? b.taskId : b.admissionId),
+  );
+  return c.json({ items });
 });
 
+outreachRouter.post("/tasks/:id/acknowledge", staffAccess("NURSE"), async (c) => {
+  const p = c.get("principal");
+  const id = z.uuid().safeParse(c.req.param("id"));
+  if (!id.success) throw new HTTPException(400, { message: "Invalid task reference" });
+  const task = await acknowledgeRecoveryCall(tenantDb({ db: c.env.DB, orgId: p.orgId }), p.clinicId, p.userId, id.data);
+  if (!task) throw new HTTPException(404, { message: "Active outreach task unavailable" });
+  return c.json(task);
+});
+
+const outcome = z.enum(["stable", "medication-reviewed", "opd-requested", "transfer-reported"]);
 outreachRouter.post("/outcomes", staffAccess("NURSE"), async (c) => {
   const p = c.get("principal");
-  const body = await staffBody(
-    c.req.raw,
-    z.strictObject({
-      admissionId: z.uuid(),
-      day: z.iso.date(),
-      outcome: z.enum([
-        "stable",
-        "medication-reviewed",
-        "opd-requested",
-        "transfer-reported",
-      ]),
-    }),
-  );
-  const saved = await tenantDb({ db: c.env.DB, orgId: p.orgId })
+  const body = await staffBody(c.req.raw, z.union([
+    z.strictObject({ taskId: z.uuid(), outcome }),
+    z.strictObject({ admissionId: z.uuid(), day: z.iso.date(), outcome }),
+  ]));
+  const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+  if ("taskId" in body) {
+    const saved = await closeRecoveryCall(db, p.clinicId, p.userId, body.taskId, body.outcome);
+    if (!saved) throw new HTTPException(409, { message: "Acknowledge an active outreach task before closing it." });
+    return c.json(saved, 201);
+  }
+  const saved = await db
     .statement(
       `WITH eligible AS (${outreachItems})
     INSERT INTO nurse_outreach(org_id,clinic_id,id,admission_id,check_in_day,actor_id,outcome,created_at)

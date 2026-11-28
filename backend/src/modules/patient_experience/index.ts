@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
-import { driftRadar, sentinel } from "../../../../packages/engine";
+import { sentinel } from "../../../../packages/engine";
 import { getClinicalRedFlags } from "../../../../packages/engine/clinicalIntake";
 import {
   herCycleDetector,
@@ -33,6 +33,9 @@ import {
 import { tokenHash } from "../../security";
 import { clinicalOriginAllowed } from "../../staff-session";
 import { kioskSpeech } from "./kiosk-speech";
+import { recordRecoveryOutreach, recoveryTrend, urgentCheckIn } from "../continuity/recovery";
+import { cancelPatientRefill, requestRefill } from "../continuity/refills";
+import { revokeWellness, shareWellness, shareWellnessSchema, wellnessShareOptions } from "../continuity/wellness-sharing";
 
 const demoScope = {
   orgId: "demo",
@@ -407,18 +410,29 @@ companionRouter.use("*", boundedBody, async (c, next) => {
   await next();
 });
 
-const rxSelect = `SELECT r.id, r.signed_at, s.brand AS medicine, l.units, l.directions, l.course_end,
-  EXISTS (SELECT 1 FROM reservations v WHERE v.org_id=r.org_id AND v.prescription_id=r.id AND v.status='dispensed') AS dispensed
-  FROM signed_prescriptions r JOIN encounters e ON e.org_id=r.org_id AND e.id=r.encounter_id
+const rxSelect = `WITH scope AS (SELECT :org AS org_id,? AS patient_id,? AS current_day,? AS stamp)
+  SELECT r.id,r.signed_at,s.brand AS medicine,l.id AS lineId,l.units,l.directions,l.course_end,
+    f.sale_id IS NOT NULL AS dispensed,
+    (d.line_id IS NOT NULL AND a.request_through>=scope.current_day AND q.id IS NULL) AS refillEligible,
+    q.id AS refillRequestId,
+    CASE WHEN q.status IN ('requested','held') AND (a.request_through<scope.current_day OR q.held_until<=scope.stamp)
+      THEN 'released' ELSE q.status END AS refillStatus,
+    q.held_until AS refillHeldUntil
+  FROM scope JOIN encounters e ON e.org_id=scope.org_id AND e.patient_id=scope.patient_id
+  JOIN signed_prescriptions r ON r.org_id=e.org_id AND r.encounter_id=e.id AND r.clinic_id=e.clinic_id
   JOIN consents c ON c.org_id=e.org_id AND c.encounter_id=e.id AND c.purpose='care' AND c.revoked_at IS NULL
   JOIN prescription_lines l ON l.org_id=r.org_id AND l.prescription_id=r.id
   JOIN sku s ON s.org_id=r.org_id AND s.id=l.sku_id
-  WHERE e.org_id=:org AND e.patient_id=? ORDER BY r.signed_at DESC LIMIT 50`;
+  LEFT JOIN continuity_fulfillments f ON f.org_id=r.org_id AND f.prescription_id=r.id
+  LEFT JOIN continuity_dispensed_lines d ON d.org_id=l.org_id AND d.line_id=l.id
+  LEFT JOIN refill_approvals a ON a.org_id=d.org_id AND a.line_id=d.line_id AND a.clinic_id=d.clinic_id
+  LEFT JOIN refill_requests q ON q.org_id=a.org_id AND q.line_id=a.line_id AND q.patient_id=e.patient_id AND q.clinic_id=e.clinic_id
+  ORDER BY r.signed_at DESC,l.id LIMIT 50`;
 
 companionRouter.get("/thread", async (c) => {
   const { orgId, patientId } = c.get("patient");
   const db = tenantDb({ db: c.env.DB, orgId });
-  const [visits, checks, signed] = await Promise.all([
+  const [visits, checks, signed, fulfilled] = await Promise.all([
     db
       .statement(
         `SELECT e.id,e.status,e.created_at,e.reviewed_at,k.token_number FROM encounters e
@@ -448,6 +462,10 @@ companionRouter.get("/thread", async (c) => {
         patientId,
       )
       .all<{ id: string; signed_at: string }>(),
+    db.statement(
+      `SELECT sale_id,prescription_id,created_at FROM continuity_fulfillments
+       WHERE org_id=:org AND patient_id=? ORDER BY created_at DESC,sale_id LIMIT 50`, patientId,
+    ).all<{ sale_id: string; prescription_id: string; created_at: string }>(),
   ]);
   const events = [
     ...visits.results.flatMap((visit) => [
@@ -480,6 +498,13 @@ companionRouter.get("/thread", async (c) => {
       source: "Pharmacy record",
       occurredAt: rx.signed_at,
     })),
+    ...fulfilled.results.map((sale) => ({
+      id: sale.sale_id,
+      prescriptionId: sale.prescription_id,
+      title: "Medicine dispensed",
+      source: "Pharmacy record",
+      occurredAt: sale.created_at,
+    })),
   ]
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 80);
@@ -493,17 +518,34 @@ companionRouter.get("/thread", async (c) => {
 
 companionRouter.get("/prescriptions", async (c) => {
   const { orgId, patientId } = c.get("patient");
+  const now = new Date();
   const { results } = await tenantDb({ db: c.env.DB, orgId })
-    .statement(rxSelect, patientId)
-    .all();
-  return c.json({ prescriptions: results, refillReservationsAvailable: false });
+    .statement(rxSelect, patientId, day(now), now.toISOString())
+    .all<{ refillEligible: number | null }>();
+  return c.json({
+    prescriptions: results,
+    refillReservationsAvailable: results.some(({ refillEligible }) => refillEligible === 1),
+  });
+});
+
+companionRouter.post("/refills", async (c) => {
+  const { patientId, orgId } = c.get("patient");
+  const { lineId } = await input(c.req.raw, z.strictObject({ lineId: z.uuid() }));
+  return c.json(await requestRefill(tenantDb({ db: c.env.DB, orgId }), patientId, lineId));
+});
+
+companionRouter.post("/refills/:id/cancel", async (c) => {
+  const { patientId, orgId } = c.get("patient");
+  await input(c.req.raw, z.strictObject({ confirmed: z.literal(true) }));
+  return c.json(await cancelPatientRefill(tenantDb({ db: c.env.DB, orgId }), patientId, c.req.param("id")));
 });
 
 companionRouter.post("/check-in", async (c) => {
   const { orgId, patientId } = c.get("patient");
   const record = await input(c.req.raw, checkInSchema);
   const now = new Date();
-  const saved = await tenantDb({ db: c.env.DB, orgId })
+  const db = tenantDb({ db: c.env.DB, orgId });
+  const saved = await db
     .statement(
       `INSERT INTO patient_check_ins (org_id,patient_id,day,created_at,observations_json) VALUES (:org,?,?,?,?)
      ON CONFLICT(org_id,patient_id,day) DO NOTHING RETURNING day`,
@@ -517,61 +559,39 @@ companionRouter.post("/check-in", async (c) => {
     throw new HTTPException(409, {
       message: "Today's check-in was already saved.",
     });
-  return c.json(
-    {
-      saved: true,
-      urgent:
-        record.distress ||
-        (record.systolic ?? 0) >= 180 ||
-        (record.spo2 ?? 100) <= 90,
-    },
-    201,
+  const urgent = urgentCheckIn(record);
+  if (urgent) return c.json({ saved: true, urgent }, 201);
+  // The saved check-in remains authoritative. Opening Drift retries a transient handoff failure.
+  const recoveryHandoff = await recordRecoveryOutreach(db, patientId, now).then(
+    () => "checked" as const, () => "unavailable" as const,
   );
+  return c.json({ saved: true, urgent, recoveryHandoff }, 201);
 });
 
 companionRouter.get("/drift", async (c) => {
   const { orgId, patientId } = c.get("patient");
-  const { results } = await tenantDb({ db: c.env.DB, orgId })
-    .statement(
-      "SELECT day,observations_json FROM patient_check_ins WHERE org_id=:org AND patient_id=? ORDER BY day DESC LIMIT 60",
-      patientId,
-    )
-    .all<{ day: string; observations_json: string }>();
-  const records = results.reverse().map(({ day, observations_json }) => ({
-    day,
-    reading: checkInSchema.parse(JSON.parse(observations_json)),
-  }));
-  const startDay = records.length ? Date.parse(records[0]?.day ?? "") : 0;
-  const readings = records.flatMap(({ day, reading }) =>
-    reading.systolic === undefined ||
-    reading.systolic < 60 ||
-    reading.systolic > 250
-      ? []
-      : [
-          {
-            day: Math.round((Date.parse(day) - startDay) / 86_400_000),
-            value: reading.systolic,
-          },
-        ],
-  );
-  const latest = records.at(-1)?.reading;
-  const urgent = Boolean(
-    latest &&
-      (latest.distress ||
-        (latest.systolic ?? 0) >= 180 ||
-        (latest.spo2 ?? 100) <= 90),
-  );
-  const drift = readings.length >= 7 ? driftRadar({ readings }) : null;
-  return c.json({
-    readings: records.map(({ day, reading }) => ({
-      day,
-      systolic: reading.systolic,
-      spo2: reading.spo2,
-    })),
-    baseline: drift?.baseline ?? null,
-    alert: drift?.alert ?? false,
-    urgent,
-  });
+  const db = tenantDb({ db: c.env.DB, orgId });
+  const trend = await recoveryTrend(db, patientId);
+  const recoveryHandoff = trend.status === "sustained"
+    ? await recordRecoveryOutreach(db, patientId, new Date()).then(
+        () => "checked" as const, () => "unavailable" as const,
+      )
+    : null;
+  return c.json({ ...trend, recoveryHandoff });
+});
+
+companionRouter.get("/wellness/shares", async (c) => {
+  const { orgId, patientId } = c.get("patient");
+  return c.json(await wellnessShareOptions(tenantDb({ db: c.env.DB, orgId }), patientId));
+});
+companionRouter.post("/wellness/shares", async (c) => {
+  const { orgId, patientId } = c.get("patient");
+  const selection = await input(c.req.raw, shareWellnessSchema);
+  return c.json(await shareWellness(tenantDb({ db: c.env.DB, orgId }), patientId, selection));
+});
+companionRouter.post("/wellness/shares/:id/revoke", async (c) => {
+  const { orgId, patientId } = c.get("patient");
+  return c.json(await revokeWellness(tenantDb({ db: c.env.DB, orgId }), patientId, c.req.param("id")));
 });
 
 const confirmedDay = z.iso

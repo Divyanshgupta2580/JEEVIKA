@@ -18,11 +18,10 @@ const actions = {
 } as const;
 
 type Call = {
-  admissionId: string;
   patientName: string;
   day: string;
   priority: "urgent" | "review";
-};
+} & ({ admissionId: string } | { taskId: string; acknowledgedAt: string | null; kind: "opd-recovery" });
 
 function GoldBrushUnderline() {
   return (
@@ -55,21 +54,24 @@ export function NurseCallQueue() {
   );
   const isRefreshing = !data && !error && revision > 0;
 
-  async function record(call: Call, outcome: keyof typeof actions) {
+  async function record(call: Call, outcome?: keyof typeof actions) {
     if (pending) return;
     setPending(true);
     setNotice("");
     setFailure("");
     try {
-      await staffApi("/clinical/nurse-calls/outcomes", {
-        method: "POST",
-        body: JSON.stringify({
-          admissionId: call.admissionId,
-          day: call.day,
-          outcome,
-        }),
-      });
-      setNotice("Outreach outcome recorded.");
+      if (!outcome && "taskId" in call) {
+        await staffApi(`/clinical/nurse-calls/tasks/${encodeURIComponent(call.taskId)}/acknowledge`, { method: "POST" });
+        setNotice("Outreach task acknowledged.");
+      } else {
+        await staffApi("/clinical/nurse-calls/outcomes", {
+          method: "POST",
+          body: JSON.stringify("taskId" in call
+            ? { taskId: call.taskId, outcome }
+            : { admissionId: call.admissionId, day: call.day, outcome }),
+        });
+        setNotice("Outreach outcome recorded.");
+      }
       setRevision((value) => value + 1);
     } catch (failure) {
       setFailure(
@@ -172,7 +174,7 @@ export function NurseCallQueue() {
             </h2>
             <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#52685F]">
               Eligible post-discharge check-ins with follow-up consent will
-              appear here.
+              appear here. Consented OPD recovery tasks also appear when the approved criteria are met.
             </p>
           </div>
         )}
@@ -196,9 +198,10 @@ export function NurseCallQueue() {
               {data.items.map((call, index) => {
                 const withinBudget =
                   (index + 1) * plannedMinutesPerCall <= callMinutes;
+                const recovery = "taskId" in call ? call : null;
                 return (
                   <Card
-                    key={call.admissionId}
+                    key={"taskId" in call ? call.taskId : `${call.admissionId}:${call.day}`}
                     className={`jvk-nurse-call-card ${
                       call.priority === "urgent"
                         ? "!border-[#EBCAC7]"
@@ -217,7 +220,7 @@ export function NurseCallQueue() {
                         >
                           {call.priority === "urgent"
                             ? "Urgent check-in"
-                            : "Follow-up review"}
+                            : recovery ? "Approved OPD recovery review" : "Follow-up review"}
                         </StatusChip>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-[#52685F]">
@@ -234,7 +237,13 @@ export function NurseCallQueue() {
                         </StatusChip>
                       </div>
                       <div className="flex flex-wrap gap-2 pt-0.5">
-                        {(
+                        {recovery && !recovery.acknowledgedAt && (
+                          <Button type="button" disabled={pending} onClick={() => void record(recovery)}>
+                            Acknowledge task
+                          </Button>
+                        )}
+                        {recovery?.acknowledgedAt && <span className="text-xs text-[#52685F]">Acknowledged</span>}
+                        {(!recovery || recovery.acknowledgedAt) && (
                           Object.keys(actions) as Array<keyof typeof actions>
                         ).map((outcome) => (
                           <Button

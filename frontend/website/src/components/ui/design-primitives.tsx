@@ -255,6 +255,7 @@ export function Slider({
         min={min}
         max={max}
         step={step}
+        aria-label={label}
         aria-valuetext={unitSuffix ? `${value} minutes` : undefined}
         style={sliderVars}
         onChange={(event) => onChange(Number(event.target.value))}

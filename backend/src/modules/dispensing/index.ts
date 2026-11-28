@@ -20,6 +20,7 @@ import { staffAccess, staffBody } from "../../staff-access";
 import { clinicalDay, profileAllergies, recordedAllergies, reviewPrescription } from "./prescription-review";
 import { stockWriteoffs } from "./stock-writeoffs";
 import { completedClinicalReceipt } from "./receipt";
+import { releaseStaleRefills } from "../continuity/refills";
 
 type Repo = ReturnType<typeof tenantDb>;
 type Batch = Inventory["batches"][number] & { gstBps: number; nti: boolean };
@@ -40,6 +41,7 @@ export const clinicalPharmacyRouter = new Hono<IntegrationContext>();
 clinicalPharmacyRouter.route("/inventory", stockWriteoffs);
 
 async function batches(db: Repo, clinicId: string, skuIds?: string[]) {
+  await releaseStaleRefills(db, clinicId);
   const { results } = await db
     .statement(
       `SELECT b.id,b.sku_id AS skuId,s.brand,s.salt,s.strength_mg AS strengthMg,

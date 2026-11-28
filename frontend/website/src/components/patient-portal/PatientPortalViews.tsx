@@ -324,7 +324,7 @@ export function ThreadView() {
               <div className="jvk-card p-6 sm:p-8">
                 <EmptyState
                   title="No health events yet"
-                  description="Clinic visits, signed prescriptions and completed check-ins appear here."
+                  description="Clinic visits, prescriptions, dispensing and completed check-ins appear here."
                 />
               </div>
             )}
@@ -617,11 +617,13 @@ export function DriftView() {
     baseline: number | null;
     alert: boolean;
     urgent: boolean;
+    status: "urgent" | "no-readings" | "missing-systolic" | "outside-trend-range" | "learning" | "trend-change" | "sustained" | "monitoring";
+    recoveryHandoff: "checked" | "unavailable" | null;
   }>(`${ENDPOINT}/drift`);
 
   return (
     <PortalLoaded result={result}>
-      {({ readings, baseline, alert, urgent }) => (
+      {({ readings, baseline, alert, urgent, status, recoveryHandoff }) => (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           {/* Baseline / Alert Status Panel */}
           <div className="lg:col-span-5">
@@ -632,6 +634,8 @@ export function DriftView() {
             ) : alert ? (
               <InlineBanner tone="warning" title="A change was detected">
                 Discuss recent readings with your care team.
+                {status === "trend-change" && " The change has been flagged on one check-in."}
+                {recoveryHandoff === "unavailable" && " The recovery handoff is unavailable. Refresh to retry."}
               </InlineBanner>
             ) : (
               <div className="jvk-card-sage relative overflow-hidden p-5 sm:p-6">
@@ -653,9 +657,9 @@ export function DriftView() {
                   <PastelIconBadge icon={Activity} tone="mint" />
                   <div className="space-y-1">
                     <h2 className="text-base sm:text-lg font-bold text-[#0E2420]">
-                      {baseline === null
-                        ? "Learning your baseline"
-                        : "Baseline available"}
+                      {status === "outside-trend-range" ? "Reading outside trend range" :
+                        status === "missing-systolic" && baseline !== null ? "Latest systolic reading missing" :
+                        baseline === null || status === "learning" ? "Learning your baseline" : "Baseline available"}
                     </h2>
                     <p className="text-xs sm:text-[13.5px] leading-relaxed text-[#465953]">
                       {baseline === null
@@ -769,6 +773,11 @@ export function DriftView() {
 
 type Prescription = {
   id: string;
+  lineId: string;
+  refillEligible: 0 | 1 | null;
+  refillRequestId: string | null;
+  refillStatus: "requested" | "held" | "released" | null;
+  refillHeldUntil: string | null;
   medicine: string;
   units: number;
   directions: string;
@@ -779,9 +788,21 @@ type Prescription = {
 
 /** PAGE 04 — MEDICINES & REFILL (#/app/home/refill & #/app/home/prescriptions) */
 export function MedicinesView({ view }: { view: "refill" | "prescriptions" }) {
-  const result = usePatientData<{ prescriptions: Prescription[] }>(
-    `${ENDPOINT}/prescriptions`,
-  );
+  const [revision, setRevision] = useState(0);
+  const action = useViewAction();
+  const result = usePatientData<{ prescriptions: Prescription[] }>(`${ENDPOINT}/prescriptions`, revision);
+
+  function updateRefill(rx: Prescription, cancel = false) {
+    void action.run(async () => {
+      await patientRequest(cancel ? `${ENDPOINT}/refills/${rx.refillRequestId}/cancel` : `${ENDPOINT}/refills`, {
+        method: "POST",
+        token: patientToken(),
+        body: cancel ? { confirmed: true } : { lineId: rx.lineId },
+      });
+      setRevision(value => value + 1);
+      return cancel ? "Refill request cancelled." : "Refill request sent for pharmacy review.";
+    });
+  }
 
   return (
     <div className="space-y-5">
@@ -819,6 +840,7 @@ export function MedicinesView({ view }: { view: "refill" | "prescriptions" }) {
         {view === "refill" ? "Refill" : "Prescriptions"}
       </h2>
 
+      <ActionFeedback error={action.error} message={action.message} />
       <PortalLoaded result={result}>
         {({ prescriptions }) => {
           const rows =
@@ -852,11 +874,10 @@ export function MedicinesView({ view }: { view: "refill" | "prescriptions" }) {
                       />
                       <div className="space-y-1">
                         <p className="text-sm sm:text-base font-bold text-[#0E2420]">
-                          Contact your pharmacy for refills
+                          Refills require clinician approval
                         </p>
                         <p className="text-xs sm:text-[13px] leading-relaxed text-[#465953]">
-                          Online stock reservations and refill predictions are
-                          unavailable.
+                          Request an approved refill here. Pharmacy staff review stock before placing a temporary hold.
                         </p>
                       </div>
                     </div>
@@ -869,7 +890,7 @@ export function MedicinesView({ view }: { view: "refill" | "prescriptions" }) {
                   <ul className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
                     {rows.map((rx) => (
                       <li
-                        key={`${rx.id}-${rx.medicine}`}
+                        key={rx.lineId}
                         className="jvk-card p-5 space-y-2.5"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -899,6 +920,30 @@ export function MedicinesView({ view }: { view: "refill" | "prescriptions" }) {
                           <p className="rounded-xl bg-[#F7F4EC] px-3 py-2 text-xs sm:text-sm text-[#435650]">
                             {rx.directions}
                           </p>
+                        )}
+                        {view === "refill" && (
+                          <div className="space-y-2">
+                            {rx.refillStatus && (
+                              <p className="text-xs font-semibold text-[#0E2420]">
+                                {rx.refillStatus === "held" && rx.refillHeldUntil
+                                  ? `Stock held until ${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(rx.refillHeldUntil))} IST`
+                                  : rx.refillStatus === "requested" ? "Awaiting pharmacy review" : "Request closed"}
+                              </p>
+                            )}
+                            {rx.refillEligible === 1 && (
+                              <Button type="button" disabled={action.pending} onClick={() => updateRefill(rx)}>
+                                Request refill
+                              </Button>
+                            )}
+                            {rx.refillRequestId && (rx.refillStatus === "requested" || rx.refillStatus === "held") && (
+                              <Button type="button" variant="outline" disabled={action.pending} onClick={() => updateRefill(rx, true)}>
+                                Cancel refill request
+                              </Button>
+                            )}
+                            {!rx.refillStatus && !rx.refillEligible && (
+                              <p className="text-xs text-[#465953]">Refill approval unavailable for this prescription.</p>
+                            )}
+                          </div>
                         )}
                       </li>
                     ))}

@@ -25,6 +25,9 @@ import { procurementHandoffs } from "./modules/dispensing/procurement";
 import { clinicalPharmacyRouter, postedLedgerRouter } from "./modules/dispensing";
 import { bedsRouter, outreachRouter, wardRouter } from "./modules/clinical_ops";
 import { commandRouter } from "./modules/clinical_ops/command";
+import { recoveryRouter as outpatientRecovery } from "./modules/continuity/recovery";
+import { refillStaffRouter } from "./modules/continuity/refills";
+import { wellnessClinicianRouter } from "./modules/continuity/wellness-sharing";
 import { ayushRouter } from "./modules/ayush";
 import { createApp } from "../../apps/api/app";
 
@@ -642,11 +645,18 @@ export function createIntegrationApp() {
       });
     }
     const referrals = p.role === "DOCTOR"
-      ? await db.statement(`SELECT a.encounter_id FROM nurse_outreach n
+      ? await db.statement(`WITH scope AS (SELECT :org AS org_id,? AS clinic_id)
+           SELECT a.encounter_id,n.created_at AS recordedAt FROM nurse_outreach n
+           JOIN scope q ON q.org_id=n.org_id AND q.clinic_id=n.clinic_id
            JOIN care_admissions a ON a.org_id=n.org_id AND a.clinic_id=n.clinic_id AND a.id=n.admission_id
            JOIN consents c ON c.org_id=a.org_id AND c.encounter_id=a.encounter_id AND c.purpose='care' AND c.revoked_at IS NULL
-           WHERE n.org_id=:org AND n.clinic_id=? AND n.outcome='opd-requested'
-           ORDER BY n.created_at DESC LIMIT 100`, p.clinicId).all<{ encounter_id: string }>()
+           WHERE n.outcome='opd-requested'
+           UNION ALL
+           SELECT x.encounter_id,x.closed_at AS recordedAt FROM recovery_outreach x
+           JOIN scope q ON q.org_id=x.org_id AND q.clinic_id=x.clinic_id
+           JOIN continuity_remote_encounters e ON e.org_id=x.org_id AND e.clinic_id=x.clinic_id AND e.encounter_id=x.encounter_id
+           WHERE x.outcome='opd-requested'
+           ORDER BY recordedAt DESC LIMIT 100`, p.clinicId).all<{ encounter_id: string }>()
       : { results: [] };
     for (const { encounter_id } of referrals.results) {
       const row = rows.get(encounter_id);
@@ -2057,6 +2067,9 @@ v1.route("/clinical/pharmacy", clinicalPharmacyRouter);
 v1.route("/clinical/ledger", postedLedgerRouter);
 v1.route("/clinical/procurement", procurementHandoffs);
 v1.route("/clinical/nurse-calls", outreachRouter);
+v1.route("/clinical/recovery", outpatientRecovery);
+v1.route("/clinical/refills", refillStaffRouter);
+v1.route("/clinical/wellness", wellnessClinicianRouter);
 v1.route("/ipd", ipdRouter);
 v1.route("/intake", intakeRouter);
 v1.route("/intake", protectedIntake);
@@ -2075,6 +2088,15 @@ v1.route("/insurance", insuranceRouter);
 v1.route("/documents", documentsRouter);
 v1.route("/prescriptions", protectedPrescriptions);
 v1.route("/patients", protectedPatients);
+// The standalone wellness APIs use sample profiles and caller-supplied identities.
+for (const path of ["/her/*", "/vitalis/*"]) {
+  v1.use(path, async (c, next) => {
+    if (c.env && !["development", "test", "demo"].includes(c.env.ENVIRONMENT))
+      throw new HTTPException(503, { message: "Standalone wellness demo unavailable." });
+    c.header("X-Jeevika-Provenance", "synthetic-demo");
+    await next();
+  });
+}
 v1.route("/her", herRouter);
 v1.route("/vitalis", vitalisRouter);
 v1.route("/auth/password-reset", recoveryRouter);
