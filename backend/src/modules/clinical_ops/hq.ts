@@ -14,6 +14,7 @@ const id = z.string().trim().min(1).max(100);
 const text = (max: number) => z.string().trim().min(1).max(max);
 const email = z.email().trim().toLowerCase().max(254);
 const hqAccess = staffAccess("HOSPITAL_ADMIN", "OWNER", "SUPER_ADMIN");
+const branchAccess = staffAccess("HOSPITAL_ADMIN", "CLINIC_ADMIN", "OWNER", "SUPER_ADMIN");
 const managesHq = staffAccess("HOSPITAL_ADMIN");
 const missingClinic = () => new HTTPException(404, { message: "Clinic or stock batch unavailable" });
 const organizationInput = z.strictObject({
@@ -74,7 +75,7 @@ hqRouter.get("/fleet", hqAccess, async (c) => {
   return c.json({ ...fleet, organization });
 });
 
-hqRouter.get("/branches/:id", staffAccess("HOSPITAL_ADMIN", "CLINIC_ADMIN", "OWNER", "SUPER_ADMIN"), async (c) => {
+hqRouter.get("/branches/:id", branchAccess, async (c) => {
   const principal = c.get("principal");
   const clinicId = id.parse(c.req.param("id"));
   if (principal.role === "CLINIC_ADMIN" && principal.clinicId !== clinicId) throw missingClinic();
@@ -82,6 +83,18 @@ hqRouter.get("/branches/:id", staffAccess("HOSPITAL_ADMIN", "CLINIC_ADMIN", "OWN
   const { clinics, day } = await getFleet(db, clinicId);
   if (!clinics[0]) throw missingClinic();
   return c.json({ clinic: clinics[0], day });
+});
+
+hqRouter.get("/branches/:id/duty", branchAccess, async (c) => {
+  const p = c.get("principal");
+  const clinicId = id.parse(c.req.param("id"));
+  if (p.role === "CLINIC_ADMIN" && p.clinicId !== clinicId) throw missingClinic();
+  const clinic = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
+    "SELECT id FROM clinics WHERE org_id=:org AND id=?", clinicId,
+  ).first();
+  if (!clinic) throw missingClinic();
+  // Shift templates and current assignments do not establish who attended a dated shift.
+  return c.json({ status: "unavailable", onDuty: null, reason: "attendance-events-unconfigured" } as const);
 });
 
 hqRouter.post("/organization", managesHq, async (c) => {
@@ -179,13 +192,22 @@ hqRouter.patch("/branches/:id/status", managesHq, async (c) => {
   return c.json(row);
 });
 
-hqRouter.get("/stock", hqAccess, async (c) => {
-  const db = tenantDb({ db: c.env.DB, orgId: c.get("principal").orgId });
-  const clinicId = id.optional().parse(c.req.query("clinic")) ?? null;
+hqRouter.get("/stock", branchAccess, async (c) => {
+  const p = c.get("principal");
+  const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+  const requested = id.optional().parse(c.req.query("clinic"));
+  if (p.role === "CLINIC_ADMIN" && (!p.clinicId || (requested && requested !== p.clinicId))) throw missingClinic();
+  const clinicId = (p.role === "CLINIC_ADMIN" ? p.clinicId : requested) ?? null;
   if (clinicId && !(await db.statement("SELECT id FROM clinics WHERE org_id=:org AND id=?", clinicId).first()))
     throw missingClinic();
   const [items, batches] = await Promise.all([
-    db.statement("SELECT id,brand,salt,strength_mg AS strengthMg,form FROM sku WHERE org_id=:org ORDER BY brand,id LIMIT 5001")
+    db.statement(
+      `SELECT s.id,s.brand,s.salt,s.strength_mg AS strengthMg,s.form FROM sku s WHERE s.org_id=:org
+        AND (? IS NULL OR EXISTS (SELECT 1 FROM inventory_batches b
+          WHERE b.org_id=s.org_id AND b.clinic_id=? AND b.sku_id=s.id))
+        ORDER BY s.brand,s.id LIMIT 5001`,
+      clinicId, clinicId,
+    )
       .all<HqStock["items"][number]>(),
     db.statement(
       `SELECT id,sku_id AS skuId,clinic_id AS clinicId,batch_no AS batchNo,expiry,qty_units AS quantity,

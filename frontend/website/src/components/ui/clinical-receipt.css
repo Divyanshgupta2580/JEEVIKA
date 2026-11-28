@@ -1,0 +1,35 @@
+@media print {
+  body:has([data-clinical-print-content="active"]) {
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  body:has([data-clinical-print-content="active"]) *:not(:has([data-clinical-print-content="active"])):not([data-clinical-print-content="active"]):not([data-clinical-print-content="active"] *) {
+    display: none !important;
+  }
+
+  body:has([data-clinical-print-content="active"]) *:has([data-clinical-print-content="active"]) {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  [data-clinical-print-content="active"] {
+    color: black !important;
+    background: white !important;
+    border: 0 !important;
+  }
+
+  [data-clinical-print-content="active"] tr {
+    break-inside: avoid;
+  }
+}

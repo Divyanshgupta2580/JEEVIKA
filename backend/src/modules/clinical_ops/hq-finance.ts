@@ -6,6 +6,7 @@ import type { IntegrationContext } from "../../context";
 import { tenantDb } from "../../database";
 import { staffAccess } from "../../staff-access";
 import { clinicalDay } from "../dispensing/prescription-review";
+import { completedClinicalReceipt } from "../dispensing/receipt";
 
 const filters = z.object({
   period: z.enum(["today", "week", "month", "all"]).default("today"),
@@ -13,9 +14,10 @@ const filters = z.object({
   payment: z.enum(["cash", "upi", "card", "credit"]).optional(),
   service: z.enum(["PHARMACY", "CONSULTATION", "IPD"]).optional(),
   group: z.enum(["clinic_id", "payment_mode", "sale_type"]).default("clinic_id"),
+  receipt: z.string().trim().toLowerCase().max(100).optional(),
 });
 
-const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from,? AS date_to,? AS payment,? AS service,? AS group_by),
+const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from,? AS date_to,? AS payment,? AS service,? AS group_by,? AS receipt_search),
   posted AS (
     SELECT j.* FROM journals j JOIN cfg q ON q.org_id=j.org_id
     WHERE j.status='posted' AND (q.clinic_id IS NULL OR q.clinic_id=j.clinic_id)
@@ -31,12 +33,14 @@ const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from
   ),
   sales_in_period AS (
     SELECT s.* FROM sales s JOIN cfg q ON q.org_id=s.org_id
+    LEFT JOIN journals j ON j.org_id=s.org_id AND j.clinic_id=s.clinic_id
+      AND j.ref_type='sale' AND j.ref_id=s.id AND j.status='posted'
     WHERE s.status='completed' AND (q.clinic_id IS NULL OR q.clinic_id=s.clinic_id)
-      AND (q.date_from IS NULL OR date(s.created_at,'+330 minutes')>=q.date_from)
-      AND date(s.created_at,'+330 minutes')<=q.date_to
+      AND (q.date_from IS NULL OR COALESCE(j.date,date(s.created_at,'+330 minutes'))>=q.date_from)
+      AND COALESCE(j.date,date(s.created_at,'+330 minutes'))<=q.date_to
   ),
   settled AS (
-    SELECT s.*,t.revenue,t.cogs,t.debit,t.credit
+    SELECT s.*,j.date AS business_day,t.revenue,t.cogs,t.debit,t.credit
     FROM sales_in_period s JOIN posted j
       ON j.org_id=s.org_id AND j.clinic_id=s.clinic_id AND j.ref_type='sale' AND j.ref_id=s.id
     JOIN totals t ON t.id=j.id
@@ -65,6 +69,7 @@ const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from
     ) AS selected_gross
     FROM settled s JOIN cfg q ON q.org_id=s.org_id JOIN clinics c ON c.org_id=s.org_id AND c.id=s.clinic_id
     WHERE (q.service IS NULL OR q.service='PHARMACY')
+      AND (q.receipt_search IS NULL OR instr(lower(s.id),q.receipt_search)>0)
       AND (q.payment IS NULL OR EXISTS (SELECT 1 FROM sale_payments p WHERE p.org_id=s.org_id AND p.sale_id=s.id AND p.method=q.payment))
   ),
   segments AS (
@@ -95,9 +100,15 @@ const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from
            (SELECT SUM(p.amount_paise) FROM sale_payments p WHERE p.org_id=s.org_id AND p.sale_id=s.id),0)
     ) AS unreconciledSales,
     (SELECT COUNT(*) FROM selected)>500 AS salesTruncated,
+    (SELECT COUNT(*) FROM selected) AS selectedSaleCount,
     (SELECT COALESCE(SUM(selected_gross),0) FROM selected) AS selectedGrossPaise,
+    (SELECT json_group_array(json_object('method',method,'amountPaise',total,'saleCount',sale_count)) FROM (
+      SELECT p.method,SUM(p.amount_paise) AS total,COUNT(*) AS sale_count
+      FROM settled s JOIN sale_payments p ON p.org_id=s.org_id AND p.sale_id=s.id
+      GROUP BY p.method ORDER BY p.method
+    )) AS paymentSummary,
     (SELECT json_group_array(json_object('date',day,'grossPaise',gross,'saleCount',count)) FROM
-      (SELECT date(s.created_at,'+330 minutes') AS day,SUM(s.total_paise) AS gross,COUNT(*) AS count
+      (SELECT s.business_day AS day,SUM(s.total_paise) AS gross,COUNT(*) AS count
        FROM settled s GROUP BY day ORDER BY day)) AS daily,
     (SELECT json_group_array(json_object('clinicId',clinicId,'grossPaise',grossPaise,'revenuePaise',revenuePaise,
       'cogsPaise',cogsPaise,'operatingExpensesPaise',operatingExpensesPaise,'saleCount',saleCount,
@@ -105,42 +116,37 @@ const report = `WITH cfg AS (SELECT :org AS org_id,? AS clinic_id,? AS date_from
     (SELECT json_group_array(json_object('name',name,'paise',paise)) FROM
        (SELECT name,paise FROM segments ORDER BY paise DESC,name)) AS segments,
     (SELECT json_group_array(json_object('id',s.id,'clinicId',s.clinic_id,'recordedAt',s.created_at,
-      'grossPaise',s.total_paise,'netPaise',s.revenue,'cogsPaise',s.cogs,'taxPaise',s.tax_paise,
+      'businessDay',s.business_day,'grossPaise',s.total_paise,'netPaise',s.revenue,'cogsPaise',s.cogs,'taxPaise',s.tax_paise,
       'payments',json((SELECT json_group_array(json_object('method',p.method,'amountPaise',p.amount_paise))
        FROM sale_payments p WHERE p.org_id=s.org_id AND p.sale_id=s.id))))
       FROM (SELECT * FROM selected ORDER BY created_at DESC,id LIMIT 500) s) AS sales
   FROM cfg q`;
 
-type ReportRow = Omit<HqFinance, "from" | "through" | "operatingProfitPaise" | "branches" | "segments" | "sales" | "salesTruncated" | "daily"> & {
-  branches: string; segments: string; sales: string; daily: string; salesTruncated: 0 | 1;
+type ReportRow = Omit<HqFinance, "from" | "through" | "operatingProfitPaise" | "branches" | "segments" | "sales" | "salesTruncated" | "daily" | "paymentSummary"> & {
+  branches: string; segments: string; sales: string; daily: string; paymentSummary: string; salesTruncated: 0 | 1;
 };
 
 export const hqFinance = new Hono<IntegrationContext>();
 hqFinance.get("/branches/:clinic/receipts/:id", staffAccess("HOSPITAL_ADMIN", "OWNER", "SUPER_ADMIN", "CLINIC_ADMIN"), async (c) => {
-  const { clinic, id } = z.object({ clinic: z.string().min(1).max(100), id: z.uuid() }).parse(c.req.param());
+  const input = z.object({ clinic: z.string().min(1).max(100), id: z.uuid(), day: z.iso.date().optional() })
+    .safeParse({ ...c.req.param(), day: c.req.query("day") });
+  if (!input.success) throw new HTTPException(400, { message: "Invalid clinic, receipt reference or posted date" });
+  const { clinic, id, day } = input.data;
   const p = c.get("principal");
   if (p.role === "CLINIC_ADMIN" && p.clinicId !== clinic)
     throw new HTTPException(404, { message: "Receipt unavailable" });
-  const receipt = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
-    `SELECT s.id,s.total_paise AS grossPaise,s.tax_paise AS taxPaise,
-     (SELECT json_group_array(json_object('brand',k.brand,'units',r.units,'unitPricePaise',r.unit_price_paise))
-        FROM reservation_lines r
-        JOIN inventory_batches b ON b.org_id=r.org_id AND b.id=r.batch_id AND b.clinic_id=s.clinic_id
-        JOIN sku k ON k.org_id=b.org_id AND k.id=b.sku_id
-        WHERE r.org_id=s.org_id AND r.reservation_id=s.reservation_id) AS lines
-     FROM sales s JOIN journals j ON j.org_id=s.org_id AND j.clinic_id=s.clinic_id
-       AND j.ref_type='sale' AND j.ref_id=s.id AND j.status='posted'
-     WHERE s.org_id=:org AND s.clinic_id=? AND s.id=? AND s.status='completed'`,
-    clinic, id,
-  ).first<{ id: string; grossPaise: number; taxPaise: number; lines: string }>();
+  const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
+  const receipt = await completedClinicalReceipt(db, clinic, id, day ?? null);
   if (!receipt) throw new HTTPException(404, { message: "Receipt unavailable" });
-  return c.json({ ...receipt, lines: JSON.parse(receipt.lines) });
+  return c.json({ ...receipt, grossPaise: receipt.totalPaise });
 });
 
 hqFinance.get("/", staffAccess("HOSPITAL_ADMIN", "OWNER", "SUPER_ADMIN", "CLINIC_ADMIN"), async (c) => {
-  const input = filters.parse(c.req.query());
+  const parsed = filters.safeParse(c.req.query());
+  if (!parsed.success) throw new HTTPException(400, { message: "Invalid finance filters" });
+  const input = parsed.data;
   const p = c.get("principal");
-  if (p.role === "CLINIC_ADMIN" && input.clinic && p.clinicId !== input.clinic)
+  if (p.role === "CLINIC_ADMIN" && (!p.clinicId || (input.clinic && p.clinicId !== input.clinic)))
     throw new HTTPException(404, { message: "Clinic unavailable" });
   const clinic = (p.role === "CLINIC_ADMIN" ? p.clinicId : input.clinic) ?? null;
   const db = tenantDb({ db: c.env.DB, orgId: p.orgId });
@@ -151,9 +157,9 @@ hqFinance.get("/", staffAccess("HOSPITAL_ADMIN", "OWNER", "SUPER_ADMIN", "CLINIC
   const days = { all: 0, today: 0, week: 6, month: 29 };
   start.setUTCDate(start.getUTCDate() - days[input.period]);
   const from = input.period === "all" ? null : start.toISOString().slice(0, 10);
-  const values = await db.statement(report, clinic, from, through, input.payment ?? null, input.service ?? null, input.group).first<ReportRow>();
+  const values = await db.statement(report, clinic, from, through, input.payment ?? null, input.service ?? null, input.group, input.receipt ?? null).first<ReportRow>();
   if (!values) throw new HTTPException(503, { message: "Finance unavailable" });
-  const { branches, segments, sales, daily, salesTruncated, ...summary } = values;
+  const { branches, segments, sales, daily, paymentSummary, salesTruncated, ...summary } = values;
   const response: HqFinance = {
     ...summary, from, through,
     operatingProfitPaise: summary.revenuePaise - summary.cogsPaise - summary.operatingExpensesPaise,
@@ -161,6 +167,7 @@ hqFinance.get("/", staffAccess("HOSPITAL_ADMIN", "OWNER", "SUPER_ADMIN", "CLINIC
     segments: JSON.parse(segments),
     sales: JSON.parse(sales),
     daily: JSON.parse(daily),
+    paymentSummary: JSON.parse(paymentSummary),
     salesTruncated: Boolean(salesTruncated),
   };
   return c.json(response);

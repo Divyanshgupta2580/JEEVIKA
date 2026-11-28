@@ -36,7 +36,10 @@ export async function staffApi<T>(
   return response.json() as Promise<T>;
 }
 
-export function useStaffData<T>(path: string, revision = 0) {
+export function useStaffData<T>(
+  path: string,
+  revision = 0,
+): { data?: T; error?: string } {
   const [result, setResult] = useState<{ path: string; revision: number; data?: T; error?: string }>();
   useEffect(() => {
     const controller = new AbortController();

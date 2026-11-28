@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -21,6 +21,9 @@ import type {
   StockPlan,
 } from "../../../../packages/shared/operations";
 import { prescriptionQuoteSchema, signPrescriptionSchema } from "../../../../packages/shared/operations";
+import type { ClinicalReceipt } from "../../../../packages/shared/clinical-receipt";
+import { ClinicalReceiptDetails } from "@/components/ui/ClinicalReceiptDetails";
+import { useHospital } from "@/context/HospitalContext";
 import type { OpdPrescriptionItem, OpdPrescriptionReview } from "@/features/opd/opdMetricsAndAlerts";
 import { Button, Card, CardContent, Input } from "@/components/ui/basic";
 import {
@@ -286,7 +289,7 @@ type Sale = { id: string; totalPaise: number; createdAt: string };
 export function PharmacyInflow() {
   const [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState("");
-  const [receipt, setReceipt] = useState<{ sale: Sale; retrieved?: boolean }>();
+  const [receipt, setReceipt] = useState<{ sale: Sale | ClinicalReceipt; retrieved?: boolean }>();
   const [showReceiptLookup, setShowReceiptLookup] = useState(false);
   const { data, error } = useStaffData<{
     prescriptions: Array<{ id: string; patientName: string }>;
@@ -331,36 +334,8 @@ export function PharmacyInflow() {
           Loading prescriptions…
         </div>
       )}
-      {receipt && (
-        <Card className="jvk-clinic-ops-card print:border-none">
-          <CardContent className="space-y-2.5 p-5 sm:p-6">
-            <h2 className="jvk-clinic-ops-serif text-lg font-bold text-[#103B32]">
-              {receipt.retrieved ? "Cash receipt" : "Cash sale recorded"}
-            </h2>
-            <p className="text-base font-bold text-[#087466] tabular-nums">
-              Total {money(receipt.sale.totalPaise)}
-            </p>
-            <p className="break-all text-xs font-mono text-[#52685F]">
-              Receipt {receipt.sale.id}
-            </p>
-            <time
-              dateTime={receipt.sale.createdAt}
-              className="block text-xs text-[#52685F]"
-            >
-              {new Date(receipt.sale.createdAt).toLocaleString("en-IN")}
-            </time>
-            <div className="pt-1 print:hidden">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="jvk-admin-secondary-btn"
-              >
-                Print receipt
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {receipt && <CashReceiptPanel key={receipt.sale.id} {...receipt} />}
+
       {data?.prescriptions.length === 0 && (
         <div className="jvk-clinic-ops-card jvk-clinic-ops-enter flex flex-col items-center justify-center px-6 py-10 sm:py-12 text-center">
           <img
@@ -430,17 +405,50 @@ export function PharmacyInflow() {
   );
 }
 
-function CashReceiptLookup({ close, onFound }: { close: () => void; onFound: (sale: Sale) => void }) {
+function CashReceiptPanel({ sale, retrieved }: { sale: Sale | ClinicalReceipt; retrieved?: boolean }) {
+  const [revision, setRevision] = useState(0);
+  const stored = "lines" in sale ? sale : undefined;
+  const { data, error } = useStaffData<ClinicalReceipt>(`${pharmacy}/receipts/${encodeURIComponent(sale.id)}`, revision);
+  const receipt = stored ?? data;
+  return (
+    <Card className="jvk-clinic-ops-card">
+      <CardContent className="space-y-2.5 p-5 sm:p-6">
+        <h2 className="jvk-clinic-ops-serif text-lg font-bold text-[#103B32]">
+          {retrieved ? "Cash receipt" : "Cash sale recorded"}
+        </h2>
+        <p className="text-base font-bold text-[#087466] tabular-nums">Total {money(sale.totalPaise)}</p>
+        {receipt ? (
+          <ClinicalReceiptDetails receipt={receipt} />
+        ) : (
+          <>
+            <p className="break-all font-mono text-xs">Receipt {sale.id}</p>
+            {error ? (
+              <>
+                <p role="alert">{error}</p>
+                <Button type="button" onClick={() => setRevision(value => value + 1)}>Retry receipt</Button>
+              </>
+            ) : <p role="status">Loading posted receipt…</p>}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CashReceiptLookup({ close, onFound }: { close: () => void; onFound: (sale: ClinicalReceipt) => void }) {
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState("");
   async function lookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
-    const id = String(new FormData(event.currentTarget).get("receipt") ?? "").trim();
+    const form = new FormData(event.currentTarget);
+    const id = String(form.get("receipt") ?? "").trim();
+    const day = String(form.get("day") ?? "");
     setPending(true);
     setFailure("");
     try {
-      onFound(await staffApi<Sale>(`${pharmacy}/receipts/${encodeURIComponent(id)}`));
+      const path = `${pharmacy}/receipts/${encodeURIComponent(id)}`;
+      onFound(await staffApi<ClinicalReceipt>(day ? `${path}?day=${encodeURIComponent(day)}` : path));
     } catch (err) {
       setFailure(err instanceof Error ? err.message : "Cash receipt unavailable.");
     } finally {
@@ -453,6 +461,9 @@ function CashReceiptLookup({ close, onFound }: { close: () => void; onFound: (sa
       <form className="space-y-3" onSubmit={(event) => void lookup(event)}>
         <label className="block">Receipt reference
           <Input name="receipt" minLength={36} maxLength={36} required />
+        </label>
+        <label className="block">Posted date (IST, optional)
+          <Input name="day" type="date" />
         </label>
         <Button type="submit" disabled={pending}>Open receipt</Button>
       </form>
@@ -617,6 +628,13 @@ export function ClinicStock({
   const { data, error } = useStaffData<{
     batches: PublicBatch[];
   }>(`${pharmacy}/inventory`, revision);
+  const { pendingRestockId, setPendingRestockId } = useHospital();
+  useEffect(() => {
+    if (!pendingRestockId || !data) return;
+    const target = data.batches.find(batch => batch.id === pendingRestockId);
+    if (target) setSearch(target.batchNo);
+    setPendingRestockId(null);
+  }, [pendingRestockId, data, setPendingRestockId]);
   const date = new Date().toISOString().slice(0, 10);
   const cutoff = new Date(Date.now() + 90 * 86_400_000)
     .toISOString()

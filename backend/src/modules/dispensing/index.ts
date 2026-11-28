@@ -19,6 +19,7 @@ import { equalHash, tokenHash } from "../../security";
 import { staffAccess, staffBody } from "../../staff-access";
 import { clinicalDay, profileAllergies, recordedAllergies, reviewPrescription } from "./prescription-review";
 import { stockWriteoffs } from "./stock-writeoffs";
+import { completedClinicalReceipt } from "./receipt";
 
 type Repo = ReturnType<typeof tenantDb>;
 type Batch = Inventory["batches"][number] & { gstBps: number; nti: boolean };
@@ -328,18 +329,15 @@ clinicalPharmacyRouter.get("/inflow/:id/quote", posRoles, async (c) => {
 
 clinicalPharmacyRouter.get("/receipts/:id", posRoles, async (c) => {
   const p = c.get("principal");
-  const id = z.uuid().parse(c.req.param("id"));
-  const receipt = await tenantDb({ db: c.env.DB, orgId: p.orgId }).statement(
-    `SELECT s.id,s.created_at AS createdAt,s.total_paise AS totalPaise,
-       s.net_paise AS netPaise,s.tax_paise AS taxPaise,p.method,p.amount_paise AS amountPaise,
-       r.prescription_id AS prescriptionId
-     FROM sales s JOIN reservations r ON r.org_id=s.org_id AND r.id=s.reservation_id
-     JOIN sale_payments p ON p.org_id=s.org_id AND p.sale_id=s.id AND p.method='cash'
-     WHERE s.org_id=:org AND s.clinic_id=? AND s.id=? AND s.status='completed'`,
-    p.clinicId, id,
-  ).first();
-  if (!receipt) throw new HTTPException(404, { message: "Cash receipt unavailable" });
-  return c.json(receipt);
+  const input = z.object({ id: z.uuid(), day: z.iso.date().optional() })
+    .safeParse({ id: c.req.param("id"), day: c.req.query("day") });
+  if (!input.success) throw new HTTPException(400, { message: "Invalid receipt reference or posted date" });
+  const receipt = await completedClinicalReceipt(
+    tenantDb({ db: c.env.DB, orgId: p.orgId }), p.clinicId, input.data.id, input.data.day ?? null,
+  );
+  const cash = receipt?.payments.find(({ method }) => method === "cash");
+  if (!receipt || !cash) throw new HTTPException(404, { message: "Cash receipt unavailable" });
+  return c.json({ ...receipt, method: cash.method, amountPaise: cash.amountPaise });
 });
 
 clinicalPharmacyRouter.get(
@@ -498,7 +496,7 @@ clinicalPharmacyRouter.post("/checkout", posRoles, async (c) => {
         journal,
         p.clinicId,
         id,
-        today(),
+        today(at),
       ),
       ...amounts
         .filter(([, debit, credit]) => debit || credit)

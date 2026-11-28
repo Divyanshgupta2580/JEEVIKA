@@ -55,6 +55,7 @@ export type HqSale = {
   id: string;
   clinicId: string;
   recordedAt: string;
+  businessDay: string;
   grossPaise: number;
   netPaise: number;
   cogsPaise: number;
@@ -87,6 +88,8 @@ export type HqFinance = {
   centralExpensesPaise: number;
   segments: { name: string; paise: number }[];
   selectedGrossPaise: number;
+  selectedSaleCount: number;
+  paymentSummary: { method: string; amountPaise: number; saleCount: number }[];
   daily: { date: string; grossPaise: number; saleCount: number }[];
   sales: HqSale[];
   salesTruncated: boolean;
